@@ -1,0 +1,46 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+
+<div class="p-6 max-w-3xl mx-auto">
+
+    <h1 class="text-2xl font-bold mb-6">Edit Student</h1>
+
+    <form method="POST" enctype="multipart/form-data"
+          class="bg-white p-6 shadow rounded-lg space-y-6">
+        {% csrf_token %}
+
+        <!-- USER FORM -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {{ form.username.label_tag }} {{ form.username }}
+            {{ form.first_name.label_tag }} {{ form.first_name }}
+            {{ form.last_name.label_tag }} {{ form.last_name }}
+            {{ form.email.label_tag }} {{ form.email }}
+        </div>
+
+        <div>
+            {{ form.profile_picture.label_tag }}
+            {{ form.profile_picture }}
+        </div>
+
+        <div>
+            {{ form.password.label_tag }}
+            {{ form.password }}
+            <p class="text-gray-500 text-sm mt-1">Leave blank to keep old password</p>
+        </div>
+
+        <!-- STUDENT PROFILE -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {{ profile_form.school.label_tag }} {{ profile_form.school }}
+            {{ profile_form.school_class.label_tag }} {{ profile_form.school_class }}
+        </div>
+
+        <button type="submit"
+                class="bg-blue-600 text-white px-6 py-2 rounded-lg shadow hover:bg-blue-700">
+            Update Student
+        </button>
+
+    </form>
+
+</div>
+
+{% endblock %}

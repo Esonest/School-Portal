@@ -1,0 +1,16 @@
+{% extends "accounts/base.html" %}
+
+{% block content %}
+<div class="max-w-xl mx-auto p-6">
+    <h1 class="text-xl font-bold mb-4">Teacher Form</h1>
+
+    <form method="post">
+        {% csrf_token %}
+        <div class="space-y-4">
+            {{ form.as_p }}
+        </div>
+
+        <button class="mt-4 bg-green-600 text-white px-4 py-2 rounded">Save</button>
+    </form>
+</div>
+{% endblock %}

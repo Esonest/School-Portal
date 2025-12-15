@@ -1,0 +1,26 @@
+{% extends 'accounts/base.html' %}
+{% block content %}
+<div class="max-w-3xl mx-auto mt-8">
+  <h1 class="text-2xl font-bold mb-4  text-{{ school.theme_color }}-600">Available CBT Exams</h1>
+
+  {% for exam in exams %}
+  <div class="p-4 border rounded-lg mb-3 flex justify-between items-center">
+    <div>
+      <h2 class="text-lg font-semibold">{{ exam.title }}</h2>
+      <p class="text-sm text-gray-600">{{ exam.subject.name }} • {{ exam.session }} • {{ exam.term }}</p>
+    </div>
+
+    {% if exam.already_taken %}
+      <span class="bg-green-100 text-green-700 px-3 py-1 rounded-lg text-sm font-semibold">Taken</span>
+      <a href="{% url 'cbt:student_exam_result' exam.id %}" 
+         class="ml-2 text-blue-700 hover:underline text-sm">View Result</a>
+    {% else %}
+      <a href="{% url 'cbt:start_exam_page' exam.id %}" 
+         class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700">Start</a>
+    {% endif %}
+  </div>
+  {% empty %}
+  <p>No active exams at the moment.</p>
+  {% endfor %}
+</div>
+{% endblock %}

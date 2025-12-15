@@ -1,0 +1,15 @@
+{% extends "accounts/base.html" %}
+
+{% block content %}
+<div class="max-w-lg mx-auto mt-10 bg-red-50 border border-red-300 p-6 rounded">
+    <h2 class="text-xl font-bold text-red-700 mb-3 text-{{ school.theme_color }}-600">Access Restricted</h2>
+
+    <p class="text-gray-800">
+        {{ reason }}
+    </p>
+
+    <p class="mt-4 text-sm text-gray-600">
+        Contact the school admin for assistance.
+    </p>
+</div>
+{% endblock %}

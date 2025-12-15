@@ -1,0 +1,9 @@
+{% extends 'students/base.html' %}
+{% block content %}
+<h2>CBT Exams</h2>
+<ul>
+{% for exam in exams %}
+<li><a href="{% url 'take_exam' exam.id %}">{{ exam.title }} - {{ exam.subject }}</a></li>
+{% endfor %}
+</ul>
+{% endblock %}

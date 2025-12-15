@@ -1,0 +1,52 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+<div class="p-6">
+
+    <div class="flex justify-between items-center mb-5">
+        <h1 class="text-2xl font-bold">All Schools</h1>
+        <a href="{% url 'superadmin:school_create' %}" 
+           class="bg-blue-600 text-white px-4 py-2 rounded">
+            + Add School
+        </a>
+    </div>
+
+    {% if schools %}
+    <table class="w-full bg-white rounded shadow">
+        <thead class="bg-gray-100">
+            <tr>
+                <th class="p-3 text-left">Name</th>
+                <th class="p-3 text-left">Location</th>
+                <th class="p-3 text-left">Admins</th>
+                <th class="p-3 text-left">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for school in schools %}
+            <tr class="border-b">
+                <td class="p-3">{{ school.name }}</td>
+                <td class="p-3">{{ school.location }}</td>
+                <td class="p-3">
+                    {% for admin in school.admins.all %}
+                        <span class="text-sm bg-gray-200 px-2 py-1 rounded">{{ admin.user.username }}</span>
+                    {% empty %}
+                        <span class="text-gray-500">No admins</span>
+                    {% endfor %}
+                </td>
+                <td class="p-3">
+                    <a href="{% url 'superadmin:school_edit' school.id %}" class="text-blue-600">Edit</a>
+                    |
+                    <a href="{% url 'superadmin:school_delete' school.id %}" class="text-red-600">Delete</a>
+                    |
+                    <a href="{% url 'superadmin:admin_create' %}" class="text-green-600">Assign Admin</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% else %}
+        <p class="text-gray-600 mt-6">No schools have been added yet.</p>
+    {% endif %}
+
+</div>
+{% endblock %}

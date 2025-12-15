@@ -1,0 +1,106 @@
+{% load static %}
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>Report - {{ student.user.get_full_name }}</title>
+<style>
+body { font-family: Arial, sans-serif; }
+.table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+.table th, .table td { border: 1px solid #333; padding: 4px; text-align: center; }
+.header, .footer { text-align: center; margin-bottom: 10px; }
+.student-photo { width: 80px; height: 80px; object-fit: cover; border-radius: 50%; border: 1px solid #333; }
+.qr { width: 60px; height: 60px; }
+</style>
+</head>
+<body>
+
+<div class="header">
+    {% if student.school.logo %}
+        <img src="{{ student.school.logo.url }}" height="60">
+    {% endif %}
+    <h2>{{ student.school.name }}</h2>
+    <p>{{ student.school.address }}</p>
+    <p><em>{{ student.school.motto }}</em></p>
+</div>
+
+<hr>
+
+<div>
+    <table>
+        <tr>
+            <td rowspan="4"><img src="{{ student.photo.url }}" class="student-photo"></td>
+            <td>Name: {{ student.user.get_full_name }}</td>
+            <td>Class: {{ student.student_class }}</td>
+        </tr>
+        <tr>
+            <td>Gender: {{ student.gender }}</td>
+            <td></td>
+        </tr>
+    </table>
+</div>
+
+<h3>Academic Scores</h3>
+<table class="table">
+    <thead>
+        <tr>
+            <th>Subject</th>
+            <th>CA Score</th>
+            <th>Exam Score</th>
+            <th>Total</th>
+            <th>Grade</th>
+            <th>Teacher</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for s in scores %}
+        <tr>
+            <td>{{ s.subject.name }}</td>
+            <td>{{ s.ca_score }}</td>
+            <td>{{ s.exam_score }}</td>
+            <td>{{ s.total }}</td>
+            <td>{{ s.grade }}</td>
+            <td>{{ s.subject.teacher.user.get_full_name }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<p><strong>Total Marks:</strong> {{ total_marks }}</p>
+<p><strong>Average Score:</strong> {{ average_score }}</p>
+<p><strong>Best Subject:</strong> {{ best_subject }}</p>
+<p><strong>Least Subject:</strong> {{ least_subject }}</p>
+
+<h3>Psychomotor Domains</h3>
+<table class="table">
+<tr><th>Neatness</th><th>Agility</th><th>Creativity</th></tr>
+<tr>
+<td>{{ psycho.neatness }}</td>
+<td>{{ psycho.agility }}</td>
+<td>{{ psycho.creativity }}</td>
+</tr>
+</table>
+
+<h3>Affective Domains</h3>
+<table class="table">
+<tr><th>Punctuality</th><th>Cooperation</th><th>Behavior</th></tr>
+<tr>
+<td>{{ affective.punctuality }}</td>
+<td>{{ affective.cooperation }}</td>
+<td>{{ affective.behavior }}</td>
+</tr>
+</table>
+
+<h3>Comments</h3>
+<p><strong>Principal:</strong> {{ principal_comment }}</p>
+<p><strong>Class Teacher:</strong> {{ teacher_comment }}</p>
+
+<div style="display:flex; justify-content: space-between; margin-top:20px;">
+<img src="data:image/png;base64,{{ qr_code }}" class="qr">
+{% if student.school.stamp %}
+<img src="{{ student.school.stamp.url }}" height="50">
+{% endif %}
+</div>
+
+</body>
+</html>

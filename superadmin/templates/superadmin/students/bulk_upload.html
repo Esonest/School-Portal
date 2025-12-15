@@ -1,0 +1,12 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+<div class="p-6 max-w-2xl mx-auto bg-white shadow rounded p-6">
+  <h1 class="text-xl font-bold mb-4">Bulk Upload Students (CSV)</h1>
+  <form method="post" enctype="multipart/form-data">
+    {% csrf_token %}
+    {{ form.as_p }}
+    <button class="bg-indigo-600 text-white px-4 py-2 rounded">Upload</button>
+  </form>
+  <p class="text-sm text-gray-500 mt-3">CSV columns: first_name,last_name,email,school_id,class_id,dob,gender,session,term</p>
+</div>
+{% endblock %}

@@ -1,0 +1,42 @@
+{% extends 'accounts/base.html' %}
+{% block content %}
+<div class="max-w-5xl mx-auto bg-white rounded-2xl shadow p-8 mt-8">
+  <div class="flex justify-between items-center mb-6">
+    <h2 class="text-2xl font-bold text-gray-800">Attendance Details — {{ cls.name }}</h2>
+    <a href="{% url 'attendance:attendance_report' %}" class="text-indigo-600 hover:underline text-sm">← Back to Report</a>
+  </div>
+
+  <table class="w-full border-collapse">
+    <thead class="bg-indigo-600 text-white">
+      <tr>
+        <th class="p-3 text-left rounded-tl-lg">Student</th>
+        <th class="p-3 text-center">Status</th>
+        <th class="p-3 text-right rounded-tr-lg">Date</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for record in student_attendance %}
+      <tr class="border-b hover:bg-gray-50 transition">
+        <td class="p-3 text-gray-700 font-medium">{{ record.student.user.get_full_name }}</td>
+        <td class="p-3 text-center">
+          {% if record.status == "present" %}
+            <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-semibold">Present</span>
+          {% elif record.status == "absent" %}
+            <span class="bg-red-100 text-red-800 px-3 py-1 rounded-full text-sm font-semibold">Absent</span>
+          {% else %}
+            <span class="bg-gray-100 text-gray-600 px-3 py-1 rounded-full text-sm font-semibold">Not Marked</span>
+          {% endif %}
+        </td>
+        <td class="p-3 text-right text-gray-600">
+          {{ record.date|date:"M d, Y" }}
+        </td>
+      </tr>
+      {% empty %}
+      <tr>
+        <td colspan="3" class="p-6 text-center text-gray-500 italic">No attendance records available.</td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

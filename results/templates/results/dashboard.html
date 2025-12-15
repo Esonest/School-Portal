@@ -1,0 +1,139 @@
+{% extends 'accounts/base.html' %}
+{% load custom_filters %}
+{% load static %}
+{% block content %}
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
+<div class="max-w-7xl mx-auto p-6">
+
+  <!-- Header -->
+  <div class="flex items-center justify-between mb-6">
+    <div>
+      <h1 class="text-2xl font-bold text-{{ school.theme_color }}-600">{{ school.name }}</h1>
+      <div class="text-sm text-gray-600">{{ school.address }}</div>
+      <div class="text-sm text-gray-500 italic">{{ school.motto }}</div>
+    </div>
+    <div class="text-right">
+      {% if school.logo_url %}
+        <img src="{{ school.logo_url }}" alt="logo" class="h-20">
+      {% endif %}
+      <div class="text-sm text-gray-600">Term: {{ selected_term }} &bull; Session: {{ selected_session }}</div>
+    </div>
+  </div>
+
+  <!-- Filters -->
+  <form method="get" class="mb-4 flex flex-wrap gap-3 items-end">
+    <select name="class_id" class="p-2 border rounded">
+      <option value="">All classes</option>
+      {% for c in classes %}
+        <option value="{{ c.id }}" {% if selected_class == c.id %}selected{% endif %}>{{ c.name }}</option>
+      {% endfor %}
+    </select>
+
+    {% if subjects %}
+    <select name="subject_id" class="p-2 border rounded">
+      <option value="">All subjects</option>
+      {% for s in subjects %}
+        <option value="{{ s.id }}" {% if selected_subject == s.id %}selected{% endif %}>{{ s.name }}</option>
+      {% endfor %}
+    </select>
+    {% endif %}
+
+    <input type="text" name="student" placeholder="Search student" value="{{ student_q }}" class="p-2 border rounded">
+
+    <select name="term" class="p-2 border rounded">
+      <option value="">Select term</option>
+      {% for key,label in TERM_CHOICES %}
+        <option value="{{ key }}" {% if selected_term == key %}selected{% endif %}>{{ label }}</option>
+      {% endfor %}
+    </select>
+
+    <select name="session" class="p-2 border rounded">
+      <option value="">Select session</option>
+      {% for ses in SESSION_LIST %}
+        <option value="{{ ses }}" {% if selected_session == ses %}selected{% endif %}>{{ ses }}</option>
+      {% endfor %}
+    </select>
+
+    <button class="bg-blue-600 text-white px-4 py-2 rounded">Filter</button>
+    <a href="{% url 'results:export_results_excel' school.id %}?class_id={{ selected_class }}&subject_id={{ selected_subject }}&term={{ selected_term }}&session={{ selected_session }}" class="bg-green-600 text-white px-4 py-2 rounded">Export Excel</a>
+  </form>
+
+  <!-- Results Table -->
+  <div class="bg-white shadow rounded overflow-x-auto">
+    <table class="w-full table-auto text-sm">
+      <thead class="bg-gray-100">
+        <tr>
+          <th class="p-3 text-left">Photo</th>
+          <th class="p-3 text-left">Student</th>
+          <th class="p-3 text-left">Class</th>
+          <th class="p-3 text-left">Subject</th>
+          <th class="p-3 text-center">CA</th>
+          <th class="p-3 text-center">Exam</th>
+          <th class="p-3 text-center">Total</th>
+          <th class="p-3 text-left">Psychomotor</th>
+          <th class="p-3 text-left">Affective</th>
+          <th class="p-3 text-center">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+          {% for s in row.subject_rows %}
+          <tr class="border-b hover:bg-gray-50">
+            <td class="p-3">
+              {% if row.student.user.profile_picture %}
+                <img src="{{ row.student.user.profile_picture.url }}" class="h-12 w-12 rounded-full object-cover">
+              {% else %}
+                <div class="h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center text-gray-500">N/A</div>
+              {% endif %}
+            </td>
+            <td class="p-3">
+              <div class="font-medium">{{ row.student.full_name }}</div>
+              <div class="text-xs text-gray-500">{{ row.student.admission_no }}</div>
+            </td>
+            <td class="p-3">{{ row.student.school_class.name }}</td>
+            <td class="p-3 font-semibold">
+              {{ s.subject }}<div class="text-xs text-gray-500">{{ s.teacher }}</div>
+            </td>
+            <td class="p-3 text-center"><span class="px-2 py-1 bg-blue-100 text-blue-800 rounded">{{ s.ca }}</span></td>
+            <td class="p-3 text-center"><span class="px-2 py-1 bg-purple-100 text-purple-800 rounded">{{ s.exam }}</span></td>
+            <td class="p-3 text-center font-bold"><span class="px-3 py-1 bg-green-100 text-green-800 rounded">{{ s.total }}</span></td>
+            <td class="p-3 space-y-1">
+              {% for p in row.psychomotor %}
+                <div>{{ p.field|capfirst }}:
+                  <span class="text-yellow-500">{% for i in 1|num_range:5 %}{% if i <= p.value %}⭐{% else %}☆{% endif %}{% endfor %}</span>
+                </div>
+              {% endfor %}
+            </td>
+            <td class="p-3 space-y-1">
+              {% for a in row.affective %}
+                <div>{{ a.field|capfirst }}:
+                  <span class="text-yellow-500">{% for i in 1|num_range:5 %}{% if i <= a.value %}⭐{% else %}☆{% endif %}{% endfor %}</span>
+                </div>
+              {% endfor %}
+            </td>
+            <td class="p-3 text-center">
+              <a href="#" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded">PDF</a>
+            </td>
+          </tr>
+          {% endfor %}
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Pagination -->
+  <div class="mt-4 flex justify-between items-center">
+    <div>Showing {{ page_obj.start_index }}–{{ page_obj.end_index }} of {{ paginator.count }}</div>
+    <div class="flex gap-2">
+      {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}&class_id={{ selected_class }}&term={{ selected_term }}&session={{ selected_session }}" class="px-3 py-1 border rounded">Previous</a>
+      {% endif %}
+      {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}&class_id={{ selected_class }}&term={{ selected_term }}&session={{ selected_session }}" class="px-3 py-1 border rounded">Next</a>
+      {% endif %}
+    </div>
+  </div>
+
+</div>
+{% endblock %}

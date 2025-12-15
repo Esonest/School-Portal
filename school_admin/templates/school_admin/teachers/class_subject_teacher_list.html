@@ -1,0 +1,59 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+
+<div class="max-w-6xl mx-auto p-6">
+    <div class="flex justify-between items-center mb-6">
+        <h1 class="text-2xl font-bold text-{{ school.theme_color }}-800">
+            Class Subject Teachers – {{ school.name }}
+        </h1>
+
+        <a href="{% url 'school_admin:class_subject_teacher_create' school.id %}"
+           class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">
+            Assign New
+        </a>
+    </div>
+
+    <table class="w-full border-collapse bg-white shadow rounded">
+        <thead class="bg-gray-100">
+            <tr>
+                <th class="p-3 text-left">Class</th>
+                <th class="p-3 text-left">Subject</th>
+                <th class="p-3 text-left">Teacher</th>
+                <th class="p-3">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for a in assignments %}
+            <tr class="border-t">
+                <td class="p-3">{{ a.school_class.name }}</td>
+                <td class="p-3">{{ a.subject.name }}</td>
+                <td class="p-3">
+                    {% if a.teacher %}
+                        {{ a.teacher.user.get_full_name|default:a.teacher.user.username }}
+                    {% else %}
+                        Not Assigned
+                    {% endif %}
+                </td>
+                
+                <td class="p-3 text-center space-x-2">
+                    <a href="{% url 'school_admin:class_subject_teacher_update' school.id a.id %}"
+                       class="text-indigo-600 hover:underline">Edit</a>
+                    <a href="{% url 'school_admin:class_subject_teacher_delete' school.id a.id %}"
+                       class="text-red-600 hover:underline"
+                       onclick="return confirm('Delete this assignment?')">
+                        Delete
+                    </a>
+                </td>
+            </tr>
+        {% empty %}
+            <tr>
+                <td colspan="4" class="p-6 text-center text-gray-500">
+                    No assignments found.
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

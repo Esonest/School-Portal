@@ -1,0 +1,240 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+
+<div class="min-h-screen bg-gray-100 p-6">
+
+    <!-- TOP BAR -->
+    <div class="flex items-center justify-between mb-6">
+        <h1 class="text-3xl font-bold tracking-tight">Super Admin Dashboard</h1>
+        <div class="flex items-center gap-3">
+            <span class="text-sm text-gray-500">{{ request.user.username }}</span>
+            <img src="/static/img/user.png" class="h-10 w-10 rounded-full border shadow">
+        </div>
+    </div>
+
+    <!-- STATS CARDS -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+
+        <!-- Schools -->
+        <div class="bg-white rounded-2xl shadow-lg p-6 transform transition hover:-translate-y-1">
+            <div class="flex items-center justify-between">
+                <h2 class="text-gray-500 text-sm uppercase font-semibold">Schools</h2>
+                <span class="p-2 bg-blue-100 text-blue-600 rounded-xl">
+                    <i class="fas fa-school"></i>
+                </span>
+            </div>
+            <p class="text-4xl font-bold mt-4">{{ school_count }}</p>
+            <a href="{% url 'superadmin:school_list' %}" class="text-sm text-blue-600 mt-2 inline-block">Manage Schools →</a>
+        </div>
+
+        <!-- Teachers -->
+        <div class="bg-white rounded-2xl shadow-lg p-6 transform transition hover:-translate-y-1">
+            <div class="flex items-center justify-between">
+                <h2 class="text-gray-500 text-sm uppercase font-semibold">Teachers</h2>
+                <span class="p-2 bg-green-100 text-green-600 rounded-xl">
+                    <i class="fas fa-chalkboard-teacher"></i>
+                </span>
+            </div>
+            <p class="text-4xl font-bold mt-4">{{ teacher_count }}</p>
+            <a href="{% url 'superadmin:teacher_list' %}" class="text-sm text-green-600 mt-2 inline-block">Manage Teachers →</a>
+        </div>
+
+        <!-- Students -->
+        <div class="bg-white rounded-2xl shadow-lg p-6 transform transition hover:-translate-y-1">
+            <div class="flex items-center justify-between">
+                <h2 class="text-gray-500 text-sm uppercase font-semibold">Students</h2>
+                <span class="p-2 bg-purple-100 text-purple-600 rounded-xl">
+                    <i class="fas fa-user-graduate"></i>
+                </span>
+            </div>
+            <p class="text-4xl font-bold mt-4">{{ student_count }}</p>
+            <a href="{% url 'superadmin:student_list' %}" class="text-sm text-purple-600 mt-2 inline-block">Manage Students →</a>
+        </div>
+
+        <!-- Users -->
+        <div class="bg-white rounded-2xl shadow-lg p-6 transform transition hover:-translate-y-1">
+            <div class="flex items-center justify-between">
+                <h2 class="text-gray-500 text-sm uppercase font-semibold">Users</h2>
+                <span class="p-2 bg-indigo-100 text-indigo-600 rounded-xl">
+                    <i class="fas fa-users"></i>
+                </span>
+            </div>
+            <p class="text-4xl font-bold mt-4">{{ user_count }}</p>
+            <a href="{% url 'superadmin:user_list' %}" class="text-sm text-indigo-600 mt-2 inline-block">Manage Users →</a>
+        </div>
+    </div>
+
+    <!-- NAVIGATION CARDS -->
+    <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6 mt-8">
+
+        <!-- Schools -->
+        <a href="{% url 'superadmin:school_list' %}"
+           class="bg-white rounded-2xl shadow-lg p-6 hover:bg-blue-50 transition block">
+            <div class="flex items-center gap-4">
+                <div class="p-4 bg-blue-100 text-blue-600 rounded-xl text-xl">
+                    <i class="fas fa-school"></i>
+                </div>
+                <div>
+                    <h3 class="text-xl font-semibold">Schools</h3>
+                    <p class="text-gray-600 text-sm mt-1">Create and manage schools</p>
+                </div>
+            </div>
+        </a>
+            
+
+
+        <!-- Portal Settings -->
+<a href="{% url 'superadmin:superadmin_portal_list' %}"
+class="bg-white rounded-2xl shadow-lg p-6 hover:bg-cyan-50 transition block">
+ <div class="flex items-center gap-4">
+     <div class="p-4 bg-cyan-100 text-cyan-600 rounded-xl text-xl">
+         <i class="fas fa-toggle-on"></i>
+     </div>
+     <div>
+         <h3 class="text-xl font-semibold">School Portals</h3>
+         <p class="text-gray-600 text-sm mt-1">
+             Activate or deactivate school portals
+         </p>
+     </div>
+ </div>
+</a>
+
+        <!-- Teachers -->
+        <a href="{% url 'superadmin:teacher_list' %}"
+           class="bg-white rounded-2xl shadow-lg p-6 hover:bg-green-50 transition block">
+            <div class="flex items-center gap-4">
+                <div class="p-4 bg-green-100 text-green-600 rounded-xl text-xl">
+                    <i class="fas fa-chalkboard-teacher"></i>
+                </div>
+                <div>
+                    <h3 class="text-xl font-semibold">Teachers</h3>
+                    <p class="text-gray-600 text-sm mt-1">Manage teacher records</p>
+                </div>
+            </div>
+        </a>
+
+        <!-- Students -->
+        <a href="{% url 'superadmin:student_list' %}"
+           class="bg-white rounded-2xl shadow-lg p-6 hover:bg-purple-50 transition block">
+            <div class="flex items-center gap-4">
+                <div class="p-4 bg-purple-100 text-purple-600 rounded-xl text-xl">
+                    <i class="fas fa-user-graduate"></i>
+                </div>
+                <div>
+                    <h3 class="text-xl font-semibold">Students</h3>
+                    <p class="text-gray-600 text-sm mt-1">View, add, and manage students</p>
+                </div>
+            </div>
+        </a>
+
+        <!-- Classes -->
+        <a href="{% url 'superadmin:class_list' %}"
+           class="bg-white rounded-2xl shadow-lg p-6 hover:bg-yellow-50 transition block">
+            <div class="flex items-center gap-4">
+                <div class="p-4 bg-yellow-100 text-yellow-600 rounded-xl text-xl">
+                    <i class="fas fa-layer-group"></i>
+                </div>
+                <div>
+                    <h3 class="text-xl font-semibold">School Classes</h3>
+                    <p class="text-gray-600 text-sm mt-1">Create and manage classes</p>
+                </div>
+            </div>
+        </a>
+            <!--Admin list-->
+    
+            <a href="{% url 'superadmin:admin_list' %}"
+           class="bg-white rounded-2xl shadow-lg p-6 hover:bg-yellow-50 transition block">
+            <div class="flex items-center gap-4">
+                <div class="p-4 bg-yellow-100 text-yellow-600 rounded-xl text-xl">
+                    <i class="fas fa-layer-group"></i>
+                </div>
+                <div>
+                    <h3 class="text-xl font-semibold">School Admins</h3>
+                    <p class="text-gray-600 text-sm mt-1">Create and manage Admins</p>
+                </div>
+            </div>
+        </a>
+
+        <!-- Subjects -->
+        <a href="{% url 'superadmin:subject_list' %}"
+           class="bg-white rounded-2xl shadow-lg p-6 hover:bg-red-50 transition block">
+            <div class="flex items-center gap-4">
+                <div class="p-4 bg-red-100 text-red-600 rounded-xl text-xl">
+                    <i class="fas fa-book"></i>
+                </div>
+                <div>
+                    <h3 class="text-xl font-semibold">Subjects</h3>
+                    <p class="text-gray-600 text-sm mt-1">Assign teachers and manage subjects</p>
+                </div>
+            </div>
+        </a>
+
+        <!-- Users -->
+        <a href="{% url 'superadmin:user_list' %}"
+           class="bg-white rounded-2xl shadow-lg p-6 hover:bg-indigo-50 transition block">
+            <div class="flex items-center gap-4">
+                <div class="p-4 bg-indigo-100 text-indigo-600 rounded-xl text-xl">
+                    <i class="fas fa-users"></i>
+                </div>
+                <div>
+                    <h3 class="text-xl font-semibold">Users</h3>
+                    <p class="text-gray-600 text-sm mt-1">Create, filter, search & manage users</p>
+                </div>
+            </div>
+        </a>
+
+    </div>
+
+    <!-- CHARTS -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-10">
+        <div class="bg-white shadow-lg rounded-2xl p-6">
+            <h2 class="text-xl font-semibold mb-4">Schools Growth Overview</h2>
+            <div id="schoolsChart" class="h-64"></div>
+        </div>
+
+        <div class="bg-white shadow-lg rounded-2xl p-6">
+            <h2 class="text-xl font-semibold mb-4">Users Distribution</h2>
+            <div id="usersPie" class="h-64"></div>
+        </div>
+    </div>
+
+    <!-- RECENT LOGS -->
+    <div class="bg-white mt-10 rounded-2xl shadow p-6">
+        <h2 class="text-xl font-semibold mb-4">Recent Activity</h2>
+        {% if logs %}
+        <ul class="divide-y">
+            {% for log in logs %}
+            <li class="py-4 flex justify-between items-center">
+                <div>
+                    <p class="font-medium">{{ log.user.username }}</p>
+                    <p class="text-gray-500 text-sm">{{ log.action }}</p>
+                </div>
+                <span class="text-xs text-gray-400">{{ log.timestamp }}</span>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+            <p class="text-gray-500">No activity recorded.</p>
+        {% endif %}
+    </div>
+</div>
+
+<!-- CHARTS SCRIPT -->
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
+<script>
+var schoolsChart = new ApexCharts(document.querySelector("#schoolsChart"), {
+    chart: { type: 'area', height: 250 },
+    series: [{ name: 'Schools', data: {{ school_growth_json|safe }} }],
+    xaxis: { categories: {{ school_growth_dates|safe }} }
+});
+schoolsChart.render();
+
+var usersPie = new ApexCharts(document.querySelector("#usersPie"), {
+    chart: { type: 'donut', height: 250 },
+    series: [{{ school_count }}, {{ teacher_count }}, {{ student_count }}],
+    labels: ['Schools', 'Teachers', 'Students']
+});
+usersPie.render();
+</script>
+
+{% endblock %}

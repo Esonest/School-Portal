@@ -1,0 +1,48 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+<div class="p-6">
+  <div class="flex items-center gap-4">
+    {% if student.photo %}<img src="{{ student.photo.url }}" class="h-20 w-20 rounded-full object-cover">{% endif %}
+    <div>
+      <h1 class="text-2xl font-bold">{{ student.user.get_full_name }}</h1>
+      <div class="text-gray-500">{{ student.admission_no }} • {{ student.school.name }}</div>
+    </div>
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
+    <div class="bg-white p-4 rounded shadow">
+      <h3 class="font-semibold">Attendance</h3>
+      {% if attendance_stats %}
+        <p>Present: {{ attendance_stats.present }}</p>
+        <p>Absent: {{ attendance_stats.absent }}</p>
+        <p>Percent: {{ attendance_stats.percentage|default:"-" }}%</p>
+      {% else %}
+        <p class="text-gray-500">Attendance data not available.</p>
+      {% endif %}
+    </div>
+
+    <div class="bg-white p-4 rounded shadow md:col-span-2">
+      <h3 class="font-semibold">Performance Summary</h3>
+      {% if performance %}
+        <p class="mt-2">Average Score: {{ performance.average }}</p>
+        <table class="w-full mt-4 text-sm">
+          <thead class="bg-gray-100">
+            <tr><th class="p-2">Subject</th><th class="p-2">Total</th><th class="p-2">Grade</th></tr>
+          </thead>
+          <tbody>
+            {% for s in performance.subjects %}
+            <tr class="border-b">
+              <td class="p-2">{{ s.subject }}</td>
+              <td class="p-2">{{ s.total }}</td>
+              <td class="p-2">{{ s.grade }}</td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      {% else %}
+        <p class="text-gray-500">No scores available.</p>
+      {% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}

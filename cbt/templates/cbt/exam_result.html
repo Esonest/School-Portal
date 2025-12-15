@@ -1,0 +1,11 @@
+{% extends 'accounts/base.html' %}
+{% block content %}
+<div class="max-w-xl mx-auto mt-10 p-6 border rounded-lg">
+  <h1 class="text-2xl font-bold mb-4 text-{{ school.theme_color }}-600">{{ exam.title }} - Result</h1>
+  <p><strong>Subject:</strong> {{ exam.subject.name }}</p>
+  <p><strong>Score:</strong> {{ submission.score }}</p>
+  <p><strong>Submitted on:</strong> {{ submission.completed_on|date:"d M Y, H:i" }}</p>
+
+  
+</div>
+{% endblock %}

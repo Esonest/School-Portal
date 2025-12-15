@@ -1,0 +1,26 @@
+{% extends 'accounts/base.html' %}
+{% block content %}
+<div class="max-w-4xl mx-auto p-6 bg-white rounded shadow">
+  <h1 class="text-2xl font-bold">My Attendance</h1>
+  <table class="w-full mt-4">
+    <thead class="bg-gray-100">
+      <tr>
+        <th class="p-2">Date</th>
+        <th class="p-2">Status</th>
+        <th class="p-2">Remarks</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for a in attendances %}
+      <tr class="border-b">
+        <td class="p-2">{{ a.date }}</td>
+        <td class="p-2">{{ a.status }}</td>
+        <td class="p-2">{{ a.remarks }}</td>
+      </tr>
+      {% empty %}
+      <tr><td colspan="3" class="p-4 text-gray-600">No attendance records found.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

@@ -1,0 +1,87 @@
+{% extends 'accounts/base.html' %}
+{% block content %}
+<div class="max-w-6xl mx-auto p-6">
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-2xl font-bold text-{{ school.theme_color }}-600">Notes Dashboard</h1>
+
+    {% if is_teacher %}
+      <a href="{% url 'notes:upload_note' %}" 
+         class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition">
+        + Create Note
+      </a>
+    {% endif %}
+  </div>
+
+  {% if is_teacher %}
+    <!-- Teacher View -->
+    <div class="grid md:grid-cols-3 gap-6">
+      <!-- Teacher Notes -->
+      <div class="bg-white p-4 rounded-lg shadow">
+        <h3 class="font-semibold text-gray-800 mb-3">Your Notes</h3>
+        <div class="space-y-4">
+          {% for note in notes %}
+            {% include 'notes/note_card.html' with note=note %}
+          {% empty %}
+            <p class="text-gray-600 text-sm">No notes yet. Create one above.</p>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Pending Grading -->
+      <div class="col-span-2 bg-white p-4 rounded-lg shadow">
+        <h3 class="font-semibold text-gray-800 mb-3">Pending Grading</h3>
+        <ul class="divide-y divide-gray-100">
+          {% for p in pending %}
+            <li class="py-3 flex justify-between items-center">
+              <div>
+                <div class="font-medium text-gray-800">{{ p.note.title }}</div>
+                <div class="text-sm text-gray-600">
+                  {{ p.student }} • Submitted {{ p.submitted_on|date:"M d, Y" }}
+                </div>
+              </div>
+              <a href="{% url 'notes:grade_submission' p.id %}" 
+                 class="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600 text-sm">
+                Grade
+              </a>
+            </li>
+          {% empty %}
+            <li class="text-gray-600 py-4 text-sm">No pending submissions</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+
+  {% else %}
+    <!-- Student View -->
+    <div class="grid md:grid-cols-3 gap-6 mt-6">
+      <div class="col-span-2">
+        <h2 class="font-semibold text-{{ school.theme_color }}-600">Assigned to You</h2>
+        <div class="space-y-4">
+          {% for note in notes %}
+            {% include 'notes/note_card.html' with note=note %}
+          {% empty %}
+            <p class="text-gray-600 text-sm">No notes assigned to your class.</p>
+          {% endfor %}
+        </div>
+      </div>
+
+      <!-- Submissions -->
+      <div class="bg-white p-4 rounded-lg shadow">
+        <h3 class="font-semibold text-gray-800 mb-3">My Submissions</h3>
+        <ul class="space-y-2">
+          {% for s in submissions %}
+            <li class="text-sm text-gray-700">
+              <span class="font-medium">{{ s.note.title }}</span> • 
+              {{ s.status }} • 
+              {{ s.submitted_on|date:"M d, Y" }}
+            </li>
+          {% empty %}
+            <li class="text-gray-600 text-sm">No submissions yet.</li>
+          {% endfor %}
+        </ul>
+      </div>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

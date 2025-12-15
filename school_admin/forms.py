@@ -1,0 +1,433 @@
+from django import forms
+from students.models import Student
+from accounts.models import User
+from results.utils import generate_unique_username
+
+
+tailwind_input = "w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
+tailwind_select = "w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm bg-white focus:ring-2 focus:ring-blue-500"
+tailwind_file = "block w-full text-sm text-gray-700 border border-gray-300 rounded-lg cursor-pointer bg-gray-50"
+
+
+class StudentCreateForm(forms.ModelForm):
+    # User fields
+    first_name = forms.CharField(
+        required=True,
+        widget=forms.TextInput(attrs={"class": tailwind_input, "placeholder": "First name"})
+    )
+    last_name = forms.CharField(
+        required=True,
+        widget=forms.TextInput(attrs={"class": tailwind_input, "placeholder": "Last name"})
+    )
+    username = forms.CharField(
+        required=False,  # optional, will auto-generate if empty
+        widget=forms.TextInput(attrs={"class": tailwind_input, "placeholder": "Username"})
+    )
+    password = forms.CharField(
+        required=True,
+        widget=forms.PasswordInput(attrs={"class": tailwind_input, "placeholder": "Password"})
+    )
+
+    class Meta:
+        model = Student
+        fields = [
+            "admission_no",
+            "school_class",
+            "dob",
+            "gender",
+            "photo",
+        ]
+        widgets = {
+            "admission_no": forms.TextInput(attrs={"class": tailwind_input}),
+            "school_class": forms.Select(attrs={"class": tailwind_select}),
+            "dob": forms.DateInput(attrs={"type": "date", "class": tailwind_input}),
+            "gender": forms.Select(attrs={"class": tailwind_select}),
+            "photo": forms.FileInput(attrs={"class": tailwind_file}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        self.school = kwargs.pop("school", None)
+        super().__init__(*args, **kwargs)
+        if self.school:
+            self.fields["school_class"].queryset = self.fields["school_class"].queryset.filter(school=self.school)
+
+    def save(self, commit=True):
+        # Create the user first
+        data = self.cleaned_data
+        username = data.get("username") or generate_unique_username(data.get("first_name"))
+
+        user = User.objects.create_user(
+            username=username,
+            first_name=data["first_name"],
+            last_name=data["last_name"],
+            password=data["password"],
+            role="student",
+            is_student=True,
+            school=self.school
+        )
+
+        # Create the student profile
+        student = super().save(commit=False)
+        student.user = user
+        student.school = self.school
+
+        if commit:
+            student.save()
+            self.save_m2m()
+
+        return student
+
+
+class StudentUpdateForm(forms.ModelForm):
+    # Add user fields
+    username = forms.CharField(
+        required=True,
+        widget=forms.TextInput(attrs={"class": tailwind_input, "placeholder": "Username"})
+    )
+    password = forms.CharField(
+        required=False,
+        widget=forms.PasswordInput(attrs={"class": tailwind_input, "placeholder": "Password (leave blank to keep unchanged)"})
+    )
+    first_name = forms.CharField(
+        required=True,
+        widget=forms.TextInput(attrs={"class": tailwind_input, "placeholder": "First name"})
+    )
+    last_name = forms.CharField(
+        required=True,
+        widget=forms.TextInput(attrs={"class": tailwind_input, "placeholder": "Last name"})
+    )
+
+    class Meta:
+        model = Student
+        fields = [
+            "username",
+            "password",
+            "first_name",
+            "last_name",
+            "admission_no",
+            "school_class",
+            "dob",
+            "gender",
+            "photo",
+        ]
+        widgets = {
+            "admission_no": forms.TextInput(attrs={"class": tailwind_input}),
+            "school_class": forms.Select(attrs={"class": tailwind_select}),
+            "dob": forms.DateInput(attrs={"type": "date", "class": tailwind_input}),
+            "gender": forms.Select(attrs={"class": tailwind_select}),
+            "photo": forms.FileInput(attrs={"class": tailwind_file}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        self.school = kwargs.pop("school", None)  # Pass school from view
+        super().__init__(*args, **kwargs)
+
+        if self.school:
+            # Filter classes to the specific school
+            self.fields["school_class"].queryset = self.fields["school_class"].queryset.filter(school=self.school)
+
+        # Populate initial values for linked user
+        if self.instance and self.instance.user:
+            self.fields["username"].initial = self.instance.user.username
+            self.fields["first_name"].initial = self.instance.user.first_name
+            self.fields["last_name"].initial = self.instance.user.last_name
+
+    def save(self, commit=True):
+        student = super().save(commit=False)
+        user = student.user
+
+        # Update user fields
+        user.username = self.cleaned_data["username"]
+        user.first_name = self.cleaned_data["first_name"]
+        user.last_name = self.cleaned_data["last_name"]
+
+        password = self.cleaned_data.get("password")
+        if password:
+            user.set_password(password)
+
+        if commit:
+            user.save()
+            student.save()
+            self.save_m2m()
+
+        return student
+
+
+
+
+
+from django import forms
+from cbt.models import CBTExam, CBTQuestion, Subject
+from results.utils import SESSION_LIST
+
+
+class CBTExamForm(forms.ModelForm):
+    session = forms.ChoiceField(
+        choices=[(s, s) for s in SESSION_LIST],
+        required=True
+    )
+
+    class Meta:
+        model = CBTExam
+        fields = [
+            'title',
+            'subject',
+            'session',
+            'term',
+            'school_class',
+            'start_time',
+            'end_time',
+            'duration_minutes',
+            'active'
+        ]
+        widgets = {
+            'start_time': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+            'end_time': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
+        }
+
+    def __init__(self, *args, user=None, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # ---------- GLOBAL TAILWIND STYLING ----------
+        for field in self.fields.values():
+            field.widget.attrs.update({
+                "class": "w-full border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+                "text-slate-800 placeholder-slate-400 "
+                "focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 "
+                "transition"
+            })
+
+        # ---------- SCHOOL FILTERING ----------
+        if user and not getattr(user, 'is_superadmin', False):
+            school = getattr(user.school_admin_profile, "school", None)
+
+            if school:
+                self.fields['subject'].queryset = Subject.objects.filter(school=school)
+                self.fields['school_class'].queryset = SchoolClass.objects.filter(school=school)
+
+
+
+
+
+class CBTQuestionForm(forms.ModelForm):
+    class Meta:
+        model = CBTQuestion
+        fields = [
+            'text', 'option_a', 'option_b',
+            'option_c', 'option_d', 'correct_option', 'marks'
+        ]
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # allow empty forms so unused questions don't block save
+        for field in self.fields.values():
+            field.required = False
+
+
+
+
+from django import forms
+from notes.models import LessonNote, NoteCategory, SchoolClass
+
+class LessonNoteForm(forms.ModelForm):
+    class Meta:
+        model = LessonNote
+        fields = ['title', 'subject', 'category', 'content', 'session', 'term', 'file', 'visibility', 'classes']
+        widgets = {
+            'content': forms.Textarea(attrs={'rows':4, 'class':'border p-2 w-full'}),
+            'classes': forms.SelectMultiple(attrs={'class':'border p-2 w-full'}),
+            'term': forms.Select(attrs={'class':'border p-2 w-full'}),
+            'visibility': forms.Select(attrs={'class':'border p-2 w-full'}),
+        }
+
+
+
+from django import forms
+from attendance.models import Attendance
+
+class AttendanceForm(forms.ModelForm):
+    class Meta:
+        model = Attendance
+        fields = ["student", "date", "status", "remarks"]
+        widgets = {
+            "date": forms.DateInput(attrs={"type": "date"}),
+            "remarks": forms.Textarea(attrs={"rows": 2}),
+        }
+
+
+
+
+from django import forms
+from accounts.models import User, Teacher
+from students.models import SchoolClass
+from django import forms
+from django.core.exceptions import ValidationError
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
+
+class TeacherForm(forms.ModelForm):
+    username = forms.CharField()
+    first_name = forms.CharField(required=False)
+    last_name = forms.CharField(required=False)
+    email = forms.EmailField(required=False)
+    phone = forms.CharField(required=False)
+    address = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={"rows": 2})
+    )
+
+    password = forms.CharField(
+        required=False,
+        widget=forms.PasswordInput
+    )
+
+    class Meta:
+        model = Teacher
+        fields = [
+            "staff_id",
+            "school",
+            "classes",
+            "subjects",
+        ]
+
+    def __init__(self, *args, **kwargs):
+        self.is_edit = kwargs.pop("is_edit", False)
+        self.school = kwargs.pop("school", None)  # ✅ ONLY SOURCE
+        super().__init__(*args, **kwargs)
+
+        if self.school:
+            # School (locked)
+            self.fields["school"].queryset = (
+                self.fields["school"].queryset.filter(id=self.school.id)
+            )
+            self.fields["school"].initial = self.school
+            self.fields["school"].disabled = True
+
+            # Classes (school only)
+            self.fields["classes"].queryset = (
+                self.fields["classes"].queryset.filter(school=self.school)
+            )
+
+            # Subjects (school only) ✅ FIX
+            self.fields["subjects"].queryset = (
+                self.fields["subjects"].queryset.filter(school=self.school)
+            )
+
+        if self.is_edit and self.instance.pk:
+            user = self.instance.user
+            self.fields["username"].initial = user.username
+            self.fields["first_name"].initial = user.first_name
+            self.fields["last_name"].initial = user.last_name
+            self.fields["email"].initial = user.email
+            self.fields["phone"].initial = user.phone
+            self.fields["address"].initial = user.address
+            self.fields["password"].widget = forms.HiddenInput()
+        else:
+            self.fields["password"].required = True
+
+
+
+
+
+
+
+
+from results.models import Score
+
+class ScoreForm(forms.ModelForm):
+    class Meta:
+        model = Score
+        fields = ['ca', 'exam']
+        widgets = {
+            'ca': forms.NumberInput(attrs={'class': 'border rounded px-2 py-1 w-24'}),
+            'exam': forms.NumberInput(attrs={'class': 'border rounded px-2 py-1 w-24'}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        show_ca = kwargs.pop("show_ca", True)
+        super().__init__(*args, **kwargs)
+
+        if not show_ca:
+            self.fields.pop("ca", None)    # 💥 remove CA dynamically
+
+
+from results.models import ClassSubjectTeacher, Subject
+
+
+TAILWIND_INPUT = "w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
+
+class ClassSubjectTeacherForm(forms.ModelForm):
+    class Meta:
+        model = ClassSubjectTeacher
+        fields = ["school_class", "subject", "teacher"]
+        widgets = {
+            "school_class": forms.Select(attrs={"class": TAILWIND_INPUT}),
+            "subject": forms.Select(attrs={"class": TAILWIND_INPUT}),
+            "teacher": forms.Select(attrs={"class": TAILWIND_INPUT}),
+        }
+
+    def __init__(self, *args, **kwargs):
+        school = kwargs.pop("school", None)
+        super().__init__(*args, **kwargs)
+
+        if school:
+            self.fields["school_class"].queryset = SchoolClass.objects.filter(school=school)
+            self.fields["subject"].queryset = Subject.objects.filter(school=school)
+            self.fields["teacher"].queryset = Teacher.objects.filter(school=school)
+
+
+
+
+# school_admin/forms.py
+
+from django import forms
+from django.contrib.auth import get_user_model
+from finance.models import SchoolAccountant
+
+TAILWIND_INPUT = "w-full border-gray-300 rounded px-3 py-2"
+
+User = get_user_model()
+
+class AccountantUserForm(forms.ModelForm):
+    password1 = forms.CharField(widget=forms.PasswordInput(attrs={"class": TAILWIND_INPUT}))
+    password2 = forms.CharField(widget=forms.PasswordInput(attrs={"class": TAILWIND_INPUT}))
+    role = forms.ChoiceField(choices=User.ROLE_CHOICES, widget=forms.Select(attrs={"class": TAILWIND_INPUT}))
+
+    class Meta:
+        model = User
+        fields = ["username", "first_name", "last_name", "email", "phone", "role"]
+        widgets = {
+            "username": forms.TextInput(attrs={"class": TAILWIND_INPUT}),
+            "first_name": forms.TextInput(attrs={"class": TAILWIND_INPUT}),
+            "last_name": forms.TextInput(attrs={"class": TAILWIND_INPUT}),
+            "email": forms.EmailInput(attrs={"class": TAILWIND_INPUT}),
+            "phone": forms.TextInput(attrs={"class": TAILWIND_INPUT}),
+        }
+
+    def clean(self):
+        cleaned = super().clean()
+        if cleaned.get("password1") != cleaned.get("password2"):
+            self.add_error("password2", "Passwords do not match")
+        return cleaned
+
+class SchoolAccountantForm(forms.ModelForm):
+    """
+    Handles SchoolAccountant-specific fields only.
+    """
+    class Meta:
+        model = SchoolAccountant
+        fields = ["staff_id", "is_active"]
+        widgets = {
+            "staff_id": forms.TextInput(attrs={"class": TAILWIND_INPUT}),
+            "is_active": forms.CheckboxInput(),
+        }
+
+    def save(self, commit=True):
+        accountant = super().save(commit=False)
+        if commit:
+            accountant.save()
+        return accountant

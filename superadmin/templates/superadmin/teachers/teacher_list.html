@@ -1,0 +1,45 @@
+{% extends "accounts/base.html" %}
+
+{% block content %}
+<div class="p-6">
+    <div class="flex justify-between items-center mb-4">
+        <h1 class="text-xl font-bold">Teachers</h1>
+        <a href="{% url 'superadmin:teacher_create' %}"
+           class="bg-blue-600 text-white px-4 py-2 rounded">Add Teacher</a>
+    </div>
+
+    <table class="w-full border text-sm">
+        <thead class="bg-gray-100">
+            <tr>
+                <th class="p-2 border">Name</th>
+                <th class="p-2 border">School</th>
+                <th class="p-2 border">Subjects</th>
+                <th class="p-2 border">Classes</th>
+                <th class="p-2 border">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for t in teachers %}
+            <tr class="border-b">
+                <td class="p-2">{{ t.user.get_full_name }}</td>
+                <td class="p-2">{{ t.school.name }}</td>
+                <td class="p-2">
+                    {% for s in t.subjects.all %}
+                        <span class="bg-blue-100 px-2 py-1 rounded">{{ s.name }}</span>
+                    {% endfor %}
+                </td>
+                <td class="p-2">
+                    {% for c in t.schoolClass.all %}
+                        <span class="bg-green-100 px-2 py-1 rounded">{{ c.name }}</span>
+                    {% endfor %}
+                </td>
+                <td class="p-2">
+                    <a href="{% url 'superadmin:teacher_edit' t.id %}" class="text-blue-600">Edit</a> |
+                    <a href="{% url 'superadmin:teacher_delete' t.id %}" class="text-red-600">Delete</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}

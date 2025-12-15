@@ -1,0 +1,61 @@
+{% extends 'accounts/base.html' %}
+{% block content %}
+<div class="max-w-3xl mx-auto p-6 bg-white rounded shadow">
+  <div class="flex justify-between items-center mb-4">
+    <h2 class="text-xl font-semibold">{{ exam.title }}</h2>
+    <div class="text-sm text-gray-600">Q {{ page }} of {{ total }}</div>
+  </div>
+
+  <div id="timer" class="text-red-600 font-semibold mb-3">Time left: <span id="time">{{ remaining_seconds }}</span>s</div>
+
+  <div class="mb-4">
+    <p class="font-medium">{{ question.text }}</p>
+    <form method="post">
+      {% csrf_token %}
+      <div class="mt-3 space-y-2">
+        {% for label, text in shuffled_options.items %}
+          <label class="block p-3 border rounded hover:bg-gray-50">
+            <input type="radio" name="answer" value="{{ label }}" {% if submission.raw_answers|get_item:question.id|stringformat:"s" == label %}checked{% endif %}>
+            <span class="ml-2">{{ label }}. {{ text }}</span>
+          </label>
+        {% endfor %}
+      </div>
+
+      <div class="flex justify-between mt-6">
+        {% if page > 1 %}
+          <button name="action" value="prev" class="px-4 py-2 bg-gray-200 rounded">Previous</button>
+        {% endif %}
+        <div class="flex gap-2">
+          {% if page < total %}
+            <button name="action" value="next" class="px-4 py-2 bg-indigo-600 text-white rounded">Next</button>
+          {% else %}
+            <button name="action" value="submit" class="px-4 py-2 bg-green-600 text-white rounded">Submit Exam</button>
+          {% endif %}
+        </div>
+      </div>
+    </form>
+  </div>
+
+  <div class="mt-4">
+    <div class="w-full bg-gray-200 rounded h-2">
+      <div class="bg-indigo-600 h-2 rounded" style="width: {{ page|floatformat:2|divisibleby:total|default:0 }}">{{ page|floatformat:2 }}</div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // countdown timer
+  let remaining = {{ remaining_seconds }};
+  const timeEl = document.getElementById('time');
+  const tick = () => {
+    if (remaining <= 0) {
+      // auto-submit
+      window.location.href = "{% url 'cbt:submit_exam' exam.id %}";
+      return;
+    }
+    remaining -= 1;
+    timeEl.textContent = remaining;
+  };
+  setInterval(tick, 1000);
+</script>
+{% endblock %}

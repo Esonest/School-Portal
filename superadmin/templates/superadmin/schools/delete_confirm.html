@@ -1,0 +1,24 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+<div class="p-6">
+    <h1 class="text-xl font-bold mb-6 text-red-600">Confirm Delete</h1>
+
+    <p class="mb-4 text-gray-700">
+        Are you sure you want to delete <strong>{{ school.name }}</strong>?  
+        This action cannot be undone.
+    </p>
+
+    <form method="POST">
+        {% csrf_token %}
+        <button type="submit"
+            class="bg-red-600 text-white px-4 py-2 rounded">
+            Delete
+        </button>
+
+        <a href="{% url 'superadmin:school_delete' school.id %}" 
+           class="ml-3 text-gray-700">
+            Cancel
+        </a>
+    </form>
+</div>
+{% endblock %}

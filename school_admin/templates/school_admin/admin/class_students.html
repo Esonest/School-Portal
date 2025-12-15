@@ -1,0 +1,33 @@
+{% extends "accounts/base.html" %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto bg-white shadow rounded-lg p-6 mt-6">
+
+    <h2 class="text-2xl font-bold text-{{ school.theme_color }}-600">
+        Students in {{ class.name }}
+    </h2>
+
+    <ul class="space-y-3">
+        {% for s in students %}
+        <li class="p-4 border bg-gray-50 rounded shadow flex justify-between items-center">
+            <span class="font-medium">{{ s.full_name }}</span>
+            
+            <a href="{% url 'school_admin:admin-student-results' s.id %}?term={{term}}&session={{session}}"
+               class="text-blue-600 hover:text-blue-800 font-medium">
+                View Result →
+            </a>
+        </li>
+        {% empty %}
+        <p class="text-gray-500">No students in this class.</p>
+        {% endfor %}
+    </ul>
+       
+    <div class="mt-6">
+        <a href="{% url 'school_admin:admin-class-list' %}?term={{term}}&session={{session}}"
+           class="inline-block bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700">
+            Back to Classes
+        </a>
+    </div>
+
+</div>
+{% endblock %}

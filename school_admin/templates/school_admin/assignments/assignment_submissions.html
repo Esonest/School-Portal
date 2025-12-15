@@ -1,0 +1,38 @@
+{% extends "accounts/base.html" %}
+
+{% block content %}
+<div class="p-6 space-y-6">
+    <h1 class="text-2xl font-bold text-{{ school.theme_color }}-600">Submissions - {{ assignment.title }}</h1>
+
+    <table class="w-full border border-gray-300 text-sm">
+        <thead class="bg-gray-100">
+            <tr>
+                <th class="p-2 border">Student</th>
+                <th class="p-2 border">Status</th>
+                <th class="p-2 border">Score</th>
+                <th class="p-2 border">Feedback</th>
+                <th class="p-2 border">Graded By</th>
+                <th class="p-2 border">Submitted On</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for sub in submissions %}
+            <tr class="border hover:bg-gray-50">
+                <td class="p-2 border">{{ sub.student.full_name }}</td>
+                <td class="p-2 border">{{ sub.status }}</td>
+                <td class="p-2 border">{{ sub.score|default:"-" }}</td>
+                <td class="p-2 border">{{ sub.feedback|default:"-" }}</td>
+                <td class="p-2 border">{{ sub.graded_by }}</td>
+                <td class="p-2 border">{{ sub.submitted_on|date:"d M Y H:i" }}</td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="6" class="p-2 text-gray-500 text-center">No submissions yet</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <a href="{% url 'school_admin:assignment_list' school.id %}" class="mt-4 inline-block bg-gray-300 px-4 py-2 rounded hover:bg-gray-400">Back to Assignments</a>
+</div>
+{% endblock %}

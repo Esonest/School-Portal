@@ -1,0 +1,55 @@
+{% extends "accounts/base.html" %}
+{% load custom_filters %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto py-8">
+  <h1 class="text-3xl font-bold mb-6">{{ school.name }} Grade Settings</h1>
+
+  <form method="POST" class="space-y-6 bg-white p-6 rounded-lg shadow-md">
+    {% csrf_token %}
+
+    <!-- Grades JSON -->
+    <div>
+      <label class="block text-gray-700 font-medium mb-2">Grades (JSON)</label>
+      {{ form.grades|add_class:"w-full border-gray-300 rounded px-3 py-2 focus:ring focus:ring-blue-300" }}
+      <p class="text-gray-500 text-sm mt-1">{{ form.grades.help_text }}</p>
+    </div>
+
+    <!-- Grade Interpretations JSON -->
+    <div>
+      <label class="block text-gray-700 font-medium mb-2">Grade Interpretations (JSON)</label>
+      {{ form.grade_interpretations|add_class:"w-full border-gray-300 rounded px-3 py-2 focus:ring focus:ring-purple-300" }}
+      <p class="text-gray-500 text-sm mt-1">{{ form.grade_interpretations.help_text }}</p>
+    </div>
+
+    <!-- Principal Comments -->
+    <div>
+      <label class="block text-gray-700 font-medium mb-2">Principal Comments (JSON)</label>
+      {{ form.principal_comments|add_class:"w-full border-gray-300 rounded px-3 py-2 focus:ring focus:ring-green-300" }}
+      <p class="text-gray-500 text-sm mt-1">{{ form.principal_comments.help_text }}</p>
+    </div>
+
+    <!-- Teacher Comments -->
+    <div>
+      <label class="block text-gray-700 font-medium mb-2">Teacher Comments (JSON)</label>
+      {{ form.teacher_comments|add_class:"w-full border-gray-300 rounded px-3 py-2 focus:ring focus:ring-yellow-300" }}
+      <p class="text-gray-500 text-sm mt-1">{{ form.teacher_comments.help_text }}</p>
+    </div>
+
+    <button type="submit"
+      class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded shadow-md transition">
+      Save Settings
+    </button>
+  </form>
+
+  {% if messages %}
+    <div class="mt-4">
+      {% for message in messages %}
+        <div class="p-3 rounded mb-2 {{ message.tags }} bg-green-100 text-green-800">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

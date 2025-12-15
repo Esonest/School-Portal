@@ -1,0 +1,16 @@
+{% extends 'students/base.html' %}
+{% block content %}
+<h2>Cumulative Result</h2>
+<table>
+<tr><th>Subject</th><th>1st Term</th><th>2nd Term</th><th>3rd Term</th><th>Cumulative Avg</th></tr>
+{% for row in cumulative_results %}
+<tr>
+<td>{{ row.subject }}</td>
+<td>{{ row.term1 }}</td>
+<td>{{ row.term2 }}</td>
+<td>{{ row.term3 }}</td>
+<td>{{ row.average }}</td>
+</tr>
+{% endfor %}
+</table>
+{% endblock %}

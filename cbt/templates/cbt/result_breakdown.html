@@ -1,0 +1,59 @@
+{% extends 'acconts/base.html' %}
+{% block content %}
+<div class="max-w-5xl mx-auto p-6">
+  <h2 class="text-2xl font-semibold mb-4 text-{{ school.theme_color }}-600">Result — {{ exam.title }}</h2>
+
+  <div class="p-4 border rounded mb-6">
+    <div class="flex items-center justify-between">
+      <div>
+        <p class="text-lg"><strong>Score:</strong> {{ total_obtained }} / {{ total_marks }}</p>
+        <p class="text-sm text-gray-600">Percentage: {{ percentage|floatformat:2 }}%</p>
+      </div>
+      <div>
+        <a href="{% url 'cbt:exam_list' %}" class="px-4 py-2 bg-indigo-600 text-white rounded">Back to exams</a>
+      </div>
+    </div>
+  </div>
+
+  <div class="overflow-x-auto">
+    <table class="min-w-full bg-white">
+      <thead>
+        <tr class="bg-gray-100">
+          <th class="px-4 py-2 text-left">#</th>
+          <th class="px-4 py-2 text-left">Question</th>
+          <th class="px-4 py-2 text-left">Your answer</th>
+          <th class="px-4 py-2 text-left">Correct answer</th>
+          <th class="px-4 py-2 text-left">Marks</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for item in breakdown %}
+          <tr class="border-t">
+            <td class="px-4 py-3 align-top">{{ forloop.counter }}</td>
+            <td class="px-4 py-3">
+              <div class="text-sm">{{ item.question.text|linebreaksbr }}</div>
+            </td>
+            <td class="px-4 py-3 align-top">
+              {% if item.student_text %}
+                <div class="text-sm">{{ item.student_label }}. {{ item.student_text }}</div>
+              {% else %}
+                <div class="text-sm text-gray-500 italic">No answer</div>
+              {% endif %}
+            </td>
+            <td class="px-4 py-3 align-top">
+              <div class="text-sm text-green-700 font-medium">{{ item.correct_label }}. {{ item.correct_text }}</div>
+            </td>
+            <td class="px-4 py-3 align-top">
+              {% if item.marks_awarded %}
+                <div class="text-sm text-green-700 font-semibold">+{{ item.marks_awarded }}</div>
+              {% else %}
+                <div class="text-sm text-red-600">0</div>
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

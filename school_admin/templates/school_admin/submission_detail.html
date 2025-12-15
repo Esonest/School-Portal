@@ -1,0 +1,45 @@
+{% extends 'accounts/base.html' %}
+{% load custom_filters %}
+
+{% block content %}
+<h1 class="text-2xl font-bold mb-4">Submission Detail - {{ submission.student.full_name }}</h1>
+
+<p><strong>Exam:</strong> {{ exam.title }}</p>
+<p><strong>Score:</strong> {{ submission.score }} / {{ submission.total_questions }}</p>
+<p><strong>Percentage:</strong> {{ submission.percentage }}%</p>
+<p><strong>Status:</strong> {{ submission.status }}</p>
+<p><strong>Started On:</strong> {{ submission.started_on }}</p>
+<p><strong>Completed On:</strong> {{ submission.completed_on|default:"Not completed" }}</p>
+
+<hr class="my-4">
+
+<h2 class="text-xl font-semibold mb-2">Answers</h2>
+<table class="w-full border-collapse border border-gray-300">
+  <thead>
+    <tr class="bg-gray-100">
+      <th class="border p-2">#</th>
+      <th class="border p-2">Question</th>
+      <th class="border p-2">Selected Answer</th>
+      <th class="border p-2">Correct Answer</th>
+      <th class="border p-2">Marks</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for question in questions %}
+    <tr>
+      <td class="border p-2">{{ forloop.counter }}</td>
+      <td class="border p-2">{{ question.text }}</td>
+      <td class="border p-2">{{ answers|get_item:question.id|default:"-" }}</td>
+      <td class="border p-2">{{ question.correct_option }}</td>
+      <td class="border p-2">
+        {% if answers|get_item:question.id == question.correct_option %}
+          {{ question.marks }}
+        {% else %}
+          0
+        {% endif %}
+      </td>
+    </tr>
+    {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

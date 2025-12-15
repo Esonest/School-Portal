@@ -1,0 +1,16 @@
+from django.urls import path
+from .views import portal_selection, login_view, logout_view, home, open_portal,about, contact,help
+
+app_name = 'accounts'
+
+urlpatterns = [
+    path('', home, name='home'),
+    path('login/', login_view, name='login'),
+    path('about/', about, name='about'),
+    path('contact/', contact, name='contact'),
+    path('help/', help, name='help'),
+    path('logout/', logout_view, name='logout'),
+    path('portal-selection/', portal_selection, name='portal_selection'),
+    # dynamic portals
+    path("portal/<int:school_id>/<str:portal>/", open_portal, name="open_portal"),
+]

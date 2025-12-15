@@ -1,0 +1,116 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ exam.subject.name }} - Question {{ current_question_number }}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    // Timer logic
+    let timeLimit = {{ time_limit }};
+    let examStart = new Date("{{ exam_start_time }}").getTime() || new Date().getTime();
+    let now = new Date().getTime();
+    let remainingSeconds = Math.floor((timeLimit - ((now - examStart)/1000)));
+
+    function updateTimer() {
+      const minutes = Math.floor(remainingSeconds / 60);
+      const seconds = remainingSeconds % 60;
+      document.getElementById("timer").textContent = 
+        minutes + ":" + (seconds < 10 ? "0" : "") + seconds;
+      if (remainingSeconds <= 0) document.getElementById("exam-form").submit();
+      remainingSeconds--;
+    }
+    setInterval(updateTimer, 1000);
+  </script>
+</head>
+
+<body class="bg-gradient-to-br from-blue-50 to-slate-100 min-h-screen flex items-center justify-center p-6">
+  <div class="w-full max-w-3xl bg-white rounded-2xl shadow-xl p-8 animate-fadeIn">
+    
+    <!-- Header Info -->
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-gray-200 pb-4 mb-5">
+      <div>
+        <p class="text-lg font-semibold text-gray-800">{{ exam.subject.name }} CBT</p>
+        <p class="text-gray-600 text-sm">
+          <strong>Student:</strong> {{ request.user.get_full_name }} <br>
+          <strong>Class:</strong> {{ student.school_class }}
+        </p>
+      </div>
+      <div class="text-right mt-3 sm:mt-0">
+        <p class="text-blue-700 font-semibold">⏰ Time Left: <span id="timer">--:--</span></p>
+      </div>
+    </div>
+
+    <!-- Progress -->
+    <div class="mb-6">
+      <p class="text-sm text-gray-600 mb-1">Question {{ current_question_number }} of {{ total_questions }}</p>
+      <div class="w-full bg-gray-200 h-2 rounded-full">
+        <div class="h-2 bg-blue-600 rounded-full transition-all duration-300" style="width: {{ progress }}%;"></div>
+      </div>
+    </div>
+
+    <!-- Question Text -->
+    <div class="mb-6">
+      <p class="text-lg font-medium text-gray-800 leading-relaxed">{{ question.text }}</p>
+    </div>
+
+    <!-- Options -->
+    <form id="exam-form" method="post" class="space-y-4">
+      {% csrf_token %}
+      <div class="space-y-3">
+        {% for label, text in options %}
+          <label class="flex items-start space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-blue-50 cursor-pointer transition duration-200">
+            <input type="radio" name="answer" value="{{ label }}" class="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500">
+            <span><strong>{{ label }}.</strong> {{ text }}</span>
+          </label>
+        {% endfor %}
+      </div>
+
+      <!-- Navigation Buttons -->
+      <div class="flex justify-between mt-8">
+        {% if question_index > 0 %}
+          <a href="{% url 'cbt:take_exam' exam_id=exam.id question_index=question_index|add:'-1' %}" 
+             class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-5 rounded-lg shadow-md transition">
+            Previous
+          </a>
+        {% else %}
+          <div></div>
+        {% endif %}
+
+        {% if current_question_number < total_questions %}
+          <button type="submit" 
+                  class="bg-blue-700 hover:bg-blue-800 text-white font-semibold py-2 px-5 rounded-lg shadow-md transition">
+            Next
+          </button>
+        {% else %}
+          <button type="submit" 
+                  class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-5 rounded-lg shadow-md transition"
+                  onclick="return confirm('Once you submit, you cannot change your answers. Proceed?');">
+            Submit Exam
+          </button>
+        {% endif %}
+      </div>
+    </form>
+
+    <!-- Warning -->
+    <div class="bg-yellow-50 border border-yellow-200 text-yellow-800 p-4 rounded-lg mt-8 text-sm flex items-start gap-2">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mt-0.5 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+              d="M12 9v2m0 4h.01M5.93 19h12.14A2 2 0 0020 17.07L13.07 4.93a2 2 0 00-2.14 0L4 17.07A2 2 0 005.93 19z" />
+      </svg>
+      <span><strong>Note:</strong> Do not refresh or close this page until you complete your exam.</span>
+    </div>
+  </div>
+
+  <style>
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fadeIn {
+      animation: fadeIn 0.5s ease-in-out;
+    }
+  </style>
+</body>
+</html>

@@ -1,0 +1,22 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+<div class="max-w-xl mx-auto p-6 bg-white shadow rounded">
+
+<h2 class="text-xl font-bold mb-4">Accountant</h2>
+
+<form method="post">
+{% csrf_token %}
+
+<h3 class="font-semibold mb-2">User Details</h3>
+{{ user_form.as_p }}
+
+<h3 class="font-semibold mt-4 mb-2">Accountant Details</h3>
+{{ acc_form.as_p }}
+
+<button class="bg-indigo-600 text-white px-4 py-2 rounded mt-4">
+    Save
+</button>
+</form>
+
+</div>
+{% endblock %}

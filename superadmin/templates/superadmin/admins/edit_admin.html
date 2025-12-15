@@ -1,0 +1,71 @@
+{% extends "accounts/base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto mt-10 bg-white shadow-lg rounded-xl p-8">
+
+  <h2 class="text-2xl font-bold mb-6">Edit School Admin</h2>
+
+  <form method="post" class="space-y-6">
+    {% csrf_token %}
+    {{ form.non_field_errors }}
+
+    <!-- First Name -->
+    <div>
+      {{ form.first_name.label_tag }}
+      {{ form.first_name }}
+      {{ form.first_name.errors }}
+    </div>
+
+
+
+    <!-- Username -->
+    <div>
+      {{ form.username.label_tag }}
+      {{ form.username }}
+      {{ form.username.errors }}
+    </div>
+
+    <!-- Email -->
+    <div>
+      {{ form.email.label_tag }}
+      {{ form.email }}
+      {{ form.email.errors }}
+    </div>
+
+    <!-- Password -->
+    <div>
+      {{ form.password.label_tag }}
+      {{ form.password }}
+      <small class="text-gray-500">Leave blank to keep current password</small>
+      {{ form.password.errors }}
+    </div>
+
+    <!-- Assign School -->
+    <div>
+      {{ form.school.label_tag }}
+      {{ form.school }}
+      {{ form.school.errors }}
+    </div>
+
+    <!-- Active Status -->
+    <div class="flex items-center space-x-2">
+      <input type="checkbox" name="active" {% if admin_user.is_active %}checked{% endif %}
+             class="h-5 w-5 text-indigo-600">
+      <label class="font-semibold">Active</label>
+    </div>
+
+    <div class="flex justify-between items-center">
+      <a href="{% url 'superadmin:admin_delete' admin_user.id %}" 
+         class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700">
+        Delete Admin
+      </a>
+      <button type="submit" class="bg-indigo-600 text-white px-6 py-2 rounded-lg hover:bg-indigo-700">
+        Update Admin
+      </button>
+    </div>
+
+  </form>
+
+</div>
+{% endblock %}

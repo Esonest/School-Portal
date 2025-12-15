@@ -1,0 +1,27 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+
+<div class="max-w-xl mx-auto bg-white shadow-lg rounded-xl p-8 mt-20 text-center">
+    <h2 class="text-2xl font-bold text-red-600 mb-3">Delete Subject</h2>
+
+    <p class="text-gray-700">
+        Are you sure you want to delete 
+        <strong>{{ subject.name }}</strong>?
+    </p>
+
+    <form method="POST" class="mt-6">
+        {% csrf_token %}
+        <div class="flex justify-center gap-4">
+            <a href="{% url 'superadmin:subjects' %}"
+               class="px-5 py-2 bg-gray-300 rounded-lg hover:bg-gray-400">
+                Cancel
+            </a>
+
+            <button class="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
+                Delete
+            </button>
+        </div>
+    </form>
+</div>
+
+{% endblock %}

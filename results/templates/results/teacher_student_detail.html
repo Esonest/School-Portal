@@ -1,0 +1,102 @@
+{% load custom_filters %}
+{% load static %}
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>Teacher — Subject Students</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-100 p-6">
+  <div class="max-w-6xl mx-auto bg-white p-6 rounded shadow">
+    <div class="flex justify-between items-center mb-4">
+      <div>
+        <h2 class="text-xl font-semibold">Students for: {{ subject.name if subject else "Subject" }}</h2>
+        <p class="text-sm text-gray-600">Showing students assigned to you for this subject</p>
+      </div>
+
+      <!-- Export Dropdown -->
+      <div class="relative">
+        <button id="exportBtn" class="px-4 py-2 bg-blue-600 text-white rounded">Export ▼</button>
+        <div id="exportMenu" class="hidden absolute right-0 mt-2 w-52 bg-white border rounded shadow-lg z-50">
+          <a class="block px-4 py-2 hover:bg-gray-100" href="{% url 'results:export_students_pdf' subject.id %}">Export PDF (List)</a>
+          <a class="block px-4 py-2 hover:bg-gray-100" href="{% url 'results:export_students_excel' subject.id %}">Export Excel</a>
+          <a class="block px-4 py-2 hover:bg-gray-100" href="{% url 'results:export_students_detailed_pdf' subject.id %}">Export Detailed PDF</a>
+        </div>
+      </div>
+    </div>
+
+    <table class="w-full border-collapse">
+      <thead class="bg-gray-50">
+        <tr>
+          <th class="p-2 border text-left">#</th>
+          <th class="p-2 border text-left">Student</th>
+          <th class="p-2 border">Admission No</th>
+          <th class="p-2 border">Class</th>
+          <th class="p-2 border">Scores</th>
+          <th class="p-2 border">Psychomotor</th>
+          <th class="p-2 border">Affective</th>
+          <th class="p-2 border">Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in rows %}
+          <tr class="border-b">
+            <td class="p-2">{{ forloop.counter }}</td>
+            <td class="p-2">
+              <div class="font-medium">{{ row.student.full_name }}</div>
+            </td>
+            <td class="p-2 text-center">{{ row.student.admission_no }}</td>
+            <td class="p-2 text-center">{{ row.student.school_class.name }}</td>
+            <td class="p-2 text-sm">
+              {% if row.scores %}
+                {% for s in row.scores %}
+                  <div>{{ s.subject }}: <strong>{{ s.total }}</strong></div>
+                {% endfor %}
+              {% else %}
+                <div class="text-xs text-gray-500">No scores yet</div>
+              {% endif %}
+            </td>
+            <td class="p-2 text-center">
+              {% if row.psychomotor %}
+                <div>{{ row.psychomotor.neatness }}/5</div>
+              {% else %}
+                <div class="text-xs text-gray-500">-</div>
+              {% endif %}
+            </td>
+            <td class="p-2 text-center">
+              {% if row.affective %}
+                <div>{{ row.affective.punctuality }}/5</div>
+              {% else %}
+                <div class="text-xs text-gray-500">-</div>
+              {% endif %}
+            </td>
+            <td class="p-2">
+              <div class="flex flex-col gap-2">
+                <a href="{% url 'results:teacher_student_detail' row.student.id %}" class="px-2 py-1 bg-blue-500 text-white rounded text-xs">View</a>
+                <a href="{% url 'results:report_card_view' row.student.id %}" target="_blank" class="px-2 py-1 bg-gray-800 text-white rounded text-xs">Report</a>
+                <a href="{% url 'results:verify_result' row.student.admission_no %}?token={{ row.student|get_token }}" target="_blank" class="px-2 py-1 bg-gray-200 rounded text-xs">Verify</a>
+              </div>
+            </td>
+          </tr>
+        {% empty %}
+          <tr><td colspan="8" class="p-4 text-center text-gray-500">No students assigned.</td></tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+<script>
+  document.getElementById('exportBtn').addEventListener('click', function(e){
+    document.getElementById('exportMenu').classList.toggle('hidden');
+  });
+  // click outside to hide
+  document.addEventListener('click', function(e){
+    const menu = document.getElementById('exportMenu');
+    if (!document.getElementById('exportBtn').contains(e.target) && !menu.contains(e.target)) {
+      menu.classList.add('hidden');
+    }
+  });
+</script>
+</body>
+</html>

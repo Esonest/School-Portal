@@ -1,0 +1,31 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+
+<div class="p-8 max-w-xl mx-auto bg-white shadow rounded">
+
+    <h2 class="text-xl font-bold mb-4 text-red-600">Delete Exam</h2>
+
+    <p class="mb-6">
+        Are you sure you want to delete:
+        <strong>{{ exam.title }}</strong> — {{ exam.subject.name }}?
+        <br><br>
+        This action cannot be undone.
+    </p>
+
+    <form method="POST">
+        {% csrf_token %}
+        <div class="flex gap-4">
+            <button type="submit"
+                    class="px-4 py-2 bg-red-600 text-white rounded">
+                Yes, Delete
+            </button>
+
+            <a href="{% url 'school_admin:question_list' school.id exam.id %}"
+               class="px-4 py-2 bg-gray-300 rounded">
+               Cancel
+            </a>
+        </div>
+    </form>
+</div>
+
+{% endblock %}

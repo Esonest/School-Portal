@@ -1,0 +1,66 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}Contact Us - TECHCENTER School Portal{% endblock %}
+
+{% block content %}
+<section class="bg-cover bg-center h-64 flex flex-col justify-center items-center text-white" style="background-image: url('https://images.unsplash.com/photo-1504384308090-c894fdcc538d');">
+ <h2 class="text-4xl font-bold drop-shadow-lg">Get in Touch With Us</h2>
+ <p class="mt-4 text-lg drop-shadow-lg text-center max-w-2xl">
+  Have questions or need support? Reach out and our team will be happy to assist you.
+ </p>
+</section>
+
+<main class="p-8 max-w-6xl mx-auto">
+ <h2 class="text-2xl font-semibold mb-6 text-center">Contact Information</h2>
+
+ <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+  <div class="bg-white shadow-lg rounded-lg p-6">
+   <h3 class="text-xl font-bold mb-4"><i class="bi bi-geo-alt-fill text-blue-700 mr-2"></i>Our Address</h3>
+   <p>Close 3 Block One Elekahia Housing Estate, PortHarcourt, Nigeria</p>
+  </div>
+
+  <div class="bg-white shadow-lg rounded-lg p-6">
+   <h3 class="text-xl font-bold mb-4"><i class="bi bi-telephone-fill text-blue-700 mr-2"></i>Phone</h3>
+   <p>+234 708 573 4441</p>
+  </div>
+
+  <div class="bg-white shadow-lg rounded-lg p-6">
+   <h3 class="text-xl font-bold mb-4"><i class="bi bi-envelope-fill text-blue-700 mr-2"></i>Email</h3>
+   <p>support@techcenter.com.ng</p>
+  </div>
+
+  <div class="bg-white shadow-lg rounded-lg p-6">
+   <h3 class="text-xl font-bold mb-4"><i class="bi bi-globe text-blue-700 mr-2"></i>Website</h3>
+   <p>www.techcenter.com.ng</p>
+  </div>
+ </div>
+
+ <h2 class="text-2xl font-semibold mb-6 text-center">Send Us a Message</h2>
+
+ <form action="#" method="POST" class="bg-white shadow-lg rounded-lg p-6 space-y-6">
+  <div>
+   <label class="block mb-2 font-semibold" for="name">Full Name</label>
+   <input class="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-700" type="text" id="name" name="name" required>
+  </div>
+
+  <div>
+   <label class="block mb-2 font-semibold" for="email">Email</label>
+   <input class="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-700" type="email" id="email" name="email" required>
+  </div>
+
+  <div>
+   <label class="block mb-2 font-semibold" for="subject">Subject</label>
+   <input class="w-full border border-gray-300 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-700" type="text" id="subject" name="subject" required>
+  </div>
+
+  <div>
+   <label class="block mb-2 font-semibold" for="message">Message</label>
+   <textarea class="w-full border border-gray-300 rounded-lg p-3 h-32 focus:outline-none focus:ring-2 focus:ring-blue-700" id="message" name="message" required></textarea>
+  </div>
+
+  <div class="text-center">
+   <button type="submit" class="bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-800 transition">Send Message</button>
+  </div>
+ </form>
+</main>
+{% endblock %}

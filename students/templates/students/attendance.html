@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="max-w-4xl mx-auto p-6">
+  <h1 class="text-2xl font-bold">Attendance</h1>
+  {% if attendance_pct is not None %}
+    <p class="mt-2">Attendance: <strong>{{ attendance_pct|floatformat:1 }}%</strong></p>
+  {% endif %}
+  <table class="w-full mt-4">
+    <thead><tr class="bg-gray-100"><th class="p-2">Date</th><th class="p-2">Present</th><th class="p-2">Remark</th></tr></thead>
+    <tbody>
+      {% for r in records %}
+        <tr class="border-b"><td class="p-2">{{ r.date }}</td><td class="p-2">{{ r.present }}</td><td class="p-2">{{ r.remark }}</td></tr>
+      {% empty %}
+        <tr><td colspan="3" class="p-4 text-gray-600">No attendance records</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}
+```

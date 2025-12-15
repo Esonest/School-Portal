@@ -1,0 +1,58 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+
+<form method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+
+    <!-- Live Preview -->
+    <div class="mb-4 p-4 border rounded bg-gray-50">
+        <p class="text-sm text-gray-500 mb-1">Live Preview</p>
+        <h2 id="school-name-preview"
+            class="text-2xl font-bold text-indigo-600">
+            {{ form.name.value|default:"School Name" }}
+        </h2>
+    </div>
+
+    {{ form.name.label_tag }}
+    {{ form.name }}
+
+    {{ form.address.label_tag }}
+    {{ form.address }}
+
+    {{ form.motto.label_tag }}
+    {{ form.motto }}
+
+    {{ form.logo.label_tag }}
+    {{ form.logo }}
+
+    {{ form.theme_color.label_tag }}
+    {{ form.theme_color }}
+
+    {{ form.principal_signature.label_tag }}
+    {{ form.principal_signature }}
+
+    <button type="submit" class="mt-4 px-4 py-2 rounded bg-indigo-600 text-white">
+        Save School
+    </button>
+</form>
+
+<script>
+    const nameInput = document.getElementById("school-name-input");
+    const namePreview = document.getElementById("school-name-preview");
+    const colorSelect = document.getElementById("theme-color-select");
+
+    function updatePreview() {
+        const color = colorSelect.value || "indigo";
+        namePreview.className = `text-2xl font-bold text-${color}-600`;
+        namePreview.textContent = nameInput.value || "School Name";
+    }
+
+    nameInput.addEventListener("input", updatePreview);
+    colorSelect.addEventListener("change", updatePreview);
+
+    // Initial render
+    updatePreview();
+</script>
+
+
+{% endblock %}

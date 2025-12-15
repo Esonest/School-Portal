@@ -1,0 +1,13 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+
+<h2 class="text-2xl font-bold text-{{ school.theme_color }}-600">Attendance Form – {{ school.name }}</h2>
+
+<form method="POST" class="space-y-4">
+    {% csrf_token %}
+    {{ form.as_p }}
+
+    <button class="bg-green-600 text-white px-4 py-2 rounded">Save</button>
+</form>
+
+{% endblock %}

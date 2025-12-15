@@ -1,0 +1,23 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+<h2 class="text-2xl font-bold mb-4">Generate Invoices for {{ session }} - Term {{ term }}</h2>
+
+<p>School: {{ request.user.school.name }}</p>
+<p>Total Students: {{ students.count }}</p>
+
+<form method="POST">
+    {% csrf_token %}
+    <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+        Generate Invoices
+    </button>
+</form>
+
+<hr class="my-4">
+
+<h3 class="font-semibold mb-2">Students:</h3>
+<ul class="list-disc pl-5">
+    {% for student in students %}
+        <li>{{ student.admission_no }} - {{ student.full_name }} ({{ student.school_class.name }})</li>
+    {% endfor %}
+</ul>
+{% endblock %}

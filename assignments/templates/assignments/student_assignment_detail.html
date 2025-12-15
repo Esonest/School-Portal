@@ -1,0 +1,26 @@
+{% extends 'accounts/base.html' %}
+{% block content %}
+<div class="max-w-4xl mx-auto p-6 bg-white rounded shadow">
+  <h1 class="text-2xl font-bold">{{ assignment.title }}</h1>
+  <div class="text-sm text-gray-600">{{ assignment.subject }} • Due: {{ assignment.due_date|date:"SHORT_DATETIME_FORMAT" }}</div>
+  <div class="mt-4">{{ assignment.description|linebreaks }}</div>
+  {% if assignment.file %}
+    <div class="mt-3"><a href="{{ assignment.file.url }}" class="text-indigo-600">Download resource</a></div>
+  {% endif %}
+
+  <div class="mt-6">
+    {% if submission %}
+      <h3 class="font-semibold">Your Submission</h3>
+      <p>Status: {{ submission.status }}</p>
+      <p>Submitted on: {{ submission.submitted_on|date:"SHORT_DATETIME_FORMAT" }}</p>
+      {% if submission.score %}
+        <p>Score: {{ submission.score }}</p>
+        <p>Feedback: {{ submission.feedback }}</p>
+      {% endif %}
+      <a class="mt-3 inline-block px-3 py-2 bg-gray-200 rounded" href="{% url 'assignments:dashboard' %}">Back</a>
+    {% else %}
+      <a class="px-3 py-2 bg-indigo-600 text-white rounded" href="{% url 'assignments:submit_assignment' pk=assignment.id %}">Submit Assignment</a>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

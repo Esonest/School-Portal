@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{% block title %}School Management{% endblock %}</title>
+
+    <!-- Tailwind CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Static Files -->
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+
+    {% block extra_head %}{% endblock %}
+</head>
+<body class="bg-gray-100 text-gray-800">
+
+    <!-- Messages -->
+    {% if messages %}
+    <div class="space-y-3 mb-4 max-w-xl mx-auto">
+        {% for message in messages %}
+        <div class="px-4 py-3 rounded-lg text-sm font-medium text-center
+            {% if message.tags == 'error' %}bg-red-100 text-red-700 border border-red-300
+            {% elif message.tags == 'success' %}bg-green-100 text-green-700 border border-green-300
+            {% else %}bg-gray-100 text-gray-700 border border-gray-300{% endif %}">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+    {% endif %}
+
+    <!-- Navigation -->
+    <nav class="bg-white shadow-md">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <!-- Logo -->
+                <div class="flex-shrink-0">
+                    <a href="{% url 'accounts:home' %}" class="text-xl font-bold text-blue-600 hover:text-blue-800 transition">
+                        🏫 TECHCENTER SCHOOL PORTAL
+                    </a>
+                </div>
+
+                <!-- Desktop Links -->
+                <div class="hidden md:flex space-x-6">
+                    <a href="{% url 'accounts:home' %}" class="font-medium {% if request.resolver_match.url_name == 'home' %}text-blue-600 underline{% else %}hover:text-blue-600{% endif %}">Home</a>
+                    <a href="{% url 'accounts:about' %}" class="font-medium {% if request.resolver_match.url_name == 'about' %}text-blue-600 underline{% else %}hover:text-blue-600{% endif %}">About</a>
+                    <a href="{% url 'accounts:contact' %}" class="font-medium {% if request.resolver_match.url_name == 'contact' %}text-blue-600 underline{% else %}hover:text-blue-600{% endif %}">Contact</a>
+                    <a href="{% url 'accounts:help' %}" class="font-medium {% if request.resolver_match.url_name == 'help' %}text-blue-600 underline{% else %}hover:text-blue-600{% endif %}">Help</a>
+
+                    {% if user.is_authenticated %}
+                    <a href="{% url 'accounts:logout' %}" class="text-red-500 font-medium hover:text-red-700 transition">Logout</a>
+                    {% else %}
+                    <a href="{% url 'accounts:login' %}" class="text-green-600 font-medium hover:text-green-800 transition">Login</a>
+                    {% endif %}
+                </div>
+
+                <!-- Mobile Menu Button -->
+                <div class="md:hidden">
+                    <button id="mobile-menu-button" class="text-gray-700 focus:outline-none">☰</button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Mobile Dropdown -->
+        <div id="mobile-menu" class="hidden md:hidden bg-white shadow-lg">
+            <a href="{% url 'accounts:home' %}" class="block px-4 py-2 hover:bg-gray-100">Home</a>
+            <a href="{% url 'accounts:about' %}" class="block px-4 py-2 hover:bg-gray-100">About</a>
+            <a href="{% url 'accounts:contact' %}" class="block px-4 py-2 hover:bg-gray-100">Contact</a>
+            <a href="{% url 'accounts:help' %}" class="block px-4 py-2 hover:bg-gray-100">Help</a>
+
+            {% if user.is_authenticated %}
+            <a href="{% url 'accounts:logout' %}" class="block px-4 py-2 text-red-600 hover:bg-gray-100">Logout</a>
+            {% else %}
+            <a href="{% url 'accounts:login' %}" class="block px-4 py-2 text-green-600 hover:bg-gray-100">Login</a>
+            {% endif %}
+        </div>
+    </nav>
+
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto mt-8 px-4">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white mt-10 py-4">
+        <div class="text-center text-sm">
+            © {{ year|default:2025 }} School Management System - All Rights Reserved.
+        </div>
+    </footer>
+
+    <!-- Mobile Menu Script -->
+    <script>
+        document.getElementById("mobile-menu-button").onclick = function () {
+            document.getElementById("mobile-menu").classList.toggle("hidden");
+        };
+    </script>
+
+</body>
+</html>

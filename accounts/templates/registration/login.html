@@ -1,0 +1,69 @@
+{% extends 'accounts/base.html' %}
+{% block content %}
+<div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-blue-50">
+  <div class="bg-white/90 backdrop-blur-sm shadow-xl rounded-2xl p-8 w-full max-w-md border border-gray-100">
+    
+    <!-- Header -->
+    <div class="text-center mb-8">
+      <h2 class="text-3xl font-bold text-gray-800">Welcome Back 👋</h2>
+      <p class="text-gray-500 text-sm mt-1">Sign in to continue to your dashboard</p>
+    </div>
+
+    <!-- Login Form -->
+    <form method="post" action="{% url 'login' %}" class="space-y-6">
+      {% csrf_token %}
+
+      <!-- Username -->
+      <div class="relative">
+        {{ form.username }}
+        <label for="{{ form.username.id_for_label }}" 
+               class="absolute left-3 top-2.5 text-gray-500 text-sm transition-all duration-200 
+                      pointer-events-none peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-gray-400 
+                      peer-placeholder-shown:text-sm peer-focus:-top-3 peer-focus:text-xs peer-focus:text-indigo-600">
+          Username
+        </label>
+        {% if form.username.errors %}
+          <p class="text-red-500 text-sm mt-1">{{ form.username.errors.0 }}</p>
+        {% endif %}
+      </div>
+
+      <!-- Password -->
+      <div class="relative">
+        {{ form.password }}
+        <label for="{{ form.password.id_for_label }}" 
+               class="absolute left-3 top-2.5 text-gray-500 text-sm transition-all duration-200 
+                      pointer-events-none peer-placeholder-shown:top-2.5 peer-placeholder-shown:text-gray-400 
+                      peer-placeholder-shown:text-sm peer-focus:-top-3 peer-focus:text-xs peer-focus:text-indigo-600">
+          Password
+        </label>
+        {% if form.password.errors %}
+          <p class="text-red-500 text-sm mt-1">{{ form.password.errors.0 }}</p>
+        {% endif %}
+      </div>
+
+      <!-- Submit Button -->
+      <button type="submit"
+        class="w-full py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg 
+               shadow-sm hover:shadow-md transition duration-200 ease-in-out">
+        Login
+      </button>
+
+      <!-- Footer Links -->
+      <div class="text-center text-sm text-gray-500 mt-4">
+        <a href="{% url 'password_reset' %}" class="text-indigo-600 hover:text-indigo-700 font-medium transition">
+          Forgot password?
+        </a>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Tailwind Input Styling -->
+<style>
+  input {
+    @apply w-full px-3 py-2.5 border border-gray-300 rounded-lg text-gray-700 
+           focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 
+           transition duration-150 peer bg-transparent placeholder-transparent;
+  }
+</style>
+{% endblock %}

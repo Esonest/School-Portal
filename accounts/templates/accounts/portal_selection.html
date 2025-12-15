@@ -1,0 +1,135 @@
+{% extends 'accounts/base.html' %}
+{% block content %}
+
+<div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-50 via-white to-purple-50 py-12 px-6">
+  <div class="w-full max-w-5xl bg-white shadow-2xl rounded-3xl border border-indigo-100 p-12">
+
+    <!-- Header -->
+    <div class="text-center mb-12">
+      <h2 class="text-4xl font-extrabold text-gray-800">Welcome, {{ request.user.get_full_name }} 👋</h2>
+      <p class="text-gray-500 mt-3 text-lg">Select the portal you want to access below.</p>
+    </div>
+
+    <!-- Portal Sections -->
+    <div class="space-y-16">
+
+      <!-- Student Section -->
+      {% if 'student' in roles %}
+      <div>
+        <h3 class="text-2xl font-bold text-indigo-700 mb-6 flex items-center gap-3">🎓 Student Portals</h3>
+        <div class="grid sm:grid-cols-2 gap-8">
+          <a href="{% url 'students:student_dashboard' %}" 
+             class="flex flex-col items-center justify-center bg-gradient-to-r from-indigo-500 to-indigo-600 text-white font-bold py-12 rounded-2xl shadow-lg hover:shadow-2xl transform hover:-translate-y-2 transition-all text-center text-2xl">
+            Student Dashboard
+          </a>
+          <a href="{% url 'results:student_portal' %}" 
+             class="flex flex-col items-center justify-center bg-gradient-to-r from-purple-500 to-purple-600 text-white font-bold py-12 rounded-2xl shadow-lg hover:shadow-2xl transform hover:-translate-y-2 transition-all text-center text-2xl">
+            Result Portal
+          </a>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- Teacher Section -->
+      {% if 'teacher' in roles %}
+      <div>
+        <h3 class="text-2xl font-bold text-green-700 mb-6 flex items-center gap-3">🧑‍🏫 Teacher Portals</h3>
+        <div class="grid sm:grid-cols-3 gap-8">
+          <a href="{% url 'teachers:teacher_dashboard' %}" 
+             class="flex flex-col items-center justify-center bg-gradient-to-r from-green-500 to-green-600 text-white font-bold py-12 rounded-2xl shadow-lg hover:shadow-2xl transform hover:-translate-y-2 transition-all text-center text-2xl">
+            Teacher Dashboard
+          </a>
+          <a href="{% url 'teachers:teacher_result_dashboard' %}" 
+             class="flex flex-col items-center justify-center bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold py-12 rounded-2xl shadow-lg hover:shadow-2xl transform hover:-translate-y-2 transition-all text-center text-2xl">
+            Enter Scores & Domains
+          </a>
+          <a href="{% url 'results:teacher_portal' %}" 
+             class="flex flex-col items-center justify-center bg-gradient-to-r from-pink-500 to-pink-600 text-white font-bold py-12 rounded-2xl shadow-lg hover:shadow-2xl transform hover:-translate-y-2 transition-all text-center text-2xl">
+            Teacher Result Portal
+          </a>
+        </div>
+      </div>
+      {% endif %}
+
+      <!-- School Admin Section -->
+{% if 'schooladmin' in roles %}
+<div>
+  <h3 class="text-2xl font-bold text-indigo-700 mb-6">🏫 School Admin Portals</h3>
+  <div class="grid sm:grid-cols-2 gap-8">
+    {% if school %}
+      <a href="{% url 'school_admin:school_admin_dashboard' school.id %}" 
+         class="flex flex-col items-center justify-center bg-gradient-to-r from-indigo-500 to-indigo-600 text-white font-bold py-12 rounded-2xl shadow-lg hover:shadow-2xl transform hover:-translate-y-2 transition-all text-center text-2xl">
+        School Admin Dashboard
+      </a>
+    {% else %}
+      <p class="text-red-500 font-bold text-xl">No school assigned</p>
+    {% endif %}
+  </div>
+</div>
+{% endif %}
+{% if 'accountant' in roles %}
+<div>
+  <h3 class="text-2xl font-bold text-yellow-700 mb-6">💰 Accountant / Finance Portals</h3>
+
+  <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+
+    <!-- Finance Dashboard -->
+    <a href="{% url 'finance:dashboard' %}"
+       class="flex flex-col items-center justify-center bg-gradient-to-r from-yellow-500 to-yellow-600 text-white font-bold py-12 rounded-2xl shadow-lg hover:shadow-2xl transform hover:-translate-y-2 transition-all text-center text-2xl">
+      Finance Dashboard
+    </a>
+
+    <!-- Invoice List -->
+    <a href="{% url 'finance:invoice_list' %}"
+       class="flex flex-col items-center justify-center bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold py-12 rounded-2xl shadow-lg hover:shadow-2xl transform hover:-translate-y-2 transition-all text-center text-2xl">
+      View Invoices
+    </a>
+
+    <!-- Create Invoice -->
+    <a href="{% url 'finance:invoice_create' %}"
+       class="flex flex-col items-center justify-center bg-gradient-to-r from-indigo-500 to-indigo-600 text-white font-bold py-12 rounded-2xl shadow-lg hover:shadow-2xl transform hover:-translate-y-2 transition-all text-center text-2xl">
+      Create Invoice
+    </a>
+
+    <!-- Generate Invoices -->
+    <a href="{% url 'finance:generate_invoices' %}"
+       class="flex flex-col items-center justify-center bg-gradient-to-r from-green-500 to-green-600 text-white font-bold py-12 rounded-2xl shadow-lg hover:shadow-2xl transform hover:-translate-y-2 transition-all text-center text-2xl">
+      Generate Invoices
+    </a>
+
+    <!-- Record Payment -->
+    <a href="{% url 'finance:record_payment' %}"
+       class="flex flex-col items-center justify-center bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-bold py-12 rounded-2xl shadow-lg hover:shadow-2xl transform hover:-translate-y-2 transition-all text-center text-2xl">
+      Record Payment
+    </a>
+
+    <!-- Financial Reports -->
+    <a href="{% url 'finance:financial_reports' %}"
+       class="flex flex-col items-center justify-center bg-gradient-to-r from-slate-600 to-slate-700 text-white font-bold py-12 rounded-2xl shadow-lg hover:shadow-2xl transform hover:-translate-y-2 transition-all text-center text-2xl">
+      Financial Reports
+      <span class="text-sm mt-2 opacity-90">(Session / Term)</span>
+    </a>
+
+  </div>
+</div>
+{% endif %}
+
+
+      <!-- Super Admin Section -->
+      {% if 'superadmin' in roles %}
+      <div>
+        <h3 class="text-2xl font-bold text-indigo-700 mb-6">🛠 Super Admin Portals</h3>
+        <div class="grid sm:grid-cols-2 gap-8">
+          <a href="{% url 'superadmin:dashboard' %}" 
+             class="flex flex-col items-center justify-center bg-gradient-to-r from-indigo-500 to-indigo-600 text-white font-bold py-12 rounded-2xl shadow-lg hover:shadow-2xl transform hover:-translate-y-2 transition-all text-center text-2xl">
+            Super Admin Dashboard
+          </a>
+        </div>
+      </div>
+      {% endif %}
+
+    </div>
+  </div>
+</div>
+
+{% endblock %}

@@ -1,0 +1,206 @@
+{% load static %}
+{% load custom_filters %}
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>Cumulative Result — {{ student.user.get_full_name }}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    th, td { font-size: 14px; }
+    @media print { button, form { display: none; } }
+  </style>
+</head>
+
+<body class="bg-gray-50 p-6">
+<div class="max-w-6xl mx-auto bg-white p-6 rounded shadow">
+
+  <!-- HEADER -->
+  <div class="flex justify-between items-start mb-4">
+    <div>
+      {% if school.logo %}
+        <img src="{{ school.logo.url }}" class="h-20 object-contain"/>
+      {% endif %}
+      <h1 class="text-2xl font-bold mt-2 text-{{ school.theme_color }}-600">{{ school.name }}</h1>
+      <p class="text-sm italic">{{ school.motto }}</p>
+      <p class="text-xs text-gray-500">{{ school.address }}</p>
+    </div>
+
+    <div class="text-right">
+      <div class="text-sm">{{ student.user.get_full_name }}</div>
+      <div class="text-sm">{{ student.admission_no }}</div>
+      <div class="text-sm">{{ student.school_class.name }}</div>
+      <div class="text-sm">Session: {{ selected_session }}</div>
+
+      {% if student.photo %}
+        <img src="{{ student.photo.url }}" class="h-20 w-20 rounded mt-2 border object-cover"/>
+      {% endif %}
+    </div>
+  </div>
+
+  <hr class="my-4"/>
+
+  <!-- SESSION SELECTION + PDF BUTTON -->
+<div class="mb-4 flex justify-end items-center space-x-3">
+  <!-- Session Selector -->
+  <form method="get" class="flex items-center space-x-2">
+    <label for="session" class="font-medium">Select Session:</label>
+    <select id="session" name="session" class="border px-2 py-1" onchange="this.form.submit()">
+      {% for s in available_sessions %}
+        <option value="{{ s }}" {% if s == selected_session %}selected{% endif %}>{{ s }}</option>
+      {% endfor %}
+    </select>
+  </form>
+
+  <!-- PDF Download Button -->
+  <form method="get" action="{% url 'results:student_cumulative_result_download' %}">
+    <input type="hidden" name="session" value="{{ selected_session }}">
+    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded shadow">
+      Download PDF
+    </button>
+  </form>
+</div>
+
+  <!-- CUMULATIVE TABLE -->
+<div class="overflow-x-auto">
+  <table class="min-w-full border text-center">
+    <thead class="bg-gray-100 font-semibold">
+      <tr>
+        <th rowspan="2" class="border p-2">Subject</th>
+        {% for term in terms %}
+          <th colspan="{% if show_ca %}4{% else %}3{% endif %}" class="border p-2">{{ term }} Term</th>
+        {% endfor %}
+        <th rowspan="2" class="border p-2">Average</th>
+        <th rowspan="2" class="border p-2">Grade</th>
+        <th rowspan="2" class="border p-2">Teacher</th>
+      </tr>
+      <tr>
+        {% for term in terms %}
+          {% if show_ca %}
+            <th class="border p-1">CA</th>
+          {% endif %}
+          <th class="border p-1">Exam</th>
+          <th class="border p-1">Total</th>
+          <th class="border p-1">Grade</th>
+        {% endfor %}
+      </tr>
+    </thead>
+
+    <tbody>
+      {% for subject, data in subjects.items %}
+      <tr class="border-b hover:bg-gray-50">
+        <td class="border p-2 text-left font-medium">{{ subject }}</td>
+
+        {% for term in terms %}
+          {% with tdata=data|get_item:term %}
+            {% if show_ca %}
+              <td class="border p-2">{{ tdata.ca|default:"0" }}</td>
+            {% endif %}
+            <td class="border p-2">{{ tdata.exam }}</td>
+            <td class="border p-2 font-semibold">{{ tdata.total }}</td>
+            <td class="border p-2">{{ tdata.grade }}</td>
+          {% endwith %}
+        {% endfor %}
+
+        <td class="border p-2 font-semibold text-blue-700">{{ data.Average|floatformat:2 }}</td>
+        <td class="border p-2 font-semibold text-blue-700">{{ data.AverageGrade }}</td>
+        <td class="border p-2">
+          {% with tdata=data|get_item:terms.0 %}
+            {{ tdata.teacher }}
+          {% endwith %}
+        </td>
+      </tr>
+      {% endfor %}
+
+      <!-- SUMMARY ROW -->
+      <tr class="bg-gray-200 font-semibold">
+        <td class="border p-2 text-left">Totals & Summary</td>
+        {% for term in terms %}
+          <td class="border p-2" colspan="{% if show_ca %}4{% else %}3{% endif %}"></td>
+        {% endfor %}
+        <td class="border p-2 text-blue-700">{{ avg_total|floatformat:2 }}</td>
+        <td class="border p-2 text-blue-700">{{ overall_avg_grade }}</td>
+        <td class="border p-2">
+          <div>Total: {{ overall_total }}</div>
+          <div>Best: {{ best_subject }}</div>
+          <div>Weak: {{ weak_subject }}</div>
+          <div>Position: {{ position }}/{{ class_size }}</div>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+
+  <!-- PSYCHOMOTOR AND AFFECTIVE -->
+  <div class="grid grid-cols-2 gap-6 mt-6">
+    <div>
+      <h3 class="font-semibold text-lg">Psychomotor</h3>
+      <ul class="list-disc ml-5 text-md">
+        {% for skill, value in psychomotor.items %}
+          <li>{{ skill|capfirst }}:
+            {% for i in "12345"|make_list %}
+              {% if i|add:"0" <= value %} ⭐ {% else %} ☆ {% endif %}
+            {% endfor %}
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <div>
+      <h3 class="font-semibold text-lg">Affective</h3>
+      <ul class="list-disc ml-5 text-md">
+        {% for skill, value in affective.items %}
+          <li>{{ skill|capfirst }}:
+            {% for i in "12345"|make_list %}
+              {% if i|add:"0" <= value %} ⭐ {% else %} ☆ {% endif %}
+            {% endfor %}
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+
+  <!-- COMMENTS -->
+  <div class="mt-6">
+    <h3 class="font-semibold">Principal's Comment</h3>
+    <p class="italic">{{ principal_comment }}</p>
+
+    {% for p in promotion_history %}
+    <p>{{ p.session }}: {{ p.from_class }} → {{ p.to_class }} ({{ p.date_promoted }})</p>
+{% empty %}
+    <p>No promotion history recorded.</p>
+{% endfor %}
+
+
+    <h3 class="font-semibold mt-4">Teacher's Comment</h3>
+    <p class="italic">{{ teacher_comment }}</p>
+  </div>
+
+
+  <!-- SIGNATURE + QR -->
+  <div class="mt-6 flex justify-between">
+    <div class="flex items-center space-x-3">
+      {% if principal_signature_url %}
+        <img src="{{ principal_signature_url }}" class="h-16"/>
+      {% else %}
+        <div class="text-sm text-gray-500">Principal's signature</div>
+      {% endif %}
+    </div>
+
+    <div class="text-right">
+      <img src="{{ qr_data_uri }}" class="h-20 w-20 border bg-white p-1"/>
+      <div class="text-xs text-gray-500">Scan to verify</div>
+    </div>
+  </div>
+
+  <!-- PRINT BUTTON -->
+  <div class="mt-4">
+    <button onclick="window.print()" class="bg-green-600 text-white px-4 py-2 rounded shadow">
+      Print
+    </button>
+  </div>
+
+</div>
+</body>
+</html>

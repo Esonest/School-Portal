@@ -1,0 +1,61 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+
+<div class="max-w-3xl mx-auto bg-white shadow-lg rounded-xl p-8 mt-10">
+    <h2 class="text-2xl font-bold mb-6">Edit Teacher</h2>
+
+    <form method="POST" enctype="multipart/form-data" class="space-y-6">
+        {% csrf_token %}
+
+        <!-- USER INFO -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+                <label class="font-semibold">First Name</label>
+                {{ form.first_name }}
+            </div>
+            <div>
+                <label class="font-semibold">Last Name</label>
+                {{ form.last_name }}
+            </div>
+        </div>
+
+        <div>
+            <label class="font-semibold">Email</label>
+            {{ form.email }}
+        </div>
+
+        <div>
+            <label class="font-semibold">Phone</label>
+            {{ form.phone }}
+        </div>
+
+        <!-- PROFILE PICTURE -->
+        <div>
+            <label class="font-semibold">Profile Picture</label>
+            {{ form.profile_picture }}
+        </div>
+
+        <!-- SCHOOL → SUBJECTS → CLASSES -->
+        <div>
+            <label class="font-semibold">Subjects Taught</label>
+            {{ form.subjects }}
+        </div>
+
+        <div>
+            <label class="font-semibold">Assigned Classes</label>
+            {{ form.classes }}
+        </div>
+
+        <div class="flex justify-between mt-6">
+            <a href="{% url 'superadmin:teachers' %}" class="px-5 py-2 bg-gray-300 rounded-lg hover:bg-gray-400">
+                Cancel
+            </a>
+
+            <button class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                Save Changes
+            </button>
+        </div>
+    </form>
+</div>
+
+{% endblock %}

@@ -1,0 +1,264 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="max-w-3xl mx-auto p-6">
+
+  <!-- Header -->
+  <div class="flex justify-between items-center mb-4">
+    <div>
+      <h2 class="text-2xl font-semibold text-{{ school.theme_color }}-600">
+        {{ exam.title }}
+      </h2>
+      <div class="text-sm text-gray-500">
+        {{ exam.session }} · {{ exam.term }}
+      </div>
+    </div>
+
+    <div class="text-right">
+      <div class="text-sm text-gray-600">Time remaining</div>
+      <div id="timer" class="text-xl font-bold">--:--</div>
+    </div>
+  </div>
+
+  <!-- Progress -->
+  <div class="mb-4">
+    <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+      <div
+        id="progress-bar"
+        class="h-3 rounded-full transition-all"
+        style="width:0%"
+      ></div>
+    </div>
+    <div
+      id="progress-text"
+      class="mt-2 text-sm text-gray-600"
+    >
+      0% complete
+    </div>
+  </div>
+
+  <!-- Question Card -->
+  <div class="bg-white p-5 rounded shadow">
+
+    <!-- Question -->
+    <div class="mb-4">
+      <div class="text-sm text-gray-500">
+        Question {{ index|add:1 }} of {{ total }}
+      </div>
+      <div class="text-lg font-medium mt-2">
+        {{ question.text|linebreaksbr }}
+      </div>
+    </div>
+
+    <!-- Options -->
+    <div id="options" class="space-y-3">
+      {% for label, text in options.items %}
+        <label class="block cursor-pointer p-2 rounded hover:bg-gray-50">
+          <input
+            type="radio"
+            name="answer"
+            value="{{ label }}"
+            class="answer-radio mr-2 align-middle"
+          >
+          <span class="align-middle">{{ text }}</span>
+        </label>
+      {% endfor %}
+    </div>
+
+    <!-- Navigation -->
+    <div class="mt-6 flex items-center justify-between">
+
+      <div>
+        {% if index > 0 %}
+          <a
+            href="{% url 'cbt:question_page' exam.id index|add:-1 %}"
+            class="px-3 py-2 bg-gray-200 rounded"
+          >
+            Previous
+          </a>
+        {% else %}
+          <button
+            disabled
+            class="px-3 py-2 bg-gray-100 rounded opacity-60"
+          >
+            Previous
+          </button>
+        {% endif %}
+
+        {% if index < total|add:-1 %}
+          <a
+            href="{% url 'cbt:question_page' exam.id index|add:1 %}"
+            id="next-link"
+            class="px-3 py-2 bg-indigo-600 text-white rounded ml-2"
+          >
+            Next
+          </a>
+        {% else %}
+          <a
+            href="#"
+            id="finish-link"
+            class="px-3 py-2 bg-green-600 text-white rounded ml-2"
+          >
+            Finish / Submit
+          </a>
+        {% endif %}
+      </div>
+
+      <div class="flex items-center gap-3">
+        <div id="save-status" class="text-sm text-gray-500"></div>
+        <button
+          id="submit-btn"
+          type="button"
+          class="px-4 py-2 bg-red-600 text-white rounded"
+        >
+          Submit Exam
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  const examId = '{{ exam.id }}';
+  const questionId = '{{ question.id }}';
+  let timeLeft = parseInt({{ time_left }});
+  const totalQuestions = {{ total }};
+
+  // Used only for progress (no radio pre-checking)
+  const answersMap = JSON.parse('{{ answers_json|escapejs }}');
+
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let cookie of cookies) {
+        cookie = cookie.trim();
+        if (cookie.startsWith(name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+
+  function updateProgressUI() {
+    const answeredCount = Object.keys(answersMap)
+      .filter(k => k !== 'order' && k !== 'shuffled_meta').length;
+
+    const percent = totalQuestions
+      ? Math.round((answeredCount / totalQuestions) * 100)
+      : 0;
+
+    const bar = document.getElementById('progress-bar');
+    document.getElementById('progress-text').textContent = percent + '% complete';
+
+    bar.style.width = percent + '%';
+    bar.classList.remove('bg-red-500', 'bg-yellow-400', 'bg-green-500');
+
+    if (percent < 40) bar.classList.add('bg-red-500');
+    else if (percent < 80) bar.classList.add('bg-yellow-400');
+    else bar.classList.add('bg-green-500');
+  }
+
+  function flash(msg, isError = false) {
+    const el = document.getElementById('save-status');
+    el.textContent = msg;
+    el.classList.toggle('text-red-500', isError);
+    setTimeout(() => {
+      el.textContent = '';
+      el.classList.remove('text-red-500');
+    }, 1200);
+  }
+
+  // Auto-save answer (AJAX)
+  document.addEventListener('change', e => {
+    if (!e.target.matches('.answer-radio')) return;
+
+    const fd = new FormData();
+    fd.append('exam_id', examId);
+    fd.append('question_id', questionId);
+    fd.append('answer', e.target.value);
+
+    fetch("{% url 'cbt:ajax_save_answer' %}", {
+      method: 'POST',
+      headers: { 'X-CSRFToken': getCookie('csrftoken') },
+      body: fd
+    })
+    .then(r => {
+      if (!r.ok) throw r;
+      return r.json();
+    })
+    .then(() => {
+      answersMap[questionId] = e.target.value;
+      updateProgressUI();
+      flash('Saved');
+    })
+    .catch(err => {
+      console.error(err);
+      flash('Save failed', true);
+    });
+  });
+
+  // Submit handlers
+  function doSubmit() {
+    const fd = new FormData();
+    fd.append('exam_id', examId);
+
+    fetch("{% url 'cbt:submit_ajax' exam.id %}", {
+      method: 'POST',
+      headers: { 'X-CSRFToken': getCookie('csrftoken') },
+      body: fd
+    })
+    .then(r => r.json())
+    .then(json => {
+      if (json.status === 'submitted' || json.status === 'already_submitted') {
+        window.location.href =
+          "{% url 'cbt:result' 0 %}".replace('/0/', '/' + json.submission_id + '/');
+      } else {
+        alert('Submission failed.');
+      }
+    })
+    .catch(() => alert('Network error'));
+  }
+
+  document.getElementById('submit-btn')
+    .addEventListener('click', () => {
+      if (confirm('Submit exam now?')) doSubmit();
+    });
+
+  document.getElementById('finish-link')
+    ?.addEventListener('click', e => {
+      e.preventDefault();
+      if (confirm('Submit exam now?')) doSubmit();
+    });
+
+  // Timer
+  function updateTimer() {
+    const el = document.getElementById('timer');
+    const m = Math.floor(timeLeft / 60);
+    const s = timeLeft % 60;
+
+    el.textContent = `${String(m).padStart(2,'0')}:${String(s).padStart(2,'0')}`;
+    el.classList.remove('text-red-600', 'text-yellow-500', 'text-gray-900');
+
+    if (timeLeft <= 60) el.classList.add('text-red-600');
+    else if (timeLeft <= 300) el.classList.add('text-yellow-500');
+    else el.classList.add('text-gray-900');
+  }
+
+  updateProgressUI();
+  updateTimer();
+
+  const timerInterval = setInterval(() => {
+    timeLeft -= 1;
+    if (timeLeft <= 0) {
+      clearInterval(timerInterval);
+      alert('Time is up — auto-submitting.');
+      doSubmit();
+    } else {
+      updateTimer();
+    }
+  }, 1000);
+</script>
+{% endblock %}

@@ -1,0 +1,94 @@
+{% extends "accounts/base.html" %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto bg-white shadow rounded-lg p-6 mt-6">
+
+    <h2 class="text-2xl font-bold text-{{ school.theme_color }}-600">
+        Promote Students from {{ current_class.name }}
+    </h2>
+
+    {% if messages %}
+        <div class="mb-4">
+            {% for message in messages %}
+                <div class="px-4 py-2 rounded {{ message.tags }}">
+                    {{ message }}
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+
+    <form method="post">
+        {% csrf_token %}
+
+        <!-- Session Selector -->
+        <div class="mb-4">
+            <label class="block font-semibold mb-1" for="session">Session</label>
+            <select name="session" id="session" class="border rounded px-3 py-2 w-full">
+                {% for s in sessions %}
+                    <option value="{{ s }}" {% if s == selected_session %}selected{% endif %}>
+                        {{ s }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Select All Button -->
+        <div class="mb-2">
+            <button type="button"
+                    id="selectAllBtn"
+                    class="bg-gray-700 text-white px-3 py-1 rounded hover:bg-gray-800 transition">
+                Select All Students
+            </button>
+        </div>
+
+        <!-- Students List -->
+        <div class="mb-4">
+            <p class="font-semibold mb-2">Select Students to Promote:</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-2">
+                {% for student in students %}
+                <label class="flex items-center gap-2 p-2 border rounded hover:bg-gray-50 cursor-pointer">
+                    <input type="checkbox" name="students" value="{{ student.id }}" class="student-checkbox form-checkbox">
+                    <span>{{ student.full_name }} ({{ student.school_class }})</span>
+                </label>
+                {% empty %}
+                <p class="text-gray-500">No students in this class.</p>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- New Class Selector -->
+        <div class="mb-4">
+            <label class="block font-semibold mb-1" for="new_class">Promote to Class</label>
+            <select name="new_class" id="new_class" class="border rounded px-3 py-2 w-full">
+                {% for c in all_classes %}
+                    {% if c.id != current_class.id %}
+                    <option value="{{ c.id }}">{{ c.name }}</option>
+                    {% endif %}
+                {% endfor %}
+            </select>
+        </div>
+
+        <button type="submit"
+                class="bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 transition">
+            Promote Selected Students
+        </button>
+    </form>
+
+</div>
+
+<!-- JavaScript for Select All -->
+<script>
+    const btn = document.getElementById("selectAllBtn");
+    let allSelected = false;
+
+    btn.addEventListener("click", () => {
+        const boxes = document.querySelectorAll(".student-checkbox");
+        allSelected = !allSelected;
+
+        boxes.forEach(cb => cb.checked = allSelected);
+
+        btn.textContent = allSelected ? "Unselect All Students" : "Select All Students";
+    });
+</script>
+
+{% endblock %}

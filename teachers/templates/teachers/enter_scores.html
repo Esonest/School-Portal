@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Enter Scores for {{ exam.title }}</h2>
+<form method="post">{% csrf_token %}
+  {{ formset.management_form }}
+  <table>
+    <tr><th>Student</th><th>Subject</th><th>CA</th><th>Exam</th></tr>
+    {% for form in formset %}
+      <tr>
+        <td>{{ form.student }}</td>
+        <td>{{ form.subject }}</td>
+        <td>{{ form.ca }}</td>
+        <td>{{ form.exam_score }}</td>
+      </tr>
+    {% endfor %}
+  </table>
+  <button type="submit">Save all</button>
+</form>
+{% endblock %}

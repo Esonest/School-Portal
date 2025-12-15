@@ -1,0 +1,167 @@
+{% extends 'accounts/base.html' %}
+{% load custom_filters %}
+{% block content %}
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
+<div class="max-w-7xl mx-auto p-6">
+  {% if messages %}
+    <div class="mb-4">
+      {% for message in messages %}
+        <div class="p-3 rounded {{ message.tags|default:'bg-green-50 border-green-400 text-green-800' }}">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <!-- top bar -->
+  <div class="flex items-center justify-between mb-4">
+    <form method="get" class="flex gap-3 items-end">
+      <input type="hidden" name="page" value="{{ page_obj.number }}">
+
+      <select name="session" onchange="this.form.submit()" class="px-3 py-2 border rounded">
+        {% for ses in session_choices %}
+          <option value="{{ ses }}" {% if selected_session == ses %}selected{% endif %}>{{ ses }}</option>
+        {% endfor %}
+      </select>
+
+      <select name="class_id" onchange="this.form.submit()" class="px-3 py-2 border rounded">
+        <option value="">-- Select class --</option>
+        {% for cls in classes %}
+          <option value="{{ cls.id }}" {% if selected_class and selected_class.id == cls.id %}selected{% endif %}>{{ cls.name }}</option>
+        {% endfor %}
+      </select>
+
+      <select name="subject_id" multiple size="4" class="px-3 py-2 border rounded">
+        {% for subj in subjects %}
+          <option value="{{ subj.id }}" {% if subj.id in selected_subject_ids %}selected{% endif %}>
+            {{ subj.name }}
+          </option>
+        {% endfor %}
+      </select>
+
+      <select name="term" onchange="this.form.submit()" class="px-3 py-2 border rounded">
+        {% for key, value in term_choices.items %}
+          <option value="{{ key }}" {% if selected_term == key %}selected{% endif %}>{{ value }}</option>
+        {% endfor %}
+      </select>
+
+      <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Load</button>
+    </form>
+  </div>
+
+
+  {% if not selected_class %}
+    <div class="bg-yellow-100 p-4">Please select a class.</div>
+
+  {% elif not selected_subjects %}
+    <div class="bg-yellow-100 p-4">Please select subject</div>
+
+  {% else %}
+
+    <div class="bg-white shadow rounded overflow-x-auto">
+      <form method="post">
+        {% csrf_token %}
+        <input type="hidden" name="class_id" value="{{ selected_class.id }}">
+        <input type="hidden" name="session" value="{{ selected_session }}">
+        {% for subj in selected_subjects %}
+          <input type="hidden" name="subject_id" value="{{ subj.id }}">
+        {% endfor %}
+
+        <table class="w-full table-auto">
+          <thead class="bg-gray-100">
+            <tr>
+              <th>#</th>
+              <th>Student</th>
+              {% for subj in selected_subjects %}
+                <th class="p-3 text-center" colspan="2">{{ subj.name }}</th>
+              {% endfor %}
+            </tr>
+
+            <tr>
+              <th></th><th></th>
+              {% for subj in selected_subjects %}
+                <th class="p-2 text-center">Exam <br><span class="text-xs">({{ exam_max }})</span></th>
+                <th class="p-2 text-center">Total</th>
+              {% endfor %}
+            </tr>
+          </thead>
+
+          <tbody>
+          {% for student in students_page.object_list %}
+            <tr class="border-b">
+              <td class="p-3">{{ forloop.counter0|add:page_obj.start_index }}</td>
+
+              <td class="p-3">
+                <div class="font-medium">{{ student.full_name }}</div>
+                <div class="text-sm text-gray-500">{{ student.school_class.name }}</div>
+              </td>
+
+              {% for subj in selected_subjects %}
+              {% with score=scores_map|get_item:student.id|get_item:subj.id %}
+                <td class="p-2 text-center">
+                  <input
+                    type="number"
+                    name="exam_{{ student.id }}_{{ subj.id }}"
+                    id="exam_{{ student.id }}_{{ subj.id }}"
+                    value="{{ score.exam|default_if_none:0 }}"
+                    min="0" max="{{ exam_max }}" step="1"
+                    class="exam-input w-20 px-2 py-1 border rounded text-center"
+                    data-student="{{ student.id }}" data-subject="{{ subj.id }}">
+                </td>
+
+                <td class="p-2 text-center">
+                  <input
+                    readonly
+                    class="total-input w-20 px-2 py-1 bg-gray-50 border rounded text-center"
+                    id="total_{{ student.id }}_{{ subj.id }}"
+                    value="{{ score.exam|default_if_none:0 }}">
+                </td>
+              {% endwith %}
+              {% endfor %}
+            </tr>
+          {% endfor %}
+          </tbody>
+        </table>
+
+        <div class="flex justify-between items-center mt-4 p-4">
+          <div>
+            <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Save</button>
+          </div>
+
+          <div>Page {{ page_obj.number }} of {{ paginator.num_pages }}</div>
+        </div>
+      </form>
+    </div>
+  {% endif %}
+</div>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+  const EXAM_MAX = {{ exam_max|default:60 }};
+
+  function calcTotal(student, subject) {
+    const exam = parseFloat(document.getElementById(`exam_${student}_${subject}`).value) || 0;
+    document.getElementById(`total_${student}_${subject}`).value = exam;
+  }
+
+  document.querySelectorAll(".exam-input").forEach(function (input) {
+    input.addEventListener("input", function () {
+      const student = this.dataset.student;
+      const subject = this.dataset.subject;
+      let v = parseFloat(this.value) || 0;
+
+      if (v > EXAM_MAX) {
+        alert(`Max Exam is ${EXAM_MAX}`);
+        this.value = "";
+      }
+
+      calcTotal(student, subject);
+    });
+  });
+});
+</script>
+
+{% endblock %}

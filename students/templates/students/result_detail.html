@@ -1,0 +1,18 @@
+{% extends 'students/base.html' %}
+{% block content %}
+<h2>Report Card</h2>
+<p>School: {{ school.name }}</p>
+<p>Logo:<img src='{{ school.logo.url }}' /></p>
+<p>Student: {{ student.full_name }}</p>
+<p>Term: {{ term }}</p>
+<table>
+<tr><th>Subject</th><th>CA</th><th>Exam</th><th>Total</th><th>Teacher</th></tr>
+{% for result in results %}
+<tr><td>{{ result.subject }}</td><td>{{ result.ca }}</td><td>{{ result.exam }}</td><td>{{ result.total }}</td><td>{{ result.teacher }}</td></tr>
+{% endfor %}
+</table>
+<p>Average: {{ average }}</p>
+<p>Principal Comment: {{ principal_comment }}</p>
+<p>Class Teacher Comment: {{ class_teacher_comment }}</p>
+{% endblock %}
+"""

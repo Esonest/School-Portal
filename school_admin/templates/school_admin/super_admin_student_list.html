@@ -1,0 +1,112 @@
+{% extends "accounts/base.html" %}
+
+{% block content %}
+
+<style>
+@media print {
+    /* Hide buttons, links, filter form */
+    form, a[href], button {
+        display: none !important;
+    }
+
+    /* Make table full width on print */
+    table {
+        width: 100% !important;
+        border: 1px solid black;
+    }
+
+    th, td {
+        border: 1px solid #333 !important;
+        padding: 6px !important;
+    }
+
+    img {
+        height: 50px !important;
+        width: 50px !important;
+        object-fit: cover;
+    }
+}
+</style>
+
+<div class="min-h-screen bg-gray-100 p-6">
+    <!-- Header -->
+    <div class="max-w-6xl mx-auto flex items-center justify-between mb-6">
+        <h2 class="text-3xl font-bold text-{{ school.theme_color }}-800">{{ school.name }} — Students</h2>
+        <a href="{% url 'school_admin:admin_student_create' school.id %}"
+           class="px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition">
+            Add Student
+        </a>
+    </div>
+
+    <form method="GET" class="mb-4 flex space-x-3 items-center">
+    <select name="class_id" class="border px-3 py-2 rounded">
+        <option value="">All Classes</option>
+        {% for c in classes %}
+            <option value="{{ c.id }}" {% if selected_class == c.id|stringformat:"s" %}selected{% endif %}>
+                {{ c.name }}
+            </option>
+        {% endfor %}
+    </select>
+
+    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">
+        Filter
+    </button>
+
+    <!-- PRINT BUTTON -->
+    <button type="button"
+            onclick="window.print()"
+            class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">
+        Print List
+    </button>
+</form>
+
+
+    <!-- Students Table -->
+    <div class="overflow-x-auto">
+        <table class="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
+            <thead class="bg-gray-50 border-b">
+                <tr>
+                    <th class="px-4 py-2 text-left text-gray-600 font-medium">Photo</th>
+                    <th class="px-4 py-2 text-left text-gray-600 font-medium">Name</th>
+                    <th class="px-4 py-2 text-left text-gray-600 font-medium">Admission No</th>
+                    <th class="px-4 py-2 text-left text-gray-600 font-medium">Class</th>
+                    <th class="px-4 py-2 text-left text-gray-600 font-medium">Actions</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for student in students %}
+                <tr class="border-b hover:bg-gray-50">
+                    <td class="px-4 py-2">
+                        {% if student.photo %}
+                        <img src="{{ student.photo.url }}" alt="Photo" class="h-12 w-12 rounded-full object-cover">
+                        {% else %}
+                        <div class="h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center text-gray-500">
+                            N/A
+                        </div>
+                        {% endif %}
+                    </td>
+                    <td class="px-4 py-2 text-gray-700">{{ student.full_name }}</td>
+                    <td class="px-4 py-2 text-gray-700">{{ student.admission_no }}</td>
+                    <td class="px-4 py-2 text-gray-700">{{ student.school_class }}</td>
+                    <td class="px-4 py-2 space-x-2">
+                        <a href="{% url 'school_admin:admin_student_edit' school.id student.id %}"
+                           class="px-3 py-1 bg-yellow-400 text-white rounded hover:bg-yellow-500 transition">
+                            Edit
+                        </a>
+                        <a href="{% url 'school_admin:admin_student_delete' school.id student.id %}"
+                           class="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition">
+                            Delete
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="px-4 py-6 text-center text-gray-500">No students found.</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

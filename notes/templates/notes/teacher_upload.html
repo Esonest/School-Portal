@@ -1,0 +1,167 @@
+{% extends 'accounts/base.html' %}
+{% block content %}
+<div class="max-w-6xl mx-auto mt-10 bg-white rounded-2xl shadow-xl overflow-hidden">
+  <div class="grid md:grid-cols-2">
+    
+    <!-- LEFT: FORM -->
+    <div class="p-8">
+      <h1 class="text-2xl font-bold text-indigo-700 mb-6">
+        {% if note %}Edit{% else %}Upload{% endif %} Lesson Note
+      </h1>
+
+      <form method="post" enctype="multipart/form-data" id="noteForm" class="space-y-6">
+        {% csrf_token %}
+
+        {% for field in form %}
+          <div>
+            <label for="{{ field.id_for_label }}" class="block text-gray-700 font-medium mb-1">
+              {{ field.label }}
+            </label>
+            {{ field }}
+            {% if field.help_text %}
+              <p class="text-xs text-gray-500 mt-1">{{ field.help_text }}</p>
+            {% endif %}
+            {% for error in field.errors %}
+              <p class="text-sm text-red-500 mt-1">{{ error }}</p>
+            {% endfor %}
+          </div>
+        {% endfor %}
+
+        <!-- Buttons -->
+        <div class="flex items-center space-x-4 pt-4">
+          <button type="submit"
+            class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg shadow transition-all duration-300">
+            {% if note %}Update{% else %}Upload{% endif %}
+          </button>
+          <a href="{% url 'notes:dashboard' %}"
+             class="px-5 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition font-medium">
+             Cancel
+          </a>
+        </div>
+      </form>
+    </div>
+
+    <!-- RIGHT: LIVE PREVIEW PANEL -->
+    <div class="bg-gradient-to-br from-indigo-50 via-white to-fuchsia-50 border-l border-indigo-100 p-8 flex flex-col justify-between">
+      <div>
+        <h2 class="text-xl font-semibold text-indigo-700 mb-4">📘 Live Preview</h2>
+
+        <div class="bg-white rounded-xl shadow p-5 space-y-4">
+          <!-- Title -->
+          <div>
+            <p class="text-gray-500 text-sm">Title</p>
+            <p id="previewTitle" class="font-semibold text-gray-800 mt-1">—</p>
+          </div>
+
+          <!-- Subject -->
+          <div>
+            <p class="text-gray-500 text-sm">Subject</p>
+            <p id="previewSubject" class="font-medium text-gray-800 mt-1">—</p>
+          </div>
+
+          <!-- File -->
+          <div class="flex items-center space-x-3">
+            <div id="fileIcon" class="text-gray-400 text-4xl">📄</div>
+            <div>
+              <p class="text-gray-500 text-sm">Selected File</p>
+              <a id="previewFileLink" href="#" target="_blank" class="text-indigo-600 hover:text-indigo-800 font-medium mt-1 block">
+                <span id="previewFile">No file selected</span>
+              </a>
+            </div>
+          </div>
+
+          <!-- Date -->
+          <div>
+            <p class="text-gray-500 text-sm">Publish Date</p>
+            <p id="previewDate" class="text-gray-700 font-medium mt-1">Not set</p>
+          </div>
+        </div>
+      </div>
+
+      <p class="text-xs text-gray-500 mt-6 text-center italic">
+        Preview updates automatically as you type ✨
+      </p>
+    </div>
+  </div>
+</div>
+
+<!-- Tailwind base input styles -->
+<style>
+  input, select, textarea {
+    @apply w-full border border-gray-300 rounded-lg px-3 py-2 
+           focus:outline-none focus:ring-2 focus:ring-indigo-500 
+           focus:border-indigo-500 transition;
+  }
+</style>
+
+<!-- JS: Live Preview with Clickable File -->
+<script>
+  document.addEventListener('DOMContentLoaded', function() {
+    const titleInput = document.querySelector('#id_title');
+    const subjectSelect = document.querySelector('#id_subject');
+    const fileInput = document.querySelector('#id_file');
+    const dateInput = document.querySelector('#id_publish_date');
+
+    const previewTitle = document.getElementById('previewTitle');
+    const previewSubject = document.getElementById('previewSubject');
+    const previewFile = document.getElementById('previewFile');
+    const previewFileLink = document.getElementById('previewFileLink');
+    const previewDate = document.getElementById('previewDate');
+    const fileIcon = document.getElementById('fileIcon');
+
+    const getFileIcon = (filename) => {
+      const ext = filename.split('.').pop().toLowerCase();
+      switch (ext) {
+        case 'pdf': return '📕';
+        case 'doc':
+        case 'docx': return '📝';
+        case 'ppt':
+        case 'pptx': return '📊';
+        case 'xls':
+        case 'xlsx': return '📈';
+        case 'zip':
+        case 'rar': return '🗜️';
+        default: return '📄';
+      }
+    };
+
+    if (titleInput) titleInput.addEventListener('input', () => {
+      previewTitle.textContent = titleInput.value || '—';
+    });
+
+    if (subjectSelect) subjectSelect.addEventListener('change', () => {
+      const selected = subjectSelect.options[subjectSelect.selectedIndex];
+      previewSubject.textContent = selected.text || '—';
+    });
+
+    if (fileInput) fileInput.addEventListener('change', () => {
+      if (fileInput.files.length) {
+        const file = fileInput.files[0];
+        const filename = file.name;
+        previewFile.textContent = filename;
+        fileIcon.textContent = getFileIcon(filename);
+
+        // Create blob preview link
+        const fileURL = URL.createObjectURL(file);
+        previewFileLink.href = fileURL;
+        previewFileLink.classList.remove('pointer-events-none', 'text-gray-400');
+      } else {
+        previewFile.textContent = 'No file selected';
+        previewFileLink.href = '#';
+        fileIcon.textContent = '📄';
+      }
+    });
+
+    if (dateInput) dateInput.addEventListener('change', () => {
+      previewDate.textContent = dateInput.value || 'Not set';
+    });
+
+    // Preload existing note file (for edit mode)
+    {% if note and note.file %}
+      previewFile.textContent = "{{ note.file.name|escapejs }}";
+      previewFileLink.href = "{{ note.file.url }}";
+      fileIcon.textContent = getFileIcon("{{ note.file.name|escapejs }}");
+    {% endif %}
+  });
+</script>
+{% endblock %}

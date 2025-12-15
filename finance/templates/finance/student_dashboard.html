@@ -1,0 +1,167 @@
+{% extends "accounts/base.html" %}
+{% load static %}
+{% block content %}
+<div class="max-w-6xl mx-auto p-6">
+
+  <!-- HEADER -->
+  <div class="flex justify-between items-center mb-6">
+    <h1 class="text-2xl font-bold text-{{ student.school.theme_color }}-600">
+      Student Finance Dashboard
+    </h1>
+    <span class="text-sm text-gray-500" id="header-info">
+      {{ student.school_class.name }} · {{ current_session }} · 
+      {% for term_val, term_name in terms %}
+        {% if term_val|stringformat:"s" == current_term|stringformat:"s" %}
+          {{ term_name }}
+        {% endif %}
+      {% endfor %}
+    </span>
+  </div>
+
+  <!-- FILTER DROPDOWNS -->
+  <div class="flex gap-4 mb-6 items-center">
+    <select id="class-select" class="border rounded px-3 py-2">
+      {% for cls in classes %}
+        <option value="{{ cls.id }}" {% if cls.id == current_class_id %}selected{% endif %}>
+          {{ cls.name }}
+        </option>
+      {% endfor %}
+    </select>
+
+    <select id="session-select" class="border rounded px-3 py-2">
+      {% for ses in sessions %}
+        <option value="{{ ses }}" {% if ses == current_session %}selected{% endif %}>
+          {{ ses }}
+        </option>
+      {% endfor %}
+    </select>
+
+    <select id="term-select" class="border rounded px-3 py-2">
+      {% for term_val, term_name in terms %}
+        <option value="{{ term_val }}" {% if term_val|stringformat:"s" == current_term|stringformat:"s" %}selected{% endif %}>
+          {{ term_name }}
+        </option>
+      {% endfor %}
+    </select>
+  </div>
+
+  <!-- SUMMARY CARDS -->
+  <div class="grid grid-cols-3 gap-6 mb-6">
+    <div class="bg-white p-4 rounded shadow">
+      <p class="text-sm text-gray-500">Total Invoiced</p>
+      <p class="text-2xl font-bold">₦{{ total_invoiced|floatformat:2 }}</p>
+    </div>
+
+    <div class="bg-white p-4 rounded shadow">
+      <p class="text-sm text-gray-500">Total Paid</p>
+      <p class="text-2xl font-bold text-green-600">₦{{ total_paid|floatformat:2 }}</p>
+    </div>
+
+    <div class="bg-white p-4 rounded shadow">
+      <p class="text-sm text-gray-500">Outstanding Balance</p>
+      <p class="text-2xl font-bold text-red-600">₦{{ outstanding|floatformat:2 }}</p>
+    </div>
+  </div>
+
+  <!-- INVOICES -->
+  <div class="mt-8 bg-white rounded shadow p-4">
+    <h3 class="font-semibold mb-3">My Invoices</h3>
+
+    <table class="w-full text-sm">
+      <thead class="bg-gray-100">
+        <tr>
+          <th class="p-2 text-left">Title</th>
+          <th>Amount</th>
+          <th>Paid</th>
+          <th>Status</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for inv in invoices %}
+        <tr class="border-t">
+          <td class="p-2">{{ inv.title }}</td>
+          <td>₦{{ inv.total_amount|floatformat:2 }}</td>
+          <td>₦{{ inv.amount_paid|floatformat:2 }}</td>
+          <td>
+            {% if inv.amount_paid >= inv.total_amount %}
+              <span class="text-green-600 font-semibold">Paid</span>
+            {% elif inv.amount_paid > 0 %}
+              <span class="text-yellow-600 font-semibold">Partial</span>
+            {% else %}
+              <span class="text-red-600 font-semibold">Unpaid</span>
+            {% endif %}
+          </td>
+          <td class="text-right">
+            <a href="{% url 'finance:invoice_detail' inv.id %}" class="text-indigo-600 font-semibold">View</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5" class="p-4 text-center text-gray-500">
+            No invoices found for this session/term/class
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- PAYMENTS -->
+  <div class="mt-8 bg-white rounded shadow p-4">
+    <h3 class="font-semibold mb-3">My Payments</h3>
+
+    <table class="w-full text-sm">
+      <thead class="bg-gray-100">
+        <tr>
+          <th class="p-2 text-left">Date</th>
+          <th>Amount</th>
+          <th>Method</th>
+          <th>Receipt</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for pay in payments %}
+        <tr class="border-t">
+          <td class="p-2">{{ pay.payment_date }}</td>
+          <td>₦{{ pay.amount|floatformat:2 }}</td>
+          <td>{{ pay.payment_method|capfirst }}</td>
+          <td>
+            <a href="{% url 'finance:payment_receipt' pay.id %}" class="text-indigo-600 font-semibold">
+              View
+            </a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="4" class="p-4 text-center text-gray-500">
+            No payments yet
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+</div>
+
+<!-- JAVASCRIPT FOR AUTO-LOAD -->
+<script>
+  const classSelect = document.getElementById('class-select');
+  const sessionSelect = document.getElementById('session-select');
+  const termSelect = document.getElementById('term-select');
+
+  function reloadDashboard() {
+    const classId = classSelect.value;
+    const session = sessionSelect.value;
+    const term = termSelect.value;
+    const params = new URLSearchParams({class: classId, session: session, term: term});
+    window.location.search = params.toString();
+  }
+
+  classSelect.addEventListener('change', reloadDashboard);
+  sessionSelect.addEventListener('change', reloadDashboard);
+  termSelect.addEventListener('change', reloadDashboard);
+</script>
+
+{% endblock %}

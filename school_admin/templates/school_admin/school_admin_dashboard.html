@@ -1,0 +1,264 @@
+{% extends "accounts/base.html" %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-100 p-6">
+    <div class="max-w-6xl mx-auto">
+        <!-- Page Header -->
+        <h1 class="text-3xl font-bold text-{{ school.theme_color }}-800">{{ school.name }} Admin Dashboard</h1>
+
+        <!-- Dashboard Links with Counts -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+
+            <!-- Students -->
+            <a href="{% url 'school_admin:admin_student_list' school.id %}"
+               class="flex items-center justify-between p-6 bg-white shadow rounded-lg hover:bg-blue-50 transition">
+                <div class="flex items-center gap-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-600" fill="none"
+                         viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M5.121 17.804A13.937 13.937 0 0112 15c2.386 0 4.607.606 6.879 1.804M12 3a4 4 0 100 8 4 4 0 000-8z" />
+                    </svg>
+                    <p class="text-lg font-semibold text-gray-800">Students</p>
+                </div>
+                <span class="bg-blue-100 text-blue-800 text-sm font-semibold px-3 py-1 rounded-full">
+                    {{ student_count }}
+                </span>
+            </a>
+
+            <!-- Teachers -->
+            <a href="{% url 'school_admin:teacher_list' school.id %}"
+               class="flex items-center justify-between p-6 bg-white shadow rounded-lg hover:bg-green-50 transition">
+                <div class="flex items-center gap-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-green-600" fill="none"
+                         viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M12 14l9-5-9-5-9 5 9 5zM12 14l6.16-3.422M12 14l-6.16-3.422M12 14v7" />
+                    </svg>
+                    <p class="text-lg font-semibold text-gray-800">Teachers</p>
+                </div>
+                <span class="bg-green-100 text-green-800 text-sm font-semibold px-3 py-1 rounded-full">
+                    {{ teacher_count }}
+                </span>
+            </a>
+
+           <!-- Class Subject Teachers -->
+<a href="{% url 'school_admin:class_subject_teacher_list' school.id %}"
+class="flex items-center justify-between p-6 bg-white shadow rounded-lg hover:bg-cyan-50 transition">
+ <div class="flex items-center gap-4">
+     <svg xmlns="http://www.w3.org/2000/svg"
+          class="h-8 w-8 text-cyan-600"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor">
+         <path stroke-linecap="round"
+               stroke-linejoin="round"
+               stroke-width="2"
+               d="M8 7V3m8 4V3M4 11h16M6 19h12a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2v10a2 2 0 002 2z" />
+     </svg>
+     <p class="text-lg font-semibold text-gray-800">
+         Class Subject Teachers
+     </p>
+ </div>
+
+ <span class="bg-cyan-100 text-cyan-800 text-sm font-semibold px-3 py-1 rounded-full">
+     {{ class_subject_teacher_count }}
+ </span>
+</a>
+
+
+                  <!-- Class List -->
+<a href="{% url 'school_admin:admin-class-list' %}"
+   class="flex items-center justify-between p-6 bg-white shadow rounded-lg hover:bg-orange-50 transition">
+    <div class="flex items-center gap-4">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-orange-600" fill="none"
+             viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M4 6h16M4 10h16M4 14h16M4 18h16" />
+        </svg>
+        <p class="text-lg font-semibold text-gray-800">Class List</p>
+    </div>
+
+    <span class="bg-orange-100 text-orange-800 text-sm font-semibold px-3 py-1 rounded-full">
+        {{ class_count }}
+    </span>
+</a>
+
+
+                          <!-- School Accountant -->
+<a href="{% url 'school_admin:accountant_list' school.id %}"
+class="flex items-center justify-between p-6 bg-white shadow rounded-lg hover:bg-emerald-50 transition">
+ <div class="flex items-center gap-4">
+     <svg xmlns="http://www.w3.org/2000/svg"
+          class="h-8 w-8 text-emerald-600"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor">
+         <path stroke-linecap="round"
+               stroke-linejoin="round"
+               stroke-width="2"
+               d="M12 8c-1.657 0-3 1.343-3 3s1.343 3 3 3 3-1.343 3-3-1.343-3-3-3zM4 20h16v-2a6 6 0 00-12 0v2z" />
+     </svg>
+
+     <p class="text-lg font-semibold text-gray-800">
+         Accountants
+     </p>
+ </div>
+
+ <span class="bg-emerald-100 text-emerald-800 text-sm font-semibold px-3 py-1 rounded-full">
+     Manage
+ </span>
+</a>
+
+
+
+
+            <!-- Results -->
+            <a href="{% url 'school_admin:admin-class-list' %}"
+               class="flex items-center justify-between p-6 bg-white shadow rounded-lg hover:bg-yellow-50 transition">
+                <div class="flex items-center gap-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-yellow-600" fill="none"
+                         viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M9 12h6m-3-3v6m2 4h4a2 2 0 002-2V7a2 2 0 00-2-2h-4l-2-2-2 2H7a2 2 0 00-2 2v11a2 2 0 002 2h4" />
+                    </svg>
+                    <p class="text-lg font-semibold text-gray-800">Results</p>
+                </div>
+                <span class="bg-yellow-100 text-yellow-800 text-sm font-semibold px-3 py-1 rounded-full">
+                    {{ result_count }}
+                </span>
+            </a>
+
+            <!-- CBT -->
+            <a href="{% url 'school_admin:admin_dashboard' school.id %}"
+               class="flex items-center justify-between p-6 bg-white shadow rounded-lg hover:bg-purple-50 transition">
+                <div class="flex items-center gap-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-purple-600" fill="none"
+                         viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M9 12h6m-3-3v6m-7 4h12a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                    <p class="text-lg font-semibold text-gray-800">CBT</p>
+                </div>
+                <span class="bg-purple-100 text-purple-800 text-sm font-semibold px-3 py-1 rounded-full">
+                    {{ cbt_count }}
+                </span>
+            </a>
+
+            <!-- Lesson Note -->
+            <a href="{% url 'school_admin:lessonnote_dashboard' school.id %}"
+               class="flex items-center justify-between p-6 bg-white shadow rounded-lg hover:bg-indigo-50 transition">
+                <div class="flex items-center gap-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-indigo-600" fill="none"
+                         viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M7 8h10M7 12h4m-4 4h10M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z" />
+                    </svg>
+                    <p class="text-lg font-semibold text-gray-800">Lesson Note</p>
+                </div>
+                <span class="bg-indigo-100 text-indigo-800 text-sm font-semibold px-3 py-1 rounded-full">
+                    {{ lesson_count }}
+                </span>
+            </a>
+
+            <!-- Assignments -->
+            <a href="{% url 'school_admin:assignment_dashboard' school.id %}"
+               class="flex items-center justify-between p-6 bg-white shadow rounded-lg hover:bg-pink-50 transition">
+                <div class="flex items-center gap-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-pink-600" fill="none"
+                         viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M9 12h6m-3-3v6m-7 4h12a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
+                    </svg>
+                    <p class="text-lg font-semibold text-gray-800">Assignments</p>
+                </div>
+                <span class="bg-pink-100 text-pink-800 text-sm font-semibold px-3 py-1 rounded-full">
+                    {{ assignment_count }}
+                </span>
+            </a>
+
+            <!-- Attendance -->
+            <a href="{% url 'school_admin:admin_attendance_list' school.id %}"
+               class="flex items-center justify-between p-6 bg-white shadow rounded-lg hover:bg-teal-50 transition">
+                <div class="flex items-center gap-4">
+                    <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-teal-600" fill="none"
+                         viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                              d="M9 12h6m-3-3v6M12 3v3m0 12v3m6-6h3M3 12h3" />
+                    </svg>
+                    <p class="text-lg font-semibold text-gray-800">Attendance</p>
+                </div>
+                <span class="bg-teal-100 text-teal-800 text-sm font-semibold px-3 py-1 rounded-full">
+                    {{ attendance_count }}
+                </span>
+            </a>
+            
+            <!-- 🔥 NEW: Block / Unblock Students Result Access -->
+<a href="{% url 'school_admin:block_unblock_students' school.id %}"
+   class="flex items-center justify-between p-6 bg-white shadow rounded-lg hover:bg-red-50 transition">
+    <div class="flex items-center gap-4">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-red-600" fill="none"
+             viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 4.354a4 4 0 110 7.292M6 20h12a2 2 0 002-2v-5a2 2 0 00-2-2H6a2 2 0 00-2 2v5a2 2 0 002 2z" />
+        </svg>
+        <p class="text-lg font-semibold text-gray-800">Result Access Control</p>
+    </div>
+
+    <span class="bg-red-100 text-red-800 text-sm font-semibold px-3 py-1 rounded-full">
+        Manage
+    </span>
+          <!-- Dynamic Grade Settings (Edit) -->
+<a href="{% url 'results:grade_settings' school.id %}"
+   class="flex items-center justify-between p-6 bg-white shadow rounded-lg hover:bg-blue-50 transition">
+    <div class="flex items-center gap-4">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-600" fill="none"
+             viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M12 8c1.657 0 3-1.343 3-3S13.657 2 12 2 9 3.343 9 5s1.343 3 3 3zM12 14c2.21 0 4-1.79 4-4H8c0 2.21 1.79 4 4 4zM4 20h16v-2H4v2z" />
+        </svg>
+        <p class="text-lg font-semibold text-gray-800">Grade Settings</p>
+    </div>
+    <span class="bg-blue-100 text-blue-800 text-sm font-semibold px-3 py-1 rounded-full">
+        Manage
+    </span>
+</a>
+
+<!-- NEW: Grade Settings Overview (View Only) -->
+<a href="{% url 'results:grade_settings_overview' school.id %}"
+   class="flex items-center justify-between p-6 bg-white shadow rounded-lg hover:bg-indigo-50 transition">
+    <div class="flex items-center gap-4">
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-indigo-600" fill="none"
+             viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                  d="M4 6h16M4 10h16M4 14h10M4 18h10" />
+        </svg>
+        <p class="text-lg font-semibold text-gray-800">Grade Summary</p>
+    </div>
+    <span class="bg-indigo-100 text-indigo-800 text-sm font-semibold px-3 py-1 rounded-full">
+        View
+    </span>
+</a>
+  
+
+   <!-- Inside the grid on dashboard.html -->
+<a href="{% url 'results:class_score_settings' school.id %}"
+   class="flex items-center justify-between p-6 bg-white shadow rounded-lg hover:bg-blue-50 transition">
+   <div class="flex items-center gap-4">
+       <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-blue-600" fill="none"
+            viewBox="0 0 24 24" stroke="currentColor">
+           <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                 d="M12 8c1.657 0 3-1.343 3-3S13.657 2 12 2 9 3.343 9 5s1.343 3 3 3zM12 14c2.21 0 4-1.79 4-4H8c0 2.21 1.79 4 4 4zM4 20h16v-2H4v2z" />
+       </svg>
+       <p class="text-lg font-semibold text-gray-800">Class Score Settings</p>
+   </div>
+   <span class="bg-blue-100 text-blue-800 text-sm font-semibold px-3 py-1 rounded-full">
+       Manage
+   </span>
+</a>
+
+
+
+        </div>
+    </div>
+</div>
+{% endblock %}

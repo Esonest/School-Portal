@@ -1,0 +1,95 @@
+{% extends 'accounts/base.html' %}
+{% block content %}
+<div class="max-w-6xl mx-auto px-6 py-10 space-y-8">
+
+  <!-- Assignment Header -->
+  <div class="bg-gradient-to-r from-indigo-50 to-white border border-indigo-100 rounded-2xl shadow-sm p-6">
+    <h1 class="text-3xl font-bold text-gray-800 flex items-center gap-3">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+              d="M12 20h9M12 4v16m0-16L3 12l9 8"/>
+      </svg>
+      {{ assignment.title }}
+    </h1>
+
+    <div class="text-sm text-gray-500 mt-1 flex flex-wrap gap-4">
+      <span>📘 {{ assignment.subject }}</span>
+      <span>🕒 Due: {{ assignment.due_date|date:"SHORT_DATETIME_FORMAT" }}</span>
+    </div>
+
+    <div class="mt-4 text-gray-700 leading-relaxed">
+      {{ assignment.description|linebreaks }}
+    </div>
+
+    {% if assignment.file %}
+      <div class="mt-4">
+        <a href="{{ assignment.file.url }}" 
+           class="inline-flex items-center px-4 py-2 text-sm font-medium text-indigo-700 bg-indigo-50 rounded-lg hover:bg-indigo-100 transition">
+          📎 Download Attachment
+        </a>
+      </div>
+    {% endif %}
+  </div>
+
+  <!-- Submissions Table -->
+  <div class="bg-white border border-gray-100 rounded-2xl shadow-sm p-6">
+    <div class="flex items-center justify-between mb-4">
+      <h2 class="text-xl font-semibold text-gray-800">
+        Submissions <span class="text-gray-500 text-sm">({{ submissions.count }})</span>
+      </h2>
+      {% if submissions.count > 0 %}
+        <span class="text-xs px-3 py-1 bg-indigo-50 text-indigo-700 rounded-full">Active</span>
+      {% endif %}
+    </div>
+
+    {% if submissions %}
+    <div class="overflow-x-auto">
+      <table class="w-full text-sm border-collapse">
+        <thead class="bg-indigo-50 text-indigo-800 uppercase text-xs tracking-wider">
+          <tr>
+            <th class="p-3 text-left">Student</th>
+            <th class="p-3 text-left">Submitted On</th>
+            <th class="p-3 text-left">Status</th>
+            <th class="p-3 text-left">Score</th>
+            <th class="p-3 text-left">Actions</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          {% for s in submissions %}
+          <tr class="hover:bg-gray-50 transition">
+            <td class="p-3 font-medium text-gray-700">{{ s.student }}</td>
+            <td class="p-3 text-gray-600">{{ s.submitted_on|date:"SHORT_DATETIME_FORMAT" }}</td>
+            <td class="p-3">
+              <span class="px-2 py-1 rounded-full text-xs 
+                {% if s.status == 'graded' %} bg-green-50 text-green-700 
+                {% elif s.status == 'submitted' %} bg-yellow-50 text-yellow-700 
+                {% else %} bg-gray-50 text-gray-600 {% endif %}">
+                {{ s.status|title }}
+              </span>
+            </td>
+            <td class="p-3 font-semibold text-gray-800">
+              {{ s.score|default:"—" }}
+            </td>
+            <td class="p-3 flex flex-wrap items-center gap-2">
+              <a href="{% url 'assignments:grade_submission' submission_id=s.id %}"
+                 class="text-indigo-600 hover:text-indigo-800 font-medium text-sm">Grade</a>
+              {% for f in s.files.all %}
+              <a href="{% url 'assignments:download_submission_file' file_id=f.id %}" 
+                 class="text-gray-500 hover:text-gray-700 text-sm flex items-center gap-1">
+                 📄 File
+              </a>
+              {% endfor %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% else %}
+      <div class="text-center py-10 text-gray-500">
+        <p>No submissions yet for this assignment.</p>
+      </div>
+    {% endif %}
+  </div>
+</div>
+{% endblock %}

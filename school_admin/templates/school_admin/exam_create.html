@@ -1,0 +1,78 @@
+{% extends 'accounts/base.html' %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto py-10">
+  <h1 class="text-3xl font-bold text-{{ school.theme_color }}-800">Create Exam for {{ school.name }}</h1>
+
+  <form method="post" class="bg-white p-8 rounded-xl shadow-lg border border-slate-200 space-y-6">
+    {% csrf_token %}
+
+    {# Render all fields except start_time, end_time, duration_minutes separately #}
+    {% for field in form %}
+      {% if field.name != "start_time" and field.name != "end_time" and field.name != "duration_minutes" %}
+        <div>
+          <label for="{{ field.id_for_label }}" class="block text-gray-700 font-medium mb-2">
+            {{ field.label }}
+            {% if field.field.required %}<span class="text-red-500">*</span>{% endif %}
+          </label>
+          {{ field }}
+          {% if field.help_text %}
+            <p class="text-gray-500 text-sm mt-1">{{ field.help_text }}</p>
+          {% endif %}
+          {% for error in field.errors %}
+            <p class="text-red-500 text-sm mt-1">{{ error }}</p>
+          {% endfor %}
+        </div>
+      {% endif %}
+    {% endfor %}
+
+    {# Start time, end time, duration_minutes in a grid #}
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+      <div>
+        <label for="{{ form.start_time.id_for_label }}" class="block text-gray-700 font-medium mb-2">
+          Start Time
+        </label>
+        {{ form.start_time }}
+        {% for error in form.start_time.errors %}
+          <p class="text-red-500 text-sm mt-1">{{ error }}</p>
+        {% endfor %}
+      </div>
+      <div>
+        <label for="{{ form.end_time.id_for_label }}" class="block text-gray-700 font-medium mb-2">
+          End Time
+        </label>
+        {{ form.end_time }}
+        {% for error in form.end_time.errors %}
+          <p class="text-red-500 text-sm mt-1">{{ error }}</p>
+        {% endfor %}
+      </div>
+      <div>
+        <label for="{{ form.duration_minutes.id_for_label }}" class="block text-gray-700 font-medium mb-2">
+          Duration (minutes)
+        </label>
+        {{ form.duration_minutes }}
+        {% for error in form.duration_minutes.errors %}
+          <p class="text-red-500 text-sm mt-1">{{ error }}</p>
+        {% endfor %}
+      </div>
+    </div>
+
+    {# Submit button #}
+    <div class="mt-4">
+      <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700">
+        Create Exam
+      </button>
+    </div>
+
+    {# Display non-field errors #}
+    {% if form.non_field_errors %}
+      <div class="mt-4 text-red-500">
+        {% for error in form.non_field_errors %}
+          <p>{{ error }}</p>
+        {% endfor %}
+      </div>
+    {% endif %}
+
+  </form>
+</div>
+{% endblock %}

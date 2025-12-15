@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="max-w-5xl mx-auto p-6">
+  <h1 class="text-2xl font-bold">All Results</h1>
+  <table class="w-full mt-4 table-auto border-collapse">
+    <thead>
+      <tr class="bg-gray-100 text-left"><th class="p-2">Exam</th><th class="p-2">Term</th><th class="p-2">Session</th><th class="p-2">Total</th><th class="p-2">Grade</th><th class="p-2">Actions</th></tr>
+    </thead>
+    <tbody>
+      {% for r in results %}
+      <tr class="border-b"><td class="p-2">{{ r.exam.title }}</td><td class="p-2">{{ r.exam.term }}</td><td class="p-2">{{ r.exam.session }}</td><td class="p-2">{{ r.total_score }}</td><td class="p-2">{{ r.grade }}</td><td class="p-2"><a class="text-indigo-600" href="{% url 'students:result_detail' pk=r.pk %}">View</a></td></tr>
+      {% empty %}
+      <tr><td colspan="6" class="p-4 text-gray-600">No results available.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+{% endblock %}

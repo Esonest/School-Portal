@@ -1,0 +1,70 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+
+<div class="max-w-6xl mx-auto p-6">
+    <h1 class="text-3xl font-bold mb-6">School Portal Controls</h1>
+
+    <table class="w-full bg-white shadow rounded">
+        <thead class="bg-gray-100">
+            <tr>
+                <th class="p-3 text-left">School</th>
+                <th class="p-3">CBT</th>
+                <th class="p-3">Results</th>
+                <th class="p-3">Attendance</th>
+                <th class="p-3">Students</th>
+                <th class="p-3">Teachers</th>
+                <th class="p-3">Lesson notes</th>
+                <th class="p-3">Finance</th>
+                <th class="p-3">Assignments</th>
+                <th class="p-3">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+        {% for school in schools %}
+            <tr class="border-t">
+                <td class="p-3 font-medium">{{ school.name }}</td>
+
+                <td class="p-3 text-center">
+                    {{ school.portal_settings.cbt_enabled|yesno:"✅,❌" }}
+                </td>
+
+                <td class="p-3 text-center">
+                    {{ school.portal_settings.results_enabled|yesno:"✅,❌" }}
+                </td>
+
+                <td class="p-3 text-center">
+                    {{ school.portal_settings.attendance_enabled|yesno:"✅,❌" }}
+                </td>
+
+                <td class="p-3 text-center">
+                    {{ school.portal_settings.students_enabled|yesno:"✅,❌" }}
+                </td>
+
+                <td class="p-3 text-center">
+                    {{ school.portal_settings.teachers_enabled|yesno:"✅,❌" }}
+                </td>
+                <td class="p-3 text-center">
+                    {{ school.portal_settings.lesson_note_enabled|yesno:"✅,❌" }}
+                </td>
+
+                <td class="p-3 text-center">
+                    {{ school.portal_settings.finance_enabled|yesno:"✅,❌" }}
+                </td>
+
+                <td class="p-3 text-center">
+                    {{ school.portal_settings.assignemnts_enabled|yesno:"✅,❌" }}
+                </td>
+
+                <td class="p-3 text-center">
+                    <a href="{% url 'superadmin:superadmin_portal_update' school.id %}"
+                       class="text-indigo-600 hover:underline">
+                        Manage
+                    </a>
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+{% endblock %}

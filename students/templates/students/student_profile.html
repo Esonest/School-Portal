@@ -1,0 +1,8 @@
+{% extends 'students/base.html' %}
+{% block content %}
+<h2>Student Profile</h2>
+<p>Name: {{ student.name }}</p>
+<p>Class: {{ student.class }}</p>
+<p>Admission No: {{ student.admission_no }}</p>
+<a href="{% url 'edit_profile' %}">Edit Profile</a>
+{% endblock %}

@@ -1,0 +1,111 @@
+{% extends "accounts/base.html" %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-100 p-6">
+    <div class="max-w-6xl mx-auto">
+        <h1 class="text-2xl font-bold text-{{ school.theme_color }}-800">
+            {{ school.name }} - Result Access Control
+        </h1>
+
+        <!-- FILTER SECTION -->
+        <form method="get" class="bg-white p-4 rounded-lg shadow mb-6 flex flex-col md:flex-row gap-4">
+            
+            <!-- Filter by Class -->
+            <div class="flex-1">
+                <label class="block text-sm font-semibold mb-1">Class</label>
+                <select name="class" class="border rounded px-3 py-2 w-full">
+                    <option value="">All Classes</option>
+                    {% for cls in all_classes %}
+                        <option value="{{ cls.id }}"
+                            {% if cls.id|stringformat:"s" == request.GET.class %}
+                                selected
+                            {% endif %}
+                        >
+                            {{ cls.name }}
+                        </option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <!-- Filter by Student Name -->
+            <div class="flex-1">
+                <label class="block text-sm font-semibold mb-1">Search by Name</label>
+                <input type="text" name="search" placeholder="Enter student name"
+                       value="{{ request.GET.search }}"
+                       class="border rounded px-3 py-2 w-full">
+            </div>
+
+            <div class="flex items-end">
+                <button class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
+                    Filter
+                </button>
+            </div>
+        </form>
+
+        <!-- Bulk Actions -->
+        <form method="post" class="mb-4 flex gap-4">
+            {% csrf_token %}
+            <button type="submit" name="action" value="block_all"
+                    class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700 transition">
+                Block All Students
+            </button>
+            <button type="submit" name="action" value="unblock_all"
+                    class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">
+                Unblock All Students
+            </button>
+        </form>
+
+        <!-- Students Table -->
+        <div class="bg-white shadow rounded-lg overflow-hidden">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-sm font-medium text-gray-500">Name</th>
+                        <th class="px-6 py-3 text-left text-sm font-medium text-gray-500">Class</th>
+                        <th class="px-6 py-3 text-left text-sm font-medium text-gray-500">Status</th>
+                        <th class="px-6 py-3 text-left text-sm font-medium text-gray-500">Action</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for student in students %}
+                    <tr>
+                        <td class="px-6 py-4 whitespace-nowrap">{{ student.user.get_full_name }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">{{ student.school_class }}</td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            {% if student.is_result_blocked %}
+                                <span class="text-red-600 font-semibold">Blocked</span>
+                            {% else %}
+                                <span class="text-green-600 font-semibold">Active</span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <form method="post">
+                                {% csrf_token %}
+                                <input type="hidden" name="student_id" value="{{ student.id }}">
+                                {% if student.is_result_blocked %}
+                                    <button type="submit" name="action" value="unblock"
+                                            class="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 transition">
+                                        Unblock
+                                    </button>
+                                {% else %}
+                                    <button type="submit" name="action" value="block"
+                                            class="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 transition">
+                                        Block
+                                    </button>
+                                {% endif %}
+                            </form>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="4" class="px-6 py-4 text-center text-gray-500">
+                            No students found.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

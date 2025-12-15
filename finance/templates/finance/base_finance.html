@@ -1,0 +1,25 @@
+{% extends "accounts/base.html" %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto p-6">
+
+  <!-- Header with Title and Actions -->
+  <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6">
+    <h1 class="text-2xl font-bold text-{{ school.theme_color }}-600 mb-2 sm:mb-0">
+      {% block title %}Finance{% endblock %}
+    </h1>
+    <div class="flex space-x-2">
+      {% block actions %}{% endblock %}
+    </div>
+  </div>
+
+  <!-- Flash messages -->
+  {% include "partials/messages.html" %}
+
+  <!-- Page Body -->
+  <div class="space-y-6">
+    {% block body %}{% endblock %}
+  </div>
+
+</div>
+{% endblock %}

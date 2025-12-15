@@ -1,0 +1,29 @@
+{% extends 'accounts/base.html' %}
+{% block content %}
+<div class="max-w-5xl mx-auto p-6">
+  <h1 class="text-2xl font-bold mb-4">Class Notes</h1>
+
+  {% if notes %}
+    <ul class="divide-y">
+      {% for note in notes %}
+        <li class="py-3 flex justify-between items-center">
+          <div>
+            <a href="{% url 'students:note_detail' note.pk %}" class="text-indigo-600 font-semibold hover:underline">
+              {{ note.title }}
+            </a>
+            <p class="text-sm text-gray-600">Subject: {{ note.subject }} • Published: {{ note.publish_date|date:"M d, Y" }}</p>
+          </div>
+
+          {% if note.file %}
+            <a href="{{ note.file.url }}" class="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700">
+              Download
+            </a>
+          {% endif %}
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="text-gray-600 mt-4">No notes available for your class yet.</p>
+  {% endif %}
+</div>
+{% endblock %}

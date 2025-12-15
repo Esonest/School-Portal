@@ -1,0 +1,45 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+<div class="max-w-6xl mx-auto p-6 bg-white shadow rounded">
+
+<h2 class="text-2xl font-bold mb-4">School Accountants</h2>
+
+<a href="{% url 'school_admin:accountant_create' school.id %}"
+   class="bg-indigo-600 text-white px-4 py-2 rounded mb-4 inline-block">
+   + Add Accountant
+</a>
+
+<table class="w-full border mt-4">
+<tr class="bg-gray-100">
+    <th class="p-3">Name</th>
+    <th>Email</th>
+    <th>Staff ID</th>
+    <th>Status</th>
+    <th>Actions</th>
+</tr>
+
+{% for a in accountants %}
+<tr class="border-t">
+    <td class="p-3">{{ a.user.get_full_name }}</td>
+    <td>{{ a.user.email }}</td>
+    <td>{{ a.staff_id }}</td>
+    <td>
+        {% if a.is_active %}
+            <span class="text-green-600">Active</span>
+        {% else %}
+            <span class="text-red-600">Inactive</span>
+        {% endif %}
+    </td>
+    <td>
+        <a href="{% url 'school_admin:accountant_update' a.id %}" class="text-blue-600">Edit</a> |
+        <a href="{% url 'school_admin:accountant_toggle' a.id %}" class="text-orange-600">
+            Toggle
+        </a>
+    </td>
+</tr>
+{% empty %}
+<tr><td colspan="5" class="p-4 text-center">No accountants</td></tr>
+{% endfor %}
+</table>
+</div>
+{% endblock %}

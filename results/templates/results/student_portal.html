@@ -1,0 +1,153 @@
+{% load static %}
+{% load custom_filters %}
+
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <title>Student Portal</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>@media print { .no-print { display:none; } }</style>
+</head>
+
+<body class="bg-gray-50 min-h-screen py-8">
+
+  <div class="max-w-4xl mx-auto bg-white p-6 rounded shadow">
+
+    <!-- HEADER -->
+    <div class="flex items-center justify-between mb-6">
+      <div>
+        <h1 class="text-2xl font-bold text-{{ school.theme_color }}-600">Student Portal</h1>
+        <p class="text-sm text-gray-600">Welcome, {{ student.full_name }}</p>
+      </div>
+
+      <div class="text-right">
+        {% if photo_url %}
+          <img src="{{ photo_url }}" class="h-20 w-20 rounded object-cover border" />
+        {% endif %}
+        <div class="text-sm mt-2">{{ student.admission_no }}</div>
+      </div>
+    </div>
+
+    <!-- SCHOOL INFO -->
+    <div class="border rounded p-4 mb-6">
+      <h2 class="font-semibold mb-1">School</h2>
+      {% if school %}
+        <div class="text-sm">{{ school.name }}</div>
+        {% if school.motto %}<div class="text-xs italic">{{ school.motto }}</div>{% endif %}
+      {% endif %}
+    </div>
+
+    <!-- TERM STATUS & PROGRESS BAR -->
+    <div class="mb-6">
+      <h2 class="font-semibold text-lg mb-3">Term Result Status</h2>
+
+      <!-- PROGRESS BAR -->
+      <div class="mb-4">
+        <h3 class="text-sm font-medium text-gray-700 mb-1">Term Completion Progress</h3>
+        <div class="w-full bg-gray-200 rounded-full h-3 overflow-hidden">
+          <div class="h-3 rounded-full transition-all duration-700
+            {% if progress_percent < 50 %} bg-red-500
+            {% elif progress_percent < 100 %} bg-yellow-500
+            {% else %} bg-green-600{% endif %}"
+            style="width: {{ progress_percent }}%;">
+          </div>
+        </div>
+        <div class="mt-1 text-xs text-gray-500">
+          {{ terms_completed }}/3 Terms Completed ({{ progress_percent }}%)
+        </div>
+      </div>
+
+      <!-- TERM STATUS CARDS -->
+      <div class="grid grid-cols-3 gap-4">
+        {% for term in term_list %}
+          <div class="p-4 border rounded bg-gray-50">
+            <div class="font-medium">{{ term.label }}</div>
+            {% if terms_available|dict_get:term.key %}
+              <span class="text-green-700 bg-green-100 px-2 py-1 rounded text-xs">Available</span>
+            {% else %}
+              <span class="text-red-700 bg-red-100 px-2 py-1 rounded text-xs">Not Available</span>
+            {% endif %}
+            <div class="text-xs text-gray-500 mt-1">Subjects: {{ term_counts|get_item:forloop.counter }}</div>
+          </div>
+        {% endfor %}
+      </div>
+    </div>
+
+    <!-- SESSION SELECTOR -->
+<div class="mb-6 no-print">
+  <form method="get" class="flex items-center gap-3">
+    <label class="text-sm font-medium">Select Session:</label>
+
+    <select name="session" onchange="this.form.submit()" class="border rounded px-3 py-2 text-sm">
+      <option value="">-- Select Session --</option>
+
+      {% for s in sessions %}
+        <option value="{{ s }}" {% if selected_session == s %}selected{% endif %}>{{ s }}</option>
+      {% endfor %}
+    </select>
+  </form>
+</div>
+
+
+    <!-- TERM RESULTS LIST -->
+    <div class="mb-6">
+      <h2 class="text-lg font-semibold mb-3">Your Term Results</h2>
+      {% if results %}
+        <div class="grid gap-4">
+          {% for r in results %}
+            <div class="border p-4 rounded flex items-center justify-between bg-gray-50">
+              <div>
+                <div class="font-medium">{{ r.get_term_display }}</div>
+                <div class="text-sm text-gray-500">View or download your academic report for this term.</div>
+              </div>
+              <div class="flex gap-2">
+                {% if r.rep_score_id %}
+                  <a href="{% url 'results:student_view_result' r.rep_score_id %}" class="px-3 py-2 bg-blue-600 text-white rounded no-print">View</a>
+                  <a href="{% url 'results:student_result_download' r.rep_score_id %}" class="px-3 py-2 bg-green-600 text-white rounded no-print">Download PDF</a>
+                {% else %}
+                  <span class="text-sm text-gray-400">No report</span>
+                {% endif %}
+              </div>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p class="text-gray-500">No term results available yet for this session.</p>
+      {% endif %}
+    </div>
+
+    <!-- CUMULATIVE RESULT -->
+    <div class="mt-8 p-4 border rounded bg-blue-50">
+      <h2 class="font-semibold text-lg mb-2">Cumulative Result (Term 1 + Term 2 + Term 3)</h2>
+
+      {% if cumulative_available %}
+        <p class="text-sm text-gray-600 mb-3">View your combined 3-term academic performance.</p>
+
+        <div class="grid grid-cols-2 gap-4 mb-3 text-sm text-gray-700">
+          <div><strong>Overall Total:</strong> {{ overall_total }}</div>
+          <div><strong>Average:</strong> {{ avg_total|floatformat:2 }}</div>
+          {% if best_subject_overall %}<div><strong>Best Subject:</strong> {{ best_subject_overall.subject }} ({{ best_subject_overall.total }})</div>{% endif %}
+          {% if least_subject_overall %}<div><strong>Weakest Subject:</strong> {{ least_subject_overall.subject }} ({{ least_subject_overall.total }})</div>{% endif %}
+        </div>
+
+        <div class="flex gap-3">
+          <a href="{% url 'results:student_cumulative_result' %}" class="px-4 py-2 bg-blue-700 text-white rounded no-print">View Cumulative</a>
+          <a href="{% url 'results:student_cumulative_result_download' %}" class="px-4 py-2 bg-green-700 text-white rounded no-print">Download PDF</a>
+        </div>
+      {% else %}
+        <p class="text-sm text-gray-500">
+          Cumulative result will be available once at least one term result is uploaded.
+        </p>
+      {% endif %}
+    </div>
+
+    <!-- LOGOUT -->
+    <div class="mt-6 no-print">
+      <a href="{% url 'accounts:logout' %}" class="text-sm text-gray-600">Logout</a>
+    </div>
+
+  </div>
+
+</body>
+</html>

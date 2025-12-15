@@ -1,0 +1,70 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}Help - TECH Centre Limited{% endblock %}
+
+{% block content %}
+<section class="bg-cover bg-center h-64 flex flex-col justify-center items-center text-white" style="background-image: url('https://images.unsplash.com/photo-1581091215366-8b39cfe55c19');">
+ <h2 class="text-4xl font-bold drop-shadow-lg">Need Help?</h2>
+ <p class="mt-4 text-lg drop-shadow-lg text-center max-w-2xl">
+  Browse our FAQs or contact support to get assistance with our school management portal.
+ </p>
+</section>
+
+<main class="p-8 max-w-6xl mx-auto">
+ <h2 class="text-2xl font-semibold mb-6 text-center">Frequently Asked Questions (FAQ)</h2>
+
+ <div class="space-y-4" x-data="{ openIndex: null }">
+   {% comment %} FAQ Item 1 {% endcomment %}
+   <div class="bg-white shadow-lg rounded-lg p-4">
+     <button class="w-full flex justify-between items-center text-left font-bold text-lg text-blue-700" @click="openIndex === 1 ? openIndex = null : openIndex = 1">
+       <span><i class="bi bi-question-circle-fill mr-2"></i> How do I subscribe?</span>
+       <i :class="openIndex === 1 ? 'bi bi-chevron-up' : 'bi bi-chevron-down'" class="text-xl"></i>
+     </button>
+     <div x-show="openIndex === 1" x-transition class="mt-2 text-gray-700">
+       Our contacts are on the contact page
+     </div>
+   </div>
+
+   {% comment %} FAQ Item 2 {% endcomment %}
+   <div class="bg-white shadow-lg rounded-lg p-4">
+     <button class="w-full flex justify-between items-center text-left font-bold text-lg text-blue-700" @click="openIndex === 2 ? openIndex = null : openIndex = 2">
+       <span><i class="bi bi-question-circle-fill mr-2"></i> How do I access student results?</span>
+       <i :class="openIndex === 2 ? 'bi bi-chevron-up' : 'bi bi-chevron-down'" class="text-xl"></i>
+     </button>
+     <div x-show="openIndex === 2" x-transition class="mt-2 text-gray-700">
+       Login to your student portal and navigate to the Results section. You can view and download all your termly and cumulative results there.
+     </div>
+   </div>
+
+   {% comment %} FAQ Item 3 {% endcomment %}
+   <div class="bg-white shadow-lg rounded-lg p-4">
+     <button class="w-full flex justify-between items-center text-left font-bold text-lg text-blue-700" @click="openIndex === 3 ? openIndex = null : openIndex = 3">
+       <span><i class="bi bi-question-circle-fill mr-2"></i> How do teachers submit assignments or grades?</span>
+       <i :class="openIndex === 3 ? 'bi bi-chevron-up' : 'bi bi-chevron-down'" class="text-xl"></i>
+     </button>
+     <div x-show="openIndex === 3" x-transition class="mt-2 text-gray-700">
+       Teachers can login to their portal, go to the Assignment or Result sections, and upload assignments or input scores directly into the system.
+     </div>
+   </div>
+
+   {% comment %} FAQ Item 4 {% endcomment %}
+   <div class="bg-white shadow-lg rounded-lg p-4">
+     <button class="w-full flex justify-between items-center text-left font-bold text-lg text-blue-700" @click="openIndex === 4 ? openIndex = null : openIndex = 4">
+       <span><i class="bi bi-question-circle-fill mr-2"></i> How Do Schools access Free Trial?</span>
+       <i :class="openIndex === 4 ? 'bi bi-chevron-up' : 'bi bi-chevron-down'" class="text-xl"></i>
+     </button>
+     <div x-show="openIndex === 4" x-transition class="mt-2 text-gray-700">
+       Schools can access our free one term trial by choosing which of the portals they want to access for a maximum period of one term
+     </div>
+   </div>
+ </div>
+
+ <div class="mt-12 text-center">
+   <h2 class="text-2xl font-semibold mb-4">Need More Help?</h2>
+   <p class="mb-6 text-gray-700">If your question isn't answered above, please reach out to our support team directly.</p>
+   <a href="{% url 'accounts:contact' %}" class="bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-800 transition">
+     Contact Support
+   </a>
+ </div>
+</main>
+{% endblock %}

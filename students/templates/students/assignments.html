@@ -1,0 +1,52 @@
+<table class="table-auto w-full border">
+  <thead>
+    <tr class="bg-gray-200">
+      <th class="p-2 text-left">Title</th>
+      <th class="p-2 text-left">Deadline</th>
+      <th class="p-2 text-left">Status</th>
+      <th class="p-2 text-left">Action</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for a in assignments %}
+      <tr class="border-b hover:bg-gray-50">
+        <td class="p-2">{{ a.title }}</td>
+
+        <td class="p-2">
+          {% if a.due_date %}
+            {% if a.is_overdue %}
+              <span class="text-red-600 font-semibold">Overdue ({{ a.due_date|date:"M d, Y" }})</span>
+            {% elif a.is_due_soon %}
+              <span class="text-yellow-600 font-semibold">Due Soon ({{ a.due_date|date:"M d, Y" }})</span>
+            {% else %}
+              <span class="text-gray-700">{{ a.due_date|date:"M d, Y" }}</span>
+            {% endif %}
+          {% else %}
+            <span class="text-gray-400">No deadline</span>
+          {% endif %}
+        </td>
+
+        <td class="p-2">
+          {% if a.submitted %}
+            <span class="text-green-600 font-semibold">Submitted</span>
+          {% else %}
+            <span class="text-red-500 font-semibold">Pending</span>
+          {% endif %}
+        </td>
+
+     {% if not a.is_overdue and a.due_date %}
+  <small class="text-gray-500">{{ a.time_left }}</small>
+{% endif %}
+
+
+        <td class="p-2">
+          <a href="{% url 'assignments:student_detail' a.pk %}" class="text-blue-600 hover:underline">
+            View
+          </a>
+        </td>
+      </tr>
+    {% empty %}
+      <tr><td colspan="4" class="text-center p-4 text-gray-500">No assignments found</td></tr>
+    {% endfor %}
+  </tbody>
+</table>

@@ -1,0 +1,30 @@
+{% extends "accounts/base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="max-w-2xl mx-auto mt-10 bg-white shadow-lg rounded-xl p-8">
+
+  <h2 class="text-2xl font-bold mb-6 text-red-600">Delete School Admin</h2>
+
+  <p class="mb-4">
+    Are you sure you want to delete the school admin 
+    <span class="font-semibold">{{ admin_user.first_name }} {{ admin_user.last_name }}</span> 
+    (username: <span class="font-mono">{{ admin_user.username }}</span>)?
+  </p>
+
+  <form method="post">
+    {% csrf_token %}
+    <div class="flex justify-between items-center">
+      <a href="{% url 'superadmin:admin_list' %}" 
+         class="bg-gray-300 text-gray-800 px-4 py-2 rounded-lg hover:bg-gray-400">
+        Cancel
+      </a>
+      <button type="submit" 
+              class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700">
+        Confirm Delete
+      </button>
+    </div>
+  </form>
+
+</div>
+{% endblock %}

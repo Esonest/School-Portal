@@ -1,0 +1,103 @@
+{% extends "accounts/base.html" %}
+{% load custom_filters %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto py-10">
+
+    <h1 class="text-3xl font-bold mb-6 text-{{ school.theme_color }}-600">
+        {{ school.name }} — Grade & Comment Settings Overview
+    </h1>
+
+    <!-- Grades Table -->
+    <div class="bg-white p-6 shadow rounded mb-10">
+        <h2 class="text-2xl font-semibold mb-4 text-blue-700">Grades</h2>
+
+        <table class="w-full border border-gray-300 rounded overflow-hidden">
+            <thead class="bg-gray-100">
+                <tr>
+                    <th class="border px-4 py-2 text-left">Grade</th>
+                    <th class="border px-4 py-2 text-left">Minimum Score</th>
+                    <th class="border px-4 py-2 text-left">Grade Interpretation</th> <!-- NEW -->
+                </tr>
+            </thead>
+            <tbody>
+                {% for grade, score in grades.items %}
+                <tr class="hover:bg-gray-50">
+                    <td class="border px-4 py-2 font-semibold">{{ grade }}</td>
+                    <td class="border px-4 py-2">{{ score }}</td>
+                    <td class="border px-4 py-2">
+                        {% if grade_interpretations %}
+                            {{ grade_interpretations|get_item:grade }}
+                        {% else %}
+                            N/A
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Principal Comments -->
+    <div class="bg-white p-6 shadow rounded mb-10">
+        <h2 class="text-2xl font-semibold mb-4 text-green-700">Principal Comments</h2>
+
+        {% if principal_comments %}
+        <table class="w-full border border-gray-300 rounded overflow-hidden">
+            <thead class="bg-gray-100">
+                <tr>
+                    <th class="border px-4 py-2">Grade</th>
+                    <th class="border px-4 py-2">Comment</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for grade, comment in principal_comments.items %}
+                <tr class="hover:bg-gray-50">
+                    <td class="border px-4 py-2 font-semibold">{{ grade }}</td>
+                    <td class="border px-4 py-2">{{ comment }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+            <p class="text-gray-600 italic">No principal comments added.</p>
+        {% endif %}
+    </div>
+
+    <!-- Teacher Comments -->
+    <div class="bg-white p-6 shadow rounded">
+        <h2 class="text-2xl font-semibold mb-4 text-yellow-700">Teacher Comments</h2>
+
+        {% if teacher_comments %}
+        <table class="w-full border border-gray-300 rounded overflow-hidden">
+            <thead class="bg-gray-100">
+                <tr>
+                    <th class="border px-4 py-2">Grade</th>
+                    <th class="border px-4 py-2">Comment</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for grade, comment in teacher_comments.items %}
+                <tr class="hover:bg-gray-50">
+                    <td class="border px-4 py-2 font-semibold">{{ grade }}</td>
+                    <td class="border px-4 py-2">{{ comment }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+            <p class="text-gray-600 italic">No teacher comments added.</p>
+        {% endif %}
+    </div>
+
+    <!-- Back & Edit Buttons -->
+    <div class="mt-8 flex gap-4">
+        <a href="{% url 'results:grade_settings' school.id %}"
+           class="bg-blue-600 text-white px-6 py-3 rounded shadow hover:bg-blue-700">Edit Settings</a>
+
+        <a href="{% url 'school_admin:school_admin_dashboard' school.id %}"
+           class="bg-gray-500 text-white px-6 py-3 rounded shadow hover:bg-gray-600">Back</a>
+    </div>
+
+</div>
+{% endblock %}

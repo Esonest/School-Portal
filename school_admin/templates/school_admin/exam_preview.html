@@ -1,0 +1,69 @@
+{% extends "accounts/base.html" %}
+
+{% block content %}
+<div class="p-6">
+
+    <!-- Header -->
+    <div class="mb-6">
+        <h1 class="text-2xl font-bold text-{{ school.theme_color }}-800">
+            Exam Preview – {{ exam.title }}
+        </h1>
+        <p class="text-gray-600">{{ exam.school_class }}</p>
+    </div>
+
+    <!-- Questions List -->
+    <div class="bg-white p-6 rounded-lg shadow">
+
+        {% if questions %}
+            <ol class="space-y-6 list-decimal ml-5">
+                {% for q in questions %}
+                <li class="border-b pb-4">
+
+                    <!-- Question Text -->
+                    <p class="font-semibold text-gray-900 mb-3">
+                        {{ q.text }}
+                    </p>
+
+                    <!-- Options -->
+                    <div class="space-y-2">
+                        <p class="text-gray-700">
+                            A. {{ q.option_a }}
+                            {% if q.correct_option == 'A' %}
+                                <span class="text-green-700 font-bold">✔ Correct</span>
+                            {% endif %}
+                        </p>
+
+                        <p class="text-gray-700">
+                            B. {{ q.option_b }}
+                            {% if q.correct_option == 'B' %}
+                                <span class="text-green-700 font-bold">✔ Correct</span>
+                            {% endif %}
+                        </p>
+
+                        <p class="text-gray-700">
+                            C. {{ q.option_c }}
+                            {% if q.correct_option == 'C' %}
+                                <span class="text-green-700 font-bold">✔ Correct</span>
+                            {% endif %}
+                        </p>
+
+                        <p class="text-gray-700">
+                            D. {{ q.option_d }}
+                            {% if q.correct_option == 'D' %}
+                                <span class="text-green-700 font-bold">✔ Correct</span>
+                            {% endif %}
+                        </p>
+                    </div>
+
+                </li>
+                {% endfor %}
+            </ol>
+
+        {% else %}
+            <p class="text-gray-500">No questions have been added to this exam yet.</p>
+        {% endif %}
+
+    </div>
+
+</div>
+{% endblock %}

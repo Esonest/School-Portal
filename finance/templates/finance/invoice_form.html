@@ -1,0 +1,79 @@
+{% extends "finance/base_finance.html" %}
+{% load static %}
+{% block content %}
+<div class="max-w-3xl mx-auto bg-white p-6 rounded shadow">
+    <h2 class="text-2xl font-bold mb-4">Create Invoice</h2>
+    <form method="POST" id="invoice-form" class="space-y-4">
+        {% csrf_token %}
+        
+        <!-- School Class -->
+        <div>
+            <label class="block font-medium mb-1">{{ form.school_class.label }}</label>
+            {{ form.school_class }}
+            {% if form.school_class.errors %}
+                <p class="text-red-500 text-sm mt-1">{{ form.school_class.errors }}</p>
+            {% endif %}
+        </div>
+
+        <!-- Student -->
+        <div>
+            <label class="block font-medium mb-1">{{ form.student.label }}</label>
+            {{ form.student }}
+            {% if form.student.errors %}
+                <p class="text-red-500 text-sm mt-1">{{ form.student.errors }}</p>
+            {% endif %}
+        </div>
+
+        <!-- Other fields -->
+        <div>
+            <label class="block font-medium mb-1">{{ form.title.label }}</label>
+            {{ form.title }}
+        </div>
+        <div>
+            <label class="block font-medium mb-1">{{ form.total_amount.label }}</label>
+            {{ form.total_amount }}
+        </div>
+        <div>
+            <label class="block font-medium mb-1">{{ form.due_date.label }}</label>
+            {{ form.due_date }}
+        </div>
+        <div>
+            <label class="block font-medium mb-1">{{ form.session.label }}</label>
+            {{ form.session }}
+        </div>
+        <div>
+            <label class="block font-medium mb-1">{{ form.term.label }}</label>
+            {{ form.term }}
+        </div>
+
+        <div>
+            <button type="submit" class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">
+                Save Invoice
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+    // Dynamic student filtering based on selected class
+    const schoolClassSelect = document.getElementById("id_school_class");
+    const studentSelect = document.getElementById("id_student");
+
+    schoolClassSelect.addEventListener("change", function() {
+        const classId = this.value;
+
+        // Fetch students via AJAX endpoint (create in views)
+        fetch(`/finance/students-by-class/${classId}/`)
+            .then(response => response.json())
+            .then(data => {
+                studentSelect.innerHTML = "";
+                data.forEach(student => {
+                    const option = document.createElement("option");
+                    option.value = student.id;
+                    option.textContent = student.name;
+                    studentSelect.appendChild(option);
+                });
+            });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,26 @@
+{% extends "finance/base_finance.html" %}
+{% block title %}Invoice Details{% endblock %}
+
+{% block body %}
+<div class="bg-white shadow rounded p-6 max-w-3xl">
+  <dl class="grid grid-cols-2 gap-4 text-sm">
+    <div><dt class="font-semibold">Student</dt>{{ invoice.student }}</div>
+    <div><dt class="font-semibold">Class</dt>{{ invoice.school_class }}</div>
+    <div><dt class="font-semibold">Amount</dt>{{ invoice.total_amount }}</div>
+    <div><dt class="font-semibold">Paid</dt>{{ invoice.amount_paid }}</div>
+    <div><dt class="font-semibold">Session</dt>{{ invoice.session }}</div>
+    <div><dt class="font-semibold">Term</dt>{{ invoice.get_term_display }}</div>
+  </dl>
+
+  <div class="mt-6 flex gap-3">
+    <a href="{% url 'finance:invoice_update' invoice.id %}"
+       class="px-4 py-2 bg-green-600 text-white rounded">
+       Edit
+    </a>
+    <a href="{% url 'finance:invoice_delete' invoice.id %}"
+       class="px-4 py-2 bg-red-600 text-white rounded">
+       Delete
+    </a>
+  </div>
+</div>
+{% endblock %}

@@ -1,0 +1,24 @@
+{% extends 'accounts/base.html' %}
+{% block content %}
+<h1 class="text-xl font-bold mb-4">Attendance Dashboard</h1>
+<p>Welcome {{ teacher.user.get_full_name }} ({{ teacher.staff_id }})</p>
+
+<div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mt-4">
+
+  <div class="bg-white p-4 rounded shadow">
+    <h2 class="font-semibold mb-2">📘 Mark Attendance</h2>
+
+    {% if classes %}
+      {% for class in classes %}
+        <a href="{% url 'attendance:mark_attendance' class.id %}" 
+           class="block bg-indigo-500 hover:bg-indigo-600 text-white px-3 py-2 rounded mb-2 text-center transition">
+           {{ class.name }}
+        </a>
+      {% endfor %}
+    {% else %}
+      <p class="text-gray-500 italic">No classes assigned</p>
+    {% endif %}
+  </div>
+
+</div>
+{% endblock %}

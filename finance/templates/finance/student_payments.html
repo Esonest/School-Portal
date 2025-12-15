@@ -1,0 +1,45 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+
+<div class="max-w-7xl mx-auto px-4 py-8">
+  <h2 class="text-3xl font-bold mb-6">💳 Payment History — {{ student }}</h2>
+
+  <div class="bg-white rounded-2xl shadow overflow-x-auto">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-100">
+        <tr>
+          <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase">Invoice</th>
+          <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase">Amount</th>
+          <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase">Method</th>
+          <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase">Date</th>
+          <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {% for payment in payments %}
+        <tr class="hover:bg-gray-50">
+          <td class="px-6 py-4">{{ payment.invoice.title }}</td>
+          <td class="px-6 py-4">₦{{ payment.amount|floatformat:2 }}</td>
+          <td class="px-6 py-4">{{ payment.get_payment_method_display }}</td>
+          <td class="px-6 py-4">{{ payment.payment_date }}</td>
+          <td class="px-6 py-4">
+            <a href="{% url 'finance:payment_receipt' payment.id %}" class="text-indigo-600 hover:underline">Receipt</a>
+            |
+            <a href="{% url 'finance:payment_edit' payment.id %}" class="text-yellow-600 hover:underline">Edit</a>
+            |
+            <a href="{% url 'finance:payment_reverse' payment.id %}" class="text-red-600 hover:underline">Reverse</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5" class="px-6 py-10 text-center text-gray-500">
+            No payments found.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+
+{% endblock %}

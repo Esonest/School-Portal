@@ -1,0 +1,57 @@
+{% extends 'accounts/base.html' %}
+
+{% block title %}Home - TECHCENTER School Portal{% endblock %}
+
+{% block content %}
+<section class="bg-cover bg-center h-72 flex flex-col justify-center items-center text-white" style="background-image: url('https://images.unsplash.com/photo-1524995997946-a1c2e315a42f');">
+ <h2 class="text-4xl font-bold drop-shadow-lg">Empowering Education Through Technology</h2>
+ <p class="mt-4 text-lg drop-shadow-lg text-center max-w-3xl">
+  TECHCENTER School Portal provides modern digital solutions for schools to manage results, finance, attendance, CBT, and more.
+ </p>
+</section>
+
+<main class="p-8 max-w-7xl mx-auto">
+ <h2 class="text-2xl font-semibold mb-6 text-center">Welcome to TECHCENTER School Management Portal</h2>
+ <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
+   <a href="{% url 'accounts:login' %}" class="bg-white shadow-lg rounded-lg p-6 text-center hover:bg-blue-50 transition">
+     <i class="bi bi-person-circle text-5xl mb-4"></i>
+     <h3 class="text-xl font-bold">Student Portal</h3>
+   </a>
+
+   <a href="{% url 'accounts:login' %}" class="bg-white shadow-lg rounded-lg p-6 text-center hover:bg-blue-50 transition">
+     <i class="bi bi-mortarboard text-5xl mb-4"></i>
+     <h3 class="text-xl font-bold">Teacher Portal</h3>
+   </a>
+
+   <a href="{% url 'accounts:login' %}" class="bg-white shadow-lg rounded-lg p-6 text-center hover:bg-blue-50 transition">
+     <i class="bi bi-cash-stack text-5xl mb-4"></i>
+     <h3 class="text-xl font-bold">Finance Portal</h3>
+   </a>
+
+   <a href="{% url 'accounts:login' %}" class="bg-white shadow-lg rounded-lg p-6 text-center hover:bg-blue-50 transition">
+     <i class="bi bi-bar-chart text-5xl mb-4"></i>
+     <h3 class="text-xl font-bold">Result Portal</h3>
+   </a>
+
+   <a href="{% url 'accounts:login' %}" class="bg-white shadow-lg rounded-lg p-6 text-center hover:bg-blue-50 transition">
+     <i class="bi bi-pencil-square text-5xl mb-4"></i>
+     <h3 class="text-xl font-bold">CBT Exam Portal</h3>
+   </a>
+
+   <a href="{% url 'accounts:login' %}" class="bg-white shadow-lg rounded-lg p-6 text-center hover:bg-blue-50 transition">
+     <i class="bi bi-journal-bookmark text-5xl mb-4"></i>
+     <h3 class="text-xl font-bold">Notes Portal</h3>
+   </a>
+
+   <a href="{% url 'accounts:login' %}" class="bg-white shadow-lg rounded-lg p-6 text-center hover:bg-blue-50 transition">
+     <i class="bi bi-ui-checks-grid text-5xl mb-4"></i>
+     <h3 class="text-xl font-bold">Assignment Portal</h3>
+   </a>
+
+   <a href="{% url 'accounts:login' %}" class="bg-white shadow-lg rounded-lg p-6 text-center hover:bg-blue-50 transition">
+     <i class="bi bi-clipboard-check text-5xl mb-4"></i>
+     <h3 class="text-xl font-bold">Attendance Portal</h3>
+   </a>
+ </div>
+</main>
+{% endblock %}

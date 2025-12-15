@@ -1,0 +1,9 @@
+{% extends 'accounts/base.html' %}
+{% block content %}
+<h2>My Classes</h2>
+<ul>
+  {% for c in classes %}
+    <li><a href="{% url 'teachers:class_students' class_slug=c.slug %}">{{ c.name }}</a></li>
+  {% endfor %}
+</ul>
+{% endblock %}

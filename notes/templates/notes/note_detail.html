@@ -1,0 +1,14 @@
+{% extends 'accounts/base.html' %}
+{% block content %}
+<div class="max-w-3xl mx-auto p-6 bg-white rounded shadow">
+  <h1 class="text-2xl font-bold">{{ note.title }}</h1>
+  <p class="text-sm text-gray-600">{{ note.subject }} · {{ note.publish_date }}</p>
+  <div class="mt-4">{{ note.content|linebreaks }}</div>
+
+  {% if note.file %}
+    <div class="mt-4">
+      <a class="px-3 py-2 bg-indigo-600 text-white rounded" href="{% url 'notes:download' pk=note.pk %}">Download Attachment</a>
+    </div>
+  {% endif %}
+</div>
+{% endblock %}

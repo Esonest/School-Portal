@@ -1,0 +1,291 @@
+{% extends 'accounts/base.html' %}
+{% load custom_filters %}
+{% block content %}
+<link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+
+<div class="max-w-7xl mx-auto p-6">
+  <!-- messages -->
+  {% if messages %}
+    <div class="mb-4">
+      {% for message in messages %}
+        <div class="p-3 rounded {{ message.tags|default:'bg-green-50 border-green-400 text-green-800' }}">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
+
+  <!-- Toast container -->
+  <div id="toast-container" class="fixed top-5 right-5 space-y-2 z-50"></div>
+
+  <div class="flex items-center justify-between mb-4">
+    <form method="get" class="flex gap-3 items-end">
+      <input type="hidden" name="page" value="{{ page_obj.number }}">
+
+      <!-- SESSION selector -->
+      <select name="session" onchange="this.form.submit()" class="px-3 py-2 border rounded">
+        <option value="">-- Select session --</option>
+        {% for ses in session_choices %}
+          <option value="{{ ses }}" {% if selected_session == ses %}selected{% endif %}>{{ ses }}</option>
+        {% endfor %}
+      </select>
+
+      <!-- Class selector -->
+      <select name="class_id" onchange="this.form.submit()" class="px-3 py-2 border rounded">
+        <option value="">-- Select class --</option>
+        {% for cls in classes %}
+          <option value="{{ cls.id }}" {% if selected_class and selected_class.id == cls.id %}selected{% endif %}>
+            {{ cls.name }}
+          </option>
+        {% endfor %}
+      </select>
+
+      <!-- Subject selector -->
+      <!-- Subject selector (RESTRICTED to teacher subjects) -->
+<select name="subject_id" multiple size="4" class="px-3 py-2 border rounded">
+  {% for subj in request.user.teacher_profile.subjects.all %}
+    <option value="{{ subj.id }}"
+      {% if subj.id in selected_subject_ids %}selected{% endif %}>
+      {{ subj.name }}
+    </option>
+  {% endfor %}
+</select>
+
+
+      <!-- Term selector -->
+      <select name="term" onchange="this.form.submit()" class="px-3 py-2 border rounded">
+        <option value="">-- Select term --</option>
+        {% for key, value in term_choices.items %}
+          <option value="{{ key }}" {% if selected_term == key %}selected{% endif %}>{{ value }}</option>
+        {% endfor %}
+      </select>
+
+      <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Load</button>
+    </form>
+  </div>
+
+  {% if not selected_class %}
+    <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4">Please select a class to load students.</div>
+  {% elif not selected_subjects %}
+    <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4">Please select at least one subject.</div>
+  {% else %}
+    <div class="bg-white shadow rounded overflow-x-auto">
+      <form method="post" id="bulk-scores-form">
+        {% csrf_token %}
+        <input type="hidden" name="class_id" value="{{ selected_class.id }}">
+        <input type="hidden" name="session" value="{{ selected_session }}">
+        {% for subj in selected_subjects %}
+          <input type="hidden" name="subject_id" value="{{ subj.id }}">
+        {% endfor %}
+
+        <table class="w-full table-auto">
+          <thead class="bg-gray-100">
+            <tr>
+              <th class="p-3 text-left">#</th>
+              <th class="p-3 text-left">Student</th>
+              {% for subj in selected_subjects %}
+                {% if is_ca_enabled %}
+                  <th class="p-3 text-center" colspan="3">{{ subj.name }}</th>
+                {% else %}
+                  <th class="p-3 text-center" colspan="2">{{ subj.name }}</th>
+                {% endif %}
+              {% endfor %}
+            </tr>
+            <tr>
+              <th></th>
+              <th></th>
+              {% for subj in selected_subjects %}
+                {% if is_ca_enabled %}
+                  <th class="p-2 text-center">CA<br><span class="text-xs text-gray-500">({{ ca_max }})</span></th>
+                {% endif %}
+                <th class="p-2 text-center">Exam<br><span class="text-xs text-gray-500">({{ exam_max }})</span></th>
+                <th class="p-2 text-center">Total / Delete</th>
+              {% endfor %}
+            </tr>
+          </thead>
+
+          <tbody>
+            {% for student in students_page.object_list %}
+              <tr class="border-b">
+                <td class="p-3 text-sm text-gray-700">{{ forloop.counter0|add:page_obj.start_index }}</td>
+                <td class="p-3">
+                  <div class="font-medium">{{ student.full_name }}</div>
+                  <div class="text-sm text-gray-500">{{ student.school_class.name }}</div>
+                </td>
+
+                {% for subj in selected_subjects %}
+                  {% with score=scores_map|get_item:student.id|get_item:subj.id %}
+                    {% if is_ca_enabled %}
+                      <td class="p-2 text-center align-middle">
+                        <input type="number"
+                               name="ca_{{ student.id }}_{{ subj.id }}"
+                               id="ca_{{ student.id }}_{{ subj.id }}"
+                               value="{{ score.ca|default_if_none:0 }}"
+                               min="0" max="{{ ca_max }}" step="1"
+                               class="ca-input w-20 px-2 py-1 border rounded text-center"
+                               data-student="{{ student.id }}" data-subject="{{ subj.id }}">
+                      </td>
+                    {% endif %}
+
+                    <td class="p-2 text-center align-middle">
+                      <input type="number"
+                             name="exam_{{ student.id }}_{{ subj.id }}"
+                             id="exam_{{ student.id }}_{{ subj.id }}"
+                             value="{{ score.exam|default_if_none:0 }}"
+                             min="0" max="{{ exam_max }}" step="1"
+                             class="exam-input w-20 px-2 py-1 border rounded text-center"
+                             data-student="{{ student.id }}" data-subject="{{ subj.id }}">
+                    </td>
+
+                    <td class="p-2 text-center align-middle" id="score-cell-{{ student.id }}-{{ subj.id }}">
+                      <div class="flex flex-col items-center space-y-1">
+                        <input readonly
+                               class="total-input w-24 px-2 py-1 bg-gray-50 border rounded text-center"
+                               id="total_{{ student.id }}_{{ subj.id }}"
+                               value="{% if is_ca_enabled %}{{ score.ca|default_if_none:0|add:score.exam|default_if_none:0 }}{% else %}{{ score.exam|default_if_none:0 }}{% endif %}">
+
+                        <!-- DELETE button with trash icon -->
+                        <button type="button"
+                                class="delete-score-btn bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded flex items-center gap-1"
+                                data-student="{{ student.id }}"
+                                data-subject="{{ subj.id }}">
+                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5-4h4m-4 0a1 1 0 00-1 1v1h6V4a1 1 0 00-1-1m-4 0h4"/>
+                          </svg>
+                          Delete
+                        </button>
+                      </div>
+                    </td>
+                  {% endwith %}
+                {% endfor %}
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+
+        <div class="flex justify-between items-center mt-4 p-4">
+          <div>
+            <button type="submit" name="save" class="bg-yellow-500 text-white px-4 py-2 rounded mr-2">Save & Continue Later</button>
+            <button type="submit" name="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Submit Scores</button>
+          </div>
+
+          <div class="flex items-center gap-3">
+            <span>Page {{ page_obj.number }} of {{ paginator.num_pages }}</span>
+            <div class="flex items-center gap-1">
+              {% if page_obj.has_previous %}
+                <a href="?class_id={{ selected_class.id }}{% for sid in selected_subject_ids %}&subject_id={{ sid }}{% endfor %}&page={{ page_obj.previous_page_number }}" class="px-2 py-1 border rounded">Previous</a>
+              {% endif %}
+              {% if page_obj.has_next %}
+                <a href="?class_id={{ selected_class.id }}{% for sid in selected_subject_ids %}&subject_id={{ sid }}{% endfor %}&page={{ page_obj.next_page_number }}" class="px-2 py-1 border rounded">Next</a>
+              {% endif %}
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  {% endif %}
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  const CA_MAX = {{ ca_max|default_if_none:40 }};
+  const EXAM_MAX = {{ exam_max|default_if_none:60 }};
+  const IS_CA_ENABLED = {{ is_ca_enabled|yesno:"true,false" }};
+
+  function calcTotal(student, subject) {
+    const caInput = document.getElementById(`ca_${student}_${subject}`);
+    const examInput = document.getElementById(`exam_${student}_${subject}`);
+    const totalInput = document.getElementById(`total_${student}_${subject}`);
+    if (!totalInput) return;
+    const ca = (caInput && IS_CA_ENABLED) ? (parseFloat(caInput.value) || 0) : 0;
+    const exam = examInput ? (parseFloat(examInput.value) || 0) : 0;
+    totalInput.value = ca + exam;
+  }
+
+  document.querySelectorAll('.ca-input, .exam-input').forEach(function(input) {
+    input.addEventListener('input', function() {
+      const student = this.dataset.student;
+      const subject = this.dataset.subject;
+      calcTotal(student, subject);
+    });
+  });
+
+  document.querySelectorAll('.exam-input').forEach(function(input) {
+    const student = input.dataset.student;
+    const subject = input.dataset.subject;
+    calcTotal(student, subject);
+  });
+
+  // DELETE button AJAX with toast
+  function getCookie(name) {
+    let cookieValue = null;
+    if (document.cookie && document.cookie !== '') {
+      const cookies = document.cookie.split(';');
+      for (let cookie of cookies) {
+        cookie = cookie.trim();
+        if (cookie.startsWith(name + '=')) {
+          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          break;
+        }
+      }
+    }
+    return cookieValue;
+  }
+  const csrftoken = getCookie('csrftoken');
+
+  function showToast(message, type='success') {
+    const container = document.getElementById('toast-container');
+    if (!container) return;
+    const toast = document.createElement('div');
+    toast.className = `px-4 py-2 rounded shadow text-white ${type==='success' ? 'bg-green-500' : 'bg-red-500'} animate-fadein`;
+    toast.textContent = message;
+    container.appendChild(toast);
+    setTimeout(() => {
+      toast.classList.add('opacity-0');
+      setTimeout(() => toast.remove(), 600);
+    }, 2000);
+  }
+
+  document.querySelectorAll('.delete-score-btn').forEach(button => {
+    button.addEventListener('click', function() {
+      const studentId = this.dataset.student;
+      const subjectId = this.dataset.subject;
+      const cell = document.getElementById(`score-cell-${studentId}-${subjectId}`);
+      const url = `{% url 'results:delete_score' 0 0 %}`.replace('/0/0/', `/${studentId}/${subjectId}/`);
+
+      if (!confirm('Are you sure you want to delete this score?')) return;
+
+      fetch(url, {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': csrftoken,
+          'Accept': 'application/json',
+        },
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (data.status === 'success') {
+          if (cell) {
+            cell.style.transition = 'opacity 0.6s ease';
+            cell.style.opacity = '0';
+            setTimeout(() => cell.remove(), 600);
+          }
+          showToast('Score deleted successfully!');
+        } else {
+          showToast(data.message || 'Could not delete score.', 'error');
+        }
+      })
+      .catch(error => {
+        console.error('Delete error:', error);
+        showToast('Network error. Please try again.', 'error');
+      });
+    });
+  });
+});
+</script>
+
+<style>
+@keyframes fadein { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+.animate-fadein { animation: fadein 0.3s ease forwards; }
+</style>
+{% endblock %}

@@ -1,0 +1,17 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Students in {{ class.name }}</h2>
+<table>
+  <tr><th>Admission</th><th>Name</th><th>Actions</th></tr>
+  {% for s in students %}
+    <tr>
+      <td>{{ s.admission_no }}</td>
+      <td>{{ s.user.get_full_name }}</td>
+      <td>
+        <a href="{% url 'results:generate' student_id=s.id exam_id=1 %}">Generate Result (example)</a>
+      </td>
+    </tr>
+  {% endfor %}
+</table>
+{% endblock %}
+```

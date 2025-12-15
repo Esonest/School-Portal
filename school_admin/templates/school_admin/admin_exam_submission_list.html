@@ -1,0 +1,79 @@
+{% extends "accounts/base.html" %}
+{% load static %}
+
+{% block content %}
+<div class="p-6">
+
+    <div class="flex items-center justify-between mb-6">
+        <h1 class="text-2xl font-bold text-{{ school.theme_color }}-600">
+            {% if exam %}
+                Submissions for "{{ exam.title }}"
+            {% else %}
+                All CBT Submissions - {{ school.name }}
+            {% endif %}
+        </h1>
+
+        <div class="flex gap-3">
+            <!-- PRINT BUTTON -->
+            <button onclick="window.print()" 
+                class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">
+                Print
+            </button>
+
+        </div>
+    </div>
+
+    <div class="overflow-x-auto">
+        <table class="w-full border border-gray-300 text-sm text-left">
+            <thead class="bg-gray-100">
+                <tr>
+                    <th class="p-2 border">Student</th>
+                    <th class="p-2 border">Exam</th>
+                    <th class="p-2 border">Score</th>
+                    <th class="p-2 border">Correct</th>
+                    <th class="p-2 border">Wrong</th>
+                    <th class="p-2 border">Percentage</th>
+                    <th class="p-2 border">Status</th>
+                    <th class="p-2 border">Actions</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for row in submissions %}
+                    {% if row.student.school %}
+                        <tr class="border hover:bg-gray-50">
+                            <td class="p-2 border">{{ row.student.full_name }}</td>
+                            <td class="p-2 border">{{ row.exam.title }}</td>
+                            <td class="p-2 border">{{ row.score }}</td>
+                            <td class="p-2 border">{{ row.correct_answers }}</td>
+                            <td class="p-2 border">{{ row.wrong_answers }}</td>
+                            <td class="p-2 border">{{ row.percentage }}%</td>
+                            <td class="p-2 border">
+                                <span class="px-2 py-1 rounded text-white 
+                                    {% if row.status == 'Pass' %}bg-green-600
+                                    {% elif row.status == 'Fail' %}bg-red-600
+                                    {% else %}bg-gray-500{% endif %}">
+                                    {{ row.status }}
+                                </span>
+                            </td>
+                            <td class="p-2 border">
+                                <a href="{% url 'school_admin:submission_detail' row.student.school.id row.exam.id row.id %}" 
+                                   class="text-blue-600 hover:underline">
+                                   View
+                                </a>
+                            </td>
+                        </tr>
+                    {% endif %}
+                {% empty %}
+                    <tr>
+                        <td colspan="8" class="text-center p-4 text-gray-500">
+                            No submissions found.
+                        </td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+</div>
+{% endblock %}

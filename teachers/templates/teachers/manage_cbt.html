@@ -1,0 +1,9 @@
+{% extends 'accounts/base.html' %}
+{% block content %}
+<h2>CBT Exams</h2>
+<ul>
+  {% for e in exams %}
+    <li>{{ e.title }} - {{ e.term }} {{ e.session }} - <a href="#">Manage Questions</a></li>
+  {% endfor %}
+</ul>
+{% endblock %}

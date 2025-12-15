@@ -1,0 +1,33 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+
+<div class="max-w-xl mx-auto bg-white shadow-lg rounded-xl p-8 mt-10">
+    <h2 class="text-2xl font-bold mb-6">{{ title }}</h2>
+
+    <form method="POST">
+        {% csrf_token %}
+        
+        <div class="space-y-4">
+            <div>
+                <label class="font-semibold">Subject Name</label>
+                {{ form.name }}
+            </div>
+
+            <div>
+                <label class="font-semibold">School</label>
+                {{ form.school }}
+            </div>
+        </div>
+
+        <div class="flex justify-between mt-6">
+            <a href="{% url 'superadmin:subject_list' %}" class="px-4 py-2 bg-gray-200 rounded-lg hover:bg-gray-300">
+                Cancel
+            </a>
+            <button class="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                Save
+            </button>
+        </div>
+    </form>
+</div>
+
+{% endblock %}

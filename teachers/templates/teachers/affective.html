@@ -1,0 +1,20 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Affective Ratings - {{ exam.title }}</h2>
+<form method="post">{% csrf_token %}
+  {{ form.as_p }}
+  <button type="submit">Save</button>
+</form>
+<h3>Existing Records</h3>
+<table>
+  <tr><th>Student</th><th>Behaviour</th><th>Punctuality</th><th>Neatness</th></tr>
+  {% for r in records %}
+    <tr>
+      <td>{{ r.student }}</td>
+      <td>{{ r.behaviour }}</td>
+      <td>{{ r.punctuality }}</td>
+      <td>{{ r.neatness }}</td>
+    </tr>
+  {% endfor %}
+</table>
+{% endblock %}

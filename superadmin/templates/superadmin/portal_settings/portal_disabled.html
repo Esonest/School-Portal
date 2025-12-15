@@ -1,0 +1,61 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+
+<div class="min-h-screen bg-gray-100 flex items-center justify-center p-6">
+    <div class="max-w-md w-full bg-white shadow-xl rounded-2xl p-8 text-center">
+
+        <!-- Icon -->
+        <div class="flex justify-center mb-6">
+            <div class="h-20 w-20 flex items-center justify-center rounded-full bg-red-100 text-red-600">
+                <svg xmlns="http://www.w3.org/2000/svg"
+                     class="h-10 w-10"
+                     fill="none"
+                     viewBox="0 0 24 24"
+                     stroke="currentColor">
+                    <path stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M18.364 5.636l-12.728 12.728M5.636 5.636l12.728 12.728" />
+                </svg>
+            </div>
+        </div>
+
+        <!-- Title -->
+        <h1 class="text-2xl font-bold text-gray-800 mb-2">
+            Access Disabled
+        </h1>
+
+        <!-- Message -->
+        <p class="text-gray-600 mb-6">
+            {% if portal_name %}
+                The <span class="font-semibold text-gray-800">{{ portal_name }}</span> portal
+                is currently disabled for
+                <span class="font-semibold">{{ school.name }}</span>.
+            {% else %}
+                This portal is currently disabled for your school.
+            {% endif %}
+        </p>
+
+        <!-- Hint -->
+        <div class="bg-gray-50 border rounded-lg p-4 text-sm text-gray-600 mb-6">
+            Please contact the school administrator or system administrator
+            to enable access.
+        </div>
+
+        <!-- Actions -->
+        <div class="flex justify-center gap-4">
+            <a href="javascript:history.back()"
+               class="px-5 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 transition">
+                Go Back
+            </a>
+
+            <a href="{% url 'accounts:logout' %}"
+               class="px-5 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700 transition">
+                Logout
+            </a>
+        </div>
+
+    </div>
+</div>
+
+{% endblock %}

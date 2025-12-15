@@ -1,0 +1,7 @@
+<h2>Delete Student: {{ student.full_name }}</h2>
+
+<form method="POST">
+    {% csrf_token %}
+    <p>Are you sure?</p>
+    <button type="submit">Yes, Delete</button>
+</form>

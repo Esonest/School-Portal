@@ -1,0 +1,129 @@
+{% extends "accounts/base.html" %}
+
+{% block content %}
+<h2 class="text-2xl font-bold text-{{ school.theme_color }}-600">Teachers Dashboard – {{ school.name }}</h2>
+
+<!-- ========================== -->
+<!-- Top Action Bar -->
+<!-- ========================== -->
+<div class="flex justify-between items-center mb-6">
+    <!-- Add Teacher Button -->
+    <a href="{% url 'school_admin:teacher_create' school.id %}"
+       class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700">
+       + Add Teacher
+    </a>
+
+    <!-- Filter Form -->
+    <form method="GET" class="flex gap-4">
+        <select name="class" class="border p-2 rounded">
+            <option value="">All Classes</option>
+            {% for cls in classes %}
+                <option value="{{ cls.id }}" {% if cls.id|stringformat:"s" == selected_class %}selected{% endif %}>
+                    {{ cls.name }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <select name="subject" class="border p-2 rounded">
+            <option value="">All Subjects</option>
+            {% for s in subjects %}
+                <option value="{{ s.id }}" {% if s.id|stringformat:"s" == selected_subject %}selected{% endif %}>
+                    {{ s.name }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <button class="bg-gray-800 text-white px-4 py-2 rounded hover:bg-black">Apply</button>
+    </form>
+</div>
+
+<!-- ========================== -->
+<!-- Charts Section -->
+<!-- ========================== -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
+    <!-- Teachers per Class Chart -->
+    <div class="bg-white p-4 rounded-lg shadow">
+        <h3 class="font-semibold mb-2">Teachers per Class</h3>
+        <canvas id="classChart"></canvas>
+    </div>
+
+    <!-- Teachers per Subject Chart -->
+    <div class="bg-white p-4 rounded-lg shadow">
+        <h3 class="font-semibold mb-2">Teachers per Subject</h3>
+        <canvas id="subjectChart"></canvas>
+    </div>
+</div>
+
+<!-- ========================== -->
+<!-- Teachers Table -->
+<!-- ========================== -->
+<div class="overflow-x-auto bg-white shadow rounded-lg">
+    <table class="w-full min-w-max border-collapse">
+        <thead class="bg-gray-100 border-b">
+            <tr>
+                <th class="p-3 text-left">Name</th>
+                <th class="p-3 text-left">Staff ID</th>
+                <th class="p-3 text-left">Classes</th>
+                <th class="p-3 text-left">Subjects</th>
+                <th class="p-3 text-left">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for t in teachers %}
+            <tr class="border-b hover:bg-gray-50">
+                <td class="p-3">{{ t.get_full_name }}</td>
+                <td class="p-3">{{ t.staff_id }}</td>
+                <td class="p-3">
+                    {% for cls in t.classes.all %}{{ cls.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                </td>
+                <td class="p-3">
+                    {% for s in t.subjects.all %}{{ s.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+                </td>
+                <td class="p-3">
+                    <a href="{% url 'school_admin:teacher_edit' school.id t.id %}" 
+                       class="text-blue-600 hover:underline mr-2">Edit</a>
+                    <a href="{% url 'school_admin:teacher_delete' school.id t.id %}" 
+                       class="text-red-600 hover:underline">Delete</a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" class="p-4 text-center text-gray-500">No teachers found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+
+<!-- ========================== -->
+<!-- Chart.js Scripts -->
+<!-- ========================== -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const classData = {{ class_chart|safe }};
+new Chart(document.getElementById('classChart'), {
+    type: 'bar',
+    data: {
+        labels: classData.map(d => d['classes__name']),
+        datasets: [{ 
+            label: 'Teachers', 
+            data: classData.map(d => d.total), 
+            backgroundColor: '#3b82f6' 
+        }]
+    }
+});
+
+const subjectData = {{ subject_chart|safe }};
+new Chart(document.getElementById('subjectChart'), {
+    type: 'bar',
+    data: {
+        labels: subjectData.map(d => d['subjects__name']),
+        datasets: [{ 
+            label: 'Teachers', 
+            data: subjectData.map(d => d.total), 
+            backgroundColor: '#10b981' 
+        }]
+    }
+});
+</script>
+{% endblock %}

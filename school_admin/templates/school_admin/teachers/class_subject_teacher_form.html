@@ -1,0 +1,40 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+
+<div class="max-w-xl mx-auto p-6 bg-white shadow rounded">
+    <h1 class="text-2xl font-bold text-{{ school.theme_color }}-600">{{ title }}</h1>
+
+    <form method="post" class="space-y-4">
+        {% csrf_token %}
+
+        {{ form.non_field_errors }}
+
+        <div>
+            <label class="block font-medium mb-1">Class</label>
+            {{ form.school_class }}
+        </div>
+
+        <div>
+            <label class="block font-medium mb-1">Subject</label>
+            {{ form.subject }}
+        </div>
+
+        <div>
+            <label class="block font-medium mb-1">Teacher</label>
+            {{ form.teacher }}
+        </div>
+
+        <div class="flex justify-end space-x-3 pt-4">
+            <a href="{% url 'school_admin:class_subject_teacher_list' school.id %}"
+               class="px-4 py-2 border rounded">
+                Cancel
+            </a>
+            <button type="submit"
+                    class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">
+                Save
+            </button>
+        </div>
+    </form>
+</div>
+
+{% endblock %}

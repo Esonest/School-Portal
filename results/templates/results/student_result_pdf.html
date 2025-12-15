@@ -1,0 +1,213 @@
+<!doctype html>
+<html>
+<head>
+<meta charset="utf-8"/>
+<title>{{ student.user.get_full_name }}</title>
+
+
+
+
+<style>
+  @page { size: A4; margin: 20mm; }
+  body { font-family: DejaVu Sans, Arial, sans-serif; color:#111; font-size:12px; }
+
+  .header{ text-align:center; margin-bottom:8px; }
+  .info-row{ margin-bottom:10px; }
+
+  table{ width:100%; border-collapse:collapse; margin-top:6px;}
+  th,td{ border:1px solid #444; padding:5px; font-size:11px; text-align:center;}
+  .left{text-align:left;}
+
+  .small{font-size:10px;color:#666;}
+  .domain-block{ margin-top:8px; }
+
+  .photo-box img{ width:80px; height:90px; object-fit:cover; border:1px solid #222; }
+  .flex { display:flex; justify-content:space-between; }
+
+  .stars span { color:gold; font-size:14px; }
+
+</style>
+</head>
+
+<body>
+
+<div class="header">
+  {% if school.logo %}
+    <img src="{{ school.logo.path }}" style="height:70px; object-fit:contain; margin-bottom:-8px;">
+  {% endif %}
+
+  <h2 class="text-2xl font-bold text-{{ school.theme_color }}-600">{{ school.name }}</h2>  
+  <div class="small">{{ school.address }}</div>
+  <div class="small"><i>{{ school.motto }}</i></div>
+
+  <h3>Report Card — Term {{ term }} ({{ session }})</h3>
+</div>
+
+
+<!-- ========= TOP STUDENT DETAILS ============= -->
+<div class="flex info-row">
+
+  <div>
+    <b>Student:</b> {{ student.user.get_full_name }} <br>
+    <b>Adm No:</b> {{ student.admission_no }} <br>
+    <b>Class:</b> {{ student.school_class.name }} <br>
+    <b>Date:</b> {{ date_issued }}
+  </div>
+
+  <div class="photo-box">
+  {% if student.photo %}
+          <img src="{{ student.photo.url }}" alt="photo" class="h-20 w-20 rounded object-cover mt-2 border" />
+        {% endif %}
+</div>
+
+
+</div>
+
+
+<!-- =============== SUBJECTS ================== -->
+{% comment %}Check if any score has CA > 0{% endcomment %}
+{% with show_ca=False %}
+  {% for s in scores %}
+    {% if s.ca|default:0 > 0 %}
+      {% with show_ca=True %}{% endwith %}
+    {% endif %}
+  {% endfor %}
+{% endwith %}
+
+<table class="min-w-full border mt-2">
+  <thead class="bg-gray-100">
+    <tr>
+      <th class="p-2 border text-left">Subject</th>
+      {% if show_ca %}
+        <th class="p-2 border text-center">CA</th>
+      {% endif %}
+      <th class="p-2 border text-center">Exam</th>
+      <th class="p-2 border text-center">Total</th>
+      <th class="p-2 border text-center">Grade</th>
+      <th class="p-2 border text-center">Teacher</th>
+    </tr>
+  </thead>
+  <tbody>
+    {% for s in scores %}
+      <tr class="border-b">
+        <td class="p-2">{{ s.subject }}</td>
+        {% if show_ca %}
+          <td class="p-2 text-center">{{ s.ca|default:"0" }}</td>
+        {% endif %}
+        <td class="p-2 text-center">{{ s.exam }}</td>
+        <td class="p-2 text-center font-semibold">{{ s.total }}</td>
+        <td class="p-2 text-center">{{ s.grade }}</td>
+        <td class="p-2 text-center">{{ s.teacher }}</td>
+      </tr>
+    {% empty %}
+      <tr>
+        <td colspan="{% if show_ca %}6{% else %}5{% endif %}" class="p-3 text-center text-gray-500">No scores available</td>
+      </tr>
+    {% endfor %}
+  </tbody>
+</table>
+
+
+<div style="margin-top:5px;">
+  <b>Total:</b> {{ overall_total }} &nbsp;
+  <b>Average:</b> {{ avg|floatformat:2 }} &nbsp;
+  <b>Position:</b> {{ position }} of {{ class_size }}
+</div>
+
+
+<!-- =============== DOMAINS ================== -->
+
+<div class="domain-block">
+
+<h4>Psychomotor Domain</h4>
+{% if psychomotor %}
+<div class="stars">
+  Neatness:
+  {% for i in "12345" %}
+    <span>{% if i|add:"0" <= psychomotor.neatness %}★{% else %}☆{% endif %}</span>
+  {% endfor %}
+  <br>
+  Agility:
+  {% for i in "12345" %}
+    <span>{% if i|add:"0" <= psychomotor.agility %}★{% else %}☆{% endif %}</span>
+  {% endfor %}
+  <br>
+  Creativity:
+  {% for i in "12345" %}
+    <span>{% if i|add:"0" <= psychomotor.creativity %}★{% else %}☆{% endif %}</span>
+  {% endfor %}
+  <br>
+  Sports:
+  {% for i in "12345" %}
+    <span>{% if i|add:"0" <= psychomotor.sports %}★{% else %}☆{% endif %}</span>
+  {% endfor %}
+  <br>
+  Handwriting:
+  {% for i in "12345" %}
+    <span>{% if i|add:"0" <= psychomotor.handwriting %}★{% else %}☆{% endif %}</span>
+  {% endfor %}
+</div>
+{% else %}
+<div class="small">Not recorded</div>
+{% endif %}
+
+
+<h4 style="margin-top:6px;">Affective Domain</h4>
+{% if affective %}
+<div class="stars">
+  Punctuality:
+  {% for i in "12345" %}
+    <span>{% if i|add:"0" <= affective.punctuality %}★{% else %}☆{% endif %}</span>
+  {% endfor %}
+  <br>
+  Cooperation:
+  {% for i in "12345" %}
+    <span>{% if i|add:"0" <= affective.cooperation %}★{% else %}☆{% endif %}</span>
+  {% endfor %}
+  <br>
+  Behavior:
+  {% for i in "12345" %}
+    <span>{% if i|add:"0" <= affective.behavior %}★{% else %}☆{% endif %}</span>
+  {% endfor %}
+  <br>
+  Attentiveness:
+  {% for i in "12345" %}
+    <span>{% if i|add:"0" <= affective.attentiveness %}★{% else %}☆{% endif %}</span>
+  {% endfor %}
+  <br>
+  Perseverance:
+  {% for i in "12345" %}
+    <span>{% if i|add:"0" <= affective.perseverance %}★{% else %}☆{% endif %}</span>
+  {% endfor %}
+</div>
+{% else %}
+<div class="small">Not recorded</div>
+{% endif %}
+</div>
+
+
+<!-- ============= COMMENTS + QR ============== -->
+<div style="margin-top:8px;">
+  <b>Principal's Comment:</b><br>{{ principal_comment }}<br><br>
+  <b>Teacher’s Comment:</b><br>{{ teacher_comment }}
+</div>
+
+
+<div style="display:flex; justify-content:space-between; margin-top:14px;">
+
+  <div>
+    {% if principal_signature_url %}
+      <img src="{{ principal_signature_url }}" style="height:45px;">
+    {% endif %}
+    <div>Principal</div>
+  </div>
+
+  <div>
+    <img src="{{ qr_data_uri }}" style="width:85px; height:85px; border:1px solid #aaa;">
+    <div class="small">Scan to verify</div>
+  </div>
+
+</div>
+
+</body>
+</html>

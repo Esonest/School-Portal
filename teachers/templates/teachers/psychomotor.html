@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+{% block content %}
+<h2>Psychomotor Ratings - {{ exam.title }}</h2>
+<form method="post">{% csrf_token %}
+  {{ form.as_p }}
+  <button type="submit">Save</button>
+</form>
+<h3>Existing Records</h3>
+<table>
+  <tr><th>Student</th><th>Handwriting</th><th>Drawing</th></tr>
+  {% for r in records %}
+    <tr>
+      <td>{{ r.student }}</td>
+      <td>{{ r.handwriting }}</td>
+      <td>{{ r.drawing }}</td>
+    </tr>
+  {% endfor %}
+</table>
+{% endblock %}

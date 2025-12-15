@@ -1,0 +1,175 @@
+{% extends "accounts/base.html" %}
+
+{% block content %}
+
+<h2 class="text-2xl font-bold text-{{ school.theme_color }}-600">Attendance Records – {{ school.name }}</h2>
+
+<!-- Add Button -->
+<div class="flex justify-between items-center mb-6">
+    <a href="{% url 'school_admin:admin_attendance_create' school.id %}"
+       class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700">
+       + Add Attendance
+    </a>
+</div>
+
+<!-- FILTER BAR -->
+<form method="GET" class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8 bg-white p-4 rounded-lg shadow">
+
+    <!-- Class Filter -->
+    <select name="class" class="border p-2 rounded">
+        <option value="">All Classes</option>
+        {% for cls in classes %}
+            <option value="{{ cls.id }}" {% if cls.id|stringformat:"s" == selected_class %}selected{% endif %}>
+                {{ cls.name }}
+            </option>
+        {% endfor %}
+    </select>
+
+    <!-- Student Filter -->
+    <select name="student" class="border p-2 rounded">
+        <option value="">All Students</option>
+        {% for std in students %}
+            <option value="{{ std.id }}" {% if std.id|stringformat:"s" == selected_student %}selected{% endif %}>
+                {{ std.full_name }}
+            </option>
+        {% endfor %}
+    </select>
+
+    <!-- Status -->
+    <select name="status" class="border p-2 rounded">
+        <option value="">Any Status</option>
+        <option value="present" {% if selected_status == "present" %}selected{% endif %}>Present</option>
+        <option value="absent" {% if selected_status == "absent" %}selected{% endif %}>Absent</option>
+    </select>
+
+    <!-- Date From -->
+    <input type="date" name="start_date" value="{{ start_date|default:'' }}"
+           class="border p-2 rounded" placeholder="Start Date">
+
+    <!-- Date To -->
+    <input type="date" name="end_date" value="{{ end_date|default:'' }}"
+           class="border p-2 rounded" placeholder="End Date">
+
+    <!-- Submit -->
+    <div class="col-span-1 md:col-span-5 flex justify-end">
+        <button class="bg-gray-800 text-white px-4 py-2 rounded hover:bg-black">
+            Apply Filters
+        </button>
+    </div>
+</form>
+
+<!-- CHARTS SECTION -->
+<div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
+
+    <!-- Daily Chart -->
+    <div class="bg-white p-4 rounded-lg shadow">
+        <h3 class="font-semibold mb-2">Daily Attendance Count</h3>
+        <canvas id="dailyChart"></canvas>
+    </div>
+
+    <!-- Status Chart -->
+    <div class="bg-white p-4 rounded-lg shadow">
+        <h3 class="font-semibold mb-2">Status Distribution</h3>
+        <canvas id="statusChart"></canvas>
+    </div>
+
+    <!-- Class Chart -->
+    <div class="bg-white p-4 rounded-lg shadow">
+        <h3 class="font-semibold mb-2">Class Distribution</h3>
+        <canvas id="classChart"></canvas>
+    </div>
+
+</div>
+
+<!-- TABLE -->
+<div class="bg-white shadow rounded-lg overflow-hidden">
+<table class="w-full border-collapse">
+    <thead class="bg-gray-100 border-b">
+        <tr>
+            <th class="p-3 text-left">Student</th>
+            <th class="p-3 text-left">Date</th>
+            <th class="p-3 text-left">Status</th>
+            <th class="p-3 text-left">Remarks</th>
+            <th class="p-3 text-left">Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+        {% for rec in records %}
+        <tr class="border-b hover:bg-gray-50">
+            <td class="p-3">{{ rec.student }}</td>
+            <td class="p-3">{{ rec.date }}</td>
+            <td class="p-3">
+                {% if rec.status == "present" %}
+                    <span class="px-2 py-1 bg-green-100 text-green-700 rounded text-sm">Present</span>
+                {% else %}
+                    <span class="px-2 py-1 bg-red-100 text-red-700 rounded text-sm">Absent</span>
+                {% endif %}
+            </td>
+            <td class="p-3">{{ rec.remarks|default:"-" }}</td>
+            <td class="p-3">
+                <a href="{% url 'school_admin:admin_attendance_edit' school.id rec.id %}" class="text-blue-600 hover:underline">Edit</a> |
+                <a href="{% url 'school_admin:admin_attendance_delete' school.id rec.id %}" class="text-red-600 hover:underline">Delete</a>
+            </td>
+        </tr>
+        {% empty %}
+        <tr>
+            <td colspan="5" class="p-4 text-center text-gray-500">No records found.</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+</div>
+
+<!-- CHART.JS -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+const dailyData = {{ daily_chart|default:"[]"|safe }};
+const statusData = {{ status_chart|default:"[]"|safe }};
+const classData = {{ class_chart|default:"[]"|safe }};
+
+// Daily Chart
+new Chart(document.getElementById('dailyChart'), {
+    type: 'line',
+    data: {
+        labels: dailyData.map(d => d.date),
+        datasets: [{
+            label: "Total",
+            data: dailyData.map(d => d.total),
+            borderColor: "rgb(34,197,94)",
+            backgroundColor: "rgba(34,197,94,0.2)",
+            borderWidth: 2,
+            tension: 0.3
+        }]
+    },
+    options: { responsive: true, maintainAspectRatio: false }
+});
+
+// Status Chart
+new Chart(document.getElementById('statusChart'), {
+    type: 'pie',
+    data: {
+        labels: statusData.map(d => d.status),
+        datasets: [{
+            data: statusData.map(d => d.total),
+            backgroundColor: ["#34D399","#F87171","#60A5FA","#FBBF24"]
+        }]
+    },
+    options: { responsive: true, maintainAspectRatio: false }
+});
+
+// Class Distribution Chart
+new Chart(document.getElementById('classChart'), {
+    type: 'bar',
+    data: {
+        labels: classData.map(d => d.student__school_class__name),
+        datasets: [{
+            label: "Records",
+            data: classData.map(d => d.total),
+            backgroundColor: "#3B82F6"
+        }]
+    },
+    options: { responsive: true, maintainAspectRatio: false }
+});
+</script>
+
+{% endblock %}

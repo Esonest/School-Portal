@@ -1,0 +1,96 @@
+{% extends 'accounts/base.html' %}
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-10">
+  <div class="max-w-6xl mx-auto px-6">
+
+    <!-- Header -->
+    <div class="mb-10 text-center">
+      <h1 class="text-3xl font-bold text-gray-800 flex items-center justify-center gap-2">
+        <svg xmlns="http://www.w3.org/2000/svg" class="w-8 h-8 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6l4 2" />
+        </svg>
+        Teacher Dashboard
+      </h1>
+      <p class="text-gray-600 mt-2">
+        Welcome, 
+        <span class="font-semibold text-indigo-600">{{ teacher.user.get_full_name }}</span> 
+        <span class="text-sm text-gray-500">({{ teacher.staff_id }})</span>
+      </p>
+    </div>
+
+    <!-- Dashboard Cards Grid -->
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
+
+      <!-- Assignments -->
+      <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition duration-300">
+        <div class="flex items-center mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-blue-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 6H21M8 12H21M8 18H21M3 6h.01M3 12h.01M3 18h.01" />
+          </svg>
+          <h2 class="text-lg font-semibold text-gray-800">Assignments</h2>
+        </div>
+        <p class="text-sm text-gray-500 mb-4">
+          Create, manage and track class assignments with ease.
+        </p>
+        <div class="space-y-3">
+          <a href="{% url 'assignments:create_assignment' %}" 
+             class="block bg-gradient-to-r from-blue-500 to-blue-600 text-white font-medium px-4 py-2 rounded-lg text-center hover:from-blue-600 hover:to-blue-700 transition">
+            ➕ Create Assignment
+          </a>
+          <a href="{% url 'assignments:dashboard' %}" 
+             class="block bg-gradient-to-r from-green-500 to-green-600 text-white font-medium px-4 py-2 rounded-lg text-center hover:from-green-600 hover:to-green-700 transition">
+            📚 View Assignments
+          </a>
+        </div>
+      </div>
+
+      <!-- Notes -->
+      <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition duration-300">
+        <div class="flex items-center mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-emerald-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 20l9-5-9-5-9 5 9 5zM12 4v16m0-16l-9 5m9-5l9 5" />
+          </svg>
+          <h2 class="text-lg font-semibold text-gray-800">Lesson Notes</h2>
+        </div>
+        <p class="text-sm text-gray-500 mb-4">
+          Upload, organize and share your class materials with students.
+        </p>
+        <div class="space-y-3">
+          <a href="{% url 'notes:upload_note' %}" 
+             class="block bg-gradient-to-r from-sky-500 to-sky-600 text-white font-medium px-4 py-2 rounded-lg text-center hover:from-sky-600 hover:to-sky-700 transition">
+            ⬆ Upload Note
+          </a>
+          <a href="{% url 'notes:dashboard' %}" 
+             class="block bg-gradient-to-r from-emerald-500 to-emerald-600 text-white font-medium px-4 py-2 rounded-lg text-center hover:from-emerald-600 hover:to-emerald-700 transition">
+            📂 View Notes
+          </a>
+        </div>
+      </div>
+
+      <!-- Attendance -->
+      <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition duration-300">
+        <div class="flex items-center mb-4">
+          <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-indigo-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          </svg>
+          <h2 class="text-lg font-semibold text-gray-800">Attendance</h2>
+        </div>
+        <p class="text-sm text-gray-500 mb-4">
+          Record attendance and monitor student presence by class.
+        </p>
+        <div class="space-y-3">
+          <a href="{% url 'attendance:dashboard' %}" 
+             class="block bg-gradient-to-r from-indigo-500 to-indigo-600 text-white font-medium px-4 py-2 rounded-lg text-center hover:from-indigo-600 hover:to-indigo-700 transition">
+            🗓 Mark Attendance
+          </a>
+          <a href="{% url 'attendance:attendance_report' %}" 
+             class="block bg-gradient-to-r from-green-400 to-green-500 text-white font-medium px-4 py-2 rounded-lg text-center hover:from-green-500 hover:to-green-600 transition">
+            📊 Attendance Report
+          </a>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+{% endblock %}

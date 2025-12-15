@@ -1,0 +1,104 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+
+<div class="p-6 space-y-6">
+    <div class="flex justify-between items-center">
+        <h1 class="text-xl font-bold">Teachers (Advanced)</h1>
+
+        <div class="space-x-3">
+            <a href="{% url 'superadmin:teacher_export' %}" class="px-4 py-2 bg-green-600 text-white rounded">Export</a>
+            <a href="{% url 'superadmin:teacher_import' %}" class="px-4 py-2 bg-blue-600 text-white rounded">Import</a>
+        </div>
+    </div>
+
+    <!-- Search + Filters -->
+    <form method="get" class="grid grid-cols-4 gap-4 bg-white p-4 rounded shadow">
+
+        <input type="text" name="search" placeholder="Search name, email, subject..."
+               value="{{ search }}"
+               class="border p-2 rounded w-full">
+
+        <select name="school" class="border p-2 rounded">
+            <option value="">All Schools</option>
+            {% for s in schools %}
+                <option value="{{ s.id }}" {% if selected_school == s.id|stringformat:'s' %}selected{% endif %}>
+                    {{ s.name }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <select name="class" class="border p-2 rounded">
+            <option value="">All Classes</option>
+            {% for c in classes %}
+                <option value="{{ c.id }}" {% if selected_class == c.id|stringformat:'s' %}selected{% endif %}>
+                    {{ c.name }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <select name="subject" class="border p-2 rounded">
+            <option value="">All Subjects</option>
+            {% for sub in subjects %}
+                <option value="{{ sub.id }}" {% if selected_subject == sub.id|stringformat:'s' %}selected{% endif %}>
+                    {{ sub.name }}
+                </option>
+            {% endfor %}
+        </select>
+
+        <button class="col-span-4 bg-blue-600 text-white py-2 rounded">Filter</button>
+    </form>
+
+    <!-- Table -->
+    <div class="bg-white shadow rounded">
+        <table class="w-full border">
+            <thead class="bg-gray-100">
+                <tr>
+                    <th class="p-2 border">Name</th>
+                    <th class="p-2 border">School</th>
+                    <th class="p-2 border">Subjects</th>
+                    <th class="p-2 border">Classes</th>
+                    <th class="p-2 border">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for t in teachers %}
+                <tr>
+                    <td class="p-2 border">{{ t.user.get_full_name }}</td>
+                    <td class="p-2 border">{{ t.school.name }}</td>
+                    <td class="p-2 border">
+                        {% for s in t.subjects.all %}
+                            <span class="bg-blue-100 px-2 py-1 rounded">{{ s.name }}</span>
+                        {% endfor %}
+                    </td>
+                    <td class="p-2 border">
+                        {% for c in t.classes.all %}
+                            <span class="bg-green-100 px-2 py-1 rounded">{{ c.name }}</span>
+                        {% endfor %}
+                    </td>
+                    <td class="p-2 border">
+                        <a href="{% url 'superadmin:teacher_edit' t.id %}" class="text-blue-600">Edit</a>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Pagination -->
+    <div class="flex justify-center mt-4">
+        <div class="flex space-x-1">
+        {% if teachers.has_previous %}
+            <a href="?page={{ teachers.previous_page_number }}" class="px-3 py-1 bg-gray-300 rounded">Prev</a>
+        {% endif %}
+
+        <span class="px-3 py-1 bg-gray-200 rounded">Page {{ teachers.number }} of {{ teachers.paginator.num_pages }}</span>
+
+        {% if teachers.has_next %}
+            <a href="?page={{ teachers.next_page_number }}" class="px-3 py-1 bg-gray-300 rounded">Next</a>
+        {% endif %}
+        </div>
+    </div>
+
+</div>
+
+{% endblock %}

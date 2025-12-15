@@ -1,0 +1,83 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ exam.subject.name }} - CBT Result</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gradient-to-br from-blue-50 via-slate-100 to-indigo-50 min-h-screen flex items-center justify-center p-6">
+  <div class="w-full max-w-3xl backdrop-blur-lg bg-white/80 border border-slate-200 rounded-3xl shadow-2xl p-8 animate-fadeIn">
+    
+    <!-- Header -->
+    <div class="border-b border-gray-200 pb-6 mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center">
+      <div>
+        <h1 class="text-3xl font-extrabold text-slate-800 tracking-tight">
+          {{ exam.subject.name }} - <span class="text-blue-700">Result</span>
+        </h1>
+        <p class="text-sm text-gray-600 mt-2">
+          <span class="font-medium">Class:</span> {{ exam.class_level }}
+          <span class="mx-2">•</span>
+          <span class="font-medium">Exam Date:</span> {{ exam.date }}
+        </p>
+      </div>
+      <div class="mt-4 sm:mt-0 text-sm text-gray-700 bg-blue-50 border border-blue-100 px-4 py-2 rounded-lg">
+        <strong>Duration:</strong> {{ exam.duration }} mins
+      </div>
+    </div>
+
+    <!-- Student Summary -->
+    <div class="bg-white/90 border border-gray-200 rounded-xl shadow-sm p-6 mb-8">
+      <p class="text-lg font-semibold text-slate-800 mb-2">
+        Student: <span class="text-blue-700">{{ request.user.get_full_name }}</span>
+      </p>
+      <p><strong>Score:</strong> {{ submission.score }}</p>
+      <p><strong>Total Questions:</strong> {{ total_questions }}</p>
+      <p><strong>Attempted:</strong> {{ attempted }}</p>
+      <p><strong>Correct Answers:</strong> {{ correct }}</p>
+      <p><strong>Wrong Answers:</strong> {{ wrong }}</p>
+      <p><strong>Percentage:</strong> {{ percentage }}%</p>
+      <p><strong>Status:</strong>
+        {% if status == "Pass" %}
+          <span class="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full">
+            ✅ Pass
+          </span>
+        {% else %}
+          <span class="inline-flex items-center gap-1 px-3 py-1 bg-red-100 text-red-700 text-xs font-semibold rounded-full">
+            ❌ Fail
+          </span>
+        {% endif %}
+      </p>
+      <p class="mt-2 text-sm text-gray-600">
+        Submitted on: {{ submission.completed_on|date:"d M Y, H:i" }}
+      </p>
+    </div>
+
+    <!-- Buttons -->
+    <div class="flex flex-col sm:flex-row justify-center gap-4">
+      <a href="{% url 'accounts:logout' %}"
+         class="flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-6 rounded-lg shadow-md transition">
+        ⬅ Logout
+      </a>
+
+      <button onclick="window.print()"
+         class="flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-medium py-2 px-6 rounded-lg shadow-md transition">
+        🖨 Print / Save as PDF
+      </button>
+    </div>
+  </div>
+
+  <!-- Fade Animation -->
+  <style>
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(10px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .animate-fadeIn {
+      animation: fadeIn 0.6s ease-in-out;
+    }
+  </style>
+</body>
+</html>

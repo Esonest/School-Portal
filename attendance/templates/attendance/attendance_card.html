@@ -1,0 +1,23 @@
+{# templates/attendance/_attendance_card.html #}
+<div class="bg-white p-4 rounded-lg shadow-md">
+  <h3 class="font-semibold mb-3 text-gray-800">📘 Mark Attendance</h3>
+
+  {% if classes and classes.exists %}
+    <div class="space-y-3">
+      {% for cls in classes %}
+        <a href="{% url 'attendance:mark_attendance' cls.id %}"
+           class="flex items-center justify-between bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-3 rounded-lg shadow-sm transition">
+          <div>
+            <div class="text-lg font-medium">{{ cls.name }}</div>
+            {% if cls.school %}
+              <div class="text-xs opacity-80 text-{{ school.theme_color }}-600">{{ cls.school.name }}</div>
+            {% endif %}
+          </div>
+          <div class="text-sm opacity-90">Mark</div>
+        </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p class="text-gray-500 italic">No classes assigned</p>
+  {% endif %}
+</div>

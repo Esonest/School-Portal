@@ -1,0 +1,14 @@
+<div class="p-3 border rounded flex justify-between items-start">
+    <div>
+      <a href="{% if is_teacher %}{% url 'assignments:teacher_assignment_detail' pk=assignment.id %}{% else %}{% url 'assignments:student_assignment_detail' pk=assignment.id %}{% endif %}" class="font-semibold text-indigo-600">{{ assignment.title }}</a>
+      <div class="text-sm text-gray-600">{{ assignment.subject }} • Due: {{ assignment.due_date|date:"SHORT_DATETIME_FORMAT" }}</div>
+      <div class="text-sm text-gray-500 mt-1">{{ assignment.description|truncatewords:20 }}</div>
+    </div>
+    <div class="text-right">
+      <div class="text-sm">Max: {{ assignment.max_score }}</div>
+      {% if assignment.is_overdue %}
+        <div class="text-sm text-red-600">Overdue</div>
+      {% endif %}
+    </div>
+  </div>
+  

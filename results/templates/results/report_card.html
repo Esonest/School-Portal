@@ -1,0 +1,213 @@
+{% load custom_tags %}
+{% load static %}
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Report Card — {{ student.full_name }}</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    @page { margin: 18mm; }
+    body { -webkit-print-color-adjust: exact; font-family: "DejaVu Sans", Arial, sans-serif; }
+    .small { font-size: 0.85rem; color: #6b7280; }
+    .star { color: #fbbf24; }
+    .qr-medium { width: 96px; height: 96px; }
+    @media print { .no-print { display:none; } }
+  </style>
+</head>
+<body class="bg-white text-gray-800">
+  <div class="max-w-4xl mx-auto p-6">
+
+    <!-- header -->
+    <div class="flex items-start justify-between">
+      <div class="flex items-start gap-4">
+        {% if school and school.logo %}
+          <img src="{{ school.logo.url }}" alt="School logo" class="h-20 w-20 object-contain" />
+        {% else %}
+          <div class="h-20 w-20 bg-gray-100 flex items-center justify-center rounded">
+            <span class="text-gray-400">Logo</span>
+          </div>
+        {% endif %}
+        <div>
+          {% if school %}
+            <h1 class="text-2xl font-bold">{{ school.name }}</h1>
+            {% if school.motto %}<div class="small italic mt-1">“{{ school.motto }}”</div>{% endif %}
+            {% if school.address %}<div class="small mt-1">{{ school.address }}</div>{% endif %}
+          {% else %}
+            <h1 class="text-2xl font-bold">School</h1>
+          {% endif %}
+        </div>
+      </div>
+
+      <div class="text-right">
+        {% if qr_data_uri %}
+          <img src="{{ qr_data_uri }}" alt="QR" class="qr-medium object-contain border p-1 bg-white" />
+          <div class="small mt-2">Scan to verify</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <hr class="my-4" />
+
+    <!-- student top -->
+    <div class="grid grid-cols-3 gap-4 items-center">
+      <div class="col-span-2">
+        <div class="text-lg font-semibold">{{ student.full_name }}</div>
+        <div class="small">Admission No: <strong>{{ student.admission_no }}</strong></div>
+        <div class="small">Class: <strong>{{ student.school_class.name }}</strong></div>
+        <div class="small">Date issued: <strong>{{ date_issued }}</strong></div>
+      </div>
+      <div class="flex justify-end">
+        {% if student.user.profile_picture %}
+          <img src="{{ student.user.profile_picture.url }}" alt="Student photo" class="h-28 w-28 rounded object-cover border" />
+        {% else %}
+          <div class="h-28 w-28 rounded bg-gray-100 flex items-center justify-center text-gray-400">Photo</div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- academic -->
+    <div class="mt-6">
+      <h2 class="font-semibold mb-2">Academic Performance</h2>
+      <div class="overflow-x-auto">
+        <table class="w-full table-fixed border-collapse">
+          <thead>
+            <tr class="bg-gray-100">
+              <th class="p-2 border text-left">Subject</th>
+              <th class="p-2 border text-center">CA</th>
+              <th class="p-2 border text-center">Exam</th>
+              <th class="p-2 border text-center">Total</th>
+              <th class="p-2 border text-center">Grade</th>
+              <th class="p-2 border text-center">Teacher</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% if scores %}
+              {% for s in scores %}
+                <tr>
+                  <td class="p-2 border">{{ s.subject }}</td>
+                  <td class="p-2 border text-center">{{ s.ca }}</td>
+                  <td class="p-2 border text-center">{{ s.exam }}</td>
+                  <td class="p-2 border text-center font-semibold">{{ s.total }}</td>
+                  <td class="p-2 border text-center">{{ s.grade }}</td>
+                  <td class="p-2 border text-center text-sm">{{ s.teacher }}</td>
+                </tr>
+              {% endfor %}
+              <tr>
+                <td colspan="3" class="p-2 border text-right font-semibold">Average</td>
+                <td class="p-2 border text-center font-semibold">{{ avg_total|floatformat:1 }}</td>
+                <td colspan="2" class="p-2 border"></td>
+              </tr>
+              <tr>
+                <td colspan="3" class="p-2 border text-right">Best Subject</td>
+                <td class="p-2 border text-center font-semibold">{{ best_subject.subject if best_subject }}</td>
+                <td colspan="2" class="p-2 border"></td>
+              </tr>
+              <tr>
+                <td colspan="3" class="p-2 border text-right">Least Subject</td>
+                <td class="p-2 border text-center font-semibold">{{ least_subject.subject if least_subject }}</td>
+                <td colspan="2" class="p-2 border"></td>
+              </tr>
+            {% else %}
+              <tr><td class="p-4 border text-center text-gray-500" colspan="6">No academic scores available</td></tr>
+            {% endif %}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- psychomotor & affective -->
+    <div class="mt-6 grid md:grid-cols-2 gap-6">
+      <div class="bg-gray-50 p-4 rounded border">
+        <h3 class="font-semibold mb-3">Psychomotor</h3>
+        {% if psychomotor %}
+          <div class="grid grid-cols-2 gap-2">
+            <div class="small font-semibold">Neatness</div>
+            <div>{% for i in 1|to_list:5 %}{% if i <= psychomotor.neatness %}⭐{% else %}☆{% endif %}{% endfor %}</div>
+
+            <div class="small font-semibold">Agility</div>
+            <div>{% for i in 1|to_list:5 %}{% if i <= psychomotor.agility %}⭐{% else %}☆{% endif %}{% endfor %}</div>
+
+            <div class="small font-semibold">Creativity</div>
+            <div>{% for i in 1|to_list:5 %}{% if i <= psychomotor.creativity %}⭐{% else %}☆{% endif %}{% endfor %}</div>
+
+            <div class="small font-semibold">Sports</div>
+            <div>{% for i in 1|to_list:5 %}{% if i <= psychomotor.sports %}⭐{% else %}☆{% endif %}{% endfor %}</div>
+
+            <div class="small font-semibold">Handwriting</div>
+            <div>{% for i in 1|to_list:5 %}{% if i <= psychomotor.handwriting %}⭐{% else %}☆{% endif %}{% endfor %}</div>
+          </div>
+        {% else %}
+          <p class="small text-gray-500 italic">No psychomotor data recorded.</p>
+        {% endif %}
+      </div>
+
+      <div class="bg-gray-50 p-4 rounded border">
+        <h3 class="font-semibold mb-3">Affective</h3>
+        {% if affective %}
+          <div class="grid grid-cols-2 gap-2">
+            <div class="small font-semibold">Punctuality</div>
+            <div>{% for i in 1|to_list:5 %}{% if i <= affective.punctuality %}⭐{% else %}☆{% endif %}{% endfor %}</div>
+
+            <div class="small font-semibold">Cooperation</div>
+            <div>{% for i in 1|to_list:5 %}{% if i <= affective.cooperation %}⭐{% else %}☆{% endif %}{% endfor %}</div>
+
+            <div class="small font-semibold">Behavior</div>
+            <div>{% for i in 1|to_list:5 %}{% if i <= affective.behavior %}⭐{% else %}☆{% endif %}{% endfor %}</div>
+
+            <div class="small font-semibold">Attentiveness</div>
+            <div>{% for i in 1|to_list:5 %}{% if i <= affective.attentiveness %}⭐{% else %}☆{% endif %}{% endfor %}</div>
+
+            <div class="small font-semibold">Perseverance</div>
+            <div>{% for i in 1|to_list:5 %}{% if i <= affective.perseverance %}⭐{% else %}☆{% endif %}{% endfor %}</div>
+          </div>
+        {% else %}
+          <p class="small text-gray-500 italic">No affective data recorded.</p>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- comments -->
+    <div class="mt-6 bg-white p-4 border rounded">
+      <h3 class="font-semibold mb-2">Comments</h3>
+      <p><strong>Teacher:</strong> {{ teacher_comment }}</p>
+      <p class="mt-2"><strong>Principal:</strong> {{ principal_comment }}</p>
+    </div>
+
+    <!-- footer: qr (small) left, signature centered, small qr duplicate right for balance -->
+    <div class="mt-8">
+      <div class="flex justify-between items-end">
+        <div class="w-1/3 text-left">
+          {% if qr_data_uri %}
+            <img src="{{ qr_data_uri }}" alt="QR" class="h-20 w-20 object-contain border p-1 bg-white" />
+            <div class="small mt-1 italic">Scan to verify</div>
+          {% endif %}
+        </div>
+
+        <div class="w-1/3 text-center">
+          <div style="height:60px;"></div>
+          <div class="mt-1 font-semibold">{{ principal_name }}</div>
+          <div class="small">{{ principal_title }}</div>
+          <div class="small mt-1">Date issued: {{ date_issued }}</div>
+          <div style="margin-top:8px;">__________________________</div>
+        </div>
+
+        <div class="w-1/3 text-right">
+          {% if qr_data_uri %}
+            <img src="{{ qr_data_uri }}" alt="QR small" class="h-16 w-16 object-contain border p-1 bg-white inline-block" />
+            <div class="small mt-1 italic">Verify online</div>
+          {% endif %}
+        </div>
+      </div>
+
+      <p class="small text-gray-500 text-center mt-4 italic">This report card is digitally authenticated. Scan the QR code to verify originality online.</p>
+    </div>
+
+    <div class="mt-6 no-print">
+      <a href="{% url 'results:report_card_download' student.id %}" class="bg-blue-600 text-white px-4 py-2 rounded mr-2">Download PDF</a>
+      <button onclick="window.print()" class="bg-gray-600 text-white px-4 py-2 rounded">Print</button>
+    </div>
+  </div>
+</body>
+</html>

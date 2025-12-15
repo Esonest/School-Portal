@@ -1,0 +1,204 @@
+{% load static %}
+{% load custom_filters %}
+<!doctype html>
+<html>
+<head>
+    <style>
+      @media print {
+        body { background: white; }
+        .no-print { display: none !important; }
+        table { page-break-inside: avoid; }
+        .shadow, .rounded { box-shadow: none !important; border-radius: 0 !important; }
+      }
+    </style>
+    <meta charset="utf-8"/>
+    <title>Result — {{ student.user.get_full_name }}</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 p-6">
+<div class="max-w-4xl mx-auto bg-white p-6 rounded shadow">
+
+  <form method="POST">
+    {% csrf_token %}
+
+    <!-- Header -->
+    <div class="flex justify-between items-start">
+      <div>
+        {% if school and school.logo %}
+          <img src="{{ school.logo.url }}" alt="Logo" class="h-20 w-20 object-contain"/>
+        {% endif %}
+        <h1 class="text-2xl font-bold text-{{ school.theme_color }}-600">{{ school.name }}</h1>
+        <p class="text-sm italic">{{ school.motto }}</p>
+        <p class="text-xs text-gray-500">{{ school.address }}</p>
+      </div>
+
+      <div class="text-right">
+        <div class="text-sm">{{ student.user.get_full_name }}</div>
+        <div class="text-sm">{{ student.admission_no }}</div>
+        <div class="text-sm">{{ student.school_class.name }}</div>
+        <div class="text-sm">Term: {{ selected_term }} • Session: {{ selected_session }}</div>
+        {% if student.photo %}
+          <img src="{{ student.photo.url }}" alt="photo" class="h-20 w-20 rounded object-cover mt-2 border"/>
+        {% endif %}
+      </div>
+    </div>
+
+    <hr class="my-4"/>
+
+    <!-- Academic Scores -->
+<h2 class="font-semibold mb-2">Academic Performance</h2>
+<div class="overflow-x-auto">
+  <table class="min-w-full border mt-2">
+    <thead class="bg-gray-100">
+      <tr>
+        <th class="p-2 border text-left">Subject</th>
+
+        {% if is_ca_enabled %}
+        <th class="p-2 border text-center">CA</th>
+        {% endif %}
+
+        <th class="p-2 border text-center">Exam</th>
+        <th class="p-2 border text-center">Total</th>
+        <th class="p-2 border text-center">Grade</th>
+        <th class="p-2 border text-center">Teacher</th>
+      </tr>
+    </thead>
+
+    <tbody>
+      {% for form in formset %}
+      <tr class="border-b">
+        <td class="p-2">{{ form.instance.subject.name }}</td>
+
+        {% if is_ca_enabled %}
+        <td class="p-2 text-center">
+          <input type="number" name="ca_{{ form.instance.id }}" value="{{ form.instance.ca }}" 
+                 class="w-16 text-center border rounded px-1 py-0.5"/>
+        </td>
+        {% endif %}
+
+        <td class="p-2 text-center">
+          <input type="number" name="exam_{{ form.instance.id }}" value="{{ form.instance.exam }}" 
+                 class="w-16 text-center border rounded px-1 py-0.5"/>
+        </td>
+
+        <td class="p-2 text-center font-semibold">
+          {{ form.instance.ca|add:form.instance.exam }}
+        </td>
+
+        <td class="p-2 text-center">{{ form.instance.grade }}</td>
+
+        <td class="p-2 text-center">
+          {% for s in scores %}
+            {% if s.subject == form.instance.subject.name %}
+              {{ s.teacher }}
+            {% endif %}
+          {% endfor %}
+        </td>
+      </tr>
+
+      {% empty %}
+      <tr>
+        <td colspan="{% if is_ca_enabled %}6{% else %}5{% endif %}"
+            class="px-4 py-4 text-center text-gray-500">
+          No scores found.
+        </td>
+      </tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</div>
+
+    <!-- Academic Summary -->
+    <div class="bg-gray-50 p-4 rounded shadow-sm space-y-1 mt-4">
+      <p><strong>Total:</strong> {{ overall_total }}</p>
+      <p><strong>Average:</strong> {{ avg|floatformat:2 }}</p>
+      <p><strong>Position:</strong> {{ position }} of {{ class_size }}</p>
+      {% if best_subject %}
+        <p><strong>Best Subject:</strong> {{ best_subject.subject }} ({{ best_subject.total }})</p>
+      {% endif %}
+      {% if least_subject %}
+        <p><strong>Weakest Subject:</strong> {{ least_subject.subject }} ({{ least_subject.total }})</p>
+      {% endif %}
+    </div>
+
+    <!-- Psychomotor & Affective -->
+    <div class="mt-4 grid md:grid-cols-2 gap-6">
+
+      <!-- Psychomotor -->
+      <div class="bg-blue-50 p-4 rounded shadow-sm">
+        <h3 class="font-semibold mb-3 text-blue-700">Psychomotor Domain</h3>
+        <ul class="space-y-2">
+          {% for field, label in psychomotor_fields.items %}
+  <li class="flex justify-between items-center">
+    <span>{{ label }}</span>
+    <div class="flex space-x-1">
+      {% for i in "12345" %}
+        {% with score=psychomotor|get_field_value:field %}
+          <label>
+            <input type="radio" name="{{ field }}" value="{{ i }}" {% if i|add:"0" <= score %}checked{% endif %} class="hidden"/>
+            <span class="cursor-pointer text-yellow-500 text-xl">{% if i|add:"0" <= score %}⭐{% else %}☆{% endif %}</span>
+          </label>
+        {% endwith %}
+      {% endfor %}
+    </div>
+  </li>
+{% endfor %}
+
+        </ul>
+      </div>
+
+      <!-- Affective -->
+      <div class="bg-green-50 p-4 rounded shadow-sm">
+        <h3 class="font-semibold mb-3 text-green-700">Affective Domain</h3>
+        <ul class="space-y-2">
+          {% for field, label in affective_fields.items %}
+  <li class="flex justify-between items-center">
+    <span>{{ label }}</span>
+    <div class="flex space-x-1">
+      {% for i in "12345" %}
+        {% with score=affective|get_field_value:field %}
+          <label>
+            <input type="radio" name="{{ field }}" value="{{ i }}" {% if i|add:"0" <= score %}checked{% endif %} class="hidden"/>
+            <span class="cursor-pointer text-yellow-500 text-xl">{% if i|add:"0" <= score %}⭐{% else %}☆{% endif %}</span>
+          </label>
+        {% endwith %}
+      {% endfor %}
+    </div>
+  </li>
+{% endfor %}
+
+        </ul>
+      </div>
+
+    </div>
+
+    <!-- Comments -->
+    <div class="mt-6 space-y-4">
+      <div>
+        <label class="font-semibold" for="teacher_comment">Teacher Comment</label>
+        <textarea name="teacher_comment" id="teacher_comment" rows="3" class="w-full border rounded p-2">{{ teacher_comment }}</textarea>
+      </div>
+      <div>
+        <label class="font-semibold" for="principal_comment">Principal Comment</label>
+        <textarea name="principal_comment" id="principal_comment" rows="3" class="w-full border rounded p-2">{{ principal_comment }}</textarea>
+      </div>
+    </div>
+
+    <!-- Submit -->
+    <div class="mt-6 flex justify-end">
+      <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+        Save Changes
+      </button>
+    </div>
+
+    <!-- Print Button -->
+    <div class="mt-4 flex justify-end space-x-2 no-print">
+      <button type="button" onclick="window.print()" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+        Print Result
+      </button>
+    </div>
+
+  </form>
+</div>
+</body>
+</html>

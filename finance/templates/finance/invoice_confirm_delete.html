@@ -1,0 +1,22 @@
+{% extends "finance/base_finance.html" %}
+{% block title %}Confirm Delete{% endblock %}
+
+{% block body %}
+<div class="bg-white p-6 rounded shadow max-w-lg">
+  <p class="text-gray-700">
+    Are you sure you want to delete
+    <strong>{{ object }}</strong>?
+  </p>
+
+  <form method="POST" class="mt-4 flex gap-3">
+    {% csrf_token %}
+    <a href="{{ request.META.HTTP_REFERER }}"
+       class="px-4 py-2 bg-gray-200 rounded">
+       Cancel
+    </a>
+    <button class="px-4 py-2 bg-red-600 text-white rounded">
+      Delete
+    </button>
+  </form>
+</div>
+{% endblock %}
