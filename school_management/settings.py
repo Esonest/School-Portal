@@ -43,7 +43,7 @@ SECRET_KEY = 'django-insecure-(3^n%q+=ux*)s$ys)xn906%ofpfn7!^j-5$+1g*c6tb6+6j^6b
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*", ".onrender.com"]
 
 
 
@@ -92,6 +92,7 @@ SITE_URL = "https://school.com"
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
     'django.middleware.csrf.CsrfViewMiddleware',
