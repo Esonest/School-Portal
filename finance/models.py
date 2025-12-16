@@ -51,15 +51,15 @@ class SchoolTransaction(models.Model):
         ('income', 'Income'),
         ('expense', 'Expense'),
     ]
-    transaction_type = models.CharField(max_length=10, choices=TRANSACTION_TYPE_CHOICES)
+    transaction_type = models.CharField(max_length=50, choices=TRANSACTION_TYPE_CHOICES)
     title = models.CharField(max_length=255,default='')
     amount = models.DecimalField(max_digits=12, decimal_places=2)
     date = models.DateField()
     description = models.TextField(blank=True)
 
     # New fields for term and session
-    session = models.CharField(max_length=20,default='', choices=[(s, s) for s in SESSION_LIST])
-    term = models.CharField(max_length=1, default='', choices=Score.TERM_CHOICES)
+    session = models.CharField(max_length=150,default='', choices=[(s, s) for s in SESSION_LIST])
+    term = models.CharField(max_length=10, default='', choices=Score.TERM_CHOICES)
 
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
@@ -81,11 +81,11 @@ class Invoice(models.Model):
     school_class = models.ForeignKey(SchoolClass, on_delete=models.CASCADE)
 
     title = models.CharField(max_length=255)
-    total_amount = models.DecimalField(max_digits=10, decimal_places=2)
-    amount_paid = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    total_amount = models.DecimalField(max_digits=20, decimal_places=2)
+    amount_paid = models.DecimalField(max_digits=20, decimal_places=2, default=0)
 
-    session = models.CharField(max_length=20)
-    term = models.CharField(max_length=1, choices=Score.TERM_CHOICES)
+    session = models.CharField(max_length=150)
+    term = models.CharField(max_length=10, choices=Score.TERM_CHOICES)
     due_date = models.DateField()
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -131,7 +131,7 @@ class Payment(models.Model):
         related_name="payments"
     )
 
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    amount = models.DecimalField(max_digits=20, decimal_places=2)
     payment_method = models.CharField(max_length=20, choices=PAYMENT_METHODS)
     payment_date = models.DateField(auto_now_add=True)
 
@@ -163,11 +163,11 @@ class Payment(models.Model):
 
 class Expense(models.Model):
     title = models.CharField(max_length=255, default='')
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    amount = models.DecimalField(max_digits=20, decimal_places=2)
     date = models.DateField(auto_now_add=True)
-    session = models.CharField(max_length=20, default='')
+    session = models.CharField(max_length=150, default='')
     school_class = models.ForeignKey(SchoolClass, on_delete=models.CASCADE, default='')
-    term = models.CharField(max_length=1, default='', choices=Score.TERM_CHOICES)
+    term = models.CharField(max_length=10, default='', choices=Score.TERM_CHOICES)
     school = models.ForeignKey(School, on_delete=models.CASCADE)
 
     def __str__(self):
@@ -177,11 +177,11 @@ class Expense(models.Model):
 class Receipt(models.Model):
     student = models.ForeignKey(Student, on_delete=models.CASCADE)
     payment = models.ForeignKey(Payment, on_delete=models.CASCADE)
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    amount = models.DecimalField(max_digits=20, decimal_places=2)
     date = models.DateField(auto_now_add=True)
     school_class = models.ForeignKey(SchoolClass, on_delete=models.CASCADE, default='')
-    session = models.CharField(max_length=20, default='')
-    term = models.CharField(max_length=1, default='', choices=Score.TERM_CHOICES)
+    session = models.CharField(max_length=150, default='')
+    term = models.CharField(max_length=10, default='', choices=Score.TERM_CHOICES)
     school = models.ForeignKey(School, on_delete=models.CASCADE)
 
     def __str__(self):
@@ -192,7 +192,7 @@ class FeeTemplate(models.Model):
     school = models.ForeignKey(School, on_delete=models.CASCADE, related_name="fee_templates")
     school_class = models.ForeignKey(SchoolClass, on_delete=models.CASCADE, default='')
     name = models.CharField(max_length=100)
-    amount = models.DecimalField(max_digits=10, decimal_places=2)
+    amount = models.DecimalField(max_digits=20, decimal_places=2)
     is_active = models.BooleanField(default=True)
 
     class Meta:
