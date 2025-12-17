@@ -40,7 +40,7 @@ MESSAGE_TAGS = {
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-key")
 DEBUG = "False"
-ALLOWED_HOSTS = ["techcenter-p2au.onrender.com"] 
+ALLOWED_HOSTS = ["techcenter-p2au.onrender.com", "127.0.0.1"] 
 
 
 

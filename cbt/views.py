@@ -8,6 +8,7 @@ from django.views.decorators.csrf import csrf_exempt
 from .models import CBTExam, CBTQuestion, CBTSubmission
 from students.models import Student
 from results.utils import portal_required
+from django.utils.dateparse import parse_datetime
 
 
 # --------------------------------------
@@ -200,7 +201,9 @@ def take_exam(request, exam_id, question_index):
     if isinstance(exam_start_time, datetime):
         exam_start_time = int(exam_start_time.timestamp())
     else:
-        exam_start_time = int(exam_start_time)
+        exam_start_time = parse_datetime(exam_start_time)
+        if exam_start_time is None:
+            return redirect("cbt:exam_list")
 
     time_limit = exam.duration_minutes * 60  # seconds
 
