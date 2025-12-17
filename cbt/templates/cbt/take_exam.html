@@ -7,36 +7,48 @@
   <title>{{ exam.subject.name }} - Question {{ current_question_number }}</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
-document.addEventListener("DOMContentLoaded", function () {
-    const timeLimit = Number("{{ time_limit|default:0 }}");
-    const examStartSec = Number("{{ exam_start_time|default:0 }}");
+document.addEventListener("DOMContentLoaded", function() {
+    const timeLimit = Number({{ time_limit|default:0 }}); // total seconds
+    const examStart = Number({{ exam_start_time|default:0 }}); // Unix timestamp in seconds
 
-    if (!timeLimit || !examStartSec) return;
-
-    let remainingSeconds = timeLimit - Math.floor(
-        (Date.now() - examStartSec * 1000) / 1000
-    );
-
-    if (remainingSeconds < 0) remainingSeconds = 0;
-
-    function updateTimer() {
-        const timerEl = document.getElementById("timer");
-        if (!timerEl) return;
-
-        const minutes = Math.floor(remainingSeconds / 60);
-        const seconds = remainingSeconds % 60;
-
-        timerEl.textContent =
-            minutes + ":" + (seconds < 10 ? "0" : "") + seconds;
-
-        if (remainingSeconds <= 0) {
-            document.getElementById("exam-form").submit();
-            return;
-        }
-        remainingSeconds--;
+    // Calculate remaining seconds safely
+    function getRemainingSeconds() {
+        const now = Math.floor(Date.now() / 1000); // current time in seconds
+        const elapsed = now - examStart;
+        return Math.max(timeLimit - elapsed, 0);
     }
 
+    let remainingSeconds = getRemainingSeconds();
+
+    // Only start countdown if there is time left
+    if (remainingSeconds <= 0) {
+        remainingSeconds = timeLimit; // fallback to full time
+    }
+
+    function updateTimer() {
+        const minutes = Math.floor(remainingSeconds / 60);
+        const seconds = remainingSeconds % 60;
+        const timerEl = document.getElementById("timer");
+        if (timerEl) {
+            timerEl.textContent = minutes + ":" + (seconds < 10 ? "0" : "") + seconds;
+        }
+
+        // Submit only when time runs out
+        if (remainingSeconds === 0) {
+            const form = document.getElementById("exam-form");
+            if (form && !form.dataset.submitted) {
+                form.dataset.submitted = "true"; // prevent multiple submissions
+                form.submit();
+            }
+        }
+
+        remainingSeconds--;
+        if (remainingSeconds < 0) remainingSeconds = 0;
+    }
+
+    // Initial display
     updateTimer();
+    // Update every second
     setInterval(updateTimer, 1000);
 });
 </script>

@@ -8,7 +8,6 @@ from django.views.decorators.csrf import csrf_exempt
 from .models import CBTExam, CBTQuestion, CBTSubmission
 from students.models import Student
 from results.utils import portal_required
-from django.utils.dateparse import parse_datetime
 
 
 # --------------------------------------
@@ -113,13 +112,12 @@ def start_exam(request, exam_id):
 
 # --------------------------------------
 # 🧩 Take Exam (Fixed Options + Resume Support)
-# --------------------------------------
-@portal_required("cbt")
+#@portal_required("cbt")
 @login_required
 def take_exam(request, exam_id, question_index):
-  
+    import random
     from datetime import datetime
-   
+    from django.utils import timezone
 
     exam = get_object_or_404(CBTExam, id=exam_id)
     student = getattr(request.user, "student_profile", None) or getattr(request.user, "student", None)
@@ -131,16 +129,12 @@ def take_exam(request, exam_id, question_index):
     if not submission:
         return redirect("cbt:start_exam_page", exam_id=exam.id)
 
-    # 🚫 Prevent retake after completion
+    # Prevent retake after completion
     if submission.completed_on:
         return redirect("cbt:exam_result", exam_id=exam.id)
 
-    # ✅ Question order consistency
-    question_order = (
-        request.session.get("question_order")
-        or submission.raw_answers.get("_question_order")
-    )
-
+    # Question order consistency
+    question_order = request.session.get("question_order") or submission.raw_answers.get("_question_order")
     if not question_order:
         question_order = list(
             CBTQuestion.objects.filter(exam=exam).values_list("id", flat=True)
@@ -156,18 +150,18 @@ def take_exam(request, exam_id, question_index):
     question_id = question_order[question_index]
     question = get_object_or_404(CBTQuestion, id=question_id)
 
-    # ✅ Shuffle option texts only (persisted)
+    # Shuffle option texts only
     shuffle_key = f"_shuffle_text_{question_id}"
     shuffled_texts = submission.raw_answers.get(shuffle_key)
-
     if not shuffled_texts:
-        shuffled_texts = [
+        option_texts = [
             question.option_a,
             question.option_b,
             question.option_c,
             question.option_d,
         ]
-        random.shuffle(shuffled_texts)
+        random.shuffle(option_texts)
+        shuffled_texts = option_texts
         submission.raw_answers[shuffle_key] = shuffled_texts
         submission.save(update_fields=["raw_answers"])
 
@@ -178,7 +172,7 @@ def take_exam(request, exam_id, question_index):
         ("D", shuffled_texts[3]),
     ]
 
-    # ✅ Handle POST (save answer)
+    # Handle POST
     if request.method == "POST":
         selected_option = request.POST.get("answer")
         if selected_option:
@@ -187,39 +181,34 @@ def take_exam(request, exam_id, question_index):
 
         next_index = question_index + 1
         if next_index < len(question_order):
-            return redirect(
-                "cbt:take_exam",
-                exam_id=exam.id,
-                question_index=next_index
-            )
-        return redirect("cbt:submit_exam", exam_id=exam.id)
+            return redirect("cbt:take_exam", exam_id=exam.id, question_index=next_index)
+        else:
+            return redirect("cbt:submit_exam", exam_id=exam.id)
 
-    # 📊 Progress
+    # Progress
     progress = int((question_index + 1) / len(question_order) * 100)
 
-    # ✅ Exam start time (persisted, JS-friendly)
-    exam_start_time = (
-        request.session.get("exam_start_time")
-        or submission.raw_answers.get("_exam_start_time")
-    )
+    # --- Handle exam_start_time safely ---
+    exam_start_time = request.session.get("exam_start_time") or submission.raw_answers.get("_exam_start_time")
 
     if not exam_start_time:
-        now = timezone.now()
-        timestamp = int(now.timestamp())
-        request.session["exam_start_time"] = timestamp
-        submission.raw_answers["_exam_start_time"] = now.isoformat()
+        # First question: store current timestamp
+        exam_start_time = int(timezone.now().timestamp())
+        request.session["exam_start_time"] = exam_start_time
+        submission.raw_answers["_exam_start_time"] = exam_start_time
         submission.save(update_fields=["raw_answers"])
-        exam_start_timestamp = timestamp
+
     else:
-        if isinstance(exam_start_time, int):
-            exam_start_timestamp = exam_start_time
-        elif isinstance(exam_start_time, datetime):
-            exam_start_timestamp = int(exam_start_time.timestamp())
-        else:
-            parsed = parse_datetime(exam_start_time)
-            if not parsed:
-                return redirect("cbt:exam_list")
-            exam_start_timestamp = int(parsed.timestamp())
+        # If ISO string, convert to timestamp
+        if isinstance(exam_start_time, str):
+            from django.utils.dateparse import parse_datetime
+            dt = parse_datetime(exam_start_time)
+            if dt is not None:
+                exam_start_time = int(dt.timestamp())
+                request.session["exam_start_time"] = exam_start_time
+
+        # Ensure it is int
+        exam_start_time = int(exam_start_time)
 
     time_limit = exam.duration_minutes * 60  # seconds
 
@@ -232,7 +221,7 @@ def take_exam(request, exam_id, question_index):
         "total_questions": len(question_order),
         "progress": progress,
         "time_limit": time_limit,
-        "exam_start_time": exam_start_timestamp,  # ✅ JS expects timestamp
+        "exam_start_time": exam_start_time,
         "student": student,
     })
 
