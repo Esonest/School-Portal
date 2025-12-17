@@ -155,9 +155,9 @@ def student_create(request, school_id):
     else:
         form = StudentCreateForm(school=school)
 
-    return render(request, "school_admin/student/form.html", {
+    return render(request, "school_admin/admin_student_form.html", {
         "form": form,
-        "school": school,
+        "school": school,       
     })
 
 
@@ -1548,7 +1548,7 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 from django.contrib import messages
 
-from accounts.models import School, User,  Teacher
+from accounts.models import School, Teacher
 
 from .forms import TeacherForm
 
@@ -1608,125 +1608,80 @@ def teacher_list(request, school_id):
 
 
 # ------------------- CREATE TEACHER -------------------
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.contrib import messages
+from django.db import transaction
+from django.shortcuts import get_object_or_404, redirect, render
+from .forms import TeacherForm
+
+
+
+# ------------------- CREATE TEACHER -------------------
 @login_required
+@user_passes_test(lambda u: is_schooladmin(u) or is_superadmin(u))
+@transaction.atomic
 def teacher_create(request, school_id):
     school = get_object_or_404(School, id=school_id)
-    user = request.user
-
-    # ---------- ACCESS CONTROL ----------
-    if user.is_schooladmin and user.school != school:
-        messages.error(request, "You cannot manage another school.")
-        return redirect("dashboard")
 
     if request.method == "POST":
         form = TeacherForm(request.POST, request.FILES, school=school)
         if form.is_valid():
-            # ---------- CREATE USER ----------
-            new_user = User.objects.create_user(
-                username=form.cleaned_data["username"],
-                password=form.cleaned_data["password"],
-                first_name=form.cleaned_data["first_name"],
-                last_name=form.cleaned_data["last_name"],
-                email=form.cleaned_data["email"],
+            teacher = form.save()  # ✅ User is created inside the form
+            messages.success(
+                request,
+                f"Teacher '{teacher.user.get_full_name()}' created successfully."
             )
-            new_user.phone = form.cleaned_data["phone"]
-            new_user.address = form.cleaned_data["address"]
-            new_user.role = "teacher"
-            new_user.is_teacher = True
-            new_user.school = school  # force school from URL
-            new_user.save()
-
-            # ---------- CREATE TEACHER ----------
-            teacher = form.save(commit=False)
-            teacher.user = new_user
-            teacher.school = school
-            teacher.save()
-
-            # ---------- FORCE SCHOOL DATA ----------
-            teacher.classes.set(
-                form.cleaned_data["classes"].filter(school=school)
-            )
-            teacher.subjects.set(
-                form.cleaned_data["subjects"].filter(school=school)
-            )
-
-            messages.success(request, "Teacher created successfully.")
             return redirect("school_admin:teacher_list", school_id=school.id)
+        else:
+            messages.error(request, f"Error creating teacher: {form.errors}")
     else:
         form = TeacherForm(school=school)
 
-    return render(request, "school_admin/teachers/admin_form.html", {
-        "form": form,
-        "is_create": True,
-        "school": school,
-    })
+    return render(
+        request,
+        "school_admin/teachers/admin_form.html",
+        {
+            "form": form,
+            "school": school,
+        },
+    )
 
 
 # ------------------- EDIT TEACHER -------------------
 @login_required
+@user_passes_test(lambda u: is_schooladmin(u) or is_superadmin(u))
 def teacher_edit(request, school_id, teacher_id):
-    school = get_object_or_404(School, id=school_id)
-    user = request.user
-
-    teacher = get_object_or_404(
-        Teacher.objects.select_related("user"),
-        pk=teacher_id,  # match view parameter
-        school=school
-    )
-
-    # ---------- ACCESS CONTROL ----------
-    if user.is_schooladmin and user.school != school:
-        messages.error(request, "You cannot manage another school.")
-        return redirect("dashboard")
+    school = request.user.school_admin_profile.school
+    teacher = get_object_or_404(Teacher, id=teacher_id, school=school)
 
     if request.method == "POST":
         form = TeacherForm(
             request.POST,
             request.FILES,
             instance=teacher,
-            is_edit=True,
             school=school
         )
         if form.is_valid():
-            # ---------- UPDATE USER ----------
-            u = teacher.user
-            u.username = form.cleaned_data["username"]
-            u.first_name = form.cleaned_data["first_name"]
-            u.last_name = form.cleaned_data["last_name"]
-            u.email = form.cleaned_data["email"]
-            u.phone = form.cleaned_data["phone"]
-            u.address = form.cleaned_data["address"]
-            u.school = school  # force school from URL
-            u.save()
-
-            # ---------- UPDATE TEACHER ----------
-            teacher = form.save(commit=False)
-            teacher.school = school
-            teacher.save()
-
-            # ---------- FORCE SCHOOL DATA ----------
-            teacher.classes.set(
-                form.cleaned_data["classes"].filter(school=school)
+            form.save()
+            messages.success(
+                request,
+                f"Teacher '{teacher.user.get_full_name()}' updated successfully."
             )
-            teacher.subjects.set(
-                form.cleaned_data["subjects"].filter(school=school)
-            )
-
-            messages.success(request, "Teacher updated successfully.")
             return redirect("school_admin:teacher_list", school_id=school.id)
     else:
-        form = TeacherForm(
-            instance=teacher,
-            is_edit=True,
-            school=school
-        )
+        form = TeacherForm(instance=teacher, school=school)
 
-    return render(request, "school_admin/teachers/admin_form.html", {
-        "form": form,
-        "is_create": False,
-        "school": school,
-        "teacher_id": teacher.id,  # pass to template if needed
-    })
+    return render(
+        request,
+        "school_admin/teachers/admin_form.html",
+        {
+            "form": form,
+            "teacher": teacher,
+            "school": school,
+        },
+    )
+
+
 
 
 
@@ -2362,7 +2317,6 @@ from .forms import ClassSubjectTeacherForm
 from results.utils import portal_required
 
 
-@portal_required("school_admin")
 @login_required
 def class_subject_teacher_list(request, school_id):
     school = get_object_or_404(School, id=school_id)
@@ -2380,7 +2334,7 @@ def class_subject_teacher_list(request, school_id):
     })
 
 
-@portal_required("school_admin")
+
 @login_required
 def class_subject_teacher_create(request, school_id):
     school = get_object_or_404(School, id=school_id)
@@ -2401,7 +2355,7 @@ def class_subject_teacher_create(request, school_id):
     })
 
 
-@portal_required("school_admin")
+
 @login_required
 def class_subject_teacher_update(request, school_id, pk):
     school = get_object_or_404(School, id=school_id)
@@ -2423,7 +2377,6 @@ def class_subject_teacher_update(request, school_id, pk):
     })
 
 
-@portal_required("school_admin")
 @login_required
 def class_subject_teacher_delete(request, school_id, pk):
     school = get_object_or_404(School, id=school_id)

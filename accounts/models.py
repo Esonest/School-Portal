@@ -111,7 +111,7 @@ class User(AbstractUser):
 
     @property
     def is_accountant_user(self):
-        return self.role == 'accountany' or self.is_accountant    
+        return self.role == 'accountant' or self.is_accountant    
 
 
 from django.db import models

@@ -269,6 +269,13 @@ from django.contrib.auth import get_user_model
 User = get_user_model()
 
 
+from django import forms
+from django.contrib.auth import get_user_model
+from django.db import transaction
+
+User = get_user_model()
+
+
 class TeacherForm(forms.ModelForm):
     username = forms.CharField()
     first_name = forms.CharField(required=False)
@@ -296,23 +303,21 @@ class TeacherForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         self.is_edit = kwargs.pop("is_edit", False)
-        self.school = kwargs.pop("school", None)  # ✅ ONLY SOURCE
+        self.school = kwargs.pop("school", None)  # ✅ SINGLE SOURCE OF TRUTH
         super().__init__(*args, **kwargs)
 
         if self.school:
-            # School (locked)
+            # Lock school
             self.fields["school"].queryset = (
                 self.fields["school"].queryset.filter(id=self.school.id)
             )
             self.fields["school"].initial = self.school
             self.fields["school"].disabled = True
 
-            # Classes (school only)
+            # Restrict to school data
             self.fields["classes"].queryset = (
                 self.fields["classes"].queryset.filter(school=self.school)
             )
-
-            # Subjects (school only) ✅ FIX
             self.fields["subjects"].queryset = (
                 self.fields["subjects"].queryset.filter(school=self.school)
             )
@@ -328,6 +333,50 @@ class TeacherForm(forms.ModelForm):
             self.fields["password"].widget = forms.HiddenInput()
         else:
             self.fields["password"].required = True
+
+    # ---------------- SAVE LOGIC (CRITICAL PART) ----------------
+    @transaction.atomic
+    def save(self, commit=True):
+        teacher = super().save(commit=False)
+
+        if self.is_edit:
+            # -------- UPDATE USER --------
+            user = teacher.user
+            user.username = self.cleaned_data["username"]
+            user.first_name = self.cleaned_data["first_name"]
+            user.last_name = self.cleaned_data["last_name"]
+            user.email = self.cleaned_data["email"]
+            user.phone = self.cleaned_data["phone"]
+            user.address = self.cleaned_data["address"]
+            user.school = self.school
+            user.save()
+
+        else:
+            # -------- CREATE USER --------
+            user = User.objects.create_user(
+                username=self.cleaned_data["username"],
+                password=self.cleaned_data["password"],
+                first_name=self.cleaned_data["first_name"],
+                last_name=self.cleaned_data["last_name"],
+                email=self.cleaned_data["email"],
+            )
+            user.phone = self.cleaned_data["phone"]
+            user.address = self.cleaned_data["address"]
+            user.role = "teacher"
+            user.is_teacher = True
+            user.school = self.school
+            user.save()
+
+            teacher.user = user
+
+        teacher.school = self.school
+
+        if commit:
+            teacher.save()
+            self.save_m2m()
+
+        return teacher
+
 
 
 
