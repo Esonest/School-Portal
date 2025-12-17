@@ -39,7 +39,7 @@ MESSAGE_TAGS = {
 
 # SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-key")
-DEBUG = os.environ.get("DEBUG", "False") == "True"
+DEBUG = "False"
 ALLOWED_HOSTS = ["techcenter-p2au.onrender.com"] 
 
 
@@ -82,7 +82,7 @@ LOGIN_REDIRECT_URL = '/portal-selection/'
 
 
 # settings.py
-SITE_URL = "https://school.com"
+SITE_URL = "https://techcenter-p2au.onrender.com"
 
 
 
@@ -187,3 +187,19 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 
 
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
+        },
+    },
+    "loggers": {
+        "django": {
+            "handlers": ["console"],
+            "level": "ERROR",
+            "propagate": True,
+        },
+    },
+}
