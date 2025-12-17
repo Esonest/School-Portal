@@ -1,13 +1,26 @@
 {% extends 'accounts/base.html' %}
-{% block content %}
-<div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-indigo-100 via-white to-purple-100">
-  <div class="bg-white/90 backdrop-blur-xl shadow-xl rounded-2xl p-10 w-full max-w-md border border-indigo-100">
 
-    <!-- Header -->
-    <div class="text-center mb-10">
-      <h1 class="text-3xl font-extrabold text-indigo-700 tracking-tight">Welcome Back 👋</h1>
-      <p class="text-gray-500 mt-2 text-sm">Sign in to Access Different Dashboards</p>
-    </div>
+{% block title %}Login - TECHCENTER School Portal{% endblock %}
+
+{% block content %}
+
+<!-- HERO SECTION -->
+<section class="relative h-64 bg-cover bg-center flex flex-col justify-center items-center"
+         style="background-image: url('https://images.unsplash.com/photo-1522202176988-66273c2fd55f');">
+  <div class="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-black/80"></div>
+  <div class="relative z-10 text-center px-6 max-w-3xl">
+    <h2 class="text-4xl md:text-5xl font-bold text-white drop-shadow-lg">
+      Welcome Back 👋
+    </h2>
+    <p class="mt-4 text-lg md:text-xl text-gray-200 drop-shadow-lg">
+      Sign in to access different dashboards
+    </p>
+  </div>
+</section>
+
+<!-- LOGIN FORM -->
+<div class="min-h-screen flex items-center justify-center -mt-20 px-4">
+  <div class="bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl shadow-xl rounded-2xl p-10 w-full max-w-md border border-indigo-100 dark:border-gray-700">
 
     <!-- Display messages -->
     {% if messages %}
@@ -24,23 +37,23 @@
 
       <!-- Username -->
       <div>
-        <label for="id_username" class="block text-gray-700 font-semibold mb-1">Username</label>
+        <label for="id_username" class="block text-gray-700 dark:text-gray-200 font-semibold mb-1">Username</label>
         <input type="text" name="username" id="id_username" placeholder="Enter your username"
-               class="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-800
-                      focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500
-                      placeholder-gray-400 transition-all duration-200">
+               class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-800 dark:text-gray-100
+                      focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:focus:ring-indigo-400
+                      placeholder-gray-400 dark:placeholder-gray-500 transition-all duration-200">
       </div>
 
       <!-- Password -->
       <div class="relative">
-        <label for="id_password" class="block text-gray-700 font-semibold mb-1">Password</label>
+        <label for="id_password" class="block text-gray-700 dark:text-gray-200 font-semibold mb-1">Password</label>
         <div class="relative">
           <input type="password" name="password" id="id_password" placeholder="Enter your password"
-                 class="w-full px-4 py-3 border border-gray-300 rounded-lg text-gray-800
-                        focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500
-                        placeholder-gray-400 transition-all duration-200">
+                 class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-800 dark:text-gray-100
+                        focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:focus:ring-indigo-400
+                        placeholder-gray-400 dark:placeholder-gray-500 transition-all duration-200">
           <button type="button" id="togglePassword"
-                  class="absolute inset-y-0 right-3 flex items-center text-gray-500 hover:text-indigo-600 focus:outline-none">
+                  class="absolute inset-y-0 right-3 flex items-center text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-300 focus:outline-none">
             <svg id="eyeIcon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
                  stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
               <path stroke-linecap="round" stroke-linejoin="round"
@@ -53,11 +66,18 @@
         </div>
       </div>
 
+      <!-- Reset Password -->
+      <div class="text-right">
+        <a href="{% url 'accounts:password_reset' %}" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">
+          Forgot Password?
+        </a>
+      </div>
+
       <!-- Submit -->
       <button type="submit" id="loginButton"
-              class="w-full py-3 bg-gradient-to-r from-indigo-600 to-fuchsia-600 text-white font-semibold rounded-lg
-                     shadow-md hover:from-indigo-700 hover:to-fuchsia-700 transition-all duration-300
-                     transform hover:-translate-y-0.5 flex items-center justify-center space-x-2">
+              class="w-full py-3 bg-gradient-to-r from-indigo-600 to-fuchsia-600 dark:from-indigo-500 dark:to-fuchsia-500
+                     text-white font-semibold rounded-lg shadow-md hover:from-indigo-700 hover:to-fuchsia-700 dark:hover:from-indigo-600 dark:hover:to-fuchsia-400
+                     transition-all duration-300 transform hover:-translate-y-0.5 flex items-center justify-center space-x-2">
         <span id="buttonText">Sign In</span>
         <svg id="loadingSpinner" class="hidden animate-spin h-5 w-5 text-white"
              xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
@@ -69,6 +89,7 @@
       </button>
 
     </form>
+
   </div>
 </div>
 
