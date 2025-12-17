@@ -81,23 +81,31 @@ def start_exam(request, exam_id):
     submission = CBTSubmission.objects.filter(student=student, exam=exam).first()
     if submission:
         if submission.completed_on:
-            # exam already finished
             return redirect("cbt:cbt_result_analysis", exam_id=exam.id)
         else:
-            # exam started but not finished → resume
+            # resume
             request.session["question_order"] = submission.raw_answers.get("_question_order", [])
+            # ✅ preserve original start time
+            if "exam_start_time" not in request.session:
+                request.session["exam_start_time"] = submission.raw_answers.get(
+                    "_exam_start_time"
+                )
             return redirect("cbt:take_exam", exam_id=exam.id, question_index=0)
 
     # ✅ create new submission
     submission = CBTSubmission.objects.create(student=student, exam=exam)
+
     question_order = list(exam.questions.values_list("id", flat=True))
     random.shuffle(question_order)
 
+    exam_start_time = timezone.now().isoformat()
+
     submission.raw_answers["_question_order"] = question_order
+    submission.raw_answers["_exam_start_time"] = exam_start_time
     submission.save(update_fields=["raw_answers"])
 
     request.session["question_order"] = question_order
-    request.session["exam_start_time"] = timezone.now().isoformat()
+    request.session["exam_start_time"] = exam_start_time
 
     return redirect("cbt:take_exam", exam_id=exam.id, question_index=0)
 
@@ -108,13 +116,16 @@ def start_exam(request, exam_id):
 @portal_required("cbt")
 @login_required
 def take_exam(request, exam_id, question_index):
+    import time
+    from datetime import datetime
+    from django.utils import timezone
+
     exam = get_object_or_404(CBTExam, id=exam_id)
-    student = getattr(request.user, 'student_profile', None) or getattr(request.user, 'student', None)
+    student = getattr(request.user, "student_profile", None) or getattr(request.user, "student", None)
 
     if not student:
         return HttpResponseForbidden("You must be logged in as a student to take this exam.")
 
-    # Ensure submission exists
     submission = CBTSubmission.objects.filter(student=student, exam=exam).first()
     if not submission:
         return redirect("cbt:start_exam_page", exam_id=exam.id)
@@ -123,13 +134,12 @@ def take_exam(request, exam_id, question_index):
     if submission.completed_on:
         return redirect("cbt:exam_result", exam_id=exam.id)
 
-    # ✅ Ensure question order consistency
-    question_order = request.session.get("question_order")
+    # ✅ Question order consistency
+    question_order = request.session.get("question_order") or submission.raw_answers.get("_question_order")
     if not question_order:
-        question_order = submission.raw_answers.get("_question_order")
-
-    if not question_order:
-        question_order = list(CBTQuestion.objects.filter(exam=exam).values_list("id", flat=True))
+        question_order = list(
+            CBTQuestion.objects.filter(exam=exam).values_list("id", flat=True)
+        )
         random.shuffle(question_order)
         submission.raw_answers["_question_order"] = question_order
         submission.save(update_fields=["raw_answers"])
@@ -141,18 +151,21 @@ def take_exam(request, exam_id, question_index):
     question_id = question_order[question_index]
     question = get_object_or_404(CBTQuestion, id=question_id)
 
-    # ✅ Shuffle option *texts* only (letters remain A–D)
+    # ✅ Shuffle option *texts* only
     shuffle_key = f"_shuffle_text_{question_id}"
     shuffled_texts = submission.raw_answers.get(shuffle_key)
-
     if not shuffled_texts:
-        option_texts = [question.option_a, question.option_b, question.option_c, question.option_d]
+        option_texts = [
+            question.option_a,
+            question.option_b,
+            question.option_c,
+            question.option_d,
+        ]
         random.shuffle(option_texts)
         shuffled_texts = option_texts
         submission.raw_answers[shuffle_key] = shuffled_texts
         submission.save(update_fields=["raw_answers"])
 
-    # Map shuffled texts back to A–D labels
     options = [
         ("A", shuffled_texts[0]),
         ("B", shuffled_texts[1]),
@@ -160,7 +173,7 @@ def take_exam(request, exam_id, question_index):
         ("D", shuffled_texts[3]),
     ]
 
-    # ✅ Handle POST (Save answer)
+    # ✅ Handle POST
     if request.method == "POST":
         selected_option = request.POST.get("answer")
         if selected_option:
@@ -173,19 +186,34 @@ def take_exam(request, exam_id, question_index):
         else:
             return redirect("cbt:submit_exam", exam_id=exam.id)
 
-    # Progress bar & timer
+    # 📊 Progress
     progress = int((question_index + 1) / len(question_order) * 100)
-    time_limit = getattr(exam, "duration", 30) * 60
+
+    # ✅ Handle exam_start_time safely and persist across pages
+    exam_start_time = request.session.get("exam_start_time") or submission.raw_answers.get("_exam_start_time")
+    if not exam_start_time:
+        exam_start_time = timezone.now()
+        # Save to session so it persists across questions
+        request.session["exam_start_time"] = int(exam_start_time.timestamp())
+
+    # Convert datetime to timestamp for JS
+    if isinstance(exam_start_time, datetime):
+        exam_start_time = int(exam_start_time.timestamp())
+    else:
+        exam_start_time = int(exam_start_time)
+
+    time_limit = exam.duration_minutes * 60  # seconds
 
     return render(request, "cbt/take_exam.html", {
         "exam": exam,
         "question": question,
-        "options": options,  # A–D remain fixed
+        "options": options,
         "question_index": question_index,
         "current_question_number": question_index + 1,
         "total_questions": len(question_order),
         "progress": progress,
         "time_limit": time_limit,
+        "exam_start_time": exam_start_time,
         "student": student,
     })
 

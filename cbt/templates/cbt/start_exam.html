@@ -37,8 +37,8 @@
       <h3 class="text-lg font-semibold text-blue-800 mb-3">Exam Details</h3>
       <ul class="space-y-2 text-gray-700">
         <li><strong>Number of Questions:</strong> {{ exam.questions.count }}</li>
-        <li><strong>Duration:</strong> {{ exam.duration }} minutes</li>
-        <li><strong>Exam Date:</strong> {{ exam.date|date:"F j, Y" }}</li>
+        <li><strong>Duration:</strong> {{ exam.duration_minutes }} minutes</li>
+        <li><strong>Exam Date:</strong> {{ exam.start_time|date:"F j, Y" }}</li>
       </ul>
     </div>
 

@@ -2,7 +2,8 @@
 {% load custom_filters %}
 
 {% block content %}
-<h1 class="text-2xl font-bold mb-4">Submission Detail - {{ submission.student.full_name }}</h1>
+<h1 class="text-2xl font-bold text-{{ school.theme_color }}-600">{{ school.name }}</h1>
+<h2 class="text-2xl font-bold mb-4">Submission Detail - {{ submission.student.full_name }}</h2>
 
 <p><strong>Exam:</strong> {{ exam.title }}</p>
 <p><strong>Score:</strong> {{ submission.score }} / {{ submission.total_questions }}</p>
@@ -25,21 +26,32 @@
     </tr>
   </thead>
   <tbody>
-    {% for question in questions %}
-    <tr>
-      <td class="border p-2">{{ forloop.counter }}</td>
-      <td class="border p-2">{{ question.text }}</td>
-      <td class="border p-2">{{ answers|get_item:question.id|default:"-" }}</td>
-      <td class="border p-2">{{ question.correct_option }}</td>
-      <td class="border p-2">
-        {% if answers|get_item:question.id == question.correct_option %}
-          {{ question.marks }}
-        {% else %}
-          0
-        {% endif %}
-      </td>
-    </tr>
-    {% endfor %}
+   {% for question in questions %}
+<tr>
+  <td class="border p-2">{{ forloop.counter }}</td>
+
+  <td class="border p-2">{{ question.text }}</td>
+
+  {% with qid=question.id|stringformat:"s" %}
+    <td class="border p-2">
+      {{ answers|get_item:qid|default:"-" }}
+    </td>
+
+    <td class="border p-2">
+      {{ correct_map|get_item:question.id }}
+    </td>
+
+    <td class="border p-2">
+      {% if answers|get_item:qid == correct_map|get_item:question.id %}
+        {{ question.marks }}
+      {% else %}
+        0
+      {% endif %}
+    </td>
+  {% endwith %}
+</tr>
+{% endfor %}
+
   </tbody>
 </table>
 {% endblock %}

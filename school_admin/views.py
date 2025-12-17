@@ -723,86 +723,75 @@ def delete_exam(request, school_id, exam_id):
 
 @login_required
 def submission_detail(request, school_id, exam_id, submission_id):
-    """
-    Display a detailed view of a student's CBT submission.
-    Supports shuffled option reconstruction.
-    """
 
     school = get_object_or_404(School, id=school_id)
-
-    exam = get_object_or_404(
-        CBTExam.objects.select_related("school"),
-        id=exam_id,
-        school=school
-    )
-
+    exam = get_object_or_404(CBTExam, id=exam_id, school=school)
     submission = get_object_or_404(
-        CBTSubmission.objects.select_related("student__school", "exam"),
+        CBTSubmission.objects.select_related("student", "exam"),
         id=submission_id,
         exam=exam
     )
 
-    # ------------ PERMISSION CHECK -------------
     if not (
         request.user.is_superadmin or
         getattr(request.user, "school", None) == school
     ):
-        raise PermissionDenied("You do not have permission to view this submission.")
-    # -------------------------------------------
+        raise PermissionDenied
 
-    answers = submission.raw_answers or {}   # stored answers
-    questions = exam.questions.all().order_by("id")
+    answers = submission.raw_answers or {}
 
-    # =====================================================================
-    # 🔥 RECONSTRUCT REAL CORRECT ANSWER BASED ON SHUFFLED OPTION ORDER
-    # =====================================================================
-    correct_map = {}   # {question.id: "A"|"B"|"C"|"D"}
+    # 🔥 QUESTION ORDER = ANSWER ORDER
+    answered_ids = [
+        int(k) for k in answers.keys()
+        if str(k).isdigit()
+    ]
+
+    questions = list(
+        exam.questions.filter(id__in=answered_ids)
+    )
+
+    # keep the answer order
+    questions.sort(key=lambda q: answered_ids.index(q.id))
+
+    # append unanswered questions
+    unanswered = exam.questions.exclude(id__in=answered_ids)
+    questions.extend(unanswered)
+
+    # 🔥 REBUILD CORRECT ANSWERS AFTER SHUFFLE
+    correct_map = {}
 
     for q in questions:
-
-        # ——— Original correct answer (letter and text) ———
-        original_options = {
+        original = {
             "A": q.option_a,
             "B": q.option_b,
             "C": q.option_c,
             "D": q.option_d,
         }
 
-        orig_letter = q.correct_option
-        orig_text = original_options.get(orig_letter, "").strip().lower()
+        orig_text = original.get(q.correct_option, "").strip().lower()
+        shuffled = answers.get(f"_shuffle_text_{q.id}", [])
 
-        # ——— Get the shuffled list stored during submission ———
-        shuffled_list = answers.get(f"_shuffle_text_{q.id}", [])
-
-        # If not shuffled, use default
-        if not shuffled_list:
-            correct_map[q.id] = orig_letter
+        if not shuffled:
+            correct_map[q.id] = q.correct_option
             continue
 
-        # Normalize shuffled for matching
-        normalized_shuffled = [opt.strip().lower() for opt in shuffled_list]
+        shuffled_norm = [s.strip().lower() for s in shuffled]
 
-        # ——— Find correct option inside shuffled list ———
         try:
-            idx = normalized_shuffled.index(orig_text)   # position in shuffled
-            new_letter = chr(65 + idx)  # convert 0 → A, 1 → B, …
+            idx = shuffled_norm.index(orig_text)
+            correct_map[q.id] = chr(65 + idx)
         except ValueError:
-            # Correct text not found after shuffle (rare, but safe fallback)
-            new_letter = orig_letter
+            correct_map[q.id] = q.correct_option
 
-        correct_map[q.id] = new_letter
-
-    # ——— CONTEXT ———
-    context = {
+    return render(request, "school_admin/submission_detail.html", {
         "school": school,
         "exam": exam,
         "submission": submission,
-        "answers": answers,
         "questions": questions,
+        "answers": answers,
         "correct_map": correct_map,
-    }
+    })
 
-    return render(request, "school_admin/submission_detail.html", context)
 
 
 

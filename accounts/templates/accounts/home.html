@@ -3,55 +3,159 @@
 {% block title %}Home - TECHCENTER School Portal{% endblock %}
 
 {% block content %}
-<section class="bg-cover bg-center h-72 flex flex-col justify-center items-center text-white" style="background-image: url('https://images.unsplash.com/photo-1524995997946-a1c2e315a42f');">
- <h2 class="text-4xl font-bold drop-shadow-lg">Empowering Education Through Technology</h2>
- <p class="mt-4 text-lg drop-shadow-lg text-center max-w-3xl">
-  TECHCENTER School Portal provides modern digital solutions for schools to manage results, finance, attendance, CBT, and more.
- </p>
+
+<!-- DARK MODE TOGGLE -->
+<button 
+  id="theme-toggle" 
+  class="fixed top-4 right-4 p-2 bg-gray-200 dark:bg-gray-700 rounded-full shadow z-50"
+  aria-label="Toggle Dark Mode"
+>
+  🌙
+</button>
+
+<!-- HERO SECTION -->
+<section class="relative h-80 bg-cover bg-center flex items-center justify-center"
+         style="background-image: url('https://images.unsplash.com/photo-1524995997946-a1c2e315a42f');">
+  <!-- Dark Overlay -->
+  <div class="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-black/80"></div>
+
+  <!-- Hero Text -->
+  <div class="relative z-10 text-center px-6 max-w-4xl">
+    <h2 class="text-4xl md:text-5xl font-extrabold text-white leading-tight drop-shadow-lg">
+      Empowering Education Through Technology
+    </h2>
+    <p class="mt-5 text-lg md:text-xl text-gray-200 drop-shadow-lg">
+      TECHCENTER School Portal provides modern digital solutions for schools to manage results, finance, attendance, CBT, and more.
+    </p>
+  </div>
 </section>
 
+<!-- ANIMATED COUNTERS -->
+<section class="py-12 bg-gray-50 dark:bg-gray-900">
+  <div class="max-w-7xl mx-auto px-6">
+    <h3 class="text-2xl font-bold text-gray-800 dark:text-gray-100 text-center mb-8">
+      Our Impact
+    </h3>
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+      
+      <!-- Students -->
+      <div x-data="{ count: 0 }" 
+           x-init="let target=1200; let step=Math.ceil(target/100); let interval=setInterval(() => { count+=step; if(count>=target){ count=target; clearInterval(interval); } }, 20)"
+           class="bg-blue-100 dark:bg-blue-900 rounded-lg p-6 shadow">
+        <div class="text-4xl font-bold text-blue-700 dark:text-blue-300" x-text="count"></div>
+        <div class="mt-2 text-gray-700 dark:text-gray-200">Students</div>
+      </div>
+
+      <!-- Teachers -->
+      <div x-data="{ count: 0 }" 
+           x-init="let target=85; let step=1; let interval=setInterval(() => { count+=step; if(count>=target){ count=target; clearInterval(interval); } }, 30)"
+           class="bg-green-100 dark:bg-green-900 rounded-lg p-6 shadow">
+        <div class="text-4xl font-bold text-green-700 dark:text-green-300" x-text="count"></div>
+        <div class="mt-2 text-gray-700 dark:text-gray-200">Teachers</div>
+      </div>
+
+      <!-- Exams Taken -->
+      <div x-data="{ count: 0 }" 
+           x-init="let target=240; let step=2; let interval=setInterval(() => { count+=step; if(count>=target){ count=target; clearInterval(interval); } }, 25)"
+           class="bg-purple-100 dark:bg-purple-900 rounded-lg p-6 shadow">
+        <div class="text-4xl font-bold text-purple-700 dark:text-purple-300" x-text="count"></div>
+        <div class="mt-2 text-gray-700 dark:text-gray-200">Exams Taken</div>
+      </div>
+
+      <!-- Assignments Submitted -->
+      <div x-data="{ count: 0 }" 
+           x-init="let target=1500; let step=15; let interval=setInterval(() => { count+=step; if(count>=target){ count=target; clearInterval(interval); } }, 20)"
+           class="bg-yellow-100 dark:bg-yellow-900 rounded-lg p-6 shadow">
+        <div class="text-4xl font-bold text-yellow-700 dark:text-yellow-300" x-text="count"></div>
+        <div class="mt-2 text-gray-700 dark:text-gray-200">Assignments Submitted</div>
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<!-- PORTAL CARDS -->
 <main class="p-8 max-w-7xl mx-auto">
- <h2 class="text-2xl font-semibold mb-6 text-center">Welcome to TECHCENTER School Management Portal</h2>
- <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6">
-   <a href="{% url 'accounts:login' %}" class="bg-white shadow-lg rounded-lg p-6 text-center hover:bg-blue-50 transition">
-     <i class="bi bi-person-circle text-5xl mb-4"></i>
-     <h3 class="text-xl font-bold">Student Portal</h3>
-   </a>
+  <h2 class="text-3xl font-semibold mb-10 text-center text-gray-800 dark:text-gray-100">
+    Welcome to TECHCENTER School Management Portal
+  </h2>
 
-   <a href="{% url 'accounts:login' %}" class="bg-white shadow-lg rounded-lg p-6 text-center hover:bg-blue-50 transition">
-     <i class="bi bi-mortarboard text-5xl mb-4"></i>
-     <h3 class="text-xl font-bold">Teacher Portal</h3>
-   </a>
+  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
 
-   <a href="{% url 'accounts:login' %}" class="bg-white shadow-lg rounded-lg p-6 text-center hover:bg-blue-50 transition">
-     <i class="bi bi-cash-stack text-5xl mb-4"></i>
-     <h3 class="text-xl font-bold">Finance Portal</h3>
-   </a>
+    {% comment %} STUDENT PORTAL {% endcomment %}
+    <a href="{% url 'accounts:login' %}" 
+       class="group bg-white dark:bg-gray-800 rounded-xl p-6 text-center shadow-md
+              hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+      <i class="bi bi-person-circle text-5xl mb-4 text-blue-600 group-hover:scale-110 transition"></i>
+      <h3 class="text-xl font-bold text-gray-800 dark:text-gray-100">Student Portal</h3>
+    </a>
 
-   <a href="{% url 'accounts:login' %}" class="bg-white shadow-lg rounded-lg p-6 text-center hover:bg-blue-50 transition">
-     <i class="bi bi-bar-chart text-5xl mb-4"></i>
-     <h3 class="text-xl font-bold">Result Portal</h3>
-   </a>
+    {% comment %} TEACHER PORTAL {% endcomment %}
+    <a href="{% url 'accounts:login' %}" 
+       class="group bg-white dark:bg-gray-800 rounded-xl p-6 text-center shadow-md
+              hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+      <i class="bi bi-mortarboard text-5xl mb-4 text-green-600 group-hover:scale-110 transition"></i>
+      <h3 class="text-xl font-bold text-gray-800 dark:text-gray-100">Teacher Portal</h3>
+    </a>
 
-   <a href="{% url 'accounts:login' %}" class="bg-white shadow-lg rounded-lg p-6 text-center hover:bg-blue-50 transition">
-     <i class="bi bi-pencil-square text-5xl mb-4"></i>
-     <h3 class="text-xl font-bold">CBT Exam Portal</h3>
-   </a>
+    {% comment %} FINANCE PORTAL {% endcomment %}
+    <a href="{% url 'accounts:login' %}" 
+       class="group bg-white dark:bg-gray-800 rounded-xl p-6 text-center shadow-md
+              hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+      <i class="bi bi-cash-stack text-5xl mb-4 text-emerald-600 group-hover:scale-110 transition"></i>
+      <h3 class="text-xl font-bold text-gray-800 dark:text-gray-100">Finance Portal</h3>
+    </a>
 
-   <a href="{% url 'accounts:login' %}" class="bg-white shadow-lg rounded-lg p-6 text-center hover:bg-blue-50 transition">
-     <i class="bi bi-journal-bookmark text-5xl mb-4"></i>
-     <h3 class="text-xl font-bold">Notes Portal</h3>
-   </a>
+    {% comment %} RESULT PORTAL {% endcomment %}
+    <a href="{% url 'accounts:login' %}" 
+       class="group bg-white dark:bg-gray-800 rounded-xl p-6 text-center shadow-md
+              hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+      <i class="bi bi-bar-chart text-5xl mb-4 text-purple-600 group-hover:scale-110 transition"></i>
+      <h3 class="text-xl font-bold text-gray-800 dark:text-gray-100">Result Portal</h3>
+    </a>
 
-   <a href="{% url 'accounts:login' %}" class="bg-white shadow-lg rounded-lg p-6 text-center hover:bg-blue-50 transition">
-     <i class="bi bi-ui-checks-grid text-5xl mb-4"></i>
-     <h3 class="text-xl font-bold">Assignment Portal</h3>
-   </a>
+    {% comment %} CBT PORTAL {% endcomment %}
+    <a href="{% url 'accounts:login' %}" 
+       class="group bg-white dark:bg-gray-800 rounded-xl p-6 text-center shadow-md
+              hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+      <i class="bi bi-pencil-square text-5xl mb-4 text-orange-600 group-hover:scale-110 transition"></i>
+      <h3 class="text-xl font-bold text-gray-800 dark:text-gray-100">CBT Exam Portal</h3>
+    </a>
 
-   <a href="{% url 'accounts:login' %}" class="bg-white shadow-lg rounded-lg p-6 text-center hover:bg-blue-50 transition">
-     <i class="bi bi-clipboard-check text-5xl mb-4"></i>
-     <h3 class="text-xl font-bold">Attendance Portal</h3>
-   </a>
- </div>
+    {% comment %} NOTES PORTAL {% endcomment %}
+    <a href="{% url 'accounts:login' %}" 
+       class="group bg-white dark:bg-gray-800 rounded-xl p-6 text-center shadow-md
+              hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+      <i class="bi bi-journal-bookmark text-5xl mb-4 text-indigo-600 group-hover:scale-110 transition"></i>
+      <h3 class="text-xl font-bold text-gray-800 dark:text-gray-100">Notes Portal</h3>
+    </a>
+
+    {% comment %} ASSIGNMENTS PORTAL {% endcomment %}
+    <a href="{% url 'accounts:login' %}" 
+       class="group bg-white dark:bg-gray-800 rounded-xl p-6 text-center shadow-md
+              hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+      <i class="bi bi-ui-checks-grid text-5xl mb-4 text-pink-600 group-hover:scale-110 transition"></i>
+      <h3 class="text-xl font-bold text-gray-800 dark:text-gray-100">Assignment Portal</h3>
+    </a>
+
+    {% comment %} ATTENDANCE PORTAL {% endcomment %}
+    <a href="{% url 'accounts:login' %}" 
+       class="group bg-white dark:bg-gray-800 rounded-xl p-6 text-center shadow-md
+              hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
+      <i class="bi bi-clipboard-check text-5xl mb-4 text-teal-600 group-hover:scale-110 transition"></i>
+      <h3 class="text-xl font-bold text-gray-800 dark:text-gray-100">Attendance Portal</h3>
+    </a>
+
+  </div>
 </main>
+
+<!-- ALPINE + DARK MODE SCRIPT -->
+<script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
+<script>
+  const toggle = document.getElementById('theme-toggle');
+  toggle.addEventListener('click', () => {
+    document.documentElement.classList.toggle('dark');
+  });
+</script>
+
 {% endblock %}

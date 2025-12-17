@@ -7,22 +7,34 @@
   <title>{{ exam.subject.name }} - Question {{ current_question_number }}</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script>
-    // Timer logic
-    let timeLimit = {{ time_limit }};
-    let examStart = new Date("{{ exam_start_time }}").getTime() || new Date().getTime();
+document.addEventListener("DOMContentLoaded", function() {
+    let timeLimit = {{ time_limit }}; // total seconds
+    let examStart = {{ exam_start_time }} * 1000; // convert to ms
     let now = new Date().getTime();
-    let remainingSeconds = Math.floor((timeLimit - ((now - examStart)/1000)));
+
+    let remainingSeconds = Math.floor(timeLimit - (now - examStart) / 1000);
+    if (remainingSeconds < 0) remainingSeconds = 0;
 
     function updateTimer() {
-      const minutes = Math.floor(remainingSeconds / 60);
-      const seconds = remainingSeconds % 60;
-      document.getElementById("timer").textContent = 
-        minutes + ":" + (seconds < 10 ? "0" : "") + seconds;
-      if (remainingSeconds <= 0) document.getElementById("exam-form").submit();
-      remainingSeconds--;
+        const minutes = Math.floor(remainingSeconds / 60);
+        const seconds = remainingSeconds % 60;
+        const timerEl = document.getElementById("timer");
+        if (!timerEl) return;
+        timerEl.textContent = minutes + ":" + (seconds < 10 ? "0" : "") + seconds;
+
+        if (remainingSeconds <= 0) {
+            document.getElementById("exam-form").submit();
+        } else {
+            remainingSeconds--;
+        }
     }
+
+    // Initial display
+    updateTimer();
     setInterval(updateTimer, 1000);
-  </script>
+});
+</script>
+
 </head>
 
 <body class="bg-gradient-to-br from-blue-50 to-slate-100 min-h-screen flex items-center justify-center p-6">
