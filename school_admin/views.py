@@ -325,7 +325,7 @@ def question_edit(request, school_id, exam_id, question_id):
         if form.is_valid():
             form.save()
             messages.success(request, "Question updated.")
-            return redirect('cbt:manage_questions', school_id=school.id, exam_id=exam.id)
+            return redirect('school_admin:manage_questions', school_id=school.id, exam_id=exam.id)
     else:
         form = CBTQuestionForm(instance=q)
     return render(request, 'school_admin/exam_create.html', {'form': form, 'exam': exam, 'question': q, 'school': school})
