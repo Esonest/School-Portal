@@ -12,90 +12,86 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 
 from pathlib import Path
-from django.contrib.messages import constants as messages
-from dotenv import load_dotenv
 import os
-
-
-
-
+from dotenv import load_dotenv
+from django.contrib.messages import constants as messages
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
-ENV_PATH = BASE_DIR / ".env"
-load_dotenv(dotenv_path=ENV_PATH)
+load_dotenv(BASE_DIR / ".env")
 
-
-
-MESSAGE_TAGS = {
-    messages.ERROR: 'error',
-    messages.SUCCESS: 'success',
-}
-
-
-
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
 SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-key")
-DEBUG = "False"
-ALLOWED_HOSTS = ["techcenter-p2au.onrender.com", "127.0.0.1"] 
 
+DEBUG = os.environ.get("DEBUG", "False") == "True"
 
-
-
-
-
-# Application definition
+ALLOWED_HOSTS = [
+    "techcenter-p2au.onrender.com",
+    "127.0.0.1",
+    "localhost",
+]
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.sessions',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'crispy_tailwind',
-    'crispy_forms',
-    'crispy_bootstrap5',
-    'students',
-    'teachers', 
-    'results', 
-    'finance',
-    'attendance',
-    'notes', 
-    'assignments',
-    'cbt',
-    'accounts',
-    'school_admin',
-    'superadmin',
-    'widget_tweaks',
+    "django.contrib.admin",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.sessions",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+
+    "crispy_forms",
+    "crispy_bootstrap5",
+    "crispy_tailwind",
+
+    "students",
+    "teachers",
+    "results",
+    "finance",
+    "attendance",
+    "notes",
+    "assignments",
+    "cbt",
+    "accounts",
+    "school_admin",
+    "superadmin",
+    "widget_tweaks",
 ]
-AUTH_USER_MODEL = 'accounts.User'
-LOGIN_URL = 'login'
-LOGOUT_REDIRECT_URL = 'login/'
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
-CRISPY_TEMPLATE_PACK = 'bootstrap5'
-LOGIN_REDIRECT_URL = '/portal-selection/'
-
-
-# settings.py
-SITE_URL = "https://techcenter-p2au.onrender.com"
-
-
 
 MIDDLEWARE = [
-    'django.middleware.security.SecurityMiddleware',
-    'whitenoise.middleware.WhiteNoiseMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "django.middleware.security.SecurityMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
+
+STATIC_URL = "/static/"
+STATIC_ROOT = BASE_DIR / "staticfiles"
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+
+MEDIA_URL = "/media/"
+MEDIA_ROOT = BASE_DIR / "media"
+
+AUTH_USER_MODEL = "accounts.User"
+
+LOGIN_URL = "login"
+LOGIN_REDIRECT_URL = "/portal-selection/"
+LOGOUT_REDIRECT_URL = "login/"
+
+CRISPY_TEMPLATE_PACK = "bootstrap5"
+
+MESSAGE_TAGS = {
+    messages.ERROR: "error",
+    messages.SUCCESS: "success",
+}
+
+if not DEBUG:
+    SECURE_SSL_REDIRECT = True
+    SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
+    CSRF_COOKIE_SECURE = True
+    SESSION_COOKIE_SECURE = True
 
 ROOT_URLCONF = 'school_management.urls'
 
@@ -179,10 +175,7 @@ USE_TZ = True
 
 
 
-STATIC_URL = "/static/"
-STATIC_ROOT = BASE_DIR / "staticfiles"
 
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 
 # Default primary key field type
