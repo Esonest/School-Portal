@@ -299,6 +299,9 @@ def student_list(request):
     })
 
 from results.utils import generate_unique_username
+from django.db import models
+
+
 
 @login_required
 @transaction.atomic
@@ -653,6 +656,7 @@ def export_teachers_excel(request):
     return response
 
 from .forms import SchoolClassForm, SubjectForm
+from django.core.exceptions import PermissionDenied
 
 
 @login_required

@@ -42,7 +42,7 @@ def dashboard(request):
     # ------------------------
     # PORTAL SETTINGS CHECK (Assignments)
     # ------------------------
-    from school.models import PortalSetting  # ensure correct import
+    from superadmin.models import PortalSetting  # ensure correct import
     portal_settings, _ = PortalSetting.objects.get_or_create(school=school)
 
     if not portal_settings.assignments_enabled:
@@ -101,7 +101,7 @@ def dashboard(request):
 # ------------------------
 # Create or edit assignment (teacher)
 # ------------------------
-@portal_required("assignments")
+
 @login_required
 @teacher_required
 def create_assignment(request, pk=None):
@@ -134,7 +134,6 @@ def create_assignment(request, pk=None):
 # Assignment detail & submissions
 # ------------------------
 
-@portal_required("assignments")
 @login_required
 @teacher_required
 def teacher_assignment_detail(request, pk):
@@ -149,7 +148,7 @@ def teacher_assignment_detail(request, pk):
 # ------------------------
 # Delete assignment
 # ------------------------
-@portal_required("assignments")
+
 @login_required
 @teacher_required
 def delete_assignment(request, pk):
@@ -166,7 +165,7 @@ def delete_assignment(request, pk):
 # ------------------------
 # Student: view assignment
 # ------------------------
-@portal_required("assignments")
+
 @login_required
 def student_assignment_detail(request, pk):
     student = getattr(request.user, 'student_profile', None)
@@ -182,7 +181,7 @@ def student_assignment_detail(request, pk):
 # ------------------------
 # Student: submit assignment
 # ------------------------
-@portal_required("assignments")
+
 @login_required
 @transaction.atomic
 def submit_assignment(request, pk):
@@ -217,7 +216,7 @@ def submit_assignment(request, pk):
     })
 
 # Teacher: grade a submission
-@portal_required("assignments")
+
 @login_required
 def grade_submission(request, submission_id):
     """
@@ -267,7 +266,7 @@ def grade_submission(request, submission_id):
     return render(request, 'assignments/grade_submission.html', context)
 
 # Download submission file
-@portal_required("assignments")
+
 @login_required
 def download_submission_file(request, file_id):
     sf = get_object_or_404(SubmissionFile, pk=file_id)
@@ -279,7 +278,7 @@ def download_submission_file(request, file_id):
     raise Http404("Not authorized to download this file")
 
 # List submissions for admin/teacher or student
-@portal_required("assignments")
+
 @login_required
 def submission_list(request, assignment_id=None):
     user = request.user

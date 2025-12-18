@@ -7,7 +7,7 @@ from .utils import portal_required
 
 
 # Result portal for a student
-@portal_required("results")
+
 def student_result(request, student_id):
     student = get_object_or_404(Student, id=student_id)
     scores = Score.objects.filter(student=student)
@@ -50,7 +50,6 @@ def student_result(request, student_id):
     }
     return render(request, 'results/student_result.html', context)
 
-@portal_required("results")
 def student_result(request, student_id):
     student = get_object_or_404(Student, id=student_id)
     scores = Score.objects.filter(student=student)
@@ -162,7 +161,6 @@ from django.contrib.auth.decorators import login_required
 from .utils import SESSION_LIST  # import the session list
 
 
-@portal_required("results")
 @login_required
 def bulk_score_entry(request, school_id):
     teacher = getattr(request.user, 'teacher_profile', None)
@@ -352,7 +350,6 @@ def bulk_score_entry(request, school_id):
 
 from .models import ClassScoreSetting
 
-@portal_required("results")
 @login_required
 def class_score_settings(request, school_id):
     school = get_object_or_404(School, id=school_id)
@@ -415,7 +412,6 @@ from django.views.decorators.http import require_POST
 from django.views.decorators.csrf import csrf_protect
 from .models import Score
 
-@portal_required("results")
 @csrf_protect
 @require_POST
 def delete_score(request, student_id, subject_id):
@@ -450,7 +446,7 @@ from .forms import PsychomotorForm, AffectiveForm
 from accounts.models import SystemSetting
 from .utils import SESSION_LIST
 
-@portal_required("results")
+
 @login_required
 def bulk_psycho_affective(request, school_id):
 
@@ -689,7 +685,6 @@ from django.http import HttpResponse
 from .utils import render_to_pdf
 
 
-@portal_required("results")
 def generate_termly_report(request, student_id):
     student = get_object_or_404(Student, id=student_id)
     scores = Score.objects.filter(student=student)
@@ -766,7 +761,7 @@ from django.contrib import messages
 from django.contrib.auth.models import User
 
 # Bulk Student Upload
-@portal_required("results")
+
 def bulk_student_upload(request, school_id):
     school = School.objects.get(id=school_id)
     if request.method == 'POST' and request.FILES.get('file'):
@@ -789,7 +784,7 @@ def bulk_student_upload(request, school_id):
     return render(request, 'results/bulk_student_upload.html', {'school': school})
 
 # Bulk Score Upload
-@portal_required("results")
+
 def bulk_score_upload(request, school_id):
     school = School.objects.get(id=school_id)
     if request.method == 'POST' and request.FILES.get('file'):
@@ -809,7 +804,6 @@ def bulk_score_upload(request, school_id):
 
 
 
-@portal_required("results")
 def generate_cumulative_report(request, student_id):
     student = Student.objects.get(id=student_id)
     scores = Score.objects.filter(student=student)
@@ -884,7 +878,6 @@ from accounts.models import Teacher, School
 from results.models import Student
 
 
-@portal_required("results")
 @login_required
 def teacher_dashboard(request):
     teacher = Teacher.objects.get(user=request.user)
@@ -907,7 +900,6 @@ import base64
 from io import BytesIO
 
 
-@portal_required("results")
 def student_report_pdf(request, student_id):
     student = get_object_or_404(Student, id=student_id)
     scores = Score.objects.filter(student=student)
@@ -981,7 +973,6 @@ from django.http import HttpResponse
 
 
 
-@portal_required("results")
 def download_students_template(request):
     response = HttpResponse(content_type='text/csv')
     response['Content-Disposition'] = 'attachment; filename=students_template.csv'
@@ -1041,7 +1032,7 @@ def render_to_pdf(template_src, context_dict={}):
 
 # Define term choices
 
-@portal_required("results")
+
 @login_required
 def results_dashboard(request, school_id):
     user = request.user
@@ -1191,7 +1182,6 @@ def results_dashboard(request, school_id):
 
 
 
-@portal_required("results")
 @login_required
 def export_results_excel(request, school_id):
     """
@@ -1395,7 +1385,7 @@ def report_card_view(request, student_id):
 
     return render(request, 'results/report_card.html', context)
 
-@portal_required("results")
+
 def report_card_download(request, student_id):
     """Generate the PDF immediately and return as download."""
     student = get_object_or_404(Student, id=student_id)
@@ -1462,7 +1452,6 @@ def report_card_download(request, student_id):
     filename = f"{student.full_name().replace(' ', '_')}_report_{context['date_issued']}.pdf"
     return _render_pdf_response('results/report_card.html', context, filename)
 
-@portal_required("results")
 def verify_result(request, admission_no):
     """
     Public verification of a student's result using a token.
@@ -1545,7 +1534,6 @@ except Exception:
 
 
 
-@portal_required("results")
 @login_required
 def teacher_portal(request):
     """
@@ -1715,7 +1703,7 @@ def teacher_portal(request):
 
 
 
-@portal_required("results")
+
 @login_required
 def bulk_save_all(request, school_id):
     school = get_object_or_404(School, id=school_id)
@@ -1811,7 +1799,7 @@ def bulk_save_all(request, school_id):
 
 
 
-@portal_required("results")
+
 @login_required
 def teacher_student_detail(request, student_id):
     """
@@ -1879,7 +1867,7 @@ def _pdf_from_html_string(html):
     return result.getvalue()
 
 # Export helpers
-@portal_required("results")
+
 @login_required
 def _get_subject_and_students_for_teacher(request, subject_id):
     """
@@ -1924,7 +1912,6 @@ def _get_subject_and_students_for_teacher(request, subject_id):
         return None, Student.objects.none()
 
 
-@portal_required("results")
 @login_required
 def export_students_excel(request, subject_id):
     """
@@ -1997,7 +1984,7 @@ def export_students_excel(request, subject_id):
     return response
 
 
-@portal_required("results")
+
 @login_required
 def export_students_pdf(request, subject_id):
     """
@@ -2034,8 +2021,6 @@ def export_students_pdf(request, subject_id):
     response['Content-Disposition'] = f'attachment; filename="{fname}"'
     return response
 
-
-@portal_required("results")
 @login_required
 def export_students_detailed_pdf(request, subject_id):
     """
@@ -2139,7 +2124,6 @@ def _pdf_from_html_string(html):
 from django.db.models import Sum, F
 from .utils import SESSION_LIST  
 
-@portal_required("results")
 @login_required
 def student_portal(request):
     user = request.user
@@ -2370,7 +2354,7 @@ from django.contrib import messages
 from .forms import GradeSettingForm
 from .models import GradeSetting
 
-@portal_required("results")
+
 @login_required
 def grade_settings(request, school_id):
     if request.user.school.id != school_id:
@@ -2396,7 +2380,6 @@ def grade_settings(request, school_id):
     return render(request, "results/grade_settings.html", context)
 
 
-@portal_required("results")
 @login_required
 def grade_settings_overview(request, school_id):
     # Ensure admin belongs to the school
@@ -2458,7 +2441,6 @@ from .models import (
 )
 from .utils import SESSION_LIST, interpret_grade  # import SESSION_LIST
 
-@portal_required("results")
 def build_student_result_context(student, term, session):
     """
     Build the context for a student's result for a specific term and session only.
@@ -2609,7 +2591,7 @@ def build_student_result_context(student, term, session):
 
 
 
-@portal_required("results")
+
 @login_required
 def student_view_result(request, result_id):
     user = request.user
@@ -2653,7 +2635,7 @@ from xhtml2pdf import pisa
 from django.shortcuts import get_object_or_404
 
 
-@portal_required("results")
+
 @login_required
 def student_result_download(request, result_id):
     user = request.user
@@ -2760,7 +2742,6 @@ from students.models import PromotionHistory
 
 
 
-@portal_required("results")
 def build_cumulative_result_context(student, session=None):
 
     # ---------- USE SESSION_LIST ----------
@@ -2912,7 +2893,7 @@ def build_cumulative_result_context(student, session=None):
 
 
 
-@portal_required("results")
+
 @login_required
 def student_cumulative_result(request):
     user = request.user
@@ -2976,7 +2957,6 @@ def _get_image_base64(file_field):
         return None
 
 
-@portal_required("results")
 @login_required
 def student_cumulative_result_download(request):
     user = request.user
