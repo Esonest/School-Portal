@@ -522,22 +522,44 @@ from django.db.models import Avg  # Add this at the top of your views.py
 @school_admin_or_superadmin_required
 def submissions_list(request, school_id, exam_id):
     school = get_object_or_404(School, id=school_id)
-    exam = get_object_or_404(CBTExam, id=exam_id, school=school)
-    subs = CBTSubmission.objects.filter(exam=exam).select_related('student__user')
+
+    exam = get_object_or_404(
+        CBTExam,
+        id=exam_id,
+        school=school
+    )
+
+    submissions = (
+        CBTSubmission.objects
+        .filter(exam=exam)
+        .select_related('student__user')
+    )
+
     # summary
-    total_attempts = subs.count()
-    avg_percentage = subs.aggregate(Avg('percentage'))['percentage__avg'] or 0
-    pass_count = subs.filter(status='Passed').count()
+    total_attempts = submissions.count()
+    avg_percentage = submissions.aggregate(
+        Avg('percentage')
+    )['percentage__avg'] or 0
+    pass_count = submissions.filter(status='Passed').count()
     fail_count = total_attempts - pass_count
+
     context = {
+        'school': school,              # ✅ REQUIRED for template
         'exam': exam,
-        'submissions': subs,
+        'exam_id': exam_id,
+        'submissions': submissions,
         'total_attempts': total_attempts,
         'avg_percentage': avg_percentage,
         'pass_count': pass_count,
         'fail_count': fail_count,
     }
-    return render(request, 'school_admin/admin_exam_submission_list.html', context)
+
+    return render(
+        request,
+        'school_admin/admin_exam_submission_list.html',
+        context
+    )
+
 
 
 

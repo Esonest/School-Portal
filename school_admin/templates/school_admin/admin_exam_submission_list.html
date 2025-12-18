@@ -5,8 +5,10 @@
 <div class="p-6">
 
     <div class="flex items-center justify-between mb-6">
+         <h1 class="text-3xl font-bold text-{{ school.theme_color }}-800">{{ school.name }}</h1>
+
         <h1 class="text-2xl font-bold text-{{ school.theme_color }}-600">
-            {% if exam %}
+            {% if exam_id %}
                 Submissions for "{{ exam.title }}"
             {% else %}
                 All CBT Submissions - {{ school.name }}
