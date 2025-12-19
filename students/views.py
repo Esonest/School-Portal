@@ -30,6 +30,7 @@ from django.utils.timezone import localtime, now as timezone_now
 from assignments.models import Assignment, AssignmentSubmission
 from django.utils import timezone
 from django.contrib import messages
+from results.utils import portal_required
 
 
 @login_required
@@ -118,6 +119,7 @@ def note_detail(request, pk):
 # ------------------------
 # CBT List View
 # ------------------------
+@portal_required("cbt")
 @login_required
 @student_required
 def cbt_list(request):

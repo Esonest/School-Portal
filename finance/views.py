@@ -229,7 +229,7 @@ from accounts.models import SystemSetting
 from decimal import Decimal
 from django.db.models import Sum
 
-
+@portal_required("finance")
 @login_required
 def student_dashboard(request):
     if not hasattr(request.user, 'student_profile'):

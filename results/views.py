@@ -2123,7 +2123,7 @@ def _pdf_from_html_string(html):
 
 from django.db.models import Sum, F
 from .utils import SESSION_LIST  
-
+@portal_required("results")
 @login_required
 def student_portal(request):
     user = request.user

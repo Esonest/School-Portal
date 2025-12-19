@@ -21,7 +21,7 @@ def is_teacher(user):
 # ------------------------
 # Teacher / Student dashboard
 # ------------------------
-@portal_required("assignments")
+
 @login_required
 def dashboard(request):
     user = request.user
@@ -40,17 +40,6 @@ def dashboard(request):
         raise Http404("No teacher or student profile found.")
 
     # ------------------------
-    # PORTAL SETTINGS CHECK (Assignments)
-    # ------------------------
-    from superadmin.models import PortalSetting  # ensure correct import
-    portal_settings, _ = PortalSetting.objects.get_or_create(school=school)
-
-    if not portal_settings.assignments_enabled:
-        return render(
-            request,
-            "errors/portal_disabled.html",
-            {"school": school, "portal_name": "Assignments"}
-        )
 
     # ------------------------
     # TEACHER DASHBOARD
