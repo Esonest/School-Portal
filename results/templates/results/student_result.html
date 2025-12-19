@@ -14,10 +14,11 @@
       <div>
 
 {% if school.logo %}
-    <img src="{% static school.logo %}" alt="{{ school.name }} Logo">
+    <img src="{{ school.logo.url }}" alt="{{ school.name }} Logo">
 {% else %}
     <img src="{% static 'img/default_school_logo.png' %}">
 {% endif %}
+
 
         <h1 class="text-2xl font-bold text-{{ school.theme_color }}-600">{{ school.name }}</h1>
         <p class="text-sm italic">{{ school.motto }}</p>

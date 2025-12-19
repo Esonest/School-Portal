@@ -4,6 +4,7 @@ import random
 import qrcode
 from io import BytesIO
 from .utils import portal_required
+from django.templatetags.static import static
 
 
 # Result portal for a student
@@ -2852,7 +2853,7 @@ def build_cumulative_result_context(student, session=None):
     school = student.school
     principal_signature_url = school.principal_signature.url if school and school.principal_signature else None
     student_photo_url = student.photo.url if student.photo else None
-    school_logo_url = school.logo.url if school and school.logo else None
+    school_logo_url = static(school.logo) if school and school.logo else None
 
     colspan_terms = 4 * len(terms)
 
