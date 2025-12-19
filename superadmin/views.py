@@ -74,6 +74,13 @@ def school_list(request):
     schools = School.objects.all().order_by('name')
     return render(request, 'superadmin/schools/list.html', {"schools": schools})
 
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib import messages
+
+
+# ----------------------------
+# Create School
+# ----------------------------
 @superadmin_required
 def school_create(request):
     if request.method == "POST":
@@ -82,13 +89,17 @@ def school_create(request):
             form.save()
             messages.success(request, "School created successfully.")
             return redirect("superadmin:school_list")
+        else:
+            messages.error(request, "Please fix the errors below.")
     else:
         form = SchoolForm()
 
     return render(request, "superadmin/schools/create.html", {"form": form})
 
 
-
+# ----------------------------
+# Edit School
+# ----------------------------
 @superadmin_required
 def school_edit(request, pk):
     school = get_object_or_404(School, pk=pk)
@@ -99,10 +110,17 @@ def school_edit(request, pk):
             form.save()
             messages.success(request, "School updated successfully.")
             return redirect("superadmin:school_list")
+        else:
+            messages.error(request, "Please fix the errors below.")
     else:
         form = SchoolForm(instance=school)
 
-    return render(request, "superadmin/schools/edit.html", {"form": form, "school": school})
+    return render(
+        request,
+        "superadmin/schools/edit.html",
+        {"form": form, "school": school}
+    )
+
 
 
 

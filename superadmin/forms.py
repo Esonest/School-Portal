@@ -56,8 +56,18 @@ class CreateAndAssignAdminForm(forms.Form):
 # SCHOOL CREATION / EDIT FORM
 # -------------------------
 
+from django.conf import settings
+import os
 
 class SchoolForm(forms.ModelForm):
+    # Logo field overridden to be a dynamic dropdown from static/img/schools/
+    logo = forms.ChoiceField(
+        choices=[],  # populated dynamically in __init__
+        widget=forms.Select(attrs={'class': 'form-input'}),
+        required=False,
+        label="School Logo"
+    )
+
     class Meta:
         model = School
         fields = [
@@ -68,7 +78,6 @@ class SchoolForm(forms.ModelForm):
             "theme_color",
             "principal_signature",
         ]
-
         widgets = {
             "name": forms.TextInput(attrs={
                 "class": "form-input",
@@ -84,6 +93,24 @@ class SchoolForm(forms.ModelForm):
                 "class": "form-input"
             }),
         }
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        # Dynamically populate logo choices from static folder
+        logo_dir = os.path.join(settings.BASE_DIR, "static", "img",  "school_logos")
+        logos = []
+        if os.path.exists(logo_dir):
+            for filename in os.listdir(logo_dir):
+                if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.svg')):
+                    path = f"img/school_logos/{filename}"
+                    logos.append((path, filename))  # (value, display name)
+        self.fields['logo'].choices = logos
+
+        # Set initial value for edit forms
+        if self.instance and self.instance.logo:
+            self.fields['logo'].initial = self.instance.logo
+
 
 
 

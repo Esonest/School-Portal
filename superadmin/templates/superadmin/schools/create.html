@@ -1,4 +1,5 @@
 {% extends "accounts/base.html" %}
+{% load static %}
 {% block content %}
 
 <form method="POST" enctype="multipart/form-data">
@@ -7,10 +8,19 @@
     <!-- Live Preview -->
     <div class="mb-4 p-4 border rounded bg-gray-50">
         <p class="text-sm text-gray-500 mb-1">Live Preview</p>
-        <h2 id="school-name-preview"
-            class="text-2xl font-bold text-indigo-600">
-            {{ form.name.value|default:"School Name" }}
-        </h2>
+        <div class="flex items-center space-x-4">
+            <!-- Logo Preview -->
+            <img id="logo-preview" src="{% static 'img/school_logos/default_logo.png' %}" alt="Logo" class="h-16 w-16 object-contain">
+
+            <!-- School Name -->
+            <h2 id="school-name-preview" class="text-2xl font-bold text-indigo-600">
+                {{ form.name.value|default:"School Name" }}
+            </h2>
+
+            <!-- Principal Signature Preview -->
+            <img id="signature-preview" src="{% if form.instance.principal_signature %}{{ form.instance.principal_signature.url }}{% else %}{% static 'img/schools/default_signature.png' %}{% endif %}" 
+                 alt="Signature" class="h-16 w-16 object-contain">
+        </div>
     </div>
 
     {{ form.name.label_tag }}
@@ -37,22 +47,53 @@
 </form>
 
 <script>
+    // Django static root (this becomes "/static/")
+    const STATIC_URL = "{{ STATIC_URL }}";
+
     const nameInput = document.getElementById("school-name-input");
     const namePreview = document.getElementById("school-name-preview");
     const colorSelect = document.getElementById("theme-color-select");
+    const logoSelect = document.getElementById("id_logo");
+    const logoPreview = document.getElementById("logo-preview");
+    const signatureInput = document.getElementById("id_principal_signature");
+    const signaturePreview = document.getElementById("signature-preview");
 
     function updatePreview() {
+        // Name
+        namePreview.textContent = nameInput.value || "School Name";
+
+        // Theme color
         const color = colorSelect.value || "indigo";
         namePreview.className = `text-2xl font-bold text-${color}-600`;
-        namePreview.textContent = nameInput.value || "School Name";
+
+        // Logo (THIS IS THE FIX)
+        const selectedLogo = logoSelect.value;
+
+        if (selectedLogo && selectedLogo !== "") {
+            logoPreview.src = STATIC_URL + selectedLogo;
+        } else {
+            logoPreview.src = STATIC_URL + "img/school_logos/default_logo.png";
+        }
     }
+
+    // Signature preview
+    signatureInput.addEventListener("change", function () {
+        const file = this.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = e => signaturePreview.src = e.target.result;
+            reader.readAsDataURL(file);
+        }
+    });
 
     nameInput.addEventListener("input", updatePreview);
     colorSelect.addEventListener("change", updatePreview);
+    logoSelect.addEventListener("change", updatePreview);
 
     // Initial render
     updatePreview();
 </script>
+
 
 
 {% endblock %}
