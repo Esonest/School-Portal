@@ -27,7 +27,7 @@ class School(models.Model):
     ]
 
     name = models.CharField(max_length=255, unique=True)
-    logo = models.ImageField(upload_to="school_logos/", blank=True, null=True)
+    logo = models.CharField(max_length=255,blank=True,help_text="Path relative to static/, e.g. img/schools/my_school.png")
     address = models.TextField(blank=True)
     motto = models.CharField(max_length=255, blank=True)
     principal_signature = models.ImageField(

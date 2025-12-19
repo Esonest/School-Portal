@@ -23,6 +23,8 @@ load_dotenv(BASE_DIR / ".env")
 SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-key")
 
 DEBUG = os.environ.get("DEBUG", "True") == "True"
+DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
+
 
 
 ALLOWED_HOSTS = [
@@ -30,6 +32,14 @@ ALLOWED_HOSTS = [
     "127.0.0.1",
     "localhost",
 ]
+
+
+CLOUDINARY_STORAGE = {
+    'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME'),
+    'API_KEY': os.environ.get('CLOUDINARY_API_KEY'),
+    'API_SECRET': os.environ.get('CLOUDINARY_API_SECRET'),
+}
+
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -55,6 +65,8 @@ INSTALLED_APPS = [
     "school_admin",
     "superadmin",
     "widget_tweaks",
+    "cloudinary",
+    "cloudinary_storage",
 ]
 
 MIDDLEWARE = [
