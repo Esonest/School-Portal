@@ -116,6 +116,8 @@ if not DEBUG:
     SECURE_PROXY_SSL_HEADER = ("HTTP_X_FORWARDED_PROTO", "https")
     CSRF_COOKIE_SECURE = True
     SESSION_COOKIE_SECURE = True
+    USE_X_FORWARDED_HOST = True
+
 
 ROOT_URLCONF = 'school_management.urls'
 
@@ -238,6 +240,11 @@ EMAIL_HOST_USER = "apikey"
 EMAIL_HOST_PASSWORD = os.environ.get("SENDGRID_API_KEY")
 
 DEFAULT_FROM_EMAIL = "TECHCENTER <techcenter652@gmail.com>"
+
+
+
+
+
 
 
 

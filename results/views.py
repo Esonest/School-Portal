@@ -1453,56 +1453,65 @@ def report_card_download(request, student_id):
     filename = f"{student.full_name().replace(' ', '_')}_report_{context['date_issued']}.pdf"
     return _render_pdf_response('results/report_card.html', context, filename)
 
+
+
 def verify_result(request, admission_no):
     """
-    Public verification of a student's result using a token.
-    The token should be passed as a GET parameter.
+    Public verification of a student's result.
+
+    Expected URL format:
+    /verify/<admission_no>/?token=<verification_token>
     """
-    token = request.GET.get('token', '').strip()
+
+    token = request.GET.get("token", "").strip()
+
     student = get_object_or_404(Student, admission_no=admission_no)
 
-    # Check if there is a valid verification token for this student
-    verification = ResultVerification.objects.filter(
-        student=student,
-        verification_token=token,
-        valid=True
-    ).first()
+    verification = None
+    if token:
+        verification = ResultVerification.objects.filter(
+            student=student,
+            verification_token=token,
+            valid=True
+        ).select_related("student").first()
 
-    if verification:
-        status = 'verified'
-        scores_qs = Score.objects.filter(student=student).select_related('subject')
+    is_verified = verification is not None
+
+    scores = []
+    psychomotor = None
+    affective = None
+
+    if is_verified:
+        scores_qs = (
+            Score.objects
+            .filter(student=student)
+            .select_related("subject")
+        )
+
         psychomotor = Psychomotor.objects.filter(student=student).first()
         affective = Affective.objects.filter(student=student).first()
-    else:
-        status = 'invalid'
-        scores_qs = []
-        psychomotor = None
-        affective = None
 
-    # Build rows for template display
-    rows = []
-    for sc in scores_qs:
-        ca = getattr(sc, 'ca', 0) or 0
-        exam = getattr(sc, 'exam', 0) or 0
-        total = ca + exam
-        rows.append({
-            'subject': getattr(sc, 'subject', None),
-            'ca': ca,
-            'exam': exam,
-            'total': total,
-        })
+        for sc in scores_qs:
+            ca = sc.ca or 0
+            exam = sc.exam or 0
+            scores.append({
+                "subject": sc.subject,
+                "ca": ca,
+                "exam": exam,
+                "total": ca + exam,
+            })
 
-    # Pass the token back to template in case you need it for links
     context = {
-        'student': student,
-        'rows': rows,
-        'psychomotor': psychomotor,
-        'affective': affective,
-        'status': status,
-        'token': token,  # <--- Pass it for template usage
+        "student": student,
+        "rows": scores,
+        "psychomotor": psychomotor,
+        "affective": affective,
+        "status": "verified" if is_verified else "invalid",
+        "token": token,
     }
 
-    return render(request, 'results/verify_result.html', context)
+    return render(request, "results/verify_result.html", context)
+
 
 
 
@@ -2103,14 +2112,21 @@ def grade_from_score(total):
     if total >= 45: return 'D'
     return 'F'
 
-def _generate_qr_data_uri(url, box_size=6):
-    qr = qrcode.QRCode(box_size=box_size, border=1)
+def _generate_qr_data_uri(url, box_size=8):
+    qr = qrcode.QRCode(
+        version=None,
+        error_correction=qrcode.constants.ERROR_CORRECT_Q,
+        box_size=box_size,
+        border=2,
+    )
     qr.add_data(url)
     qr.make(fit=True)
     img = qr.make_image(fill_color="black", back_color="white")
+
     buf = io.BytesIO()
     img.save(buf, format="PNG")
-    return "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode('ascii')
+    return "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode()
+
 
 def _pdf_from_html_string(html):
     result = io.BytesIO()
@@ -2418,14 +2434,21 @@ def get_grade_letter(avg):
     if avg >= 45: return 'D'
     return 'F'
 
-def _generate_qr_data_uri(url, box_size=6):
-    qr = qrcode.QRCode(box_size=box_size, border=1)
+def _generate_qr_data_uri(url, box_size=8):
+    qr = qrcode.QRCode(
+        version=None,
+        error_correction=qrcode.constants.ERROR_CORRECT_Q,
+        box_size=box_size,
+        border=2,
+    )
     qr.add_data(url)
     qr.make(fit=True)
     img = qr.make_image(fill_color="black", back_color="white")
+
     buf = io.BytesIO()
     img.save(buf, format="PNG")
-    return "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode('ascii')
+    return "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode()
+
 
 # ---------- MAIN VIEW (HTML) ----------
 from django.db.models import F, Sum
