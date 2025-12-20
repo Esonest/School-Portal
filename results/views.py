@@ -2648,7 +2648,7 @@ from xhtml2pdf import pisa
 from django.shortcuts import get_object_or_404
 
 
-
+@portal_required("results")
 @login_required
 def student_result_download(request, result_id):
     user = request.user
@@ -2969,7 +2969,7 @@ def _get_image_base64(file_field):
     except Exception:
         return None
 
-
+@portal_required("results")
 @login_required
 def student_cumulative_result_download(request):
     user = request.user

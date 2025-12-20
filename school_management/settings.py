@@ -239,3 +239,6 @@ EMAIL_HOST_PASSWORD = os.environ.get("SENDGRID_API_KEY")
 
 DEFAULT_FROM_EMAIL = "TECHCENTER <techcenter652@gmail.com>"
 
+
+
+
