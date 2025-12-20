@@ -153,3 +153,43 @@ def open_portal(request, school_id, portal):
             return redirect(url_name)
     except NoReverseMatch:
         return redirect(url_name)
+
+
+from django.shortcuts import render, redirect
+from django.core.mail import send_mail
+from django.conf import settings
+from django.contrib import messages
+
+def contact_us(request):
+    if request.method == "POST":
+        name = request.POST.get("name")
+        email = request.POST.get("email")
+        subject = request.POST.get("subject")
+        message = request.POST.get("message")
+
+        full_message = f"""
+New Contact Message from TECHCENTER Website
+
+Name: {name}
+Email: {email}
+Subject: {subject}
+
+Message:
+{message}
+        """
+
+        try:
+            send_mail(
+                subject=f"[TECHCENTER Contact] {subject}",
+                message=full_message,
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=["techcenter652@gmail.com"],
+                fail_silently=False,
+            )
+            messages.success(request, "Your message has been sent successfully.")
+            return redirect("contact_us")
+
+        except Exception:
+            messages.error(request, "Failed to send message. Please try again later.")
+
+    return render(request, "accounts/contact.html")
