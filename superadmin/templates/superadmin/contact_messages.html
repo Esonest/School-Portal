@@ -1,0 +1,34 @@
+{% extends "accounts/base.html" %}
+{% block title %}Contact Messages - Dashboard{% endblock %}
+
+{% block content %}
+<div class="min-h-screen p-6 bg-gray-100">
+    <h1 class="text-3xl font-bold mb-6">Contact Messages</h1>
+
+    {% if messages_list %}
+    <ul class="space-y-4">
+        {% for msg in messages_list %}
+        <li class="bg-white rounded-xl shadow p-4 flex justify-between items-start">
+            <div>
+                <p class="font-semibold">{{ msg.name }} ({{ msg.email }})</p>
+                <p class="text-gray-500 text-sm">{{ msg.subject }} - {{ msg.created_at|date:"M d, Y H:i" }}</p>
+                <p class="mt-2">{{ msg.message }}</p>
+            </div>
+            <div>
+                {% if not msg.is_handled %}
+                <form action="{% url 'superadmin:mark_message_read' msg.id %}" method="POST">
+                    {% csrf_token %}
+                    <button class="bg-green-600 text-white px-3 py-1 rounded">Mark as Read</button>
+                </form>
+                {% else %}
+                    <span class="text-green-600 font-semibold">Read</span>
+                {% endif %}
+            </div>
+        </li>
+        {% endfor %}
+    </ul>
+    {% else %}
+        <p class="text-gray-500">No messages yet.</p>
+    {% endif %}
+</div>
+{% endblock %}

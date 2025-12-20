@@ -33,6 +33,9 @@ def super_admin_dashboard(request):
     total_school_admins = User.objects.filter(school_admin_profile__isnull=False).count()
     total_teachers = Teacher.objects.count()
     total_students = Student.objects.count()
+    # Contact messages counts
+    total_messages = ContactMessage.objects.count()
+    unread_messages = ContactMessage.objects.filter(is_handled=False).count()
 
     # --- Recent entries ---
     recent_schools = School.objects.order_by('-id')[:5]
@@ -65,6 +68,8 @@ def super_admin_dashboard(request):
         'school_count': total_schools,
         'teacher_count': total_teachers,
         'student_count': total_students,
+        "total_messages": total_messages,
+        "unread_messages": unread_messages,
     }
 
     return render(request, 'superadmin/dashboard.html', context)
@@ -939,3 +944,24 @@ def school_portal_setting_update(request, school_id):
         "school": school,
         "form": form
     })
+
+
+from django.shortcuts import render
+from accounts.models import ContactMessage
+
+
+@superadmin_required
+def contact_messages_view(request):
+    messages_list = ContactMessage.objects.order_by('-created_at')
+    return render(request, "superadmin/contact_messages.html", {
+        "messages_list": messages_list
+    })
+
+
+
+@superadmin_required
+def mark_message_read(request, message_id):
+    msg = get_object_or_404(ContactMessage, id=message_id)
+    msg.is_handled = True
+    msg.save()
+    return redirect("superadmin:contact_messages")

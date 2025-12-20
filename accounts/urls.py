@@ -14,4 +14,6 @@ urlpatterns = [
     path('portal-selection/', portal_selection, name='portal_selection'),
     # dynamic portals
     path("portal/<int:school_id>/<str:portal>/", open_portal, name="open_portal"),
+
+
 ]

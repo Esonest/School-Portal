@@ -159,14 +159,21 @@ from django.shortcuts import render, redirect
 from django.core.mail import send_mail
 from django.conf import settings
 from django.contrib import messages
+from .models import ContactMessage
 
 def contact_us(request):
     if request.method == "POST":
         name = request.POST.get("name")
         email = request.POST.get("email")
         subject = request.POST.get("subject")
-        message = request.POST.get("message")
+        message_text = request.POST.get("message")
 
+        # Save to DB
+        contact = ContactMessage.objects.create(
+            name=name, email=email, subject=subject, message=message_text
+        )
+
+        # Send email to techcenter
         full_message = f"""
 New Contact Message from TECHCENTER Website
 
@@ -175,9 +182,8 @@ Email: {email}
 Subject: {subject}
 
 Message:
-{message}
+{message_text}
         """
-
         try:
             send_mail(
                 subject=f"[TECHCENTER Contact] {subject}",
@@ -186,10 +192,22 @@ Message:
                 recipient_list=["techcenter652@gmail.com"],
                 fail_silently=False,
             )
-            messages.success(request, "Your message has been sent successfully.")
-            return redirect("contact_us")
+            # Auto-reply to sender
+            send_mail(
+                subject="Thank you for contacting TECHCENTER",
+                message=f"Hi {name},\n\nWe received your message and will get back to you soon.\n\nRegards,\nTECHCENTER Team",
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[email],
+                fail_silently=True,
+            )
 
+            messages.success(request, "Your message has been sent successfully.")
         except Exception:
             messages.error(request, "Failed to send message. Please try again later.")
 
+        return redirect("accounts:contact_us")
+
     return render(request, "accounts/contact.html")
+
+
+

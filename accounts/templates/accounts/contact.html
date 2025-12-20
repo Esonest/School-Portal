@@ -68,11 +68,29 @@
   {% csrf_token %}
 
   
-  {% if messages %}
+ {% if messages %}
   {% for message in messages %}
-    <div class="p-4 rounded-lg text-white
-        {% if message.tags == 'success' %}bg-green-600{% else %}bg-red-600{% endif %}">
-      {{ message }}
+    <div
+      class="alert-message flex items-center gap-3 p-4 rounded-lg text-white font-medium transition-opacity duration-500
+      {% if message.tags == 'success' %}bg-green-600{% else %}bg-red-600{% endif %}"
+    >
+      {% if message.tags == 'success' %}
+        <!-- Success Icon -->
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
+             viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M5 13l4 4L19 7" />
+        </svg>
+      {% else %}
+        <!-- Error Icon -->
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
+             viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+        </svg>
+      {% endif %}
+
+      <span>{{ message }}</span>
     </div>
   {% endfor %}
 {% endif %}
@@ -105,5 +123,14 @@
   </form>
 
 </main>
+
+<script>
+  setTimeout(() => {
+    document.querySelectorAll(".alert-message").forEach(alert => {
+      alert.style.opacity = "0";
+      setTimeout(() => alert.remove(), 500);
+    });
+  }, 5000);
+</script>
 
 {% endblock %}

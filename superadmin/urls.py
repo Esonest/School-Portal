@@ -55,8 +55,9 @@ urlpatterns = [
     path("<int:user_id>/edit/", views.user_update, name="user_update"),
     path("<int:user_id>/delete/", views.user_delete, name="user_delete"),
     path("<int:user_id>/", views.user_detail, name="user_detail"),
-
-
+    # urls.py
+    path("contact-messages/mark-read/<int:message_id>/", views.mark_message_read, name="mark_message_read"),
+    path("contact-messages/", views.contact_messages_view, name="contact_messages"),
     path("super-admin/portals/",views.school_portal_setting_list, name="superadmin_portal_list"),
     path("super-admin/portals/<int:school_id>/edit/",views.school_portal_setting_update,name="superadmin_portal_update"),
 

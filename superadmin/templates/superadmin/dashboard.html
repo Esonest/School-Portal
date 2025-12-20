@@ -81,6 +81,26 @@
             </div>
         </a>
             
+<!-- Contact Messages -->
+<a href="{% url 'superadmin:contact_messages' %}"
+   class="bg-white rounded-2xl shadow-lg p-6 hover:bg-green-50 transition block">
+    <div class="flex items-center gap-4">
+        <div class="p-4 bg-green-100 text-green-600 rounded-xl text-xl">
+            <i class="fas fa-envelope"></i>
+        </div>
+        <div>
+            <h3 class="text-xl font-semibold">Contact Messages</h3>
+            <p class="text-gray-600 text-sm mt-1">View messages submitted via the contact form</p>
+        </div>
+        {% if unread_messages > 0 %}
+        <div class="ml-auto bg-red-600 text-white text-sm font-semibold px-3 py-1 rounded-full animate-pulse"
+     title="Unread messages">
+    {{ unread_messages }}
+</div>
+
+        {% endif %}
+    </div>
+</a>
 
 
         <!-- Portal Settings -->
