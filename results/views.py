@@ -2565,7 +2565,19 @@ def build_student_result_context(student, term, session):
     verify_url = f"{base}/results/verify/{student.admission_no}/?token={verification_obj.verification_token}"
     qr_data_uri = _generate_qr_data_uri(verify_url, box_size=6)
 
-    principal_signature_path = school.principal_signature.path if school and school.principal_signature else None
+    principal_signature_url = (
+        school.principal_signature.url
+        if school and school.principal_signature
+        else None
+    )
+    
+
+    school_logo_url = (
+        school.logo.url
+        if school and school.logo
+        else None
+    )
+
 
     return {
         "student": student,
@@ -2582,7 +2594,8 @@ def build_student_result_context(student, term, session):
         "principal_comment": principal_comment,
         "teacher_comment": teacher_comment,
         "qr_data_uri": qr_data_uri,
-        "principal_signature_path": principal_signature_path,
+        "principal_signature_url": principal_signature_url,
+        "school_logo_url": school_logo_url,
         "date_issued": timezone.localdate(),
         "sessions": SESSION_LIST,
         "selected_session": session,
@@ -2620,7 +2633,6 @@ def student_view_result(request, result_id):
         "term": selected_term,
         "session": selected_session,
         "sessions": SESSION_LIST,
-        "principal_signature_url": context.get("principal_signature_path"),
     })
 
     return render(request, "results/student_result.html", context)

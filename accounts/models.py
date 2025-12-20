@@ -7,13 +7,7 @@ from django.utils import timezone
 #  MAIN USER MODEL
 # =============================
 
-
 class School(models.Model):
-    """
-    Each school has its own identity, logo, motto, and address.
-    All major portals link to this model via ForeignKey.
-    """
-
     COLOR_CHOICES = [
         ("indigo", "Indigo"),
         ("blue", "Blue"),
@@ -27,19 +21,28 @@ class School(models.Model):
     ]
 
     name = models.CharField(max_length=255, unique=True)
-    logo = models.CharField(max_length=255,blank=True,help_text="Path relative to static/, e.g. img/schools/my_school.png")
-    address = models.TextField(blank=True)
-    motto = models.CharField(max_length=255, blank=True)
-    principal_signature = models.ImageField(
-        upload_to="signatures/", blank=True, null=True
+
+    # ✅ IMAGE UPLOAD ONLY
+    logo = models.ImageField(
+        upload_to="school_logos/",
+        blank=True,
+        null=True,
+        help_text="Upload school logo (Cloudinary)",
     )
 
-    # 🎨 Theme color for the school
+    address = models.TextField(blank=True)
+    motto = models.CharField(max_length=255, blank=True)
+
+    principal_signature = models.ImageField(
+        upload_to="signatures/",
+        blank=True,
+        null=True,
+    )
+
     theme_color = models.CharField(
         max_length=20,
         choices=COLOR_CHOICES,
         default="indigo",
-        help_text="Primary theme color used across the school portal",
     )
 
     active = models.BooleanField(default=True)
@@ -48,8 +51,6 @@ class School(models.Model):
     def __str__(self):
         return self.name
 
-    class Meta:
-        ordering = ["name"]
 
 
 
