@@ -10,7 +10,7 @@ from results.utils import portal_required
 # ------------------------
 # Teacher: list notes
 # ------------------------
-@portal_required("notes")
+
 @login_required
 def teacher_notes_list(request):
     teacher_profile = getattr(request.user, 'teacher_profile', None)
@@ -24,7 +24,7 @@ def teacher_notes_list(request):
 # ------------------------
 # Teacher: upload/edit note
 # ------------------------
-@portal_required("notes")
+
 @login_required
 def teacher_upload_note(request, pk=None):
     teacher_profile = getattr(request.user, 'teacher_profile', None)
@@ -50,7 +50,7 @@ def teacher_upload_note(request, pk=None):
 # ------------------------
 # Teacher: delete note
 # ------------------------
-@portal_required("notes")
+
 @login_required
 def teacher_delete_note(request, pk):
     teacher_profile = getattr(request.user, 'teacher_profile', None)
@@ -69,7 +69,7 @@ def teacher_delete_note(request, pk):
 # ------------------------
 # Student / public notes
 # ------------------------
-@portal_required("notes")
+
 @login_required
 def student_notes_list(request):
     student = getattr(request.user, 'student_profile', None) or getattr(request.user, 'student', None)
@@ -88,7 +88,7 @@ def student_notes_list(request):
 # ------------------------
 # Note detail
 # ------------------------
-@portal_required("notes")
+
 @login_required
 def note_detail(request, pk):
     note = get_object_or_404(LessonNote, pk=pk)
@@ -107,7 +107,7 @@ def note_detail(request, pk):
 # ------------------------
 # Download note file
 # ------------------------
-@portal_required("notes")
+
 @login_required
 def download_note_file(request, pk):
     note = get_object_or_404(LessonNote, pk=pk)
@@ -136,7 +136,7 @@ def download_note_file(request, pk):
 # ------------------------
 # Notes dashboard
 # ------------------------
-@portal_required("notes")
+
 @login_required
 def dashboard(request):
     user = request.user

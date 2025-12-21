@@ -2211,6 +2211,7 @@ def admin_student_cumulative(request, student_id):
         "teacher_comment": teacher_comment,
         "principal_comment": principal_comment,
         "qr_data_uri": qr_data_uri,
+        'photo_url': student.photo.url if student.photo else None,
         "principal_signature_url": principal_signature_url,
         "show_ca": show_ca,
 
@@ -2285,8 +2286,8 @@ def promote_students(request, class_id):
             student.save()
 
         messages.success(request, "Selected students successfully promoted.")
-        return redirect("school_admin:admin_class_list")
-
+        return redirect("school_admin:admin-class-list")
+ 
     all_classes = SchoolClass.objects.filter(school=school)
 
     return render(request, "school_admin/admin/promote_students.html", {

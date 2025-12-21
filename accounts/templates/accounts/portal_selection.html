@@ -5,21 +5,22 @@
 {% block content %}
 
 <!-- HERO SECTION -->
-<section class="relative h-64 bg-cover bg-center flex flex-col justify-center items-center"
+<section class="relative h-48 sm:h-56 md:h-64 bg-cover bg-center flex flex-col justify-center items-center"
          style="background-image: url('https://images.unsplash.com/photo-1581091215366-8b39cfe55c19');">
   <div class="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-black/80"></div>
-  <div class="relative z-10 text-center px-6 max-w-3xl">
-    <h2 class="text-4xl md:text-5xl font-bold text-white drop-shadow-lg">
+
+  <div class="relative z-10 text-center px-4 sm:px-6 max-w-3xl">
+    <h2 class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white drop-shadow-lg break-words">
       Welcome, {{ request.user.get_full_name }} 👋
     </h2>
-    <p class="mt-4 text-lg md:text-xl text-gray-200 drop-shadow-lg">
+    <p class="mt-3 text-sm sm:text-base md:text-lg text-gray-200 drop-shadow-lg">
       Select the portal you want to access below
     </p>
   </div>
 </section>
 
 <!-- STAT COUNTERS -->
-<section class="py-12 bg-gray-50 dark:bg-gray-900">
+<section class="py-10 sm:py-12 bg-gray-50 dark:bg-gray-900 px-4">
   <div class="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 text-center">
     <div class="bg-white dark:bg-gray-800 shadow-lg rounded-xl p-6">
       <h3 class="text-3xl font-bold text-indigo-600" x-data="{ count: 0 }" x-init="setInterval(() => { if(count<1200) count += Math.ceil(1200/100); $el.innerText = count }, 20)">0</h3>
@@ -41,21 +42,21 @@
 </section>
 
 <!-- PORTAL CARDS -->
-<div class="min-h-screen flex items-center justify-center px-6 -mt-16">
-  <div class="w-full max-w-6xl space-y-16">
+<div class="min-h-screen flex items-center justify-center px-4 sm:px-6 -mt-12 sm:-mt-16">
+  <div class="w-full max-w-6xl space-y-14 sm:space-y-16">
 
     <!-- STUDENT PORTALS -->
     {% if 'student' in roles %}
     <div>
-      <h3 class="text-2xl font-bold text-indigo-700 mb-6 flex items-center gap-3">🎓 Student Portals</h3>
-      <div class="grid sm:grid-cols-2 gap-8">
-        <a href="{% url 'students:student_dashboard' %}" 
-           class="portal-card bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700">
-          Student Dashboard
+      <h3 class="text-xl sm:text-2xl font-bold text-indigo-700 mb-6 flex items-center gap-2">
+        🎓 Student Portals
+      </h3>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8">
+        <a href="{% url 'students:student_dashboard' %}" class="portal-card bg-gradient-to-r from-indigo-500 to-indigo-600">
+          📊 Student Dashboard
         </a>
-        <a href="{% url 'results:student_portal' %}" 
-           class="portal-card bg-gradient-to-r from-purple-500 to-purple-600 hover:from-purple-600 hover:to-purple-700">
-          Result Portal
+        <a href="{% url 'results:student_portal' %}" class="portal-card bg-gradient-to-r from-purple-500 to-purple-600">
+          📝 Result Portal
         </a>
       </div>
     </div>
@@ -64,77 +65,64 @@
     <!-- TEACHER PORTALS -->
     {% if 'teacher' in roles %}
     <div>
-      <h3 class="text-2xl font-bold text-green-700 mb-6 flex items-center gap-3">🧑‍🏫 Teacher Portals</h3>
-      <div class="grid sm:grid-cols-3 gap-8">
-        <a href="{% url 'teachers:teacher_dashboard' %}" 
-           class="portal-card bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700">
-          Teacher Dashboard
+      <h3 class="text-xl sm:text-2xl font-bold text-green-700 mb-6 flex items-center gap-2">
+        🧑‍🏫 Teacher Portals
+      </h3>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+        <a href="{% url 'teachers:teacher_dashboard' %}" class="portal-card bg-gradient-to-r from-green-500 to-green-600">
+          📚 Teacher Dashboard
         </a>
-        <a href="{% url 'teachers:teacher_result_dashboard' %}" 
-           class="portal-card bg-gradient-to-r from-blue-500 to-blue-600 hover:from-blue-600 hover:to-blue-700">
-          Enter Scores & Domains
+        <a href="{% url 'teachers:teacher_result_dashboard' %}" class="portal-card bg-gradient-to-r from-blue-500 to-blue-600">
+          ✍️ Enter Scores & Domains
         </a>
-        <a href="{% url 'results:teacher_portal' %}" 
-           class="portal-card bg-gradient-to-r from-pink-500 to-pink-600 hover:from-pink-600 hover:to-pink-700">
-          Teacher Result Portal
+        <a href="{% url 'results:teacher_portal' %}" class="portal-card bg-gradient-to-r from-pink-500 to-pink-600">
+          🧾 Teacher Result Portal
         </a>
       </div>
     </div>
     {% endif %}
 
-    <!-- SCHOOL ADMIN PORTALS -->
+    <!-- SCHOOL ADMIN -->
     {% if 'schooladmin' in roles %}
     <div>
-      <h3 class="text-2xl font-bold text-indigo-700 mb-6">🏫 School Admin Portals</h3>
-      <div class="grid sm:grid-cols-2 gap-8">
+      <h3 class="text-xl sm:text-2xl font-bold text-indigo-700 mb-6">🏫 School Admin Portals</h3>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8">
         {% if school %}
-          <a href="{% url 'school_admin:school_admin_dashboard' school.id %}" 
-             class="portal-card bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700">
-            School Admin Dashboard
+          <a href="{% url 'school_admin:school_admin_dashboard' school.id %}" class="portal-card bg-gradient-to-r from-indigo-500 to-indigo-600">
+            🏢 School Admin Dashboard
           </a>
         {% else %}
-          <p class="text-red-500 font-bold text-xl">No school assigned</p>
+          <p class="text-red-500 font-bold text-lg">No school assigned</p>
         {% endif %}
       </div>
     </div>
     {% endif %}
 
-    <!-- ACCOUNTANT / FINANCE PORTALS -->
+    <!-- ACCOUNTANT -->
     {% if 'accountant' in roles %}
     <div>
-      <h3 class="text-2xl font-bold text-yellow-700 mb-6">💰 Accountant / Finance Portals</h3>
-      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
-        <a href="{% url 'finance:dashboard' %}" class="portal-card bg-gradient-to-r from-yellow-500 to-yellow-600 hover:from-yellow-600 hover:to-yellow-700">
-          Finance Dashboard
-        </a>
-        <a href="{% url 'finance:invoice_list' %}" class="portal-card bg-gradient-to-r from-orange-500 to-orange-600 hover:from-orange-600 hover:to-orange-700">
-          View Invoices
-        </a>
-        <a href="{% url 'finance:invoice_create' %}" class="portal-card bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700">
-          Create Invoice
-        </a>
-        <a href="{% url 'finance:generate_invoices' %}" class="portal-card bg-gradient-to-r from-green-500 to-green-600 hover:from-green-600 hover:to-green-700">
-          Generate Invoices
-        </a>
-        <a href="{% url 'finance:record_payment' %}" class="portal-card bg-gradient-to-r from-emerald-500 to-emerald-600 hover:from-emerald-600 hover:to-emerald-700">
-          Record Payment
-        </a>
-        <a href="{% url 'finance:financial_reports' %}" class="portal-card bg-gradient-to-r from-slate-600 to-slate-700 hover:from-slate-700 hover:to-slate-800">
-          Financial Reports
-          <span class="text-sm mt-2 opacity-90">(Session / Term)</span>
+      <h3 class="text-xl sm:text-2xl font-bold text-yellow-700 mb-6">💰 Accountant / Finance Portals</h3>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+        <a href="{% url 'finance:dashboard' %}" class="portal-card bg-gradient-to-r from-yellow-500 to-yellow-600">📈 Finance Dashboard</a>
+        <a href="{% url 'finance:invoice_list' %}" class="portal-card bg-gradient-to-r from-orange-500 to-orange-600">📄 View Invoices</a>
+        <a href="{% url 'finance:invoice_create' %}" class="portal-card bg-gradient-to-r from-indigo-500 to-indigo-600">➕ Create Invoice</a>
+        <a href="{% url 'finance:generate_invoices' %}" class="portal-card bg-gradient-to-r from-green-500 to-green-600">⚙️ Generate Invoices</a>
+        <a href="{% url 'finance:record_payment' %}" class="portal-card bg-gradient-to-r from-emerald-500 to-emerald-600">💳 Record Payment</a>
+        <a href="{% url 'finance:financial_reports' %}" class="portal-card bg-gradient-to-r from-slate-600 to-slate-700">
+          📊 Financial Reports
+          <span class="text-sm opacity-90">(Session / Term)</span>
         </a>
       </div>
     </div>
     {% endif %}
 
-    <!-- SUPER ADMIN PORTALS -->
+    <!-- SUPER ADMIN -->
     {% if 'superadmin' in roles %}
     <div>
-      <h3 class="text-2xl font-bold text-indigo-700 mb-6">🛠 Super Admin Portals</h3>
-      <div class="grid sm:grid-cols-2 gap-8">
-        <a href="{% url 'superadmin:dashboard' %}" 
-           class="portal-card bg-gradient-to-r from-indigo-500 to-indigo-600 hover:from-indigo-600 hover:to-indigo-700">
-          Super Admin Dashboard
+      <h3 class="text-xl sm:text-2xl font-bold text-indigo-700 mb-6">🛠 Super Admin Portals</h3>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8">
+        <a href="{% url 'superadmin:dashboard' %}" class="portal-card bg-gradient-to-r from-indigo-500 to-indigo-600">
+          🛡 Super Admin Dashboard
         </a>
       </div>
     </div>
@@ -150,17 +138,42 @@
   flex-direction: column;
   align-items: center;
   justify-content: center;
+
   font-weight: bold;
   text-align: center;
-  padding: 3rem;
-  border-radius: 1.5rem;
-  box-shadow: 0 10px 15px rgba(0,0,0,0.1);
   color: white;
-  font-size: 1.5rem;
-  transition: all 0.3s ease;
+
+  padding: 2rem;
+  border-radius: 1.25rem;
+  font-size: 1.1rem;
+  min-height: 140px;
+
+  box-shadow: 0 10px 15px rgba(0,0,0,0.1);
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
 }
-.portal-card:hover {
-  transform: translateY(-8px);
+
+/* Tablet */
+@media (min-width: 640px) {
+  .portal-card {
+    padding: 2.5rem;
+    font-size: 1.3rem;
+    min-height: 170px;
+  }
+}
+
+/* Desktop */
+@media (min-width: 1024px) {
+  .portal-card {
+    padding: 3rem;
+    font-size: 1.5rem;
+    min-height: 200px;
+  }
+}
+
+/* Hover + Touch feedback */
+.portal-card:hover,
+.portal-card:active {
+  transform: translateY(-6px) scale(1.02);
   box-shadow: 0 15px 25px rgba(0,0,0,0.2);
 }
 </style>

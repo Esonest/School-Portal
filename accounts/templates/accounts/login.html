@@ -4,81 +4,94 @@
 
 {% block content %}
 
-<!-- HERO SECTION -->
-<section class="relative h-64 bg-cover bg-center flex flex-col justify-center items-center"
+<section class="relative h-48 sm:h-56 md:h-64 bg-cover bg-center flex flex-col justify-center items-center"
          style="background-image: url('https://images.unsplash.com/photo-1522202176988-66273c2fd55f');">
   <div class="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-black/80"></div>
-  <div class="relative z-10 text-center px-6 max-w-3xl">
-    <h2 class="text-4xl md:text-5xl font-bold text-white drop-shadow-lg">
+  <div class="relative z-10 text-center px-4 sm:px-6 max-w-3xl">
+    <h2 class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white drop-shadow-lg">
       Welcome Back 👋
     </h2>
-    <p class="mt-4 text-lg md:text-xl text-gray-200 drop-shadow-lg">
+    <p class="mt-3 text-sm sm:text-base md:text-lg text-gray-200 drop-shadow-lg">
       Sign in to access different dashboards
     </p>
   </div>
 </section>
 
-<!-- LOGIN FORM -->
-<div class="min-h-screen flex items-center justify-center -mt-20 px-4">
-  <div class="bg-white/90 dark:bg-gray-800/90 backdrop-blur-xl shadow-xl rounded-2xl p-10 w-full max-w-md border border-indigo-100 dark:border-gray-700">
-
-    <!-- Display messages -->
+<div class="min-h-screen flex items-center justify-center -mt-14 sm:-mt-20 px-4">
+  <div id="loginContainer"
+       class="bg-white/95 dark:bg-gray-800/95 backdrop-blur-xl shadow-xl rounded-2xl
+              p-6 sm:p-8 md:p-10 w-full max-w-md border border-indigo-100 dark:border-gray-700 transition-transform">
     {% if messages %}
-      <div class="mb-4">
+      <div class="mb-4 space-y-2">
         {% for message in messages %}
-          <p class="text-red-500 text-sm">{{ message }}</p>
+          <p class="text-red-500 text-sm text-center">{{ message }}</p>
         {% endfor %}
       </div>
     {% endif %}
 
-    <!-- Login Form -->
     <form method="post" action="{% url 'accounts:login' %}" class="space-y-6" id="loginForm">
       {% csrf_token %}
 
       <!-- Username -->
       <div>
-        <label for="id_username" class="block text-gray-700 dark:text-gray-200 font-semibold mb-1">Username</label>
-        <input type="text" name="username" id="id_username" placeholder="Enter your username"
-               class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-800 dark:text-gray-100
-                      focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:focus:ring-indigo-400
-                      placeholder-gray-400 dark:placeholder-gray-500 transition-all duration-200">
+        <label for="id_username" class="block text-gray-700 dark:text-gray-200 font-semibold mb-1">
+          Username
+        </label>
+        <input type="text" name="username" id="id_username"
+               placeholder="Enter your username (Student/Teacher/Admin)"
+               class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg
+                      text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-900
+                      focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400
+                      placeholder-gray-400 dark:placeholder-gray-500 transition">
       </div>
 
       <!-- Password -->
-      <div class="relative">
-        <label for="id_password" class="block text-gray-700 dark:text-gray-200 font-semibold mb-1">Password</label>
+      <div>
+        <label for="id_password" class="block text-gray-700 dark:text-gray-200 font-semibold mb-1">
+          Password
+        </label>
         <div class="relative">
-          <input type="password" name="password" id="id_password" placeholder="Enter your password"
-                 class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-800 dark:text-gray-100
-                        focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:focus:ring-indigo-400
-                        placeholder-gray-400 dark:placeholder-gray-500 transition-all duration-200">
+          <input type="password" name="password" id="id_password"
+                 placeholder="Enter your password"
+                 class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg
+                        text-gray-800 dark:text-gray-100 bg-white dark:bg-gray-900
+                        focus:outline-none focus:ring-2 focus:ring-indigo-500 dark:focus:ring-indigo-400
+                        placeholder-gray-400 dark:placeholder-gray-500 transition">
           <button type="button" id="togglePassword"
-                  class="absolute inset-y-0 right-3 flex items-center text-gray-500 dark:text-gray-400 hover:text-indigo-600 dark:hover:text-indigo-300 focus:outline-none">
-            <svg id="eyeIcon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24"
-                 stroke-width="1.5" stroke="currentColor" class="w-5 h-5">
+                  class="absolute inset-y-0 right-3 flex items-center text-gray-500 dark:text-gray-400
+                         hover:text-indigo-600 dark:hover:text-indigo-300 focus:outline-none">
+            <svg id="eyeIcon" xmlns="http://www.w3.org/2000/svg" fill="none"
+                 viewBox="0 0 24 24" stroke-width="1.5"
+                 stroke="currentColor" class="w-5 h-5">
               <path stroke-linecap="round" stroke-linejoin="round"
-                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 
-                       4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                    d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7
+                       -1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
               <path stroke-linecap="round" stroke-linejoin="round"
                     d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
             </svg>
           </button>
         </div>
+        <p id="capsWarning" class="text-xs text-yellow-500 mt-1 hidden">⚠️ Caps Lock is ON</p>
       </div>
 
       <!-- Reset Password -->
       <div class="text-right">
-        <a href="" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">
+        <a href="#" class="text-sm text-indigo-600 dark:text-indigo-400 hover:underline">
           Forgot Password?
         </a>
       </div>
 
       <!-- Submit -->
       <button type="submit" id="loginButton"
-              class="w-full py-3 bg-gradient-to-r from-indigo-600 to-fuchsia-600 dark:from-indigo-500 dark:to-fuchsia-500
-                     text-white font-semibold rounded-lg shadow-md hover:from-indigo-700 hover:to-fuchsia-700 dark:hover:from-indigo-600 dark:hover:to-fuchsia-400
-                     transition-all duration-300 transform hover:-translate-y-0.5 flex items-center justify-center space-x-2">
+              class="w-full py-3 bg-gradient-to-r from-indigo-600 to-fuchsia-600
+                     dark:from-indigo-500 dark:to-fuchsia-500 text-white font-semibold
+                     rounded-lg shadow-md hover:from-indigo-700 hover:to-fuchsia-700
+                     dark:hover:from-indigo-600 dark:hover:to-fuchsia-400
+                     transition transform hover:-translate-y-0.5
+                     flex items-center justify-center gap-2">
+
         <span id="buttonText">Sign In</span>
+
         <svg id="loadingSpinner" class="hidden animate-spin h-5 w-5 text-white"
              xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
           <circle class="opacity-25" cx="12" cy="12" r="10"
@@ -89,31 +102,76 @@
       </button>
 
     </form>
-
   </div>
 </div>
 
-<!-- JS: Password Toggle + Loading Animation -->
 <script>
 const passwordInput = document.getElementById('id_password');
 const togglePassword = document.getElementById('togglePassword');
-const eyeIcon = document.getElementById('eyeIcon');
 const loginForm = document.getElementById('loginForm');
 const loginButton = document.getElementById('loginButton');
 const loadingSpinner = document.getElementById('loadingSpinner');
 const buttonText = document.getElementById('buttonText');
+const capsWarning = document.getElementById('capsWarning');
+const loginContainer = document.getElementById('loginContainer');
+const usernameInput = document.getElementById('id_username');
 
+/* 🔥 AUTO-SHOW PASSWORD IN DARK MODE */
+function applyDarkModePassword() {
+  if (document.documentElement.classList.contains('dark')) {
+    passwordInput.type = 'text';
+  } else {
+    passwordInput.type = 'password';
+  }
+}
+applyDarkModePassword();
+
+/* Manual toggle for light mode */
 togglePassword.addEventListener('click', () => {
-  const type = passwordInput.getAttribute('type') === 'password' ? 'text' : 'password';
-  passwordInput.setAttribute('type', type);
-  eyeIcon.classList.toggle('text-indigo-600');
+  passwordInput.type =
+    passwordInput.type === 'password' ? 'text' : 'password';
 });
 
+/* Loading animation */
 loginForm.addEventListener('submit', () => {
   loadingSpinner.classList.remove('hidden');
   buttonText.textContent = 'Signing In...';
   loginButton.disabled = true;
   loginButton.classList.add('opacity-80', 'cursor-not-allowed');
 });
+
+/* Caps Lock warning */
+passwordInput.addEventListener('keyup', (e) => {
+  capsWarning.style.display = e.getModifierState('CapsLock') ? 'block' : 'none';
+});
+
+/* Remember Username */
+window.addEventListener('load', () => {
+  if(localStorage.getItem('savedUsername')) {
+    usernameInput.value = localStorage.getItem('savedUsername');
+  }
+});
+
+loginForm.addEventListener('submit', () => {
+  localStorage.setItem('savedUsername', usernameInput.value);
+});
+
+/* Shake animation on error */
+{% if messages %}
+loginContainer.classList.add('animate-shake');
+setTimeout(() => loginContainer.classList.remove('animate-shake'), 500);
+{% endif %}
 </script>
+
+<style>
+@keyframes shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-5px); }
+  40%, 80% { transform: translateX(5px); }
+}
+.animate-shake {
+  animation: shake 0.5s;
+}
+</style>
+
 {% endblock %}

@@ -5,92 +5,156 @@
 {% block content %}
 
 <!-- HERO SECTION -->
-<section class="relative h-72 bg-cover bg-center flex flex-col justify-center items-center"
+<section class="relative h-56 sm:h-64 md:h-72 lg:h-80 bg-cover bg-center flex items-center justify-center"
          style="background-image: url('https://images.unsplash.com/photo-1581091215366-8b39cfe55c19');">
+
   <div class="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-black/80"></div>
-  <div class="relative z-10 text-center px-6 max-w-3xl">
-    <h2 class="text-4xl md:text-5xl font-bold text-white leading-tight drop-shadow-lg">
+
+  <div class="relative z-10 text-center px-4 sm:px-6 max-w-3xl animate-fade-in">
+    <h1 class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight drop-shadow-lg">
       Need Help?
-    </h2>
-    <p class="mt-4 text-lg md:text-xl text-gray-200 drop-shadow-lg">
+    </h1>
+    <p class="mt-4 text-sm sm:text-base md:text-lg text-gray-200 drop-shadow-lg">
       Browse our FAQs or contact support to get assistance with our school management portal.
     </p>
   </div>
 </section>
 
-<main class="p-8 max-w-7xl mx-auto">
+<main class="px-4 sm:px-6 md:px-8 py-12 max-w-7xl mx-auto">
 
-  <!-- FAQ Section -->
-  <h2 class="text-2xl md:text-3xl font-semibold mb-10 text-center text-gray-800 dark:text-gray-100">
+  <!-- FAQ TITLE -->
+  <h2 class="text-xl sm:text-2xl md:text-3xl font-semibold mb-10 text-center text-gray-800 dark:text-gray-100">
     Frequently Asked Questions (FAQ)
   </h2>
 
+  <!-- FAQ LIST -->
   <div class="space-y-4" x-data="{ openIndex: null }">
 
-    <!-- FAQ Item 1 -->
-    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 hover:shadow-xl transition-all duration-300">
-      <button class="w-full flex justify-between items-center text-left font-bold text-lg text-blue-600 dark:text-blue-400"
+    <!-- FAQ ITEM -->
+    <div class="faq-card animate-rise">
+      <button class="faq-button"
               @click="openIndex === 1 ? openIndex = null : openIndex = 1">
         <span><i class="bi bi-question-circle-fill mr-2"></i> How do I subscribe?</span>
-        <i :class="openIndex === 1 ? 'bi bi-chevron-up' : 'bi bi-chevron-down'" class="text-xl"></i>
+        <i :class="openIndex === 1 ? 'bi bi-chevron-up' : 'bi bi-chevron-down'"></i>
       </button>
-      <div x-show="openIndex === 1" x-transition class="mt-2 text-gray-700 dark:text-gray-200">
-        Our contacts are on the contact page.
+      <div x-show="openIndex === 1" x-transition class="faq-answer">
+        Our contacts are available on the Contact page.
       </div>
     </div>
 
-    <!-- FAQ Item 2 -->
-    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 hover:shadow-xl transition-all duration-300">
-      <button class="w-full flex justify-between items-center text-left font-bold text-lg text-blue-600 dark:text-blue-400"
+    <div class="faq-card animate-rise">
+      <button class="faq-button"
               @click="openIndex === 2 ? openIndex = null : openIndex = 2">
         <span><i class="bi bi-question-circle-fill mr-2"></i> How do I access student results?</span>
-        <i :class="openIndex === 2 ? 'bi bi-chevron-up' : 'bi bi-chevron-down'" class="text-xl"></i>
+        <i :class="openIndex === 2 ? 'bi bi-chevron-up' : 'bi bi-chevron-down'"></i>
       </button>
-      <div x-show="openIndex === 2" x-transition class="mt-2 text-gray-700 dark:text-gray-200">
-        Login to your student portal and navigate to the Results section. You can view and download all your termly and cumulative results there.
+      <div x-show="openIndex === 2" x-transition class="faq-answer">
+        Login to your student portal and navigate to the Results section. You can view and download all termly and cumulative results.
       </div>
     </div>
 
-    <!-- FAQ Item 3 -->
-    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 hover:shadow-xl transition-all duration-300">
-      <button class="w-full flex justify-between items-center text-left font-bold text-lg text-blue-600 dark:text-blue-400"
+    <div class="faq-card animate-rise">
+      <button class="faq-button"
               @click="openIndex === 3 ? openIndex = null : openIndex = 3">
         <span><i class="bi bi-question-circle-fill mr-2"></i> How do teachers submit assignments or grades?</span>
-        <i :class="openIndex === 3 ? 'bi bi-chevron-up' : 'bi bi-chevron-down'" class="text-xl"></i>
+        <i :class="openIndex === 3 ? 'bi bi-chevron-up' : 'bi bi-chevron-down'"></i>
       </button>
-      <div x-show="openIndex === 3" x-transition class="mt-2 text-gray-700 dark:text-gray-200">
-        Teachers can login to their portal, go to the Assignment or Result sections, and upload assignments or input scores directly into the system.
+      <div x-show="openIndex === 3" x-transition class="faq-answer">
+        Teachers login to their portal, go to Assignments or Results, and upload assignments or input scores directly.
       </div>
     </div>
 
-    <!-- FAQ Item 4 -->
-    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-4 hover:shadow-xl transition-all duration-300">
-      <button class="w-full flex justify-between items-center text-left font-bold text-lg text-blue-600 dark:text-blue-400"
+    <div class="faq-card animate-rise">
+      <button class="faq-button"
               @click="openIndex === 4 ? openIndex = null : openIndex = 4">
         <span><i class="bi bi-question-circle-fill mr-2"></i> How do schools access Free Trial?</span>
-        <i :class="openIndex === 4 ? 'bi bi-chevron-up' : 'bi bi-chevron-down'" class="text-xl"></i>
+        <i :class="openIndex === 4 ? 'bi bi-chevron-up' : 'bi bi-chevron-down'"></i>
       </button>
-      <div x-show="openIndex === 4" x-transition class="mt-2 text-gray-700 dark:text-gray-200">
-        Schools can access our free one-term trial by choosing which of the portals they want to access for a maximum period of one term.
+      <div x-show="openIndex === 4" x-transition class="faq-answer">
+        Schools can access a free one-term trial by selecting the portals they want to use during the trial period.
       </div>
     </div>
 
   </div>
 
-  <!-- Contact Support -->
-  <div class="mt-12 text-center">
-    <h2 class="text-2xl md:text-3xl font-semibold mb-4 text-gray-800 dark:text-gray-100">Need More Help?</h2>
-    <p class="mb-6 text-gray-700 dark:text-gray-200">
+  <!-- SUPPORT CTA -->
+  <div class="mt-16 text-center animate-fade-in">
+    <h2 class="text-xl sm:text-2xl md:text-3xl font-semibold mb-4 text-gray-800 dark:text-gray-100">
+      Need More Help?
+    </h2>
+    <p class="mb-6 text-gray-700 dark:text-gray-200 max-w-2xl mx-auto">
       If your question isn't answered above, please reach out to our support team directly.
     </p>
-    <a href="{% url 'accounts:contact' %}" class="bg-blue-700 dark:bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-800 dark:hover:bg-blue-500 transition">
+    <a href="{% url 'accounts:contact' %}"
+       class="inline-block bg-blue-700 hover:bg-blue-800 dark:bg-blue-600 dark:hover:bg-blue-500
+              text-white px-8 py-3 rounded-lg font-semibold shadow transition">
       Contact Support
     </a>
   </div>
 
 </main>
 
-<!-- Alpine.js for Accordion -->
+<!-- STYLES -->
+<style>
+.animate-fade-in {
+  animation: fadeIn 0.9s ease forwards;
+}
+
+.animate-rise {
+  animation: riseUp 0.6s ease forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes riseUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.faq-card {
+  background: white;
+  padding: 1rem;
+  border-radius: 1rem;
+  box-shadow: 0 10px 15px rgba(0,0,0,0.08);
+  transition: all 0.3s ease;
+}
+
+.faq-card:hover {
+  box-shadow: 0 18px 30px rgba(0,0,0,0.15);
+}
+
+.dark .faq-card {
+  background: #1f2937;
+}
+
+.faq-button {
+  width: 100%;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: 700;
+  font-size: 1rem;
+  color: #2563eb;
+}
+
+.dark .faq-button {
+  color: #60a5fa;
+}
+
+.faq-answer {
+  margin-top: 0.75rem;
+  color: #374151;
+}
+
+.dark .faq-answer {
+  color: #e5e7eb;
+}
+</style>
+
+<!-- ALPINE -->
 <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 
 {% endblock %}

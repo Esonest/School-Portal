@@ -5,40 +5,45 @@
 {% block content %}
 
 <!-- HERO SECTION -->
-<section class="relative h-72 bg-cover bg-center flex flex-col justify-center items-center"
+<section class="relative h-52 sm:h-64 md:h-72 bg-cover bg-center flex flex-col justify-center items-center"
          style="background-image: url('https://images.unsplash.com/photo-1524995997946-a1c2e315a42f');">
   <div class="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-black/80"></div>
-  <div class="relative z-10 text-center px-6 max-w-3xl">
-    <h2 class="text-4xl md:text-5xl font-bold text-white leading-tight drop-shadow-lg">
+
+  <div class="relative z-10 text-center px-4 sm:px-6 max-w-3xl">
+    <h2 class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight drop-shadow-lg break-words">
       About TECHCENTER School Portal
     </h2>
-    <p class="mt-4 text-lg md:text-xl text-gray-200 drop-shadow-lg">
+    <p class="mt-3 sm:mt-4 text-sm sm:text-base md:text-lg text-gray-200 drop-shadow-lg">
       Discover how we empower schools with modern digital solutions to manage results, finance, attendance, CBT, assignments, and more.
     </p>
   </div>
 </section>
 
-<main class="p-8 max-w-7xl mx-auto">
+<main class="px-4 sm:px-6 md:px-8 py-10 max-w-7xl mx-auto">
 
   <!-- Mission & Vision -->
-  <h2 class="text-2xl md:text-3xl font-semibold mb-10 text-center text-gray-800 dark:text-gray-100">
+  <h2 class="text-xl sm:text-2xl md:text-3xl font-semibold mb-10 text-center text-gray-800 dark:text-gray-100">
     Our Mission & Vision
   </h2>
 
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-    
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6 sm:gap-8">
+
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 hover:shadow-xl transition-all duration-300">
-      <i class="bi bi-lightbulb text-5xl text-blue-600 mb-4"></i>
-      <h3 class="text-xl font-bold mb-2 text-gray-800 dark:text-gray-100">Our Mission</h3>
-      <p class="text-gray-700 dark:text-gray-200">
+      <i class="bi bi-lightbulb text-4xl sm:text-5xl text-blue-600 mb-4"></i>
+      <h3 class="text-lg sm:text-xl font-bold mb-2 text-gray-800 dark:text-gray-100">
+        Our Mission
+      </h3>
+      <p class="text-sm sm:text-base text-gray-700 dark:text-gray-200">
         To provide innovative technology solutions that streamline school management, enhance learning experiences, and simplify administrative tasks for educators and students.
       </p>
     </div>
 
     <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 hover:shadow-xl transition-all duration-300">
-      <i class="bi bi-eye text-5xl text-blue-600 mb-4"></i>
-      <h3 class="text-xl font-bold mb-2 text-gray-800 dark:text-gray-100">Our Vision</h3>
-      <p class="text-gray-700 dark:text-gray-200">
+      <i class="bi bi-eye text-4xl sm:text-5xl text-blue-600 mb-4"></i>
+      <h3 class="text-lg sm:text-xl font-bold mb-2 text-gray-800 dark:text-gray-100">
+        Our Vision
+      </h3>
+      <p class="text-sm sm:text-base text-gray-700 dark:text-gray-200">
         To become the leading digital education platform in Africa, transforming schools with smart, easy-to-use solutions that improve efficiency, learning, and collaboration.
       </p>
     </div>
@@ -46,73 +51,88 @@
   </div>
 
   <!-- ANIMATED COUNTERS -->
-  <section class="py-12 bg-gray-50 dark:bg-gray-900 mt-16">
-    <div class="max-w-7xl mx-auto px-6">
-      <h3 class="text-2xl font-bold text-gray-800 dark:text-gray-100 text-center mb-8">
+  <section class="py-12 bg-gray-50 dark:bg-gray-900 mt-16 rounded-xl">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6">
+      <h3 class="text-xl sm:text-2xl font-bold text-gray-800 dark:text-gray-100 text-center mb-8">
         Our Impact
       </h3>
-      <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+
+      <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-4 sm:gap-6 text-center">
 
         <!-- Schools Served -->
         <div x-data="{ count: 0 }"
              x-init="let target=150; let step=Math.ceil(target/100); let interval=setInterval(() => { count+=step; if(count>=target){ count=target; clearInterval(interval); } }, 20)"
-             class="bg-blue-100 dark:bg-blue-900 rounded-lg p-6 shadow">
-          <div class="text-4xl font-bold text-blue-700 dark:text-blue-300" x-text="count"></div>
-          <div class="mt-2 text-gray-700 dark:text-gray-200">Schools Served</div>
+             class="bg-blue-100 dark:bg-blue-900 rounded-lg p-4 sm:p-6 shadow">
+          <div class="text-2xl sm:text-3xl md:text-4xl font-bold text-blue-700 dark:text-blue-300" x-text="count"></div>
+          <div class="mt-2 text-sm sm:text-base text-gray-700 dark:text-gray-200">Schools Served</div>
         </div>
 
         <!-- Students -->
         <div x-data="{ count: 0 }"
              x-init="let target=1200; let step=Math.ceil(target/100); let interval=setInterval(() => { count+=step; if(count>=target){ count=target; clearInterval(interval); } }, 20)"
-             class="bg-green-100 dark:bg-green-900 rounded-lg p-6 shadow">
-          <div class="text-4xl font-bold text-green-700 dark:text-green-300" x-text="count"></div>
-          <div class="mt-2 text-gray-700 dark:text-gray-200">Students</div>
+             class="bg-green-100 dark:bg-green-900 rounded-lg p-4 sm:p-6 shadow">
+          <div class="text-2xl sm:text-3xl md:text-4xl font-bold text-green-700 dark:text-green-300" x-text="count"></div>
+          <div class="mt-2 text-sm sm:text-base text-gray-700 dark:text-gray-200">Students</div>
         </div>
 
         <!-- Teachers -->
         <div x-data="{ count: 0 }"
              x-init="let target=85; let step=1; let interval=setInterval(() => { count+=step; if(count>=target){ count=target; clearInterval(interval); } }, 30)"
-             class="bg-purple-100 dark:bg-purple-900 rounded-lg p-6 shadow">
-          <div class="text-4xl font-bold text-purple-700 dark:text-purple-300" x-text="count"></div>
-          <div class="mt-2 text-gray-700 dark:text-gray-200">Teachers</div>
+             class="bg-purple-100 dark:bg-purple-900 rounded-lg p-4 sm:p-6 shadow">
+          <div class="text-2xl sm:text-3xl md:text-4xl font-bold text-purple-700 dark:text-purple-300" x-text="count"></div>
+          <div class="mt-2 text-sm sm:text-base text-gray-700 dark:text-gray-200">Teachers</div>
         </div>
 
-        <!-- Assignments Processed -->
+        <!-- Assignments -->
         <div x-data="{ count: 0 }"
              x-init="let target=1500; let step=15; let interval=setInterval(() => { count+=step; if(count>=target){ count=target; clearInterval(interval); } }, 20)"
-             class="bg-yellow-100 dark:bg-yellow-900 rounded-lg p-6 shadow">
-          <div class="text-4xl font-bold text-yellow-700 dark:text-yellow-300" x-text="count"></div>
-          <div class="mt-2 text-gray-700 dark:text-gray-200">Assignments Processed</div>
+             class="bg-yellow-100 dark:bg-yellow-900 rounded-lg p-4 sm:p-6 shadow">
+          <div class="text-2xl sm:text-3xl md:text-4xl font-bold text-yellow-700 dark:text-yellow-300" x-text="count"></div>
+          <div class="mt-2 text-sm sm:text-base text-gray-700 dark:text-gray-200">
+            Assignments Processed
+          </div>
         </div>
 
       </div>
     </div>
   </section>
 
-  <!-- Why Choose Us -->
+  <!-- WHY CHOOSE US -->
   <div class="mt-16">
-    <h2 class="text-2xl md:text-3xl font-semibold mb-10 text-center text-gray-800 dark:text-gray-100">
+    <h2 class="text-xl sm:text-2xl md:text-3xl font-semibold mb-10 text-center text-gray-800 dark:text-gray-100">
       Why Choose Us?
     </h2>
 
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
 
       <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 text-center hover:shadow-xl transition-all duration-300">
-        <i class="bi bi-speedometer2 text-5xl text-blue-600 mb-4"></i>
-        <h3 class="text-xl font-bold mb-2 text-gray-800 dark:text-gray-100">Fast & Efficient</h3>
-        <p class="text-gray-700 dark:text-gray-200">Our platform ensures quick access to school data and smooth operations for both teachers and students.</p>
+        <i class="bi bi-speedometer2 text-4xl sm:text-5xl text-blue-600 mb-4"></i>
+        <h3 class="text-lg sm:text-xl font-bold mb-2 text-gray-800 dark:text-gray-100">
+          Fast & Efficient
+        </h3>
+        <p class="text-sm sm:text-base text-gray-700 dark:text-gray-200">
+          Our platform ensures quick access to school data and smooth operations for both teachers and students.
+        </p>
       </div>
 
       <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 text-center hover:shadow-xl transition-all duration-300">
-        <i class="bi bi-shield-lock text-5xl text-blue-600 mb-4"></i>
-        <h3 class="text-xl font-bold mb-2 text-gray-800 dark:text-gray-100">Secure</h3>
-        <p class="text-gray-700 dark:text-gray-200">We prioritize data security, safeguarding sensitive student, teacher, and financial information.</p>
+        <i class="bi bi-shield-lock text-4xl sm:text-5xl text-blue-600 mb-4"></i>
+        <h3 class="text-lg sm:text-xl font-bold mb-2 text-gray-800 dark:text-gray-100">
+          Secure
+        </h3>
+        <p class="text-sm sm:text-base text-gray-700 dark:text-gray-200">
+          We prioritize data security, safeguarding sensitive student, teacher, and financial information.
+        </p>
       </div>
 
       <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 text-center hover:shadow-xl transition-all duration-300">
-        <i class="bi bi-people text-5xl text-blue-600 mb-4"></i>
-        <h3 class="text-xl font-bold mb-2 text-gray-800 dark:text-gray-100">Supportive</h3>
-        <p class="text-gray-700 dark:text-gray-200">Our dedicated support team ensures schools get assistance whenever needed for a seamless experience.</p>
+        <i class="bi bi-people text-4xl sm:text-5xl text-blue-600 mb-4"></i>
+        <h3 class="text-lg sm:text-xl font-bold mb-2 text-gray-800 dark:text-gray-100">
+          Supportive
+        </h3>
+        <p class="text-sm sm:text-base text-gray-700 dark:text-gray-200">
+          Our dedicated support team ensures schools get assistance whenever needed for a seamless experience.
+        </p>
       </div>
 
     </div>
@@ -120,7 +140,7 @@
 
 </main>
 
-<!-- Alpine.js for Counters -->
+<!-- Alpine.js -->
 <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
 
 {% endblock %}

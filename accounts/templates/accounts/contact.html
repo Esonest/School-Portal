@@ -5,118 +5,118 @@
 {% block content %}
 
 <!-- HERO SECTION -->
-<section class="relative h-72 bg-cover bg-center flex flex-col justify-center items-center"
+<section class="relative h-56 sm:h-64 md:h-72 lg:h-80 bg-cover bg-center flex items-center justify-center"
          style="background-image: url('https://images.unsplash.com/photo-1504384308090-c894fdcc538d');">
+
   <div class="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-black/80"></div>
-  <div class="relative z-10 text-center px-6 max-w-3xl">
-    <h2 class="text-4xl md:text-5xl font-bold text-white leading-tight drop-shadow-lg">
+
+  <div class="relative z-10 text-center px-4 sm:px-6 max-w-3xl animate-fade-in">
+    <h1 class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight drop-shadow-lg">
       Get in Touch With Us
-    </h2>
-    <p class="mt-4 text-lg md:text-xl text-gray-200 drop-shadow-lg">
+    </h1>
+    <p class="mt-4 text-sm sm:text-base md:text-lg text-gray-200 drop-shadow-lg">
       Have questions or need support? Reach out and our team will be happy to assist you.
     </p>
   </div>
 </section>
 
-<main class="p-8 max-w-7xl mx-auto">
+<main class="px-4 sm:px-6 md:px-8 py-12 max-w-7xl mx-auto">
 
-  <!-- Contact Information -->
-  <h2 class="text-2xl md:text-3xl font-semibold mb-10 text-center text-gray-800 dark:text-gray-100">
+  <!-- CONTACT INFO -->
+  <h2 class="text-xl sm:text-2xl md:text-3xl font-semibold mb-10 text-center text-gray-800 dark:text-gray-100">
     Contact Information
   </h2>
 
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-8 mb-12">
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 mb-14">
 
-    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 hover:shadow-xl transition-all duration-300">
-      <h3 class="text-xl font-bold mb-4 text-gray-800 dark:text-gray-100">
+    <div class="contact-card animate-rise">
+      <h3 class="contact-title">
         <i class="bi bi-geo-alt-fill text-blue-600 mr-2"></i>Our Address
       </h3>
-      <p class="text-gray-700 dark:text-gray-200">Close 3 Block One Elekahia Housing Estate, PortHarcourt, Nigeria</p>
+      <p>Close 3 Block One Elekahia Housing Estate, Port Harcourt, Nigeria</p>
     </div>
 
-    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 hover:shadow-xl transition-all duration-300">
-      <h3 class="text-xl font-bold mb-4 text-gray-800 dark:text-gray-100">
+    <div class="contact-card animate-rise">
+      <h3 class="contact-title">
         <i class="bi bi-telephone-fill text-blue-600 mr-2"></i>Phone
       </h3>
-      <p class="text-gray-700 dark:text-gray-200">+234 708 573 4441</p>
+      <p>+234 708 573 4441</p>
     </div>
 
-    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 hover:shadow-xl transition-all duration-300">
-      <h3 class="text-xl font-bold mb-4 text-gray-800 dark:text-gray-100">
+    <div class="contact-card animate-rise">
+      <h3 class="contact-title">
         <i class="bi bi-envelope-fill text-blue-600 mr-2"></i>Email
       </h3>
-      <p class="text-gray-700 dark:text-gray-200">techcenter652@gmail.com</p>
+      <p>techcenter652@gmail.com</p>
     </div>
 
-    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-md p-6 hover:shadow-xl transition-all duration-300">
-      <h3 class="text-xl font-bold mb-4 text-gray-800 dark:text-gray-100">
+    <div class="contact-card animate-rise">
+      <h3 class="contact-title">
         <i class="bi bi-globe text-blue-600 mr-2"></i>Website
       </h3>
-      <p class="text-gray-700 dark:text-gray-200">www.techcenter.com.ng</p>
+      <p>www.techcenter.com.ng</p>
     </div>
 
   </div>
 
-
-  <!-- Send Message Form -->
-  <h2 class="text-2xl md:text-3xl font-semibold mb-10 text-center text-gray-800 dark:text-gray-100">
+  <!-- CONTACT FORM -->
+  <h2 class="text-xl sm:text-2xl md:text-3xl font-semibold mb-10 text-center text-gray-800 dark:text-gray-100">
     Send Us a Message
   </h2>
 
   <form action="{% url 'accounts:contact_us' %}" method="POST"
-      class="bg-white dark:bg-gray-800 shadow-md rounded-xl p-8 space-y-6">
-  {% csrf_token %}
+        class="bg-white dark:bg-gray-800 shadow-lg rounded-xl p-6 sm:p-8 space-y-6 animate-fade-in">
+    {% csrf_token %}
 
-  
- {% if messages %}
-  {% for message in messages %}
-    <div
-      class="alert-message flex items-center gap-3 p-4 rounded-lg text-white font-medium transition-opacity duration-500
-      {% if message.tags == 'success' %}bg-green-600{% else %}bg-red-600{% endif %}"
-    >
-      {% if message.tags == 'success' %}
-        <!-- Success Icon -->
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
-             viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M5 13l4 4L19 7" />
-        </svg>
-      {% else %}
-        <!-- Error Icon -->
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
-             viewBox="0 0 24 24" stroke="currentColor">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-        </svg>
-      {% endif %}
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert-message flex items-center gap-3 p-4 rounded-lg text-white font-medium
+          {% if message.tags == 'success' %}bg-green-600{% else %}bg-red-600{% endif %}">
+          
+          {% if message.tags == 'success' %}
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
+                 viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M5 13l4 4L19 7" />
+            </svg>
+          {% else %}
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
+                 viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          {% endif %}
 
-      <span>{{ message }}</span>
-    </div>
-  {% endfor %}
-{% endif %}
+          <span>{{ message }}</span>
+        </div>
+      {% endfor %}
+    {% endif %}
 
-    <div>
-      <label class="block mb-2 font-semibold text-gray-800 dark:text-gray-100" for="name">Full Name</label>
-      <input class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-600 dark:focus:ring-blue-400" type="text" id="name" name="name" required>
-    </div>
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div>
+        <label class="form-label">Full Name</label>
+        <input class="form-input" type="text" name="name" required>
+      </div>
 
-    <div>
-      <label class="block mb-2 font-semibold text-gray-800 dark:text-gray-100" for="email">Email</label>
-      <input class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-600 dark:focus:ring-blue-400" type="email" id="email" name="email" required>
+      <div>
+        <label class="form-label">Email</label>
+        <input class="form-input" type="email" name="email" required>
+      </div>
     </div>
 
     <div>
-      <label class="block mb-2 font-semibold text-gray-800 dark:text-gray-100" for="subject">Subject</label>
-      <input class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-3 focus:outline-none focus:ring-2 focus:ring-blue-600 dark:focus:ring-blue-400" type="text" id="subject" name="subject" required>
+      <label class="form-label">Subject</label>
+      <input class="form-input" type="text" name="subject" required>
     </div>
 
     <div>
-      <label class="block mb-2 font-semibold text-gray-800 dark:text-gray-100" for="message">Message</label>
-      <textarea class="w-full border border-gray-300 dark:border-gray-600 rounded-lg p-3 h-32 focus:outline-none focus:ring-2 focus:ring-blue-600 dark:focus:ring-blue-400" id="message" name="message" required></textarea>
+      <label class="form-label">Message</label>
+      <textarea class="form-input h-32 resize-none" name="message" required></textarea>
     </div>
 
-    <div class="text-center">
-      <button type="submit" class="bg-blue-700 dark:bg-blue-600 text-white px-6 py-3 rounded-lg font-semibold hover:bg-blue-800 dark:hover:bg-blue-500 transition">
+    <div class="text-center pt-4">
+      <button type="submit"
+              class="px-8 py-3 rounded-lg bg-blue-700 hover:bg-blue-800 text-white font-semibold shadow transition">
         Send Message
       </button>
     </div>
@@ -124,6 +124,82 @@
 
 </main>
 
+<!-- STYLES -->
+<style>
+.animate-fade-in {
+  animation: fadeIn 0.9s ease forwards;
+}
+
+.animate-rise {
+  animation: riseUp 0.6s ease forwards;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(20px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes riseUp {
+  from { opacity: 0; transform: translateY(30px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.contact-card {
+  background: white;
+  padding: 1.5rem;
+  border-radius: 1rem;
+  box-shadow: 0 10px 15px rgba(0,0,0,0.08);
+  transition: all 0.3s ease;
+}
+
+.contact-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 18px 30px rgba(0,0,0,0.15);
+}
+
+.dark .contact-card {
+  background: #1f2937;
+  color: #f9fafb;
+}
+
+.contact-title {
+  font-size: 1.1rem;
+  font-weight: bold;
+  margin-bottom: 0.75rem;
+}
+
+.form-label {
+  display: block;
+  margin-bottom: 0.5rem;
+  font-weight: 600;
+  color: #1f2937;
+}
+
+.dark .form-label {
+  color: #f9fafb;
+}
+
+.form-input {
+  width: 100%;
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+  border: 1px solid #d1d5db;
+  outline: none;
+}
+
+.form-input:focus {
+  border-color: #2563eb;
+  box-shadow: 0 0 0 2px rgba(37,99,235,0.2);
+}
+
+.dark .form-input {
+  background: #111827;
+  border-color: #374151;
+  color: #f9fafb;
+}
+</style>
+
+<!-- AUTO HIDE ALERT -->
 <script>
   setTimeout(() => {
     document.querySelectorAll(".alert-message").forEach(alert => {
