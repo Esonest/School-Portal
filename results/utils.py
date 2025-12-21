@@ -158,23 +158,42 @@ from django.urls import reverse
 from django.conf import settings
 import io
 from django.core.files.base import ContentFile
+import base64
 
-def generate_verification_qr(student, token):
+
+def generate_verification_qr(student, verification_obj, box_size=6):
+    """
+    Generate a QR code for a student's verification URL.
+    Returns a base64 data URI that can be used directly in HTML templates.
+    """
+    # Ensure SITE_URL has the full scheme
     base_url = getattr(settings, "SITE_URL", "https://techcenter-p2au.onrender.com")
-    verify_path = reverse("verify_result", args=[student.admission_no])
-    full_url = f"{base_url}{verify_path}?token={token}"
 
+    # Full verification URL including admission_no and token
+    full_url = f"{base_url}/results/verify/{student.admission_no}/?token={verification_obj.verification_token}"
+
+    # Create the QR code
     qr = qrcode.QRCode(
         version=1,
         error_correction=qrcode.constants.ERROR_CORRECT_H,
-        box_size=10,
+        box_size=box_size,
         border=4,
     )
-    qr.add_data(full_url)
+    qr.add_data(full_url)  # full URL goes here
     qr.make(fit=True)
 
+    # Convert to image
     img = qr.make_image(fill_color="black", back_color="white")
-    return img
+
+    # Save image to bytes buffer
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    buf.seek(0)
+
+    # Convert to base64 data URI
+    qr_data_uri = "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode("ascii")
+    return qr_data_uri
+
 
 def save_qr_to_student(student, token):
     img = generate_verification_qr(student, token)

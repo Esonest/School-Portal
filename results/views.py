@@ -1283,15 +1283,6 @@ ResultVerification = apps.get_model('results', 'ResultVerification')
 
 from .utils import grade_from_score
 
-def _generate_qr_data_uri(url, box_size=6):
-    qr = qrcode.QRCode(box_size=box_size, border=1)
-    qr.add_data(url)
-    qr.make(fit=True)
-    img = qr.make_image(fill_color="black", back_color="white")
-    buf = io.BytesIO()
-    img.save(buf, format="PNG")
-    b64 = base64.b64encode(buf.getvalue()).decode('ascii')
-    return f"data:image/png;base64,{b64}"
 
 def _render_pdf_from_html(html):
     result = io.BytesIO()
