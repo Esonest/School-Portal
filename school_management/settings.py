@@ -26,6 +26,9 @@ DEBUG = os.environ.get("DEBUG", "True") == "True"
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
 
+SITE_URL = "https://techcenter-p2au.onrender.com"
+
+
 
 ALLOWED_HOSTS = [
     "techcenter-p2au.onrender.com",
@@ -241,6 +244,11 @@ EMAIL_HOST_USER = "apikey"
 EMAIL_HOST_PASSWORD = os.environ.get("SENDGRID_API_KEY")
 
 DEFAULT_FROM_EMAIL = "TECHCENTER <techcenter652@gmail.com>"
+
+
+
+
+
 
 
 

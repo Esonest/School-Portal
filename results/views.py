@@ -1895,15 +1895,23 @@ from django.utils import timezone
 from django.contrib.auth.decorators import login_required
 
 # utils inside this file (or import from your utils)
-def _generate_qr_data_uri(url, box_size=6):
-    import qrcode, io, base64
+import io
+import base64
+import qrcode
+
+def _generate_qr_data_uri(full_url, box_size=6):
+    """
+    Generate a base64 data URI of a QR code for a full URL.
+    Always encodes the full URL so scanners open it directly.
+    """
     qr = qrcode.QRCode(box_size=box_size, border=1)
-    qr.add_data(url)
+    qr.add_data(full_url)
     qr.make(fit=True)
     img = qr.make_image(fill_color="black", back_color="white")
     buf = io.BytesIO()
     img.save(buf, format="PNG")
     return "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode('ascii')
+
 
 def _pdf_from_html_string(html):
     result = io.BytesIO()
@@ -2628,7 +2636,7 @@ def build_student_result_context(student, term, session):
     if not verification_obj:
         verification_obj = ResultVerification.objects.create(student=student, valid=True)
 
-    base = getattr(settings, "SITE_URL", "/")
+    base = getattr(settings, "SITE_URL", "https://techcenter-p2au.onrender.com")
     verify_url = f"{base}/results/verify/{student.admission_no}/?token={verification_obj.verification_token}"
     qr_data_uri = _generate_qr_data_uri(verify_url, box_size=6)
 
@@ -2934,7 +2942,7 @@ def build_cumulative_result_context(student, session=None):
     if not verification_obj:
         verification_obj = ResultVerification.objects.create(student=student, valid=True)
 
-    base = getattr(settings, "SITE_URL", "/")
+    base = getattr(settings, "SITE_URL", "https://techcenter-p2au.onrender.com")
     verify_url = f"{base}/results/verify/{student.admission_no}/?token={verification_obj.verification_token}"
     qr_data_uri = _generate_qr_data_uri(verify_url, box_size=6)
 
