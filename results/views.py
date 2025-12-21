@@ -2619,10 +2619,19 @@ def build_student_result_context(student, term, session):
         principal_comment = result_comment.principal_comment
         teacher_comment = result_comment.teacher_comment
 
-    verification_obj, _ = ResultVerification.objects.get_or_create(student=student)
+    # Safely get a verification object
+    verification_obj = (
+        ResultVerification.objects
+        .filter(student=student)
+        .first()
+    )
+    if not verification_obj:
+        verification_obj = ResultVerification.objects.create(student=student, valid=True)
+
     base = getattr(settings, "SITE_URL", "/")
     verify_url = f"{base}/results/verify/{student.admission_no}/?token={verification_obj.verification_token}"
     qr_data_uri = _generate_qr_data_uri(verify_url, box_size=6)
+
 
     principal_signature_url = (
         school.principal_signature.url
@@ -2916,10 +2925,19 @@ def build_cumulative_result_context(student, session=None):
     teacher_comment = pick_comment("teacher")
 
     # QR + signature
-    verification_obj, _ = ResultVerification.objects.get_or_create(student=student)
+    # Safely get a verification object
+    verification_obj = (
+        ResultVerification.objects
+        .filter(student=student)
+        .first()
+    )
+    if not verification_obj:
+        verification_obj = ResultVerification.objects.create(student=student, valid=True)
+
     base = getattr(settings, "SITE_URL", "/")
     verify_url = f"{base}/results/verify/{student.admission_no}/?token={verification_obj.verification_token}"
     qr_data_uri = _generate_qr_data_uri(verify_url, box_size=6)
+
 
     school = student.school
     principal_signature_url = school.principal_signature.url if school and school.principal_signature else None
