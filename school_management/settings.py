@@ -119,6 +119,7 @@ if not DEBUG:
     USE_X_FORWARDED_HOST = True
 
 
+
 ROOT_URLCONF = 'school_management.urls'
 
 TEMPLATES = [
@@ -240,6 +241,10 @@ EMAIL_HOST_USER = "apikey"
 EMAIL_HOST_PASSWORD = os.environ.get("SENDGRID_API_KEY")
 
 DEFAULT_FROM_EMAIL = "TECHCENTER <techcenter652@gmail.com>"
+
+
+
+
 
 
 

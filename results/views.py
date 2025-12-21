@@ -3,7 +3,7 @@ from .models import Student, Score, Psychomotor, Affective, School, Subject, Cla
 import random
 import qrcode
 from io import BytesIO
-from .utils import portal_required
+from .utils import portal_required, save_qr_to_student, generate_verification_qr
 from django.templatetags.static import static
 
 
@@ -1455,6 +1455,42 @@ def report_card_download(request, student_id):
 
 
 
+import io
+import base64
+import qrcode
+from django.shortcuts import get_object_or_404, render
+
+
+# -------------------------------
+# Helper functions
+# -------------------------------
+
+def _generate_qr_data_uri(url, box_size=6):
+    """
+    Generate a base64 data URI of a QR code for the given URL.
+    """
+    qr = qrcode.QRCode(box_size=box_size, border=1)
+    qr.add_data(url)
+    qr.make(fit=True)
+    img = qr.make_image(fill_color="black", back_color="white")
+    buf = io.BytesIO()
+    img.save(buf, format="PNG")
+    return "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode('ascii')
+
+
+def _build_verification_url(student, token):
+    """
+    Construct the full verification URL for a student.
+    """
+    from django.conf import settings
+    base_url = getattr(settings, "SITE_URL", "https://techcenter-p2au.onrender.com")
+    return f"{base_url}/verify/{student.admission_no}/?token={token}"
+
+
+# -------------------------------
+# Main view
+# -------------------------------
+
 def verify_result(request, admission_no):
     """
     Public verification of a student's result.
@@ -1462,7 +1498,6 @@ def verify_result(request, admission_no):
     Expected URL format:
     /verify/<admission_no>/?token=<verification_token>
     """
-
     token = request.GET.get("token", "").strip()
 
     student = get_object_or_404(Student, admission_no=admission_no)
@@ -1482,12 +1517,7 @@ def verify_result(request, admission_no):
     affective = None
 
     if is_verified:
-        scores_qs = (
-            Score.objects
-            .filter(student=student)
-            .select_related("subject")
-        )
-
+        scores_qs = Score.objects.filter(student=student).select_related("subject")
         psychomotor = Psychomotor.objects.filter(student=student).first()
         affective = Affective.objects.filter(student=student).first()
 
@@ -1501,6 +1531,10 @@ def verify_result(request, admission_no):
                 "total": ca + exam,
             })
 
+    # Generate QR code for this verification
+    verification_url = _build_verification_url(student, token)
+    qr_code_data_uri = _generate_qr_data_uri(verification_url)
+
     context = {
         "student": student,
         "rows": scores,
@@ -1508,9 +1542,11 @@ def verify_result(request, admission_no):
         "affective": affective,
         "status": "verified" if is_verified else "invalid",
         "token": token,
+        "qr_code": qr_code_data_uri,  # can use in template: <img src="{{ qr_code }}">
     }
 
     return render(request, "results/verify_result.html", context)
+
 
 
 

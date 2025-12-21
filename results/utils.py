@@ -147,3 +147,38 @@ def portal_required(portal_name):
             return view_func(request, *args, **kwargs)
         return _wrapped_view
     return decorator
+
+
+
+
+# results/utils.py
+
+import qrcode
+from django.urls import reverse
+from django.conf import settings
+import io
+from django.core.files.base import ContentFile
+
+def generate_verification_qr(student, token):
+    base_url = getattr(settings, "SITE_URL", "https://techcenter-p2au.onrender.com")
+    verify_path = reverse("verify_result", args=[student.admission_no])
+    full_url = f"{base_url}{verify_path}?token={token}"
+
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_H,
+        box_size=10,
+        border=4,
+    )
+    qr.add_data(full_url)
+    qr.make(fit=True)
+
+    img = qr.make_image(fill_color="black", back_color="white")
+    return img
+
+def save_qr_to_student(student, token):
+    img = generate_verification_qr(student, token)
+    buffer = io.BytesIO()
+    img.save(buffer, format="PNG")
+    file_name = f"{student.admission_no}_verification_qr.png"
+    student.qr_code.save(file_name, ContentFile(buffer.getvalue()), save=True)

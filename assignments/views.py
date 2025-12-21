@@ -205,29 +205,20 @@ def submit_assignment(request, pk):
     })
 
 # Teacher: grade a submission
+from accounts.models import Teacher
 
 @login_required
 def grade_submission(request, submission_id):
     """
-    Allow only teachers (owners of the assignment) to grade a submission.
+    Grade an assignment submission.
     """
     user = request.user
-
-    # --- Access control ---
-    teacher = getattr(user, 'teacher_profile', None)
-    if not teacher and not user.is_staff:
-        messages.error(request, "Only teachers can access grading.")
-        return redirect('assignments:dashboard')
 
     # --- Retrieve the submission ---
     submission = get_object_or_404(
         AssignmentSubmission.objects.select_related('assignment', 'student'),
         pk=submission_id
     )
-
-    # --- Verify ownership (only the teacher who created the assignment can grade it) ---
-    if submission.assignment.teacher != user and not user.is_staff:
-        raise Http404("You are not authorized to grade this submission.")
 
     # --- Process form submission ---
     if request.method == 'POST':
@@ -236,8 +227,19 @@ def grade_submission(request, submission_id):
             score = form.cleaned_data['score']
             feedback = form.cleaned_data['feedback']
 
-            # Call model method for grading
-            submission.mark_graded(score, feedback, user)
+            # --- Get the Teacher instance for the logged-in user ---
+            if not user.is_teacher_user:
+                messages.error(request, "You are not authorized to grade submissions.")
+                return redirect('assignments:teacher_assignment_detail', pk=submission.assignment.pk)
+
+            try:
+                teacher = user.teacher_profile  # use the correct related_name
+            except Teacher.DoesNotExist:
+                messages.error(request, "You are not registered as a teacher.")
+                return redirect('assignments:teacher_assignment_detail', pk=submission.assignment.pk)
+
+            # --- Call model method for grading ---
+            submission.mark_graded(score, feedback, teacher)
 
             messages.success(request, "Submission graded successfully.")
             return redirect('assignments:teacher_assignment_detail', pk=submission.assignment.pk)
@@ -253,6 +255,7 @@ def grade_submission(request, submission_id):
         'submission': submission,
     }
     return render(request, 'assignments/grade_submission.html', context)
+
 
 # Download submission file
 
