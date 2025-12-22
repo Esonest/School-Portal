@@ -7,6 +7,11 @@
   <title>Result — {{ student.user.get_full_name }}</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
+    body { font-family: 'Arial', sans-serif; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #ccc; padding: 4px; text-align: center; }
+    .header-table td { border: none; padding: 2px; }
+
     @media print {
       .no-print { display: none !important; }
       .print-watermark {
@@ -21,10 +26,6 @@
       body { -webkit-print-color-adjust: exact; }
       .result-container { page-break-inside: avoid; }
     }
-    body { font-family: 'Arial', sans-serif; }
-    table { border-collapse: collapse; width: 100%; }
-    th, td { border: 1px solid #ccc; padding: 4px; text-align: center; }
-    .header-table td { border: none; padding: 2px; }
   </style>
 </head>
 <body class="bg-gray-50 p-4">
@@ -144,6 +145,7 @@
 
     <!-- Summary & Psychomotor/Affective -->
     <div class="mt-4 grid md:grid-cols-2 gap-4">
+      <!-- Summary -->
       <div class="bg-gray-50 p-3 rounded shadow-sm">
         <p><strong>Total:</strong> {{ overall_total }}</p>
         <p><strong>Average:</strong> {{ avg_total|floatformat:2 }}</p>
@@ -152,6 +154,7 @@
         {% if weak_subject %}<p><strong>Weakest Subject:</strong> {{ weak_subject }}</p>{% endif %}
       </div>
 
+      <!-- Psychomotor & Affective -->
       <div class="space-y-4">
         <!-- Psychomotor -->
         <div class="bg-blue-50 p-3 rounded shadow-sm">
