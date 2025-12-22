@@ -287,3 +287,9 @@ def get_attr(obj, attr_name):
 def get_item(dictionary, key):
     """Get value from dictionary using key"""
     return dictionary.get(key, {})
+
+
+
+@register.filter
+def dict_get(d, key):
+    return d.get(key, {})

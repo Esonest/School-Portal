@@ -111,7 +111,12 @@
               <tr>
                 <td>{{ subj }}</td>
                 {% for term in terms %}
-                  {% if show_ca %}<td>{{ data[term].ca|default:"0" }}</td>{% endif %}
+                  {% with term_data=data|dict_get:term %}
+    {% if show_ca %}
+        <td>{{ term_data.ca|default:"0" }}</td>
+    {% endif %}
+{% endwith %}
+
                   <td>{{ data[term].exam|default:"0" }}</td>
                   <td>{{ data[term].total|default:"0" }}</td>
                   <td>{{ data[term].grade|default:"N/A" }}</td>

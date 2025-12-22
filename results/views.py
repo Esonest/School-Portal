@@ -2716,6 +2716,11 @@ def build_student_result_context(student, term, session):
         teacher_comment = result_comment.teacher_comment
 
     # Safely get a verification object
+
+    TERM_MAP = {"First": "1", "Second": "2", "Third": "3"}
+
+    # term_for_qr is the Score.term value
+    term_for_qr = TERM_MAP[term] if term in TERM_MAP else term  # ensures '1','2','3'
     verification_obj = (
         ResultVerification.objects
         .filter(student=student)
@@ -2729,7 +2734,7 @@ def build_student_result_context(student, term, session):
         f"{base}/results/verify/{student.admission_no}/"
         f"?token={verification_obj.verification_token}"
         f"&view=term"
-        f"&term={term}"  # must be '1', '2', or '3' as in Score.term
+        f"&term={term_for_qr}"  # must be '1', '2', or '3' as in Score.term
         f"&session={session}"
     )
 
