@@ -1491,6 +1491,7 @@ def verify_result(request, admission_no):
     token = request.GET.get("token", "").strip()
     student = get_object_or_404(Student, admission_no=admission_no)
 
+
     verification = None
     if token:
         verification = ResultVerification.objects.filter(
@@ -1500,6 +1501,8 @@ def verify_result(request, admission_no):
         ).select_related("student").first()
 
     is_verified = verification is not None
+
+    is_cumulative = request.GET.get("cumulative", "").lower() == "true"
 
     # -------------------------
     # Determine session safely
@@ -2939,7 +2942,7 @@ def build_cumulative_result_context(student, session=None):
 
     # Build URL for cumulative QR code
     base = getattr(settings, "SITE_URL", "https://techcenter-p2au.onrender.com")
-    verify_url = f"{base}/results/verify/{student.admission_no}/?token={verification_obj.verification_token}&cumulative=1"
+    verify_url = f"{base}/results/verify/{student.admission_no}/?token={verification_obj.verification_token}&cumulative=true"
 
     # Generate the QR code
     qr_data_uri = _generate_qr_data_uri(verify_url, box_size=6)
