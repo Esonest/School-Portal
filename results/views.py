@@ -1482,6 +1482,10 @@ def _build_verification_url(student, token):
 # Main view
 # -------------------------------
 
+from django.shortcuts import get_object_or_404, render
+from django.http import HttpResponseBadRequest
+from django.conf import settings
+
 def verify_result(request, admission_no):
     """
     Public verification of a student's result.
@@ -1522,16 +1526,18 @@ def verify_result(request, admission_no):
     # ---------------------------
     context = {}
     if view_type == "cumulative":
-        # Cumulative result uses subjects dict
+        # Cumulative result
         context = build_cumulative_result_context(student, session=current_session)
         context.update({
             "is_cumulative": True,
-            "scores": [],
+            "scores": [],  # cumulative uses subjects dict
             "status": "verified" if is_verified else "invalid",
             "token": token,
+            "terms": context.get("terms", []),
+            "show_ca": context.get("show_ca", True),
         })
     else:
-        # Termly result requires selected_term
+        # Term view requires selected_term
         if not selected_term:
             return HttpResponseBadRequest("Term parameter is required for term view.")
         
@@ -1540,10 +1546,37 @@ def verify_result(request, admission_no):
             "is_cumulative": False,
             "status": "verified" if is_verified else "invalid",
             "token": token,
-            "subjects": {},
+            "subjects": {},  # not used in term view
             "terms": [selected_term],
             "show_ca": context.get("show_ca", True),
         })
+
+    # ---------------------------
+    # Ensure verification exists
+    # ---------------------------
+    if not verification:
+        verification = ResultVerification.objects.create(student=student, valid=True)
+
+    # ---------------------------
+    # Generate QR code URL
+    # ---------------------------
+    base_url = getattr(settings, "SITE_URL", "https://techcenter-p2au.onrender.com")
+    verification_url = f"{base_url}/results/verify/{student.admission_no}/?token={verification.verification_token}&view={view_type}&session={current_session}"
+    context["qr_data_uri"] = _generate_qr_data_uri(verification_url, box_size=6)
+
+    # ---------------------------
+    # Common template fields
+    # ---------------------------
+    school = student.school
+    context.update({
+        "principal_signature_url": getattr(school.principal_signature, 'url', None) if school else None,
+        "student_photo_url": student.photo.url if student.photo else None,
+        "school_logo_url": getattr(school.logo, 'url', None) if school else None,
+        "selected_session": current_session,
+    })
+
+    return render(request, "results/verify_result.html", context)
+
 
     # ---------------------------
     # QR Code generation
