@@ -1491,6 +1491,7 @@ from django.shortcuts import get_object_or_404, render
 from django.http import HttpResponseBadRequest
 from django.conf import settings
 
+
 def verify_result(request, admission_no):
     """
     Public verification of a student's result.
@@ -1548,13 +1549,17 @@ def verify_result(request, admission_no):
         if not selected_term:
             return HttpResponseBadRequest("Term parameter is required for term view.")
 
+        # Make sure the selected_term is valid for this student/session
+        if not student.scores.filter(session=current_session, term=selected_term).exists():
+            return HttpResponseBadRequest("Invalid term parameter for this student.")
+
         context = build_student_result_context(student, selected_term, session=current_session)
         context.update({
             "is_cumulative": False,
             "status": "verified" if is_verified else "invalid",
             "token": token,
             "subjects": {},  # not used in term view
-            "terms": [selected_term],
+            "terms": [selected_term],  # always a list
             "show_ca": context.get("show_ca", True),
         })
 
@@ -1565,27 +1570,24 @@ def verify_result(request, admission_no):
         verification = ResultVerification.objects.create(student=student, valid=True)
 
     # ---------------------------
-    # Generate QR code URL (safe)
+    # Generate QR code URL (fixed for Score.term)
     # ---------------------------
     base_url = getattr(settings, "SITE_URL", "https://techcenter-p2au.onrender.com")
 
     if context.get("is_cumulative"):
-        # Cumulative view
-        view_for_qr = "cumulative"
         verification_url = (
             f"{base_url}/results/verify/{student.admission_no}/"
             f"?token={verification.verification_token}"
-            f"&view={view_for_qr}"
+            f"&view=cumulative"
             f"&session={current_session}"
         )
     else:
-        # Term view
-        view_for_qr = "term"
-        term_for_qr = context.get("terms")[0] if context.get("terms") else "1"  # safe fallback
+        # Term view: use the term exactly as stored in Score.term ('1','2','3')
+        term_for_qr = context.get("terms")[0]  # always a string like '1'
         verification_url = (
             f"{base_url}/results/verify/{student.admission_no}/"
             f"?token={verification.verification_token}"
-            f"&view={view_for_qr}"
+            f"&view=term"
             f"&term={term_for_qr}"
             f"&session={current_session}"
         )
@@ -1604,6 +1606,7 @@ def verify_result(request, admission_no):
     })
 
     return render(request, "results/verify_result.html", context)
+
 
 
 
@@ -1962,19 +1965,40 @@ from django.contrib.auth.decorators import login_required
 import io
 import base64
 import qrcode
+from io import BytesIO
 
-def _generate_qr_data_uri(full_url, box_size=6):
+def _generate_qr_data_uri(url: str, box_size: int = 6, border: int = 4) -> str:
     """
-    Generate a base64 data URI of a QR code for a full URL.
-    Always encodes the full URL so scanners open it directly.
+    Generate a QR code as a data URI (base64) suitable for embedding in <img>.
+
+    Args:
+        url (str): The URL to encode in the QR code.
+        box_size (int): Size of each QR box (default 6).
+        border (int): Width of border boxes (default 4).
+
+    Returns:
+        str: Data URI for use in <img src="...">.
     """
-    qr = qrcode.QRCode(box_size=box_size, border=1)
-    qr.add_data(full_url)
+    qr = qrcode.QRCode(
+        version=None,  # automatic size
+        error_correction=qrcode.constants.ERROR_CORRECT_H,
+        box_size=box_size,
+        border=border,
+    )
+    qr.add_data(url)
     qr.make(fit=True)
+
     img = qr.make_image(fill_color="black", back_color="white")
-    buf = io.BytesIO()
-    img.save(buf, format="PNG")
-    return "data:image/png;base64," + base64.b64encode(buf.getvalue()).decode('ascii')
+
+    # Convert image to base64
+    buffer = BytesIO()
+    img.save(buffer, format="PNG")
+    img_bytes = buffer.getvalue()
+    base64_data = base64.b64encode(img_bytes).decode("utf-8")
+
+    # Return as data URI
+    return f"data:image/png;base64,{base64_data}"
+
 
 
 def _pdf_from_html_string(html):
