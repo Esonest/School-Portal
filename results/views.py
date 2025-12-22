@@ -1487,11 +1487,14 @@ def verify_result(request, admission_no):
     Public verification of a student's result.
 
     URL format:
-    /results/verify/<admission_no>/?token=<verification_token>&view=cumulative/term&term=<1/2/3>
+    /results/verify/<admission_no>/?token=<verification_token>&view=cumulative/term&term=<selected_term>
     """
+    # ---------------------------
+    # Fetch query parameters
+    # ---------------------------
     token = request.GET.get("token", "").strip()
     view_type = request.GET.get("view", "term").lower()  # 'term' or 'cumulative'
-    term_param = request.GET.get("term", "1")  # default term
+    selected_term = request.GET.get("term")  # MUST be provided for term view
 
     student = get_object_or_404(Student, admission_no=admission_no)
 
@@ -1508,59 +1511,67 @@ def verify_result(request, admission_no):
     is_verified = verification is not None
 
     # ---------------------------
-    # Determine session (latest if missing)
+    # Determine session
     # ---------------------------
-    current_session = getattr(settings, "CURRENT_SESSION", None)
-    if not current_session:
-        current_session = getattr(student.school, "current_session", None) or "2024/2025"
+    current_session = getattr(settings, "CURRENT_SESSION", None) \
+        or getattr(student.school, "current_session", None) \
+        or "2024/2025"
 
     # ---------------------------
     # Build result context
     # ---------------------------
     context = {}
     if view_type == "cumulative":
-        # Cumulative result
+        # Cumulative result uses subjects dict
         context = build_cumulative_result_context(student, session=current_session)
         context.update({
             "is_cumulative": True,
-            "scores": [],  # cumulative uses subjects dict, not scores list
+            "scores": [],
             "status": "verified" if is_verified else "invalid",
             "token": token,
         })
     else:
-        # Termly result
-        context = build_student_result_context(student, term_param, session=current_session)
+        # Termly result requires selected_term
+        if not selected_term:
+            return HttpResponseBadRequest("Term parameter is required for term view.")
+        
+        context = build_student_result_context(student, selected_term, session=current_session)
         context.update({
             "is_cumulative": False,
             "status": "verified" if is_verified else "invalid",
             "token": token,
-            "subjects": {},  # cumulative subjects not used in term view
-            "terms": [term_param],
+            "subjects": {},
+            "terms": [selected_term],
             "show_ca": context.get("show_ca", True),
         })
 
     # ---------------------------
-    # QR Code for verification
+    # QR Code generation
     # ---------------------------
     if not verification:
         verification = ResultVerification.objects.create(student=student, valid=True)
 
     base_url = getattr(settings, "SITE_URL", "https://techcenter-p2au.onrender.com")
-    verification_url = f"{base_url}/results/verify/{student.admission_no}/?token={verification.verification_token}&view={view_type}&session={current_session}"
+    verification_url = (
+        f"{base_url}/results/verify/{student.admission_no}/"
+        f"?token={verification.verification_token}&view={view_type}&session={current_session}"
+    )
     context["qr_data_uri"] = _generate_qr_data_uri(verification_url, box_size=6)
 
     # ---------------------------
-    # Common fields for template
+    # Common template fields
     # ---------------------------
     school = student.school
     context.update({
-        "principal_signature_url": getattr(school.principal_signature, 'url', None) if school else None,
+        "principal_signature_url": getattr(school.principal_signature, "url", None) if school else None,
         "student_photo_url": student.photo.url if student.photo else None,
-        "school_logo_url": getattr(school.logo, 'url', None) if school else None,
+        "school_logo_url": getattr(school.logo, "url", None) if school else None,
         "selected_session": current_session,
+        "selected_term": selected_term,
     })
 
     return render(request, "results/verify_result.html", context)
+
 
 
 
