@@ -2,12 +2,13 @@
 {% block content %}
 <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 
-<div class="max-w-7xl mx-auto p-6 space-y-6">
-  <h1 class="text-2xl font-bold text-{{ school.theme_color }}-600">{{ school.name }}</h1>
-  <h1 class="text-2xl font-bold text-{{ school.theme_color }}-600">Teacher Portal</h1>
+<div class="max-w-7xl mx-auto p-4 sm:p-6 space-y-6">
+
+  <h1 class="text-xl sm:text-2xl font-bold text-{{ school.theme_color }}-600">{{ school.name }}</h1>
+  <h1 class="text-xl sm:text-2xl font-bold text-{{ school.theme_color }}-600">Teacher Portal</h1>
 
   <!-- FILTER BAR -->
-  <form method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4 bg-white p-4 shadow rounded-lg">
+  <form method="GET" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 bg-white p-4 shadow rounded-lg">
     <div>
       <label class="text-xs text-gray-600">Class</label>
       <select name="class_id" class="mt-1 p-2 w-full border rounded">
@@ -43,8 +44,8 @@
       <input type="text" name="q" value="{{ q }}" placeholder="Name or Admission No" class="mt-1 p-2 w-full border rounded">
     </div>
 
-    <div class="md:col-span-4 flex justify-end">
-      <button class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded">Filter</button>
+    <div class="sm:col-span-2 md:col-span-4 flex justify-end">
+      <button class="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded w-full sm:w-auto">Filter</button>
     </div>
   </form>
 
@@ -54,90 +55,94 @@
     <input type="hidden" name="term" value="{{ term }}">
     <input type="hidden" name="session" value="{{ session }}">
 
-    <div class="bg-white shadow rounded-lg overflow-hidden">
-      <table class="w-full text-sm">
+    <div class="bg-white shadow rounded-lg overflow-x-auto">
+      <table class="w-full text-sm min-w-max">
         <thead class="bg-gray-100 text-left">
           <tr>
-            <th class="p-3">Student</th>
-            <th class="p-3">Class</th>
-            <th class="p-3">Psychomotor</th>
-            <th class="p-3">Affective</th>
-            <th class="p-3">Actions</th>
+            <th class="p-2 sm:p-3">Student</th>
+            <th class="p-2 sm:p-3">Class</th>
+            <th class="p-2 sm:p-3">Psychomotor</th>
+            <th class="p-2 sm:p-3">Affective</th>
+            <th class="p-2 sm:p-3">Actions</th>
           </tr>
         </thead>
         <tbody>
           {% for row in rows %}
           <input type="hidden" name="student_id_{{ row.student.id }}" value="{{ row.student.id }}">
           <tr class="border-b">
-            <td class="p-3">{{ row.student.user.get_full_name }}</td>
-            <td class="p-3">{{ row.student.school_class }}</td>
-            <td class="p-3">{% if row.psychomotor %}✔{% else %}-{% endif %}</td>
-            <td class="p-3">{% if row.affective %}✔{% else %}-{% endif %}</td>
-            <td class="p-3">
+            <td class="p-2 sm:p-3">{{ row.student.user.get_full_name }}</td>
+            <td class="p-2 sm:p-3">{{ row.student.school_class }}</td>
+            <td class="p-2 sm:p-3">{% if row.psychomotor %}✔{% else %}-{% endif %}</td>
+            <td class="p-2 sm:p-3">{% if row.affective %}✔{% else %}-{% endif %}</td>
+            <td class="p-2 sm:p-3">
               <button type="button" onclick="toggleRow('{{ row.student.id }}')" class="text-blue-600 underline">View/Edit Scores</button>
             </td>
           </tr>
 
           <!-- EDITABLE SCORE & DOMAIN ROW -->
           <tr id="row-{{ row.student.id }}" class="hidden bg-gray-50">
-            <td colspan="5" class="p-4">
+            <td colspan="5" class="p-2 sm:p-4">
 
               <!-- Scores -->
               <h3 class="font-semibold mb-2">Scores</h3>
-              <table class="w-full text-xs">
-                <thead class="bg-gray-200">
-                  <tr>
-                    <th class="p-2">Subject</th>
-                    <th class="p-2">CA</th>
-                    <th class="p-2">Exam</th>
-                    <th class="p-2">Total</th>
-                    <th class="p-2">Teacher</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {% for s in row.scores %}
-                  <tr class="border-b">
-                    <td class="p-2">{{ s.subject }}</td>
-                    <td class="p-2">
-                      <input type="number" name="ca_{{ s.id }}" min="0" max="100" value="{{ s.ca }}" class="border p-1 w-16 text-right rounded">
-                    </td>
-                    <td class="p-2">
-                      <input type="number" name="exam_{{ s.id }}" min="0" max="100" value="{{ s.exam }}" class="border p-1 w-16 text-right rounded">
-                    </td>
-                    <td class="p-2 font-bold">{{ s.total }}</td>
-                    <td class="p-2">{{ s.teacher }}</td>
-                  </tr>
-                  {% empty %}
-                  <tr><td colspan="5" class="p-2 text-center text-gray-500">No scores available</td></tr>
-                  {% endfor %}
-                </tbody>
-              </table>
+              <div class="overflow-x-auto">
+                <table class="w-full text-xs sm:text-sm min-w-max">
+                  <thead class="bg-gray-200">
+                    <tr>
+                      <th class="p-1 sm:p-2">Subject</th>
+                      <th class="p-1 sm:p-2">CA</th>
+                      <th class="p-1 sm:p-2">Exam</th>
+                      <th class="p-1 sm:p-2">Total</th>
+                      <th class="p-1 sm:p-2">Teacher</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {% for s in row.scores %}
+                    <tr class="border-b">
+                      <td class="p-1 sm:p-2">{{ s.subject }}</td>
+                      <td class="p-1 sm:p-2">
+                        <input type="number" name="ca_{{ s.id }}" min="0" max="100" value="{{ s.ca }}" class="border p-1 w-12 sm:w-16 text-right rounded">
+                      </td>
+                      <td class="p-1 sm:p-2">
+                        <input type="number" name="exam_{{ s.id }}" min="0" max="100" value="{{ s.exam }}" class="border p-1 w-12 sm:w-16 text-right rounded">
+                      </td>
+                      <td class="p-1 sm:p-2 font-bold">{{ s.total }}</td>
+                      <td class="p-1 sm:p-2">{{ s.teacher }}</td>
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="5" class="p-2 text-center text-gray-500">No scores available</td></tr>
+                    {% endfor %}
+                  </tbody>
+                </table>
+              </div>
 
               <!-- Psychomotor & Affective Domains -->
-              <div class="grid grid-cols-2 gap-4 mt-4">
-                {% if row.psychomotor %}
-                <div>
-                  <h4 class="font-medium mb-1">Psychomotor</h4>
-                  {% for field, value in row.psychomotor.items %}
-                  <div class="flex justify-between mb-1">
-                    <label class="text-xs text-gray-600">{{ field|capfirst }}</label>
-                    <input type="number" name="psy_{{ field }}_{{ row.student.id }}" min="0" max="5" value="{{ value }}" class="border p-1 w-12 text-right rounded">
+              <div class="overflow-x-auto mt-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 min-w-max">
+                  {% if row.psychomotor %}
+                  <div>
+                    <h4 class="font-medium mb-1">Psychomotor</h4>
+                    {% for field, value in row.psychomotor.items %}
+                    <div class="flex justify-between mb-1">
+                      <label class="text-xs text-gray-600">{{ field|capfirst }}</label>
+                      <input type="number" name="psy_{{ field }}_{{ row.student.id }}" min="0" max="5" value="{{ value }}" class="border p-1 w-12 text-right rounded">
+                    </div>
+                    {% endfor %}
                   </div>
-                  {% endfor %}
-                </div>
-                {% endif %}
+                  {% endif %}
 
-                {% if row.affective %}
-                <div>
-                  <h4 class="font-medium mb-1">Affective</h4>
-                  {% for field, value in row.affective.items %}
-                  <div class="flex justify-between mb-1">
-                    <label class="text-xs text-gray-600">{{ field|capfirst }}</label>
-                    <input type="number" name="aff_{{ field }}_{{ row.student.id }}" min="0" max="5" value="{{ value }}" class="border p-1 w-12 text-right rounded">
+                  {% if row.affective %}
+                  <div>
+                    <h4 class="font-medium mb-1">Affective</h4>
+                    {% for field, value in row.affective.items %}
+                    <div class="flex justify-between mb-1">
+                      <label class="text-xs text-gray-600">{{ field|capfirst }}</label>
+                      <input type="number" name="aff_{{ field }}_{{ row.student.id }}" min="0" max="5" value="{{ value }}" class="border p-1 w-12 text-right rounded">
+                    </div>
+                    {% endfor %}
                   </div>
-                  {% endfor %}
+                  {% endif %}
                 </div>
-                {% endif %}
               </div>
 
             </td>
@@ -147,21 +152,21 @@
       </table>
 
       <div class="mt-4 text-right p-4">
-        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded">Save All</button>
+        <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded w-full sm:w-auto">Save All</button>
       </div>
     </div>
   </form>
 
   <!-- PAGINATION -->
-  <div class="flex justify-center space-x-2 mt-4">
+  <div class="flex flex-wrap justify-center space-x-2 mt-4">
     {% if students_page.has_previous %}
-    <a href="?page={{ students_page.previous_page_number }}" class="px-3 py-1 border rounded">Prev</a>
+    <a href="?page={{ students_page.previous_page_number }}" class="px-3 py-1 border rounded mb-2 sm:mb-0">Prev</a>
     {% endif %}
 
-    <span class="px-3 py-1 bg-gray-200 rounded">Page {{ students_page.number }} of {{ students_page.paginator.num_pages }}</span>
+    <span class="px-3 py-1 bg-gray-200 rounded mb-2 sm:mb-0">Page {{ students_page.number }} of {{ students_page.paginator.num_pages }}</span>
 
     {% if students_page.has_next %}
-    <a href="?page={{ students_page.next_page_number }}" class="px-3 py-1 border rounded">Next</a>
+    <a href="?page={{ students_page.next_page_number }}" class="px-3 py-1 border rounded mb-2 sm:mb-0">Next</a>
     {% endif %}
   </div>
 </div>

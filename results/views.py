@@ -1498,6 +1498,7 @@ def verify_result(request, admission_no):
     URL format:
     /results/verify/<admission_no>/?token=<verification_token>&view=cumulative/term&term=<selected_term>
     """
+
     # ---------------------------
     # Fetch query parameters
     # ---------------------------
@@ -1530,6 +1531,7 @@ def verify_result(request, admission_no):
     # Build result context
     # ---------------------------
     context = {}
+
     if view_type == "cumulative":
         # Cumulative result
         context = build_cumulative_result_context(student, session=current_session)
@@ -1545,7 +1547,7 @@ def verify_result(request, admission_no):
         # Term view requires selected_term
         if not selected_term:
             return HttpResponseBadRequest("Term parameter is required for term view.")
-        
+
         context = build_student_result_context(student, selected_term, session=current_session)
         context.update({
             "is_cumulative": False,
@@ -1563,37 +1565,32 @@ def verify_result(request, admission_no):
         verification = ResultVerification.objects.create(student=student, valid=True)
 
     # ---------------------------
-    # Generate QR code URL
+    # Generate QR code URL (safe)
     # ---------------------------
-    # ---------------------------
-# Generate QR code URL (handles term & cumulative)
-# ---------------------------
-    # ---------------------------
-# Generate QR code URL safely
-# ---------------------------
     base_url = getattr(settings, "SITE_URL", "https://techcenter-p2au.onrender.com")
 
     if context.get("is_cumulative"):
-        verification_url = (
-        f"{base_url}/results/verify/{student.admission_no}/"
-        f"?token={verification.verification_token}"
-        f"&view=cumulative"
-        f"&session={current_session}"
-        )
-    else:
-        # Term view
-        term_for_qr = context.get("terms")[0]  # safe: pick first term in context
+        # Cumulative view
+        view_for_qr = "cumulative"
         verification_url = (
             f"{base_url}/results/verify/{student.admission_no}/"
             f"?token={verification.verification_token}"
-            f"&view=term"
+            f"&view={view_for_qr}"
+            f"&session={current_session}"
+        )
+    else:
+        # Term view
+        view_for_qr = "term"
+        term_for_qr = context.get("terms")[0] if context.get("terms") else "1"  # safe fallback
+        verification_url = (
+            f"{base_url}/results/verify/{student.admission_no}/"
+            f"?token={verification.verification_token}"
+            f"&view={view_for_qr}"
             f"&term={term_for_qr}"
             f"&session={current_session}"
         )
 
     context["qr_data_uri"] = _generate_qr_data_uri(verification_url, box_size=6)
-
-
 
     # ---------------------------
     # Common template fields
@@ -1607,6 +1604,7 @@ def verify_result(request, admission_no):
     })
 
     return render(request, "results/verify_result.html", context)
+
 
 
    
