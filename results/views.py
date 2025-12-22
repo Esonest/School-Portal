@@ -2725,7 +2725,14 @@ def build_student_result_context(student, term, session):
         verification_obj = ResultVerification.objects.create(student=student, valid=True)
 
     base = getattr(settings, "SITE_URL", "https://techcenter-p2au.onrender.com")
-    verify_url = f"{base}/results/verify/{student.admission_no}/?token={verification_obj.verification_token}"
+    verify_url = (
+        f"{base}/results/verify/{student.admission_no}/"
+        f"?token={verification_obj.verification_token}"
+        f"&view=term"
+        f"&term={term}"  # must be '1', '2', or '3' as in Score.term
+        f"&session={session}"
+    )
+
     qr_data_uri = _generate_qr_data_uri(verify_url, box_size=6)
 
 
@@ -2924,6 +2931,8 @@ def build_cumulative_result_context(student, session=None):
     # ---------- USE SESSION_LIST ----------
     if session not in SESSION_LIST:
         session = SESSION_LIST[-1]
+    current_session = session
+
 
     terms = ["First", "Second", "Third"]
     TERM_MAP = {"First": "1", "Second": "2", "Third": "3"}
@@ -3038,7 +3047,15 @@ def build_cumulative_result_context(student, session=None):
 
     # Build URL for cumulative QR code
     base = getattr(settings, "SITE_URL", "https://techcenter-p2au.onrender.com")
-    verify_url = f"{base}/results/verify/{student.admission_no}/?token={verification_obj.verification_token}&cumulative=true"
+    verify_url = (
+        f"{base}/results/verify/{student.admission_no}/"
+        f"?token={verification_obj.verification_token}"
+        f"&view=cumulative"
+        f"&session={current_session}"
+    )
+
+    import urllib.parse
+    encoded_url = urllib.parse.quote(verify_url, safe=':/?&=')
 
     # Generate the QR code
     qr_data_uri = _generate_qr_data_uri(verify_url, box_size=6)
@@ -3081,7 +3098,7 @@ def build_cumulative_result_context(student, session=None):
         "school_logo_url": school_logo_url,
         "date_issued": timezone.localdate(),
         "colspan_terms": colspan_terms,
-        "selected_session": session,
+        "selected_session":current_session,
         "show_ca": show_ca,
         "promotion_history": promotion_history,
         "is_cumulative": True,  # <-- useful for watermark/badge
