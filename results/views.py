@@ -1568,27 +1568,31 @@ def verify_result(request, admission_no):
     # ---------------------------
 # Generate QR code URL (handles term & cumulative)
 # ---------------------------
+    # ---------------------------
+# Generate QR code URL safely
+# ---------------------------
     base_url = getattr(settings, "SITE_URL", "https://techcenter-p2au.onrender.com")
 
-    if view_type == "term":
-        # Include term parameter for term view
+    if context.get("is_cumulative"):
+        verification_url = (
+        f"{base_url}/results/verify/{student.admission_no}/"
+        f"?token={verification.verification_token}"
+        f"&view=cumulative"
+        f"&session={current_session}"
+        )
+    else:
+        # Term view
+        term_for_qr = context.get("terms")[0]  # safe: pick first term in context
         verification_url = (
             f"{base_url}/results/verify/{student.admission_no}/"
             f"?token={verification.verification_token}"
             f"&view=term"
-            f"&term={selected_term}"
-            f"&session={current_session}"
-        )
-    else:
-        # Cumulative view doesn't need term
-        verification_url = (
-            f"{base_url}/results/verify/{student.admission_no}/"
-            f"?token={verification.verification_token}"
-            f"&view=cumulative"
+            f"&term={term_for_qr}"
             f"&session={current_session}"
         )
 
     context["qr_data_uri"] = _generate_qr_data_uri(verification_url, box_size=6)
+
 
 
     # ---------------------------
