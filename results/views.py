@@ -1492,120 +1492,126 @@ from django.http import HttpResponseBadRequest
 from django.conf import settings
 
 
+
 def verify_result(request, admission_no):
     """
     Public verification of a student's result.
 
     URL format:
-    /results/verify/<admission_no>/?token=<verification_token>&view=cumulative/term&term=<selected_term>
+    /results/verify/<admission_no>/
+        ?token=<verification_token>
+        &view=term|cumulative
+        &term=1|2|3
+        &session=2025/2026
     """
 
     # ---------------------------
     # Fetch query parameters
     # ---------------------------
     token = request.GET.get("token", "").strip()
-    view_type = request.GET.get("view", "term").lower()  # 'term' or 'cumulative'
-    selected_term = request.GET.get("term")  # MUST be provided for term view
+    view_type = request.GET.get("view", "term").lower()
+    selected_term = request.GET.get("term")
+    selected_session = request.GET.get("session")
 
     student = get_object_or_404(Student, admission_no=admission_no)
 
     # ---------------------------
+    # Determine session (fallback)
+    # ---------------------------
+    if not selected_session:
+        selected_session = (
+            getattr(settings, "CURRENT_SESSION", None)
+            or getattr(student.school, "current_session", None)
+            or "2024/2025"
+        )
+
+    # ---------------------------
     # Verify token
     # ---------------------------
-    verification = None
-    if token:
-        verification = ResultVerification.objects.filter(
+    verification = (
+        ResultVerification.objects
+        .filter(
             student=student,
             verification_token=token,
             valid=True
-        ).first()
+        )
+        .first()
+        if token else None
+    )
     is_verified = verification is not None
 
     # ---------------------------
-    # Determine session
+    # TERM VIEW
     # ---------------------------
-    current_session = getattr(settings, "CURRENT_SESSION", None) \
-        or getattr(student.school, "current_session", None) \
-        or "2024/2025"
-
-    # ---------------------------
-    # Build result context
-    # ---------------------------
-    context = {}
-
-    if view_type == "cumulative":
-        # Cumulative result
-        context = build_cumulative_result_context(student, session=current_session)
-        context.update({
-            "is_cumulative": True,
-            "scores": [],  # cumulative uses subjects dict
-            "status": "verified" if is_verified else "invalid",
-            "token": token,
-            "terms": context.get("terms", []),
-            "show_ca": context.get("show_ca", True),
-        })
-    else:
-        # Term view requires selected_term
+    if view_type == "term":
         if not selected_term:
             return HttpResponseBadRequest("Term parameter is required for term view.")
 
-        # Make sure the selected_term is valid for this student/session
-        if not student.scores.filter(session=current_session, term=selected_term).exists():
+        if selected_term not in ("1", "2", "3"):
+            return HttpResponseBadRequest("Invalid term value.")
+
+        # IMPORTANT: use Score.objects (NOT student.scores)
+        has_scores = Score.objects.filter(
+            student=student,
+            term=selected_term,
+            session=selected_session
+        ).exists()
+
+        if not has_scores:
             return HttpResponseBadRequest("Invalid term parameter for this student.")
 
-        context = build_student_result_context(student, selected_term, session=current_session)
+        context = build_student_result_context(
+            student,
+            term=selected_term,
+            session=selected_session
+        )
+
         context.update({
             "is_cumulative": False,
             "status": "verified" if is_verified else "invalid",
-            "token": token,
-            "subjects": {},  # not used in term view
-            "terms": [selected_term],  # always a list
-            "show_ca": context.get("show_ca", True),
+            "selected_term": selected_term,
+            "selected_session": selected_session,
         })
+
+    # ---------------------------
+    # CUMULATIVE VIEW
+    # ---------------------------
+    elif view_type == "cumulative":
+        context = build_cumulative_result_context(
+            student,
+            session=selected_session
+        )
+
+        context.update({
+            "is_cumulative": True,
+            "status": "verified" if is_verified else "invalid",
+            "selected_session": selected_session,
+        })
+
+    else:
+        return HttpResponseBadRequest("Invalid view type.")
 
     # ---------------------------
     # Ensure verification exists
     # ---------------------------
     if not verification:
-        verification = ResultVerification.objects.create(student=student, valid=True)
-
-    # ---------------------------
-    # Generate QR code URL (fixed for Score.term)
-    # ---------------------------
-    base_url = getattr(settings, "SITE_URL", "https://techcenter-p2au.onrender.com")
-
-    if context.get("is_cumulative"):
-        verification_url = (
-            f"{base_url}/results/verify/{student.admission_no}/"
-            f"?token={verification.verification_token}"
-            f"&view=cumulative"
-            f"&session={current_session}"
-        )
-    else:
-        # Term view: use the term exactly as stored in Score.term ('1','2','3')
-        term_for_qr = context.get("terms")[0]  # always a string like '1'
-        verification_url = (
-            f"{base_url}/results/verify/{student.admission_no}/"
-            f"?token={verification.verification_token}"
-            f"&view=term"
-            f"&term={term_for_qr}"
-            f"&session={current_session}"
+        verification = ResultVerification.objects.create(
+            student=student,
+            valid=True
         )
 
-    context["qr_data_uri"] = _generate_qr_data_uri(verification_url, box_size=6)
-
     # ---------------------------
-    # Common template fields
+    # Media / Common fields
     # ---------------------------
     school = student.school
     context.update({
-        "principal_signature_url": getattr(school.principal_signature, 'url', None) if school else None,
+        "principal_signature_url": getattr(school.principal_signature, "url", None) if school else None,
         "student_photo_url": student.photo.url if student.photo else None,
-        "school_logo_url": getattr(school.logo, 'url', None) if school else None,
-        "selected_session": current_session,
+        "school_logo_url": getattr(school.logo, "url", None) if school else None,
     })
 
     return render(request, "results/verify_result.html", context)
+
 
 
 
@@ -2717,10 +2723,9 @@ def build_student_result_context(student, term, session):
 
     # Safely get a verification object
 
-    TERM_MAP = {"First": "1", "Second": "2", "Third": "3"}
+    
 
-    # term_for_qr is the Score.term value
-    term_for_qr = TERM_MAP[term] if term in TERM_MAP else term  # ensures '1','2','3'
+    
     verification_obj = (
         ResultVerification.objects
         .filter(student=student)
@@ -2734,7 +2739,7 @@ def build_student_result_context(student, term, session):
         f"{base}/results/verify/{student.admission_no}/"
         f"?token={verification_obj.verification_token}"
         f"&view=term"
-        f"&term={term_for_qr}"  # must be '1', '2', or '3' as in Score.term
+        f"&term={term}"  # must be '1', '2', or '3' as in Score.term
         f"&session={session}"
     )
 

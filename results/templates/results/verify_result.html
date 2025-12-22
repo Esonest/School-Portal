@@ -106,45 +106,44 @@
           </tr>
         </thead>
         <tbody>
-          {% if is_cumulative %}
-            {% for subj, data in subjects.items %}
-              <tr>
-                <td>{{ subj }}</td>
-                {% for term in terms %}
-                  {% with term_data=data|dict_get:term %}
-    {% if show_ca %}
-        <td>{{ term_data.ca|default:"0" }}</td>
-    {% endif %}
-{% endwith %}
-
-                  <td>{{ data[term].exam|default:"0" }}</td>
-                  <td>{{ data[term].total|default:"0" }}</td>
-                  <td>{{ data[term].grade|default:"N/A" }}</td>
-                  <td>{{ data[term].teacher|default:"N/A" }}</td>
-                {% endfor %}
-                <td>{{ data.Average|floatformat:2 }}</td>
-                <td>{{ data.AverageGrade }}</td>
-              </tr>
-            {% endfor %}
-          {% else %}
-            {% for s in scores %}
-              <tr>
-                <td>{{ s.subject }}</td>
-                {% if class_has_ca %}<td>{{ s.ca|default:"0" }}</td>{% endif %}
-                <td>{{ s.exam }}</td>
-                <td>{{ s.total }}</td>
-                <td>{{ s.class_average }}</td>
-                <td>{{ s.grade }}</td>
-                <td>{{ s.grade_interpretation }}</td>
-                <td>{{ s.teacher }}</td>
-              </tr>
-            {% empty %}
-              <tr>
-                <td colspan="{% if class_has_ca %}8{% else %}7{% endif %}" class="p-3 text-center text-gray-500">No scores available</td>
-              </tr>
-            {% endfor %}
-          {% endif %}
-        </tbody>
+  {% if is_cumulative %}
+    {% for subj, data in subjects.items %}
+      <tr>
+        <td>{{ subj }}</td>
+        {% for term in terms %}
+          {% with term_data=data|dict_get:term %}
+            {% if show_ca %}<td>{{ term_data.ca|default:"0" }}</td>{% endif %}
+            <td>{{ term_data.exam|default:"0" }}</td>
+            <td>{{ term_data.total|default:"0" }}</td>
+            <td>{{ term_data.grade|default:"N/A" }}</td>
+            <td>{{ term_data.teacher|default:"N/A" }}</td>
+          {% endwith %}
+        {% endfor %}
+        <td>{{ data.Average|floatformat:2 }}</td>
+        <td>{{ data.AverageGrade }}</td>
+      </tr>
+    {% endfor %}
+  {% else %}
+    {% for s in scores %}
+      <tr>
+        <td>{{ s.subject }}</td>
+        {% if class_has_ca %}<td>{{ s.ca|default:"0" }}</td>{% endif %}
+        <td>{{ s.exam }}</td>
+        <td>{{ s.total }}</td>
+        <td>{{ s.class_average }}</td>
+        <td>{{ s.grade }}</td>
+        <td>{{ s.grade_interpretation }}</td>
+        <td>{{ s.teacher }}</td>
+      </tr>
+    {% empty %}
+      <tr>
+        <td colspan="{% if class_has_ca %}8{% else %}7{% endif %}" class="p-3 text-center text-gray-500">
+          No scores available
+        </td>
+      </tr>
+    {% endfor %}
+  {% endif %}
+</tbody>
       </table>
     </div>
 
