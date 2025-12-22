@@ -59,14 +59,11 @@ class CreateAndAssignAdminForm(forms.Form):
 from django.conf import settings
 import os
 
+from django import forms
+from .models import School
+
+
 class SchoolForm(forms.ModelForm):
-    # Logo field overridden to be a dynamic dropdown from static/img/schools/
-    logo = forms.ChoiceField(
-        choices=[],  # populated dynamically in __init__
-        widget=forms.Select(attrs={'class': 'form-input'}),
-        required=False,
-        label="School Logo"
-    )
 
     class Meta:
         model = School
@@ -81,35 +78,26 @@ class SchoolForm(forms.ModelForm):
         widgets = {
             "name": forms.TextInput(attrs={
                 "class": "form-input",
-                "id": "school-name-input"
+                "id": "school-name-input",
             }),
-            "address": forms.TextInput(attrs={"class": "form-input"}),
-            "motto": forms.TextInput(attrs={"class": "form-input"}),
+            "address": forms.TextInput(attrs={
+                "class": "form-input",
+            }),
+            "motto": forms.TextInput(attrs={
+                "class": "form-input",
+            }),
+            "logo": forms.ClearableFileInput(attrs={
+                "class": "form-input",
+            }),
             "theme_color": forms.Select(attrs={
                 "class": "form-input",
-                "id": "theme-color-select"
+                "id": "theme-color-select",
             }),
             "principal_signature": forms.ClearableFileInput(attrs={
-                "class": "form-input"
+                "class": "form-input",
             }),
         }
 
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
-        # Dynamically populate logo choices from static folder
-        logo_dir = os.path.join(settings.BASE_DIR, "static", "img",  "school_logos")
-        logos = []
-        if os.path.exists(logo_dir):
-            for filename in os.listdir(logo_dir):
-                if filename.lower().endswith(('.png', '.jpg', '.jpeg', '.svg')):
-                    path = f"img/school_logos/{filename}"
-                    logos.append((path, filename))  # (value, display name)
-        self.fields['logo'].choices = logos
-
-        # Set initial value for edit forms
-        if self.instance and self.instance.logo:
-            self.fields['logo'].initial = self.instance.logo
 
 
 

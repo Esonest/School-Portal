@@ -1786,6 +1786,7 @@ from django.contrib.auth.decorators import login_required
 from django.forms import modelformset_factory
 from .forms import ScoreForm
 from results.utils import SESSION_LIST
+from django.http import HttpResponseForbidden
 
 # ------------------------
 # LIST OF CLASSES
@@ -1795,9 +1796,19 @@ from results.utils import SESSION_LIST
 # ------------------------
 @login_required
 def admin_class_list(request):
-    classes = SchoolClass.objects.all()
-    sessions = SESSION_LIST
+    # ✅ Get admin's school safely
+    school = (
+        getattr(request.user, "school", None)
+        or getattr(getattr(request.user, "school_admin", None), "school", None)
+    )
 
+    if not school:
+        return HttpResponseForbidden("You are not assigned to any school.")
+
+    # ✅ Show only classes for this school
+    classes = SchoolClass.objects.filter(school=school)
+
+    sessions = SESSION_LIST
     selected_session = request.GET.get("session", "")
     selected_term = request.GET.get("term", "")
 
@@ -1808,6 +1819,7 @@ def admin_class_list(request):
         "selected_term": selected_term,
     }
     return render(request, "school_admin/admin/class_list.html", context)
+
 
 
 

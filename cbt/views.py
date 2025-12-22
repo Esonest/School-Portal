@@ -18,23 +18,33 @@ from results.utils import portal_required
 def exam_list(request):
     now = timezone.now()
 
-    # ✅ Safely get the logged-in student profile
+    # ✅ Get logged-in student safely
     student = getattr(request.user, 'student_profile', None) or getattr(request.user, 'student', None)
     if not student:
         return HttpResponseForbidden("You must be logged in as a student to view available exams.")
 
-    # ✅ Filter only active exams
-    exams = CBTExam.objects.filter(active=True, start_time__lte=now, end_time__gte=now)
+    # ✅ Filter exams by:
+    # 1. Student's school
+    # 2. Active status
+    # 3. Time window
+    exams = CBTExam.objects.filter(
+        school=student.school,
+        active=True,
+        start_time__lte=now,
+        end_time__gte=now
+    )
 
-    # ✅ Mark each exam with whether the student already took it
+    # ✅ Mark already-taken exams
+    taken_exam_ids = CBTSubmission.objects.filter(
+        student=student,
+        completed_on__isnull=False
+    ).values_list('exam_id', flat=True)
+
     for exam in exams:
-        exam.already_taken = CBTSubmission.objects.filter(
-            student=student,
-            exam=exam,
-            completed_on__isnull=False
-        ).exists()
+        exam.already_taken = exam.id in taken_exam_ids
 
     return render(request, "cbt/exam_list.html", {"exams": exams})
+
 
 
 # --------------------------------------

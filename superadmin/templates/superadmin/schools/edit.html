@@ -2,66 +2,92 @@
 {% load static %}
 {% block content %}
 
-<div class="p-6">
-    <h1 class="text-2xl font-bold mb-4">Edit School</h1>
+<div class="max-w-4xl mx-auto px-4 sm:px-6 py-6">
 
-    <form method="POST" enctype="multipart/form-data"
-          class="bg-white p-6 rounded shadow w-full max-w-xl">
+<form method="POST" enctype="multipart/form-data" class="space-y-6">
+    {% csrf_token %}
 
-        {% csrf_token %}
+    <!-- Live Preview -->
+    <div class="p-4 border rounded bg-gray-50">
+        <p class="text-sm text-gray-500 mb-2">Live Preview</p>
 
-        <!-- Live Preview -->
-        <div class="mb-4 p-4 border rounded bg-gray-50">
-            <p class="text-sm text-gray-500 mb-1">Live Preview</p>
-            <div class="flex items-center space-x-4">
-                <!-- Logo Preview -->
-                <img id="logo-preview"
-                     src="{% if school.logo %}{% static school.logo %}{% else %}{% static 'img/schools/default_logo.png' %}{% endif %}"
-                     alt="Logo" class="h-16 w-16 object-contain">
+        <div class="flex flex-col sm:flex-row items-center gap-4">
 
-                <!-- School Name Preview -->
-                <h2 id="school-name-preview"
-                    class="text-2xl font-bold text-{{ school.theme_color|default:'indigo' }}-600">
-                    {{ school.name|default:"School Name" }}
-                </h2>
+            <!-- Logo Preview -->
+            <img
+    id="logo-preview"
+    src="{% if form.instance.logo %}{{ form.instance.logo.url }}{% else %}{% static 'img/school_logos/default_logo.png' %}{% endif %}"
+    alt="Logo"
+    class="h-20 w-20 object-contain border rounded bg-white"
+/>
 
-                <!-- Principal Signature Preview -->
-                <img id="signature-preview"
-                     src="{% if school.principal_signature %}{{ school.principal_signature.url }}{% else %}{% static 'img/schools/default_signature.png' %}{% endif %}"
-                     alt="Signature" class="h-16 w-16 object-contain">
-            </div>
+            <!-- School Name -->
+            <h2
+                id="school-name-preview"
+                class="text-2xl font-bold text-indigo-600 text-center sm:text-left"
+            >
+                {{ form.name.value|default:"School Name" }}
+            </h2>
+
+            <!-- Principal Signature Preview -->
+            <img
+                id="signature-preview"
+                src="{% if form.instance.principal_signature %}{{ form.instance.principal_signature.url }}{% else %}{% static 'img/schools/default_signature.png' %}{% endif %}"
+                alt="Signature"
+                class="h-16 w-28 object-contain"
+            >
+        </div>
+    </div>
+
+    <!-- Form fields -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+        <div>
+            {{ form.name.label_tag }}
+            {{ form.name }}
         </div>
 
-        {{ form.name.label_tag }}
-        {{ form.name }}
+        <div>
+            {{ form.address.label_tag }}
+            {{ form.address }}
+        </div>
 
-        {{ form.address.label_tag }}
-        {{ form.address }}
+        <div>
+            {{ form.motto.label_tag }}
+            {{ form.motto }}
+        </div>
 
-        {{ form.motto.label_tag }}
-        {{ form.motto }}
+        <div>
+            {{ form.theme_color.label_tag }}
+            {{ form.theme_color }}
+        </div>
 
-        {{ form.logo.label_tag }}
-        {{ form.logo }}
+        <div>
+            {{ form.logo.label_tag }}
+            {{ form.logo }}
+        </div>
 
-        {{ form.theme_color.label_tag }}
-        {{ form.theme_color }}
+        <div>
+            {{ form.principal_signature.label_tag }}
+            {{ form.principal_signature }}
+        </div>
 
-        {{ form.principal_signature.label_tag }}
-        {{ form.principal_signature }}
+    </div>
 
-        <button class="bg-blue-600 text-white px-4 py-2 rounded mt-4">
-            Update School
-        </button>
-    </form>
+    <button type="submit" class="px-4 py-2 rounded bg-indigo-600 text-white">
+        Save School
+    </button>
+</form>
 </div>
 
 <script>
-    const nameInput = document.getElementById("id_name");
+    const nameInput = document.getElementById("school-name-input");
     const namePreview = document.getElementById("school-name-preview");
-    const colorSelect = document.getElementById("id_theme_color");
-    const logoSelect = document.getElementById("id_logo");
+    const colorSelect = document.getElementById("theme-color-select");
+
+    const logoInput = document.getElementById("id_logo");
     const logoPreview = document.getElementById("logo-preview");
+
     const signatureInput = document.getElementById("id_principal_signature");
     const signaturePreview = document.getElementById("signature-preview");
 
@@ -69,37 +95,36 @@
         // Update school name
         namePreview.textContent = nameInput.value || "School Name";
 
-        // Update theme color
+        // Color logic remains untouched
         const color = colorSelect.value || "indigo";
         namePreview.className = `text-2xl font-bold text-${color}-600`;
-
-        // Update logo preview
-        const selectedLogo = logoSelect.value;
-        if(selectedLogo){
-            logoPreview.src = "{% static '' %}" + selectedLogo;
-        } else if(logoPreview.src === ""){
-            logoPreview.src = "{% static 'img/schools/default_logo.png' %}";
-        }
     }
 
-    // Show principal signature preview on file selection
-    signatureInput.addEventListener("change", function(){
-        const file = signatureInput.files[0];
-        if(file){
+    // ✅ Live logo preview for file upload
+    logoInput.addEventListener("change", function () {
+        if (this.files && this.files[0]) {
             const reader = new FileReader();
-            reader.onload = function(e){
-                signaturePreview.src = e.target.result;
-            }
-            reader.readAsDataURL(file);
+            reader.onload = function (e) {
+                logoPreview.src = e.target.result;
+            };
+            reader.readAsDataURL(this.files[0]);
         }
     });
 
-    // Event listeners for live updates
+    // Signature preview
+    signatureInput.addEventListener("change", function () {
+        if (this.files && this.files[0]) {
+            const reader = new FileReader();
+            reader.onload = e => signaturePreview.src = e.target.result;
+            reader.readAsDataURL(this.files[0]);
+        }
+    });
+
+    // Live name and color updates
     nameInput.addEventListener("input", updatePreview);
     colorSelect.addEventListener("change", updatePreview);
-    logoSelect.addEventListener("change", updatePreview);
 
-    // Initial render (pre-filled from instance)
+    // Initial render
     updatePreview();
 </script>
 

@@ -1482,59 +1482,81 @@ def _build_verification_url(student, token):
 # Main view
 # -------------------------------
 
+
 def verify_result(request, admission_no):
     """
     Public verification of a student's result.
-    Expected URL format:
-    /verify/<admission_no>/?token=<verification_token>
+
+    URL format:
+    /results/verify/<admission_no>/?token=<verification_token>&view=cumulative/term
     """
     token = request.GET.get("token", "").strip()
+    view_type = request.GET.get("view", "term").lower()  # 'term' or 'cumulative'
+
     student = get_object_or_404(Student, admission_no=admission_no)
 
-
+    # ---------------------------
+    # Verify token
+    # ---------------------------
     verification = None
     if token:
         verification = ResultVerification.objects.filter(
             student=student,
             verification_token=token,
             valid=True
-        ).select_related("student").first()
-
+        ).first()
     is_verified = verification is not None
 
-    is_cumulative = request.GET.get("cumulative", "").lower() == "true"
+    # ---------------------------
+    # Determine session (latest if missing)
+    # ---------------------------
+    current_session = getattr(settings, "CURRENT_SESSION", None)
+    if not current_session:
+        # fallback to latest session in DB or SESSION_LIST
+        current_session = student.school.current_session if hasattr(student.school, "current_session") else "2024/2025"
 
-    # -------------------------
-    # Determine session safely
-    # -------------------------
-    if is_verified:
-        setting = SystemSetting.objects.first()
-        current_session = setting.current_session if setting else SESSION_LIST[-1]
-
-        # For cumulative, use your cumulative context builder
-        if is_cumulative:
-            context = build_cumulative_result_context(student, session=current_session)
-        else:
-            term = request.GET.get("term") or "1"  # default to first term
-            context = build_student_result_context(student, term, session=current_session)
+    # ---------------------------
+    # Build context for termly or cumulative
+    # ---------------------------
+    context = {}
+    if view_type == "cumulative":
+        context = build_cumulative_result_context(student, session=current_session)
+        context["is_cumulative"] = True
+        context["scores"] = []  # empty, cumulative uses subjects dict
+        context["status"] = "verified" if is_verified else "invalid"
+        context["token"] = token
     else:
-        context = {
-            "student": student,
-            "status": "invalid",
-            "token": token,
-            "qr_code": None,
-        }
+        # Use term param or default to 1
+        term = request.GET.get("term", "1")
+        context = build_student_result_context(student, term, session=current_session)
+        context["is_cumulative"] = False
+        context["status"] = "verified" if is_verified else "invalid"
+        context["token"] = token
+        context["subjects"] = {}  # no cumulative subjects
+        context["terms"] = [term]  # single term
+        context["show_ca"] = getattr(context, "show_ca", True)
 
-    # Generate QR code for verification
-    if is_verified:
-        verification_url = _build_verification_url(student, token)
-        qr_code_data_uri = _generate_qr_data_uri(verification_url)
-        context["qr_data_uri"] = qr_code_data_uri
-        context["status"] = "verified"
-        context["is_cumulative"] = is_cumulative
+    # ---------------------------
+    # QR Code for verification
+    # ---------------------------
+    if not verification:
+        # create a verification record if missing
+        verification = ResultVerification.objects.create(student=student, valid=True)
+    
+    base_url = getattr(settings, "SITE_URL", "https://techcenter-p2au.onrender.com")
+    verification_url = f"{base_url}/results/verify/{student.admission_no}/?token={verification.verification_token}"
+    context["qr_data_uri"] = _generate_qr_data_uri(verification_url, box_size=6)
+
+    # ---------------------------
+    # Other common fields
+    # ---------------------------
+    school = student.school
+    context["principal_signature_url"] = school.principal_signature.url if school and school.principal_signature else None
+    context["student_photo_url"] = student.photo.url if student.photo else None
+    context["school_logo_url"] = school.logo.url if school and school.logo else None
+    context["selected_session"] = current_session
 
     return render(request, "results/verify_result.html", context)
-
 
 
 
