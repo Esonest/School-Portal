@@ -6,9 +6,27 @@
   <meta charset="UTF-8">
   <title>Result — {{ student.user.get_full_name }}</title>
   <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+  @media print {
+    .no-print { display: none !important; }
+    .print-watermark { opacity: 0.15 !important; }
+  }
+</style>
+
 </head>
 <body class="bg-gray-50 p-6">
-  <div class="max-w-4xl mx-auto bg-white p-6 rounded shadow">
+  {% if is_cumulative or selected_term == "cumulative" %}
+  <div class="fixed inset-0 flex items-center justify-center 
+              pointer-events-none select-none z-0">
+    <div class="print-watermark text-gray-200 text-6xl md:text-7xl font-extrabold 
+                rotate-[-30deg] tracking-widest opacity-40">
+      CUMULATIVE RESULT
+    </div>
+  </div>
+{% endif %}
+
+  <div class="max-w-4xl mx-auto bg-white p-6 rounded shadow relative z-10">
 
     <!-- Header: School info and student info -->
     <div class="flex justify-between items-start">
@@ -35,6 +53,17 @@
     </div>
 
     <hr class="my-4">
+
+    {% if status == "verified" %}
+  <div class="mb-4 flex justify-end">
+    <span class="inline-flex items-center px-4 py-1.5 rounded-full 
+                 bg-green-100 text-green-800 text-sm font-semibold 
+                 border border-green-300">
+      ✅ Verified Result
+    </span>
+  </div>
+{% endif %}
+
 
     <!-- Academic Performance Table -->
     <h2 class="font-semibold">Academic Performance</h2>

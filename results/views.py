@@ -1485,58 +1485,134 @@ def _build_verification_url(student, token):
 def verify_result(request, admission_no):
     """
     Public verification of a student's result.
-
-    Expected URL format:
-    /verify/<admission_no>/?token=<verification_token>
+    Supports BOTH term-based and cumulative results.
     """
     token = request.GET.get("token", "").strip()
-
     student = get_object_or_404(Student, admission_no=admission_no)
 
-    verification = None
-    if token:
-        verification = ResultVerification.objects.filter(
+    verification = ResultVerification.objects.filter(
+        student=student,
+        verification_token=token,
+        valid=True
+    ).first()
+
+    if not verification:
+        return render(request, "results/verify_result.html", {
+            "status": "invalid",
+            "student": student,
+        })
+
+    # ------------------------------------
+    # Decide TERM vs CUMULATIVE
+    # ------------------------------------
+    # Priority order:
+    # 1. Explicit query param (?type=cumulative)
+    # 2. Stored verification metadata
+    # 3. Fallback to system setting
+    # ------------------------------------
+
+    result_type = request.GET.get("type")
+
+    if not result_type and hasattr(verification, "result_type"):
+        result_type = verification.result_type
+
+    setting = SystemSetting.objects.first()
+    session = getattr(verification, "session", None) or setting.current_session
+
+    # ------------------------------------
+    # Build correct result
+    # ------------------------------------
+    if result_type == "cumulative":
+        context = build_cumulative_result_context(
             student=student,
-            verification_token=token,
-            valid=True
-        ).select_related("student").first()
+            session=session
+        )
+        context["is_cumulative"] = True
+        context["selected_term"] = "cumulative"
+    else:
+        term = getattr(verification, "term", None) or setting.current_term
+        context = build_student_result_context(
+            student=student,
+            term=term,
+            session=session
+        )
+        context["is_cumulative"] = False
 
-    is_verified = verification is not None
-
-    scores = []
-    psychomotor = None
-    affective = None
-
-    if is_verified:
-        scores_qs = Score.objects.filter(student=student).select_related("subject")
-        psychomotor = Psychomotor.objects.filter(student=student).first()
-        affective = Affective.objects.filter(student=student).first()
-
-        for sc in scores_qs:
-            ca = sc.ca or 0
-            exam = sc.exam or 0
-            scores.append({
-                "subject": sc.subject,
-                "ca": ca,
-                "exam": exam,
-                "total": ca + exam,
-            })
-
-    # Generate QR code for this verification
-    verification_url = _build_verification_url(student, token)
-    qr_code_data_uri = _generate_qr_data_uri(verification_url)
-
-    context = {
-        "student": student,
-        "rows": scores,
-        "psychomotor": psychomotor,
-        "affective": affective,
-        "status": "verified" if is_verified else "invalid",
-        "token": token,
-        "qr_code": qr_code_data_uri,  # can use in template: <img src="{{ qr_code }}">
-    }
+    # ------------------------------------
+    # Verification flags
+    # ------------------------------------
+    context.update({
+        "status": "verified",
+        "verified_at": timezone.now(),
+    })
 
     return render(request, "results/verify_result.html", context)
+def verify_result(request, admission_no):
+    """
+    Public verification of a student's result.
+    Supports BOTH term-based and cumulative results.
+    """
+    token = request.GET.get("token", "").strip()
+    student = get_object_or_404(Student, admission_no=admission_no)
+
+    verification = ResultVerification.objects.filter(
+        student=student,
+        verification_token=token,
+        valid=True
+    ).first()
+
+    if not verification:
+        return render(request, "results/verify_result.html", {
+            "status": "invalid",
+            "student": student,
+        })
+
+    # ------------------------------------
+    # Decide TERM vs CUMULATIVE
+    # ------------------------------------
+    # Priority order:
+    # 1. Explicit query param (?type=cumulative)
+    # 2. Stored verification metadata
+    # 3. Fallback to system setting
+    # ------------------------------------
+
+    result_type = request.GET.get("type")
+
+    if not result_type and hasattr(verification, "result_type"):
+        result_type = verification.result_type
+
+    setting = SystemSetting.objects.first()
+    session = getattr(verification, "session", None) or setting.current_session
+
+    # ------------------------------------
+    # Build correct result
+    # ------------------------------------
+    if result_type == "cumulative":
+        context = build_cumulative_result_context(
+            student=student,
+            session=session
+        )
+        context["is_cumulative"] = True
+        context["selected_term"] = "cumulative"
+    else:
+        term = getattr(verification, "term", None) or setting.current_term
+        context = build_student_result_context(
+            student=student,
+            term=term,
+            session=session
+        )
+        context["is_cumulative"] = False
+
+    # ------------------------------------
+    # Verification flags
+    # ------------------------------------
+    context.update({
+        "status": "verified",
+        "verified_at": timezone.now(),
+    })
+
+    return render(request, "results/verify_result.html", context)
+
 
 
 
