@@ -280,3 +280,10 @@ def add_class(field, css):
 @register.filter
 def get_attr(obj, attr_name):
     return getattr(obj, attr_name, 0)
+
+
+
+@register.filter
+def get_item(dictionary, key):
+    """Get value from dictionary using key"""
+    return dictionary.get(key, {})

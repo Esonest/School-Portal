@@ -9,34 +9,49 @@
   <style>
     @media print {
       .no-print { display: none !important; }
-      .print-watermark { opacity: 0.1 !important; position: absolute; top: 40%; left: 10%; transform: rotate(-30deg); font-size: 6rem; z-index: 0; }
       body { -webkit-print-color-adjust: exact; }
       .result-container { page-break-inside: avoid; }
     }
     body { font-family: 'Arial', sans-serif; }
-    table { border-collapse: collapse; width: 100%; }
-    th, td { border: 1px solid #ccc; padding: 4px; text-align: center; }
     .header-table td { border: none; padding: 2px; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #000; padding: 4px; text-align: center; font-size: 0.85rem; }
+    .watermark {
+      position: absolute;
+      top: 40%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(-30deg);
+      font-size: 6rem;
+      color: #ddd;
+      opacity: 0.1;
+      z-index: 0;
+      pointer-events: none;
+      white-space: nowrap;
+    }
+    .container { max-width: 1200px; margin: auto; background: white; padding: 16px; border: 3px double #000; position: relative; }
+    .summary-box { border: 1px solid #000; padding: 8px; }
+    .domain-box { border: 1px solid #000; padding: 8px; }
+    h1, h2, h3 { margin: 0; padding: 0; }
   </style>
 </head>
 <body class="bg-gray-50 p-4">
   <!-- Watermark -->
   {% if is_cumulative %}
     {% if school_logo_url %}
-      <img src="{{ school_logo_url }}" class="print-watermark opacity-10 absolute inset-0 mx-auto my-auto w-2/3 h-auto" />
+      <img src="{{ school_logo_url }}" class="watermark w-2/3 h-auto" />
     {% else %}
-      <div class="print-watermark">CUMULATIVE RESULT</div>
+      <div class="watermark">CUMULATIVE RESULT</div>
     {% endif %}
   {% endif %}
 
-  <div class="max-w-5xl mx-auto bg-white p-6 rounded shadow relative z-10 result-container">
+  <div class="container result-container">
 
     <!-- Header -->
     <table class="header-table w-full mb-4">
       <tr>
-        <td class="w-1/2">
+        <td class="w-1/2 align-top">
           {% if school_logo_url %}
-            <img src="{{ school_logo_url }}" alt="{{ school.name }} Logo" class="h-20">
+            <img src="{{ school_logo_url }}" alt="{{ school.name }} Logo" class="h-24">
           {% else %}
             <div class="text-gray-400 text-sm">School Logo</div>
           {% endif %}
@@ -92,11 +107,11 @@
             <tr>
               <td>{{ subj }}</td>
               {% for term in terms %}
-                {% if show_ca %}<td>{{ data[term].ca|default:"0" }}</td>{% endif %}
-                <td>{{ data[term].exam|default:"0" }}</td>
-                <td>{{ data[term].total|default:"0" }}</td>
-                <td>{{ data[term].grade|default:"N/A" }}</td>
-                <td>{{ data[term].teacher|default:"N/A" }}</td>
+                {% if show_ca %}<td>{{ data|get_item:term|get_item:"ca"|default:"0" }}</td>{% endif %}
+                <td>{{ data|get_item:term|get_item:"exam"|default:"0" }}</td>
+                <td>{{ data|get_item:term|get_item:"total"|default:"0" }}</td>
+                <td>{{ data|get_item:term|get_item:"grade"|default:"" }}</td>
+                <td>{{ data|get_item:term|get_item:"teacher"|default:"N/A" }}</td>
               {% endfor %}
               <td>{{ data.Average|floatformat:2 }}</td>
               <td>{{ data.AverageGrade }}</td>
@@ -106,9 +121,9 @@
       </table>
     </div>
 
-    <!-- Summary -->
+    <!-- Summary and Domains -->
     <div class="mt-4 grid md:grid-cols-2 gap-4">
-      <div class="bg-gray-50 p-3 rounded shadow-sm">
+      <div class="summary-box">
         <p><strong>Total:</strong> {{ overall_total }}</p>
         <p><strong>Average:</strong> {{ avg_total|floatformat:2 }}</p>
         <p><strong>Position:</strong> {{ position }} of {{ class_size }}</p>
@@ -117,8 +132,7 @@
       </div>
 
       <div class="space-y-4">
-        <!-- Psychomotor -->
-        <div class="bg-blue-50 p-3 rounded shadow-sm">
+        <div class="domain-box">
           <h3 class="font-semibold text-blue-700 mb-2">Psychomotor</h3>
           {% if psychomotor %}
             <ul class="space-y-1">
@@ -131,8 +145,7 @@
           {% else %}<p class="text-gray-500">Not recorded</p>{% endif %}
         </div>
 
-        <!-- Affective -->
-        <div class="bg-green-50 p-3 rounded shadow-sm">
+        <div class="domain-box">
           <h3 class="font-semibold text-green-700 mb-2">Affective</h3>
           {% if affective %}
             <ul class="space-y-1">
