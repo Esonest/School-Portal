@@ -110,7 +110,7 @@ class ClassScoreSetting(models.Model):
 class Score(models.Model):
     TERM_CHOICES = [('1', 'Term 1'), ('2', 'Term 2'), ('3', 'Term 3')]
 
-    student = models.ForeignKey(Student, on_delete=models.CASCADE)
+    student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name="scores")
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name='scores')
     ca = models.FloatField(default=0)
     exam = models.FloatField(default=0)
