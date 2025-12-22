@@ -2,7 +2,9 @@
 {% block content %}
 <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 
-<div class="max-w-6xl mx-auto p-6">
+
+
+<div class="max-w-7xl mx-auto p-4 sm:p-6">
   {% if messages %}
     <div class="mb-4 space-y-2">
       {% for message in messages %}
@@ -14,30 +16,30 @@
   {% endif %}
 
   <!-- Top Bar: Class + Term Selector -->
-  <div class="flex items-center justify-between mb-4">
-    <h1 class="text-2xl font-semibold text-{{ school.theme_color }}-600">Bulk Psychomotor & Affective — {{ selected_class.name }}</h1>
-    <form method="get" class="flex gap-3 items-end">
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-4">
+    <h1 class="text-xl sm:text-2xl font-semibold text-{{ school.theme_color }}-600">Bulk Psychomotor & Affective — {{ selected_class.name }}</h1>
+    <form method="get" class="flex flex-col sm:flex-row sm:items-end gap-2 md:gap-3 w-full md:w-auto">
       <input type="hidden" name="page" value="{{ page_obj.number }}">
 
       <!-- SESSION selector -->
-<select name="session" onchange="this.form.submit()" class="px-3 py-2 border rounded">
-  <option value="">-- Select session --</option>
-  {% for ses in session_choices %}
-    <option value="{{ ses }}" {% if selected_session == ses %}selected{% endif %}>
-      {{ ses }}
-    </option>
-  {% endfor %}
-</select>
+      <select name="session" onchange="this.form.submit()" class="px-3 py-2 border rounded w-full sm:w-auto">
+        <option value="">-- Select session --</option>
+        {% for ses in session_choices %}
+          <option value="{{ ses }}" {% if selected_session == ses %}selected{% endif %}>
+            {{ ses }}
+          </option>
+        {% endfor %}
+      </select>
 
       <!-- Class Selector -->
-      <select name="class_id" onchange="this.form.submit()" class="px-3 py-2 border rounded">
+      <select name="class_id" onchange="this.form.submit()" class="px-3 py-2 border rounded w-full sm:w-auto">
         {% for cls in classes %}
           <option value="{{ cls.id }}" {% if selected_class and selected_class.id == cls.id %}selected{% endif %}>{{ cls.name }}</option>
         {% endfor %}
       </select>
 
       <!-- Term Selector -->
-      <select name="term" onchange="this.form.submit()" class="px-3 py-2 border rounded">
+      <select name="term" onchange="this.form.submit()" class="px-3 py-2 border rounded w-full sm:w-auto">
         {% for key, value in term_choices.items %}
           <option value="{{ key }}" {% if selected_term == key %}selected{% endif %}>{{ value }}</option>
         {% endfor %}
@@ -56,76 +58,78 @@
         <h2 class="text-lg font-semibold">Psychomotor Ratings</h2>
         <p class="text-sm text-gray-500">Rate 1–5 stars (click a star to choose rating)</p>
       </div>
-      <table class="w-full table-auto">
-        <thead class="bg-gray-100">
-          <tr>
-            <th class="p-3 text-left">#</th>
-            <th class="p-3 text-left">Student</th>
-            <th class="p-3 text-center">Neatness</th>
-            <th class="p-3 text-center">Agility</th>
-            <th class="p-3 text-center">Creativity</th>
-            <th class="p-3 text-center">Sports</th>
-            <th class="p-3 text-center">Handwriting</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for r in rows %}
-            <tr class="border-b">
-              <td class="p-3 text-sm text-gray-700">{{ forloop.counter0|add:page_obj.start_index }}</td>
-              <td class="p-3">
-                <div class="font-medium">{{ r.student.full_name }}</div>
-                <div class="text-sm text-gray-500">{{ r.student.school_class.name }}</div>
-                {{ r.psy_form.student }}
-              </td>
-
-              <td class="p-3 text-center">
-                <div class="inline-flex gap-1 justify-center" data-input-name="{{ r.psy_prefix }}-neatness" data-tooltip="Neatness">
-                  {% for i in "12345" %}
-                    <button type="button" class="psy-star star-btn px-1 text-2xl" data-value="{{ forloop.counter }}">☆</button>
-                  {% endfor %}
-                </div>
-                {{ r.psy_form.neatness }}
-              </td>
-
-              <td class="p-3 text-center">
-                <div class="inline-flex gap-1 justify-center" data-input-name="{{ r.psy_prefix }}-agility" data-tooltip="Agility">
-                  {% for i in "12345" %}
-                    <button type="button" class="psy-star star-btn px-1 text-2xl" data-value="{{ forloop.counter }}">☆</button>
-                  {% endfor %}
-                </div>
-                {{ r.psy_form.agility }}
-              </td>
-
-              <td class="p-3 text-center">
-                <div class="inline-flex gap-1 justify-center" data-input-name="{{ r.psy_prefix }}-creativity" data-tooltip="Creativity">
-                  {% for i in "12345" %}
-                    <button type="button" class="psy-star star-btn px-1 text-2xl" data-value="{{ forloop.counter }}">☆</button>
-                  {% endfor %}
-                </div>
-                {{ r.psy_form.creativity }}
-              </td>
-
-              <td class="p-3 text-center">
-                <div class="inline-flex gap-1 justify-center" data-input-name="{{ r.psy_prefix }}-sports" data-tooltip="Sports">
-                  {% for i in "12345" %}
-                    <button type="button" class="psy-star star-btn px-1 text-2xl" data-value="{{ forloop.counter }}">☆</button>
-                  {% endfor %}
-                </div>
-                {{ r.psy_form.sports }}
-              </td>
-
-              <td class="p-3 text-center">
-                <div class="inline-flex gap-1 justify-center" data-input-name="{{ r.psy_prefix }}-handwriting" data-tooltip="Handwriting">
-                  {% for i in "12345" %}
-                    <button type="button" class="psy-star star-btn px-1 text-2xl" data-value="{{ forloop.counter }}">☆</button>
-                  {% endfor %}
-                </div>
-                {{ r.psy_form.handwriting }}
-              </td>
+      <div class="overflow-x-auto">
+        <table class="w-full min-w-max table-auto">
+          <thead class="bg-gray-100">
+            <tr>
+              <th class="p-3 text-left">#</th>
+              <th class="p-3 text-left">Student</th>
+              <th class="p-3 text-center">Neatness</th>
+              <th class="p-3 text-center">Agility</th>
+              <th class="p-3 text-center">Creativity</th>
+              <th class="p-3 text-center">Sports</th>
+              <th class="p-3 text-center">Handwriting</th>
             </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {% for r in rows %}
+              <tr class="border-b">
+                <td class="p-3 text-sm text-gray-700">{{ forloop.counter0|add:page_obj.start_index }}</td>
+                <td class="p-3">
+                  <div class="font-medium">{{ r.student.full_name }}</div>
+                  <div class="text-sm text-gray-500">{{ r.student.school_class.name }}</div>
+                  {{ r.psy_form.student }}
+                </td>
+
+                <td class="p-3 text-center">
+                  <div class="inline-flex gap-1 justify-center" data-input-name="{{ r.psy_prefix }}-neatness" data-tooltip="Neatness">
+                    {% for i in "12345" %}
+                      <button type="button" class="psy-star star-btn px-1 text-2xl" data-value="{{ forloop.counter }}">☆</button>
+                    {% endfor %}
+                  </div>
+                  {{ r.psy_form.neatness }}
+                </td>
+
+                <td class="p-3 text-center">
+                  <div class="inline-flex gap-1 justify-center" data-input-name="{{ r.psy_prefix }}-agility" data-tooltip="Agility">
+                    {% for i in "12345" %}
+                      <button type="button" class="psy-star star-btn px-1 text-2xl" data-value="{{ forloop.counter }}">☆</button>
+                    {% endfor %}
+                  </div>
+                  {{ r.psy_form.agility }}
+                </td>
+
+                <td class="p-3 text-center">
+                  <div class="inline-flex gap-1 justify-center" data-input-name="{{ r.psy_prefix }}-creativity" data-tooltip="Creativity">
+                    {% for i in "12345" %}
+                      <button type="button" class="psy-star star-btn px-1 text-2xl" data-value="{{ forloop.counter }}">☆</button>
+                    {% endfor %}
+                  </div>
+                  {{ r.psy_form.creativity }}
+                </td>
+
+                <td class="p-3 text-center">
+                  <div class="inline-flex gap-1 justify-center" data-input-name="{{ r.psy_prefix }}-sports" data-tooltip="Sports">
+                    {% for i in "12345" %}
+                      <button type="button" class="psy-star star-btn px-1 text-2xl" data-value="{{ forloop.counter }}">☆</button>
+                    {% endfor %}
+                  </div>
+                  {{ r.psy_form.sports }}
+                </td>
+
+                <td class="p-3 text-center">
+                  <div class="inline-flex gap-1 justify-center" data-input-name="{{ r.psy_prefix }}-handwriting" data-tooltip="Handwriting">
+                    {% for i in "12345" %}
+                      <button type="button" class="psy-star star-btn px-1 text-2xl" data-value="{{ forloop.counter }}">☆</button>
+                    {% endfor %}
+                  </div>
+                  {{ r.psy_form.handwriting }}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </div>
 
     <!-- Affective Section -->
@@ -134,89 +138,90 @@
         <h2 class="text-lg font-semibold">Affective Ratings</h2>
         <p class="text-sm text-gray-500">Rate 1–5 stars (click a star to choose rating)</p>
       </div>
-
-      <table class="w-full table-auto">
-        <thead class="bg-gray-100">
-          <tr>
-            <th class="p-3 text-left">#</th>
-            <th class="p-3 text-left">Student</th>
-            <th class="p-3 text-center">Punctuality</th>
-            <th class="p-3 text-center">Cooperation</th>
-            <th class="p-3 text-center">Behavior</th>
-            <th class="p-3 text-center">Attentiveness</th>
-            <th class="p-3 text-center">Perseverance</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for r in rows %}
-            <tr class="border-b">
-              <td class="p-3 text-sm text-gray-700">{{ forloop.counter0|add:page_obj.start_index }}</td>
-              <td class="p-3">
-                <div class="font-medium">{{ r.student.full_name }}</div>
-                <div class="text-sm text-gray-500">{{ r.student.school_class.name }}</div>
-                {{ r.aff_form.student }}
-              </td>
-
-              <td class="p-3 text-center">
-                <div class="inline-flex gap-1 justify-center" data-input-name="{{ r.aff_prefix }}-punctuality" data-tooltip="Punctuality">
-                  {% for i in "12345" %}
-                    <button type="button" class="aff-star star-btn px-1 text-2xl" data-value="{{ forloop.counter }}">☆</button>
-                  {% endfor %}
-                </div>
-                {{ r.aff_form.punctuality }}
-              </td>
-
-              <td class="p-3 text-center">
-                <div class="inline-flex gap-1 justify-center" data-input-name="{{ r.aff_prefix }}-cooperation" data-tooltip="Cooperation">
-                  {% for i in "12345" %}
-                    <button type="button" class="aff-star star-btn px-1 text-2xl" data-value="{{ forloop.counter }}">☆</button>
-                  {% endfor %}
-                </div>
-                {{ r.aff_form.cooperation }}
-              </td>
-
-              <td class="p-3 text-center">
-                <div class="inline-flex gap-1 justify-center" data-input-name="{{ r.aff_prefix }}-behavior" data-tooltip="Behavior">
-                  {% for i in "12345" %}
-                    <button type="button" class="aff-star star-btn px-1 text-2xl" data-value="{{ forloop.counter }}">☆</button>
-                  {% endfor %}
-                </div>
-                {{ r.aff_form.behavior }}
-              </td>
-
-              <td class="p-3 text-center">
-                <div class="inline-flex gap-1 justify-center" data-input-name="{{ r.aff_prefix }}-attentiveness" data-tooltip="Attentiveness">
-                  {% for i in "12345" %}
-                    <button type="button" class="aff-star star-btn px-1 text-2xl" data-value="{{ forloop.counter }}">☆</button>
-                  {% endfor %}
-                </div>
-                {{ r.aff_form.attentiveness }}
-              </td>
-
-              <td class="p-3 text-center">
-                <div class="inline-flex gap-1 justify-center" data-input-name="{{ r.aff_prefix }}-perseverance" data-tooltip="Perseverance">
-                  {% for i in "12345" %}
-                    <button type="button" class="aff-star star-btn px-1 text-2xl" data-value="{{ forloop.counter }}">☆</button>
-                  {% endfor %}
-                </div>
-                {{ r.aff_form.perseverance }}
-              </td>
+      <div class="overflow-x-auto">
+        <table class="w-full min-w-max table-auto">
+          <thead class="bg-gray-100">
+            <tr>
+              <th class="p-3 text-left">#</th>
+              <th class="p-3 text-left">Student</th>
+              <th class="p-3 text-center">Punctuality</th>
+              <th class="p-3 text-center">Cooperation</th>
+              <th class="p-3 text-center">Behavior</th>
+              <th class="p-3 text-center">Attentiveness</th>
+              <th class="p-3 text-center">Perseverance</th>
             </tr>
-          {% endfor %}
-        </tbody>
-      </table>
+          </thead>
+          <tbody>
+            {% for r in rows %}
+              <tr class="border-b">
+                <td class="p-3 text-sm text-gray-700">{{ forloop.counter0|add:page_obj.start_index }}</td>
+                <td class="p-3">
+                  <div class="font-medium">{{ r.student.full_name }}</div>
+                  <div class="text-sm text-gray-500">{{ r.student.school_class.name }}</div>
+                  {{ r.aff_form.student }}
+                </td>
+
+                <td class="p-3 text-center">
+                  <div class="inline-flex gap-1 justify-center" data-input-name="{{ r.aff_prefix }}-punctuality" data-tooltip="Punctuality">
+                    {% for i in "12345" %}
+                      <button type="button" class="aff-star star-btn px-1 text-2xl" data-value="{{ forloop.counter }}">☆</button>
+                    {% endfor %}
+                  </div>
+                  {{ r.aff_form.punctuality }}
+                </td>
+
+                <td class="p-3 text-center">
+                  <div class="inline-flex gap-1 justify-center" data-input-name="{{ r.aff_prefix }}-cooperation" data-tooltip="Cooperation">
+                    {% for i in "12345" %}
+                      <button type="button" class="aff-star star-btn px-1 text-2xl" data-value="{{ forloop.counter }}">☆</button>
+                    {% endfor %}
+                  </div>
+                  {{ r.aff_form.cooperation }}
+                </td>
+
+                <td class="p-3 text-center">
+                  <div class="inline-flex gap-1 justify-center" data-input-name="{{ r.aff_prefix }}-behavior" data-tooltip="Behavior">
+                    {% for i in "12345" %}
+                      <button type="button" class="aff-star star-btn px-1 text-2xl" data-value="{{ forloop.counter }}">☆</button>
+                    {% endfor %}
+                  </div>
+                  {{ r.aff_form.behavior }}
+                </td>
+
+                <td class="p-3 text-center">
+                  <div class="inline-flex gap-1 justify-center" data-input-name="{{ r.aff_prefix }}-attentiveness" data-tooltip="Attentiveness">
+                    {% for i in "12345" %}
+                      <button type="button" class="aff-star star-btn px-1 text-2xl" data-value="{{ forloop.counter }}">☆</button>
+                    {% endfor %}
+                  </div>
+                  {{ r.aff_form.attentiveness }}
+                </td>
+
+                <td class="p-3 text-center">
+                  <div class="inline-flex gap-1 justify-center" data-input-name="{{ r.aff_prefix }}-perseverance" data-tooltip="Perseverance">
+                    {% for i in "12345" %}
+                      <button type="button" class="aff-star star-btn px-1 text-2xl" data-value="{{ forloop.counter }}">☆</button>
+                    {% endfor %}
+                  </div>
+                  {{ r.aff_form.perseverance }}
+                </td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </div>
 
     <!-- Buttons + Pagination -->
-    <div class="flex justify-between items-center mt-4 p-4">
-      <div>
-        <button type="submit" name="save" class="bg-yellow-500 text-white px-4 py-2 rounded mr-2">Save & Continue Later</button>
+    <div class="flex flex-col sm:flex-row justify-between items-center mt-4 p-4 gap-3">
+      <div class="flex flex-wrap gap-2">
+        <button type="submit" name="save" class="bg-yellow-500 text-white px-4 py-2 rounded">Save & Continue Later</button>
         <button type="submit" name="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Submit All</button>
       </div>
 
-      <div class="flex items-center gap-3">
+      <div class="flex flex-wrap items-center gap-3">
         <span>Page {{ page_obj.number }} of {{ paginator.num_pages }}</span>
-        <div class="flex items-center gap-1">
+        <div class="flex flex-wrap items-center gap-1">
           {% if page_obj.has_previous %}
             <a href="?class_id={{ selected_class.id }}&term={{ selected_term }}&page={{ page_obj.previous_page_number }}" class="px-2 py-1 border rounded">Previous</a>
           {% endif %}

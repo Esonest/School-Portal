@@ -68,7 +68,7 @@
     {% if school.logo %}
       <img src="{{ school.logo.url }}" class="h-16 mx-auto mb-1"/>
     {% endif %}
-    <h1 class="font-bold uppercase">{{ school.name }}</h1>
+    <h1 class="text-2xl font-bold text-{{ school.theme_color }}-600">{{ school.name }}</h1>
     <p class="italic text-sm">{{ school.motto }}</p>
     <p class="text-xs">{{ school.address }}</p>
   </div>
@@ -244,7 +244,7 @@
       {% else %}
         <div class="h-12 w-32 border mx-auto"></div>
       {% endif %}
-      <p class="mt-1 font-semibold">Principal</p>
+      <p class="mt-1 font-semibold">Head Teacher</p>
     </div>
 
     <div class="text-center">

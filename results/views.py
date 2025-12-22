@@ -253,7 +253,7 @@ def bulk_score_entry(request, school_id):
     for sc in scores:
         scores_map.setdefault(sc.student_id, {})[sc.subject_id] = sc
 
-    # --- NEW: read class score settings properly ---
+    # Read class score settings
     is_ca_enabled = True
     ca_max = 40
     exam_max = 60
@@ -262,7 +262,7 @@ def bulk_score_entry(request, school_id):
     if selected_class:
         try:
             setting = selected_class.score_setting
-            is_ca_enabled = setting.uses_ca        # <- correct property
+            is_ca_enabled = setting.uses_ca
             ca_max = setting.ca_max
             exam_max = setting.exam_max
             mode = 'exam_only' if not is_ca_enabled else 'ca_exam'
@@ -275,8 +275,15 @@ def bulk_score_entry(request, school_id):
 
         for st in page_students:
             for sid in selected_subject_ids:
-                exam_val = float(request.POST.get(f"exam_{st.id}_{sid}", 0))
-                ca_val = float(request.POST.get(f"ca_{st.id}_{sid}", 0)) if is_ca_enabled else 0
+                # --- SAFE float conversion ---
+                exam_val_str = request.POST.get(f"exam_{st.id}_{sid}", "")
+                exam_val = float(exam_val_str) if exam_val_str.strip() else 0
+
+                ca_val = 0
+                if is_ca_enabled:
+                    ca_val_str = request.POST.get(f"ca_{st.id}_{sid}", "")
+                    ca_val = float(ca_val_str) if ca_val_str.strip() else 0
+                # ---------------------------
 
                 if not (0 <= exam_val <= exam_max):
                     errors.append(f"Exam must be 0–{exam_max} for {st.full_name()}")
@@ -301,14 +308,14 @@ def bulk_score_entry(request, school_id):
                     score_obj.ca = ca_val
                     score_obj.exam = exam_val
                     score_obj.save()
-        
+
         # Show messages
         if errors:
             for err in errors:
                 messages.error(request, err)
         else:
             messages.success(request, "Scores saved successfully.")
-        
+
         params = [f'class_id={selected_class.id}']
         for sid in selected_subject_ids:
             params.append(f'subject_id={sid}')
@@ -316,10 +323,7 @@ def bulk_score_entry(request, school_id):
         params.append(f'session={selected_session}')
         params.append(f'page={students_page.number}')
         return redirect(f"{request.path}?{'&'.join(params)}")
-    
-    
 
-    # pick template automatically
     template_name = 'results/bulk_score_entry.html'
 
     return render(request, template_name, {
@@ -342,6 +346,7 @@ def bulk_score_entry(request, school_id):
         'exam_max': exam_max,
         'mode': mode,
     })
+
 
 
 
@@ -1560,9 +1565,31 @@ def verify_result(request, admission_no):
     # ---------------------------
     # Generate QR code URL
     # ---------------------------
+    # ---------------------------
+# Generate QR code URL (handles term & cumulative)
+# ---------------------------
     base_url = getattr(settings, "SITE_URL", "https://techcenter-p2au.onrender.com")
-    verification_url = f"{base_url}/results/verify/{student.admission_no}/?token={verification.verification_token}&view={view_type}&session={current_session}"
+
+    if view_type == "term":
+        # Include term parameter for term view
+        verification_url = (
+            f"{base_url}/results/verify/{student.admission_no}/"
+            f"?token={verification.verification_token}"
+            f"&view=term"
+            f"&term={selected_term}"
+            f"&session={current_session}"
+        )
+    else:
+        # Cumulative view doesn't need term
+        verification_url = (
+            f"{base_url}/results/verify/{student.admission_no}/"
+            f"?token={verification.verification_token}"
+            f"&view=cumulative"
+            f"&session={current_session}"
+        )
+
     context["qr_data_uri"] = _generate_qr_data_uri(verification_url, box_size=6)
+
 
     # ---------------------------
     # Common template fields
@@ -1578,34 +1605,7 @@ def verify_result(request, admission_no):
     return render(request, "results/verify_result.html", context)
 
 
-    # ---------------------------
-    # QR Code generation
-    # ---------------------------
-    if not verification:
-        verification = ResultVerification.objects.create(student=student, valid=True)
-
-    base_url = getattr(settings, "SITE_URL", "https://techcenter-p2au.onrender.com")
-    verification_url = (
-        f"{base_url}/results/verify/{student.admission_no}/"
-        f"?token={verification.verification_token}&view={view_type}&session={current_session}"
-    )
-    context["qr_data_uri"] = _generate_qr_data_uri(verification_url, box_size=6)
-
-    # ---------------------------
-    # Common template fields
-    # ---------------------------
-    school = student.school
-    context.update({
-        "principal_signature_url": getattr(school.principal_signature, "url", None) if school else None,
-        "student_photo_url": student.photo.url if student.photo else None,
-        "school_logo_url": getattr(school.logo, "url", None) if school else None,
-        "selected_session": current_session,
-        "selected_term": selected_term,
-    })
-
-    return render(request, "results/verify_result.html", context)
-
-
+   
 
 
 
