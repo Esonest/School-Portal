@@ -1512,7 +1512,6 @@ def verify_result(request, admission_no):
         current_session = setting.current_session if setting else SESSION_LIST[-1]
 
         # For cumulative, use your cumulative context builder
-        is_cumulative = request.GET.get("cumulative", "").lower() == "true"
         if is_cumulative:
             context = build_cumulative_result_context(student, session=current_session)
         else:
