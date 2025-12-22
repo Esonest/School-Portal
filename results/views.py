@@ -2902,9 +2902,9 @@ def build_cumulative_result_context(student, session=None):
 
     # ---------- USE SESSION_LIST ----------
     if session not in SESSION_LIST:
-        session = SESSION_LIST[-1]  # default to latest session if not provided
+        session = SESSION_LIST[-1]
 
-    terms = ['First', 'Second', 'Third']
+    terms = ["First", "Second", "Third"]
     TERM_MAP = {"First": "1", "Second": "2", "Third": "3"}
 
     subject_map = defaultdict(lambda: {
@@ -2924,88 +2924,98 @@ def build_cumulative_result_context(student, session=None):
     collected_comments = {
         "1": {"principal": "", "teacher": ""},
         "2": {"principal": "", "teacher": ""},
-        "3": {"principal": "", "teacher": ""}
+        "3": {"principal": "", "teacher": ""},
     }
 
+    # ---------- COLLECT TERM RESULTS ----------
     for term in terms:
         term_code = TERM_MAP[term]
         term_context = build_student_result_context(student, term_code, session)
 
-        for s in term_context['scores']:
-            subj_name = s['subject']
+        for s in term_context.get("scores", []):
+            subj_name = s["subject"]
             subject_map[subj_name][term] = {
-                "ca": s['ca'],
-                "exam": s['exam'],
-                "total": s['total'],
-                "grade": s['grade'],
-                "teacher": s['teacher'],
+                "ca": s["ca"],
+                "exam": s["exam"],
+                "total": s["total"],
+                "grade": s["grade"],
+                "teacher": s["teacher"],
             }
-            if s['ca'] > 0:
+
+            if s["ca"] > 0:
                 show_ca = True
 
-        overall_total += sum(s['total'] for s in term_context['scores'])
-        total_subject_count += len(term_context['scores'])
+        overall_total += sum(s["total"] for s in term_context.get("scores", []))
+        total_subject_count += len(term_context.get("scores", []))
 
-        if term_context.get('psychomotor'):
+        if term_context.get("psychomotor"):
+            pm = term_context["psychomotor"]
             psychomotor = {
-                "neatness": term_context['psychomotor'].neatness,
-                "agility": term_context['psychomotor'].agility,
-                "creativity": term_context['psychomotor'].creativity,
-                "sports": term_context['psychomotor'].sports,
-                "handwriting": term_context['psychomotor'].handwriting,
+                "neatness": pm.neatness,
+                "agility": pm.agility,
+                "creativity": pm.creativity,
+                "sports": pm.sports,
+                "handwriting": pm.handwriting,
             }
 
-        if term_context.get('affective'):
+        if term_context.get("affective"):
+            af = term_context["affective"]
             affective = {
-                "punctuality": term_context['affective'].punctuality,
-                "cooperation": term_context['affective'].cooperation,
-                "behavior": term_context['affective'].behavior,
-                "attentiveness": term_context['affective'].attentiveness,
-                "perseverance": term_context['affective'].perseverance,
+                "punctuality": af.punctuality,
+                "cooperation": af.cooperation,
+                "behavior": af.behavior,
+                "attentiveness": af.attentiveness,
+                "perseverance": af.perseverance,
             }
 
-        collected_comments[term_code]["principal"] = term_context.get('principal_comment') or ""
-        collected_comments[term_code]["teacher"] = term_context.get('teacher_comment') or ""
+        collected_comments[term_code]["principal"] = term_context.get("principal_comment") or ""
+        collected_comments[term_code]["teacher"] = term_context.get("teacher_comment") or ""
 
-    # Compute averages
+    # ---------- COMPUTE SUBJECT AVERAGES ----------
     for subj, data in subject_map.items():
-        totals = [data[t]["total"] for t in terms if data[t]["total"] not in ("", None)]
+        totals = [data[t]["total"] for t in terms if data[t]["total"] > 0]
         avg = sum(totals) / len(totals) if totals else 0
-        data["Average"] = avg
+        data["Average"] = round(avg, 2)
         data["AverageGrade"] = grade_from_score_dynamic(avg, student.school)
 
     avg_total = overall_total / total_subject_count if total_subject_count else 0
     overall_avg_grade = grade_from_score_dynamic(avg_total, student.school)
 
-    # Best/weak subject
-    subject_averages = {subj: data["Average"] for subj, data in subject_map.items()}
-    best_subject = max(subject_averages.items(), key=lambda x: x[1])[0] if subject_averages else None
-    weak_subject = min(subject_averages.items(), key=lambda x: x[1])[0] if subject_averages else None
+    # ---------- BEST / WEAK SUBJECT ----------
+    subject_averages = {k: v["Average"] for k, v in subject_map.items() if v["Average"] > 0}
+    best_subject = max(subject_averages, key=subject_averages.get) if subject_averages else None
+    weak_subject = min(subject_averages, key=subject_averages.get) if subject_averages else None
 
-    # Class position
-    class_totals = Score.objects.filter(
-        student__school_class=student.school_class,
-        session=session
-    ).values('student').annotate(total=Sum(F('ca') + F('exam')))
+    # ---------- CLASS POSITION ----------
+    class_totals = (
+        Score.objects
+        .filter(student__school_class=student.school_class, session=session)
+        .values("student")
+        .annotate(total=Sum(F("ca") + F("exam")))
+    )
 
-    ranking = sorted(class_totals, key=lambda x: x['total'] or 0, reverse=True)
-    position = next((i for i, r in enumerate(ranking, start=1) if r['student'] == student.id), None)
+    ranking = sorted(class_totals, key=lambda x: x["total"] or 0, reverse=True)
+    position = next((i for i, r in enumerate(ranking, 1) if r["student"] == student.id), None)
     class_size = len(ranking)
 
-    # Pick last available comments
+    # ---------- COMMENTS ----------
     def pick_comment(field):
-        return collected_comments["3"][field] or collected_comments["2"][field] or collected_comments["1"][field]
+        return (
+            collected_comments["3"][field]
+            or collected_comments["2"][field]
+            or collected_comments["1"][field]
+        )
 
     principal_comment = pick_comment("principal")
     teacher_comment = pick_comment("teacher")
 
-    # QR + signature
-    # Safely get a verification object
+    # ---------- QR VERIFICATION ----------
     verification_obj = (
         ResultVerification.objects
-        .filter(student=student)
+        .filter(student=student, valid=True)
         .first()
     )
+
     if not verification_obj:
         verification_obj = ResultVerification.objects.create(student=student, valid=True)
 
@@ -3013,17 +3023,18 @@ def build_cumulative_result_context(student, session=None):
     verify_url = f"{base}/results/verify/{student.admission_no}/?token={verification_obj.verification_token}"
     qr_data_uri = _generate_qr_data_uri(verify_url, box_size=6)
 
-
+    # ---------- MEDIA ----------
     school = student.school
     principal_signature_url = school.principal_signature.url if school and school.principal_signature else None
     student_photo_url = student.photo.url if student.photo else None
-    school_logo_url = static(school.logo) if school and school.logo else None
+    school_logo_url = school.logo.url if school and school.logo else None
 
     colspan_terms = 4 * len(terms)
 
-    # ⭐⭐⭐ ADD PROMOTION HISTORY — NO EXISTING LOGIC TOUCHED ⭐⭐⭐
     promotion_history = list(
-        PromotionHistory.objects.filter(student=student).order_by('-promoted_on')
+        PromotionHistory.objects
+        .filter(student=student)
+        .order_by("-promoted_on")
     )
 
     # ---------- RETURN CONTEXT ----------
@@ -3051,10 +3062,10 @@ def build_cumulative_result_context(student, session=None):
         "colspan_terms": colspan_terms,
         "selected_session": session,
         "show_ca": show_ca,
-
-        # ⭐ ADDED TO CONTEXT ⭐
         "promotion_history": promotion_history,
+        "is_cumulative": True,  # <-- useful for watermark/badge
     }
+
 
 
 

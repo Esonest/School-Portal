@@ -8,195 +8,195 @@
   <script src="https://cdn.tailwindcss.com"></script>
 
   <style>
-  @media print {
-    .no-print { display: none !important; }
-    .print-watermark { opacity: 0.15 !important; }
-  }
-</style>
-
+    @page { size: A4; margin: 15mm; }
+    body { font-size: 12px; }
+    th, td { font-size: 12px; }
+    @media print {
+      .no-print { display: none !important; }
+      .print-watermark { opacity: 0.1 !important; }
+    }
+    .result-watermark {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      pointer-events: none;
+      z-index: 0;
+    }
+    .result-watermark span {
+      font-size: 6rem;
+      font-weight: 800;
+      color: #e5e7eb;
+      transform: rotate(-30deg);
+      letter-spacing: 0.5rem;
+    }
+    .result-container { position: relative; z-index: 1; max-width: 210mm; margin: auto; border: 2px solid #000; background: #fff; padding: 16px; }
+  </style>
 </head>
-<body class="bg-gray-50 p-6">
-  {% if is_cumulative or selected_term == "cumulative" %}
-  <div class="fixed inset-0 flex items-center justify-center 
-              pointer-events-none select-none z-0">
-    <div class="print-watermark text-gray-200 text-6xl md:text-7xl font-extrabold 
-                rotate-[-30deg] tracking-widest opacity-40">
-      CUMULATIVE RESULT
-    </div>
+<body class="bg-gray-100 p-0">
+
+{% if is_cumulative or selected_term == "cumulative" %}
+  <div class="result-watermark">
+    <span>CUMULATIVE RESULT</span>
   </div>
 {% endif %}
 
-  <div class="max-w-4xl mx-auto bg-white p-6 rounded shadow relative z-10">
+<div class="result-container">
 
-    <!-- Header: School info and student info -->
-    <div class="flex justify-between items-start">
-      <div>
-        {% if school_logo_url %}
-          <img src="{{ school_logo_url }}" alt="{{ school.name }} Logo" class="h-16">
-        {% else %}
-          <div class="text-gray-400 text-sm">School Logo</div>
-        {% endif %}
-        <h1 class="text-2xl font-bold text-{{ school.theme_color }}-600">{{ school.name }}</h1>
-        <p class="text-sm italic">{{ school.motto }}</p>
-        <p class="text-xs text-gray-500">{{ school.address }}</p>
-      </div>
-
-      <div class="text-right">
-        <div class="text-sm">{{ student.user.get_full_name }}</div>
-        <div class="text-sm">{{ student.admission_no }}</div>
-        <div class="text-sm">{{ student.school_class.name }}</div>
-        <div class="text-sm">Term: {{ selected_term }} • Session: {{ selected_session }}</div>
-        {% if student.photo %}
-          <img src="{{ student.photo.url }}" alt="Photo" class="h-20 w-20 rounded object-cover mt-2 border">
-        {% endif %}
-      </div>
+  <!-- HEADER -->
+  <div class="flex justify-between items-start border-b border-black pb-2 mb-3">
+    <div>
+      {% if school_logo_url %}
+        <img src="{{ school_logo_url }}" alt="{{ school.name }} Logo" class="h-16">
+      {% else %}
+        <div class="text-gray-400 text-sm">School Logo</div>
+      {% endif %}
+      <h1 class="text-2xl font-bold text-{{ school.theme_color }}-600">{{ school.name }}</h1>
+      <p class="text-sm italic">{{ school.motto }}</p>
+      <p class="text-xs text-gray-500">{{ school.address }}</p>
     </div>
 
-    <hr class="my-4">
-
-    {% if status == "verified" %}
-  <div class="mb-4 flex justify-end">
-    <span class="inline-flex items-center px-4 py-1.5 rounded-full 
-                 bg-green-100 text-green-800 text-sm font-semibold 
-                 border border-green-300">
-      ✅ Verified Result
-    </span>
+    <div class="text-right">
+      <p class="text-sm"><strong>Name:</strong> {{ student.user.get_full_name }}</p>
+      <p class="text-sm"><strong>Admission No:</strong> {{ student.admission_no }}</p>
+      <p class="text-sm"><strong>Class:</strong> {{ student.school_class.name }}</p>
+      <p class="text-sm"><strong>Term:</strong> {{ selected_term }} • <strong>Session:</strong> {{ selected_session }}</p>
+      {% if student.photo %}
+        <img src="{{ student.photo.url }}" alt="Photo" class="h-20 w-20 rounded object-cover mt-2 border">
+      {% endif %}
+    </div>
   </div>
-{% endif %}
 
+  <!-- VERIFIED STATUS -->
+  {% if status == "verified" %}
+    <div class="mb-3 text-right">
+      <span class="inline-flex items-center px-4 py-1.5 rounded-full bg-green-100 text-green-800 text-sm font-semibold border border-green-300">
+        ✅ Verified Result
+      </span>
+    </div>
+  {% endif %}
 
-    <!-- Academic Performance Table -->
-    <h2 class="font-semibold">Academic Performance</h2>
-    <div class="overflow-x-auto mt-2">
-      <table class="min-w-full border">
-        <thead class="bg-gray-100">
-          <tr>
-            <th class="p-2 border text-left">Subject</th>
-            {% if class_has_ca %}
-              <th class="p-2 border text-center">CA</th>
-            {% endif %}
-            <th class="p-2 border text-center">Exam</th>
-            <th class="p-2 border text-center">Total</th>
-            <th class="p-2 border text-center">Class Avg</th>
-            <th class="p-2 border text-center">Grade</th>
-            <th class="p-2 border text-center">Grade Interpretation</th>
-            <th class="p-2 border text-center">Teacher</th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for s in scores %}
-            <tr class="border-b">
-              <td class="p-2">{{ s.subject }}</td>
-              {% if class_has_ca %}
-                <td class="p-2 text-center">{{ s.ca|default:"0" }}</td>
-              {% endif %}
-              <td class="p-2 text-center">{{ s.exam }}</td>
-              <td class="p-2 text-center font-semibold">{{ s.total }}</td>
-              <td class="p-2 text-center font-semibold">{{ s.class_average }}</td>
-              <td class="p-2 text-center">{{ s.grade }}</td>
-              <td class="p-2 text-center">{{ s.grade_interpretation }}</td>
-              <td class="p-2 text-center">{{ s.teacher }}</td>
-            </tr>
-          {% empty %}
-            <tr>
-              <td colspan="{% if class_has_ca %}8{% else %}7{% endif %}" class="p-3 text-center text-gray-500">No scores available</td>
-            </tr>
+  <!-- ACADEMIC PERFORMANCE TABLE -->
+  <h2 class="font-semibold uppercase text-center border border-black py-1 bg-gray-200">Academic Performance</h2>
+  <div class="overflow-x-auto mt-2">
+    <table class="w-full border border-black border-collapse text-center">
+      <thead class="bg-gray-100 font-semibold">
+        <tr>
+          <th class="border border-black p-2 text-left">Subject</th>
+          {% if class_has_ca %}<th class="border border-black p-2">CA</th>{% endif %}
+          <th class="border border-black p-2">Exam</th>
+          <th class="border border-black p-2">Total</th>
+          <th class="border border-black p-2">Class Avg</th>
+          <th class="border border-black p-2">Grade</th>
+          <th class="border border-black p-2">Grade Interpretation</th>
+          <th class="border border-black p-2">Teacher</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for s in scores %}
+        <tr class="border-b hover:bg-gray-50">
+          <td class="border border-black p-2 text-left">{{ s.subject }}</td>
+          {% if class_has_ca %}<td class="border border-black p-2">{{ s.ca|default:"0" }}</td>{% endif %}
+          <td class="border border-black p-2">{{ s.exam }}</td>
+          <td class="border border-black p-2 font-semibold">{{ s.total }}</td>
+          <td class="border border-black p-2 font-semibold">{{ s.class_average }}</td>
+          <td class="border border-black p-2">{{ s.grade }}</td>
+          <td class="border border-black p-2">{{ s.grade_interpretation }}</td>
+          <td class="border border-black p-2">{{ s.teacher }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="{% if class_has_ca %}8{% else %}7{% endif %}" class="border border-black p-2 text-gray-500">No scores available</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- SUMMARY AND DOMAINS -->
+  <div class="mt-4 grid md:grid-cols-2 gap-6">
+    <!-- Academic Summary -->
+    <div class="bg-gray-50 p-4 rounded shadow-sm space-y-1 border border-black">
+      <p><strong>Total:</strong> {{ overall_total }}</p>
+      <p><strong>Average:</strong> {{ avg|floatformat:2 }}</p>
+      <p><strong>Position:</strong> {{ position }} of {{ class_size }}</p>
+      {% if best_subject %}<p><strong>Best Subject:</strong> {{ best_subject.subject }} ({{ best_subject.total }})</p>{% endif %}
+      {% if least_subject %}<p><strong>Weakest Subject:</strong> {{ least_subject.subject }} ({{ least_subject.total }})</p>{% endif %}
+    </div>
+
+    <!-- Psychomotor & Affective -->
+    <div class="space-y-6">
+      <!-- Psychomotor -->
+      <div class="bg-blue-50 p-4 rounded shadow-sm border border-black">
+        <h3 class="font-semibold mb-3 text-blue-700">Psychomotor Domain</h3>
+        {% if psychomotor %}
+        <ul class="space-y-1">
+          {% for attr in "neatness,agility,creativity,sports,handwriting"|split:"," %}
+          <li class="flex justify-between">
+            <span>{{ attr|capfirst }}</span>
+            <span class="text-yellow-600">
+              {% for i in "12345" %}
+                {% if i|add:"0" <= psychomotor|get_attr:attr %}★{% else %}☆{% endif %}
+              {% endfor %}
+            </span>
+          </li>
           {% endfor %}
-        </tbody>
-      </table>
-    </div>
-
-    <!-- Summary and Psychomotor/Affective -->
-    <div class="mt-4 grid md:grid-cols-2 gap-6">
-      <!-- Academic Summary -->
-      <div class="bg-gray-50 p-4 rounded shadow-sm space-y-1">
-        <p><strong>Total:</strong> {{ overall_total }}</p>
-        <p><strong>Average:</strong> {{ avg|floatformat:2 }}</p>
-        <p><strong>Position:</strong> {{ position }} of {{ class_size }}</p>
-        {% if best_subject %}
-          <p><strong>Best Subject:</strong> {{ best_subject.subject }} ({{ best_subject.total }})</p>
-        {% endif %}
-        {% if least_subject %}
-          <p><strong>Weakest Subject:</strong> {{ least_subject.subject }} ({{ least_subject.total }})</p>
-        {% endif %}
+        </ul>
+        {% else %}<p class="text-gray-500">Not recorded</p>{% endif %}
       </div>
 
-      <!-- Psychomotor & Affective -->
-      <div class="space-y-6">
-        <!-- Psychomotor -->
-        <div class="bg-blue-50 p-4 rounded shadow-sm">
-          <h3 class="font-semibold mb-3 text-blue-700">Psychomotor Domain</h3>
-          {% if psychomotor %}
-            <ul class="space-y-2">
-              {% for attr in "neatness,agility,creativity,sports,handwriting"|split:"," %}
-                <li class="flex justify-between items-center">
-                  <span>{{ attr|capfirst }}</span>
-                  <span class="text-yellow-500">
-                    {% for i in "12345" %}
-                      {% if i|add:"0" <= psychomotor|get_attr:attr %}⭐{% else %}☆{% endif %}
-                    {% endfor %}
-                  </span>
-                </li>
+      <!-- Affective -->
+      <div class="bg-green-50 p-4 rounded shadow-sm border border-black">
+        <h3 class="font-semibold mb-3 text-green-700">Affective Domain</h3>
+        {% if affective %}
+        <ul class="space-y-1">
+          {% for attr in "punctuality,cooperation,behavior,attentiveness,perseverance"|split:"," %}
+          <li class="flex justify-between">
+            <span>{{ attr|capfirst }}</span>
+            <span class="text-yellow-600">
+              {% for i in "12345" %}
+                {% if i|add:"0" <= affective|get_attr:attr %}★{% else %}☆{% endif %}
               {% endfor %}
-            </ul>
-          {% else %}
-            <p class="text-gray-500">Not recorded</p>
-          {% endif %}
-        </div>
-
-        <!-- Affective -->
-        <div class="bg-green-50 p-4 rounded shadow-sm">
-          <h3 class="font-semibold mb-3 text-green-700">Affective Domain</h3>
-          {% if affective %}
-            <ul class="space-y-2">
-              {% for attr in "punctuality,cooperation,behavior,attentiveness,perseverance"|split:"," %}
-                <li class="flex justify-between items-center">
-                  <span>{{ attr|capfirst }}</span>
-                  <span class="text-yellow-500">
-                    {% for i in "12345" %}
-                      {% if i|add:"0" <= affective|get_attr:attr %}⭐{% else %}☆{% endif %}
-                    {% endfor %}
-                  </span>
-                </li>
-              {% endfor %}
-            </ul>
-          {% else %}
-            <p class="text-gray-500">Not recorded</p>
-          {% endif %}
-        </div>
+            </span>
+          </li>
+          {% endfor %}
+        </ul>
+        {% else %}<p class="text-gray-500">Not recorded</p>{% endif %}
       </div>
     </div>
-
-    <!-- Comments -->
-    <div class="mt-6">
-      <h3 class="font-semibold">Principal's Comment</h3>
-      <p class="italic">{{ principal_comment }}</p>
-      <h3 class="font-semibold mt-4">Teacher's Comment</h3>
-      <p class="italic">{{ teacher_comment }}</p>
-    </div>
-
-    <!-- Signature and QR -->
-    <div class="mt-6 flex justify-between items-center">
-      <div class="flex items-center space-x-4">
-        {% if principal_signature_url %}
-          <img src="{{ principal_signature_url }}" alt="Principal's Signature" class="h-16 w-32 object-contain rounded border" />
-        {% else %}
-          <div class="h-16 w-32 flex items-center justify-center border rounded text-sm text-gray-500">Principal's Signature</div>
-        {% endif %}
-        <div class="text-sm font-medium">Principal</div>
-      </div>
-
-      <div class="text-right">
-        <img src="{{ qr_data_uri }}" alt="Verification QR Code" class="h-20 w-20 border bg-white p-1" />
-        <div class="text-xs text-gray-500">Scan to verify</div>
-      </div>
-    </div>
-
-    <!-- Print Button -->
-    <div class="mt-4 no-print">
-      <button onclick="window.print()" class="px-4 py-2 bg-green-600 text-white rounded">Print</button>
-    </div>
-
   </div>
+
+  <!-- COMMENTS -->
+  <div class="mt-6 border border-black p-3">
+    <h3 class="font-semibold">Principal's Comment</h3>
+    <p class="italic">{{ principal_comment }}</p>
+    <h3 class="font-semibold mt-3">Teacher's Comment</h3>
+    <p class="italic">{{ teacher_comment }}</p>
+  </div>
+
+  <!-- SIGNATURE AND QR -->
+  <div class="mt-6 flex justify-between items-center">
+    <div class="flex items-center space-x-4">
+      {% if principal_signature_url %}
+        <img src="{{ principal_signature_url }}" alt="Principal's Signature" class="h-16 w-32 object-contain border rounded"/>
+      {% else %}
+        <div class="h-16 w-32 border rounded flex items-center justify-center text-xs text-gray-500">Principal's Signature</div>
+      {% endif %}
+      <div class="text-sm font-medium">Principal</div>
+    </div>
+
+    <div class="text-right">
+      <img src="{{ qr_data_uri }}" alt="Verification QR Code" class="h-20 w-20 border bg-white p-1"/>
+      <div class="text-xs text-gray-500">Scan to verify</div>
+    </div>
+  </div>
+
+  <!-- PRINT BUTTON -->
+  <div class="mt-4 no-print text-right">
+    <button onclick="window.print()" class="px-4 py-2 bg-green-600 text-white rounded">Print</button>
+  </div>
+
+</div>
 </body>
 </html>

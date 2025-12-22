@@ -6,105 +6,166 @@
   <meta charset="utf-8"/>
   <title>Cumulative Result — {{ student.user.get_full_name }}</title>
   <script src="https://cdn.tailwindcss.com"></script>
+
   <style>
-    th, td { font-size: 14px; }
-    @media print { button, form { display: none; } }
+    @page {
+      size: A4;
+      margin: 15mm;
+    }
+
+    @media print {
+      body {
+        background: #fff !important;
+        padding: 0 !important;
+      }
+      button, form {
+        display: none !important;
+      }
+      html {
+        font-size: 12px;
+      }
+    }
+
+    th, td {
+      font-size: 12px;
+    }
+
+    /* ===== WATERMARK (SAME AS TERMLY) ===== */
+    .result-watermark {
+      position: relative;
+      overflow: hidden;
+    }
+
+    .result-watermark::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      {% if school.logo %}
+      background-image: url('{{ school.logo.url }}');
+      {% endif %}
+      background-repeat: no-repeat;
+      background-position: center;
+      background-size: 360px;
+      opacity: 0.05;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .result-content {
+      position: relative;
+      z-index: 1;
+    }
   </style>
 </head>
 
-<body class="bg-gray-50 p-6">
-<div class="max-w-6xl mx-auto bg-white p-6 rounded shadow">
+<body class="bg-gray-100 p-4 text-black">
 
-  <!-- HEADER -->
-  <div class="flex justify-between items-start mb-4">
-    <div>
-      {% if school.logo %}
-        <img src="{{ school.logo.url }}" class="h-20 object-contain"/>
-      {% endif %}
-      <h1 class="text-2xl font-bold mt-2 text-{{ school.theme_color }}-600">{{ school.name }}</h1>
-      <p class="text-sm italic">{{ school.motto }}</p>
-      <p class="text-xs text-gray-500">{{ school.address }}</p>
+<div class="max-w-[210mm] mx-auto bg-white border border-black p-4 result-watermark">
+<div class="result-content">
+
+  <!-- HEADER (SAME AS TERMLY) -->
+  <div class="text-center border-b border-black pb-2">
+    {% if school.logo %}
+      <img src="{{ school.logo.url }}" class="h-16 mx-auto mb-1"/>
+    {% endif %}
+    <h1 class="font-bold uppercase">{{ school.name }}</h1>
+    <p class="italic text-sm">{{ school.motto }}</p>
+    <p class="text-xs">{{ school.address }}</p>
+  </div>
+
+  <!-- STUDENT INFO (SAME GRID STYLE) -->
+  <div class="grid grid-cols-3 gap-4 mt-3 border border-black p-2 text-sm">
+    <div class="space-y-1">
+      <p><strong>Name:</strong> {{ student.user.get_full_name }}</p>
+      <p><strong>Admission No:</strong> {{ student.admission_no }}</p>
+      <p><strong>Class:</strong> {{ student.school_class.name }}</p>
+    </div>
+
+    <div class="space-y-1">
+      <p><strong>Session:</strong> {{ selected_session }}</p>
+      <p><strong>Class Size:</strong> {{ class_size }}</p>
     </div>
 
     <div class="text-right">
-      <div class="text-sm">{{ student.user.get_full_name }}</div>
-      <div class="text-sm">{{ student.admission_no }}</div>
-      <div class="text-sm">{{ student.school_class.name }}</div>
-      <div class="text-sm">Session: {{ selected_session }}</div>
-
       {% if student.photo %}
-        <img src="{{ student.photo.url }}" class="h-20 w-20 rounded mt-2 border object-cover"/>
+        <img src="{{ student.photo.url }}" class="h-20 w-20 border object-cover inline-block"/>
+      {% else %}
+        <div class="h-20 w-20 border inline-flex items-center justify-center text-xs">
+          Passport
+        </div>
       {% endif %}
     </div>
   </div>
 
-  <hr class="my-4"/>
-
-  <!-- SESSION SELECTION + PDF BUTTON -->
-<div class="mb-4 flex justify-end items-center space-x-3">
-  <!-- Session Selector -->
-  <form method="get" class="flex items-center space-x-2">
-    <label for="session" class="font-medium">Select Session:</label>
-    <select id="session" name="session" class="border px-2 py-1" onchange="this.form.submit()">
-      {% for s in available_sessions %}
-        <option value="{{ s }}" {% if s == selected_session %}selected{% endif %}>{{ s }}</option>
-      {% endfor %}
-    </select>
-  </form>
-
-  <!-- PDF Download Button -->
-  <form method="get" action="{% url 'results:student_cumulative_result_download' %}">
-    <input type="hidden" name="session" value="{{ selected_session }}">
-    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded shadow">
-      Download PDF
-    </button>
-  </form>
-</div>
-
-  <!-- CUMULATIVE TABLE -->
-<div class="overflow-x-auto">
-  <table class="min-w-full border text-center">
-    <thead class="bg-gray-100 font-semibold">
-      <tr>
-        <th rowspan="2" class="border p-2">Subject</th>
-        {% for term in terms %}
-          <th colspan="{% if show_ca %}4{% else %}3{% endif %}" class="border p-2">{{ term }} Term</th>
+  <!-- SESSION SELECT (HIDDEN ON PRINT) -->
+  <div class="mt-3 flex justify-end space-x-3 no-print">
+    <form method="get" class="flex items-center space-x-2">
+      <label class="font-medium">Select Session:</label>
+      <select name="session" class="border px-2 py-1" onchange="this.form.submit()">
+        {% for s in available_sessions %}
+          <option value="{{ s }}" {% if s == selected_session %}selected{% endif %}>{{ s }}</option>
         {% endfor %}
-        <th rowspan="2" class="border p-2">Average</th>
-        <th rowspan="2" class="border p-2">Grade</th>
-        <th rowspan="2" class="border p-2">Teacher</th>
+      </select>
+    </form>
+
+    <form method="get" action="{% url 'results:student_cumulative_result_download' %}">
+      <input type="hidden" name="session" value="{{ selected_session }}">
+      <button class="bg-black text-white px-4 py-2">
+        Download PDF
+      </button>
+    </form>
+  </div>
+
+  <!-- CUMULATIVE PERFORMANCE -->
+  <h2 class="font-bold mt-4 uppercase text-center border border-black py-1">
+    Cumulative Academic Performance
+  </h2>
+
+  <table class="w-full border border-black border-collapse mt-2 text-center">
+    <thead>
+      <tr class="bg-gray-200">
+        <th rowspan="2" class="border border-black p-1 text-left">Subject</th>
+        {% for term in terms %}
+          <th colspan="{% if show_ca %}4{% else %}3{% endif %}" class="border border-black p-1">
+            {{ term }} Term
+          </th>
+        {% endfor %}
+        <th rowspan="2" class="border border-black p-1">Average</th>
+        <th rowspan="2" class="border border-black p-1">Grade</th>
+        <th rowspan="2" class="border border-black p-1">Teacher</th>
       </tr>
-      <tr>
+
+      <tr class="bg-gray-100">
         {% for term in terms %}
           {% if show_ca %}
-            <th class="border p-1">CA</th>
+            <th class="border border-black p-1">CA</th>
           {% endif %}
-          <th class="border p-1">Exam</th>
-          <th class="border p-1">Total</th>
-          <th class="border p-1">Grade</th>
+          <th class="border border-black p-1">Exam</th>
+          <th class="border border-black p-1">Total</th>
+          <th class="border border-black p-1">Grade</th>
         {% endfor %}
       </tr>
     </thead>
 
     <tbody>
       {% for subject, data in subjects.items %}
-      <tr class="border-b hover:bg-gray-50">
-        <td class="border p-2 text-left font-medium">{{ subject }}</td>
+      <tr>
+        <td class="border border-black p-1 text-left font-medium">{{ subject }}</td>
 
         {% for term in terms %}
           {% with tdata=data|get_item:term %}
             {% if show_ca %}
-              <td class="border p-2">{{ tdata.ca|default:"0" }}</td>
+              <td class="border border-black p-1">{{ tdata.ca|default:"0" }}</td>
             {% endif %}
-            <td class="border p-2">{{ tdata.exam }}</td>
-            <td class="border p-2 font-semibold">{{ tdata.total }}</td>
-            <td class="border p-2">{{ tdata.grade }}</td>
+            <td class="border border-black p-1">{{ tdata.exam }}</td>
+            <td class="border border-black p-1 font-semibold">{{ tdata.total }}</td>
+            <td class="border border-black p-1">{{ tdata.grade }}</td>
           {% endwith %}
         {% endfor %}
 
-        <td class="border p-2 font-semibold text-blue-700">{{ data.Average|floatformat:2 }}</td>
-        <td class="border p-2 font-semibold text-blue-700">{{ data.AverageGrade }}</td>
-        <td class="border p-2">
+        <td class="border border-black p-1 font-semibold">{{ data.Average|floatformat:2 }}</td>
+        <td class="border border-black p-1 font-semibold">{{ data.AverageGrade }}</td>
+        <td class="border border-black p-1">
           {% with tdata=data|get_item:terms.0 %}
             {{ tdata.teacher }}
           {% endwith %}
@@ -112,15 +173,15 @@
       </tr>
       {% endfor %}
 
-      <!-- SUMMARY ROW -->
+      <!-- SUMMARY -->
       <tr class="bg-gray-200 font-semibold">
-        <td class="border p-2 text-left">Totals & Summary</td>
+        <td class="border border-black p-1 text-left">Summary</td>
         {% for term in terms %}
-          <td class="border p-2" colspan="{% if show_ca %}4{% else %}3{% endif %}"></td>
+          <td class="border border-black p-1" colspan="{% if show_ca %}4{% else %}3{% endif %}"></td>
         {% endfor %}
-        <td class="border p-2 text-blue-700">{{ avg_total|floatformat:2 }}</td>
-        <td class="border p-2 text-blue-700">{{ overall_avg_grade }}</td>
-        <td class="border p-2">
+        <td class="border border-black p-1">{{ avg_total|floatformat:2 }}</td>
+        <td class="border border-black p-1">{{ overall_avg_grade }}</td>
+        <td class="border border-black p-1">
           <div>Total: {{ overall_total }}</div>
           <div>Best: {{ best_subject }}</div>
           <div>Weak: {{ weak_subject }}</div>
@@ -129,32 +190,40 @@
       </tr>
     </tbody>
   </table>
-</div>
 
+  <!-- PSYCHOMOTOR & AFFECTIVE (UNCHANGED LOGIC) -->
+  <h2 class="font-bold mt-4 uppercase text-center border border-black py-1">
+    Psychomotor & Affective Domain
+  </h2>
 
-  <!-- PSYCHOMOTOR AND AFFECTIVE -->
-  <div class="grid grid-cols-2 gap-6 mt-6">
+  <div class="grid grid-cols-2 gap-4 mt-2 border border-black p-3 text-xs">
     <div>
-      <h3 class="font-semibold text-lg">Psychomotor</h3>
-      <ul class="list-disc ml-5 text-md">
+      <p class="font-semibold mb-2">Psychomotor</p>
+      <ul class="space-y-1">
         {% for skill, value in psychomotor.items %}
-          <li>{{ skill|capfirst }}:
-            {% for i in "12345"|make_list %}
-              {% if i|add:"0" <= value %} ⭐ {% else %} ☆ {% endif %}
-            {% endfor %}
+          <li class="flex justify-between">
+            <span>{{ skill|capfirst }}</span>
+            <span class="text-yellow-600">
+              {% for i in "12345"|make_list %}
+                {% if i|add:"0" <= value %}★{% else %}☆{% endif %}
+              {% endfor %}
+            </span>
           </li>
         {% endfor %}
       </ul>
     </div>
 
     <div>
-      <h3 class="font-semibold text-lg">Affective</h3>
-      <ul class="list-disc ml-5 text-md">
+      <p class="font-semibold mb-2">Affective</p>
+      <ul class="space-y-1">
         {% for skill, value in affective.items %}
-          <li>{{ skill|capfirst }}:
-            {% for i in "12345"|make_list %}
-              {% if i|add:"0" <= value %} ⭐ {% else %} ☆ {% endif %}
-            {% endfor %}
+          <li class="flex justify-between">
+            <span>{{ skill|capfirst }}</span>
+            <span class="text-yellow-600">
+              {% for i in "12345"|make_list %}
+                {% if i|add:"0" <= value %}★{% else %}☆{% endif %}
+              {% endfor %}
+            </span>
           </li>
         {% endfor %}
       </ul>
@@ -162,45 +231,30 @@
   </div>
 
   <!-- COMMENTS -->
-  <div class="mt-6">
-    <h3 class="font-semibold">Principal's Comment</h3>
-    <p class="italic">{{ principal_comment }}</p>
-
-    {% for p in promotion_history %}
-    <p>{{ p.session }}: {{ p.from_class }} → {{ p.to_class }} ({{ p.date_promoted }})</p>
-{% empty %}
-    <p>No promotion history recorded.</p>
-{% endfor %}
-
-
-    <h3 class="font-semibold mt-4">Teacher's Comment</h3>
-    <p class="italic">{{ teacher_comment }}</p>
+  <div class="mt-4 border border-black p-2 text-sm">
+    <p><strong>Principal’s Comment:</strong> {{ principal_comment }}</p>
+    <p class="mt-2"><strong>Teacher’s Comment:</strong> {{ teacher_comment }}</p>
   </div>
 
-
-  <!-- SIGNATURE + QR -->
-  <div class="mt-6 flex justify-between">
-    <div class="flex items-center space-x-3">
+  <!-- FOOTER -->
+  <div class="flex justify-between items-end mt-6 text-sm">
+    <div class="text-center">
       {% if principal_signature_url %}
-        <img src="{{ principal_signature_url }}" class="h-16"/>
+        <img src="{{ principal_signature_url }}" class="h-12 border mx-auto"/>
       {% else %}
-        <div class="text-sm text-gray-500">Principal's signature</div>
+        <div class="h-12 w-32 border mx-auto"></div>
       {% endif %}
+      <p class="mt-1 font-semibold">Principal</p>
     </div>
 
-    <div class="text-right">
-      <img src="{{ qr_data_uri }}" alt="Verification QR Code" class="h-20 w-20 border bg-white p-1"/>
-      <div class="text-xs text-gray-500">Scan to verify</div>
+    <div class="text-center">
+      <img src="{{ qr_data_uri }}" class="h-16 w-16 border mx-auto"/>
+      <p class="text-xs">Scan to verify</p>
     </div>
-  </div>
-
-  <!-- PRINT BUTTON -->
-  <div class="mt-4">
-    <button onclick="window.print()" class="bg-green-600 text-white px-4 py-2 rounded shadow">
-      Print
-    </button>
   </div>
 
 </div>
+</div>
+
 </body>
 </html>
