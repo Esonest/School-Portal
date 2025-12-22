@@ -64,6 +64,11 @@ from .models import School
 
 
 class SchoolForm(forms.ModelForm):
+    logo = forms.ImageField(
+        required=False,
+        widget=forms.ClearableFileInput(attrs={"class": "form-input"}),
+        label="School Logo"
+    )
 
     class Meta:
         model = School
@@ -76,27 +81,13 @@ class SchoolForm(forms.ModelForm):
             "principal_signature",
         ]
         widgets = {
-            "name": forms.TextInput(attrs={
-                "class": "form-input",
-                "id": "school-name-input",
-            }),
-            "address": forms.TextInput(attrs={
-                "class": "form-input",
-            }),
-            "motto": forms.TextInput(attrs={
-                "class": "form-input",
-            }),
-            "logo": forms.ClearableFileInput(attrs={
-                "class": "form-input",
-            }),
-            "theme_color": forms.Select(attrs={
-                "class": "form-input",
-                "id": "theme-color-select",
-            }),
-            "principal_signature": forms.ClearableFileInput(attrs={
-                "class": "form-input",
-            }),
+            "name": forms.TextInput(attrs={"class": "form-input", "id": "school-name-input"}),
+            "address": forms.TextInput(attrs={"class": "form-input"}),
+            "motto": forms.TextInput(attrs={"class": "form-input"}),
+            "theme_color": forms.Select(attrs={"class": "form-input", "id": "theme-color-select"}),
+            "principal_signature": forms.ClearableFileInput(attrs={"class": "form-input"}),
         }
+
 
 
 
