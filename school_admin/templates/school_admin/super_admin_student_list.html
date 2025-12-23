@@ -1,112 +1,262 @@
 {% extends "accounts/base.html" %}
-
 {% block content %}
 
 <style>
-@media print {
-    /* Hide buttons, links, filter form */
-    form, a[href], button {
-        display: none !important;
-    }
+  :root {
+    --theme: #2563eb;
+    --bg-dark: #020617;
+    --card-dark: #020617;
+    --border-dark: #1e293b;
+    --text-dark: #e5e7eb;
+    --muted-dark: #94a3b8;
+  }
 
-    /* Make table full width on print */
+  /* 🌙 DARK MODE */
+  body.dark,
+  @media (prefers-color-scheme: dark) {
+    body {
+      background: var(--bg-dark);
+      color: var(--text-dark);
+    }
+    .card {
+      background: var(--card-dark) !important;
+      border-color: var(--border-dark) !important;
+    }
+    .muted {
+      color: var(--muted-dark) !important;
+    }
     table {
-        width: 100% !important;
-        border: 1px solid black;
+      color: var(--text-dark);
     }
+    thead {
+      background: #020617;
+    }
+    tbody tr:hover {
+      background: #020617;
+    }
+  }
 
-    th, td {
-        border: 1px solid #333 !important;
-        padding: 6px !important;
-    }
+  /* 🏫 PRINT WATERMARK */
+ 
+@media print {
 
-    img {
-        height: 50px !important;
-        width: 50px !important;
-        object-fit: cover;
-    }
+  /* A4 PAGE SETUP */
+  @page {
+    size: A4 portrait;
+    margin: 15mm 12mm;
+  }
+
+  html, body {
+    width: 210mm;
+    height: 297mm;
+    background: white !important;
+    color: black !important;
+    font-size: 11px;
+    line-height: 1.4;
+  }
+
+  /* SCHOOL LOGO WATERMARK */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image: url("{% if school.logo %}{{ school.logo.url }}{% endif %}");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 380px;
+    opacity: 0.06;
+    z-index: -1;
+  }
+
+  /* HIDE NON-PRINT ITEMS */
+  form,
+  button,
+  a[href],
+  .no-print {
+    display: none !important;
+  }
+
+  /* CONTAINER RESET */
+  .min-h-screen,
+  .max-w-6xl,
+  .card {
+    margin: 0 !important;
+    padding: 0 !important;
+    max-width: 100% !important;
+    background: transparent !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  /* TABLE FIX */
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    page-break-inside: auto;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+
+  tr {
+    page-break-inside: avoid;
+    page-break-after: auto;
+  }
+
+  th, td {
+    border: 1px solid #333 !important;
+    padding: 6px 5px !important;
+    text-align: left;
+    vertical-align: middle;
+  }
+
+  th {
+    background: #f1f1f1 !important;
+    font-weight: bold;
+  }
+
+  /* IMAGES */
+  img {
+    height: 35px !important;
+    width: 35px !important;
+    object-fit: cover;
+    border-radius: 50%;
+  }
+
+  /* HEADINGS */
+  h1, h2, h3 {
+    margin-bottom: 8px !important;
+    page-break-after: avoid;
+  }
 }
+
+
 </style>
 
-<div class="min-h-screen bg-gray-100 p-6">
-    <!-- Header -->
-    <div class="max-w-6xl mx-auto flex items-center justify-between mb-6">
-        <h2 class="text-3xl font-bold text-{{ school.theme_color }}-800">{{ school.name }} — Students</h2>
-        <a href="{% url 'school_admin:admin_student_create' school.id %}"
-           class="px-4 py-2 bg-blue-600 text-white rounded-lg shadow hover:bg-blue-700 transition">
-            Add Student
-        </a>
-    </div>
+<div class="min-h-screen px-3 sm:px-6 py-6 bg-gray-100">
 
-    <form method="GET" class="mb-4 flex space-x-3 items-center">
-    <select name="class_id" class="border px-3 py-2 rounded">
-        <option value="">All Classes</option>
-        {% for c in classes %}
-            <option value="{{ c.id }}" {% if selected_class == c.id|stringformat:"s" %}selected{% endif %}>
-                {{ c.name }}
-            </option>
-        {% endfor %}
+  <!-- HEADER -->
+  <div class="max-w-6xl mx-auto mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <h2 class="text-xl sm:text-2xl lg:text-3xl font-bold text-{{ school.theme_color }}-800">
+      {{ school.name }} — Students
+    </h2>
+
+    <div class="flex flex-wrap gap-2 no-print">
+      <a href="{% url 'school_admin:admin_student_create' school.id %}"
+         class="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg shadow hover:bg-blue-700 transition">
+        Add Student
+      </a>
+
+      <button onclick="window.print()"
+              class="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition">
+        PDF
+      </button>
+
+      <button onclick="exportTableToExcel()"
+              class="px-4 py-2 bg-emerald-600 text-white text-sm rounded-lg hover:bg-emerald-700 transition">
+        Excel
+      </button>
+    </div>
+  </div>
+
+  <!-- FILTER + SEARCH -->
+  <form method="GET"
+        class="card max-w-6xl mx-auto mb-6 bg-white rounded-xl shadow-sm border p-4 flex flex-col sm:flex-row gap-3 no-print">
+
+    <select name="class_id"
+            class="border px-3 py-2 rounded text-sm w-full sm:w-auto">
+      <option value="">All Classes</option>
+      {% for c in classes %}
+        <option value="{{ c.id }}" {% if selected_class == c.id|stringformat:"s" %}selected{% endif %}>
+          {{ c.name }}
+        </option>
+      {% endfor %}
     </select>
 
-    <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded">
-        Filter
+    <button type="submit"
+            class="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg">
+      Filter
     </button>
 
-    <!-- PRINT BUTTON -->
-    <button type="button"
-            onclick="window.print()"
-            class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700 transition">
-        Print List
-    </button>
-</form>
+    <input type="text"
+           id="searchInput"
+           placeholder="Search name, admission, class..."
+           class="border px-3 py-2 rounded text-sm w-full sm:max-w-xs">
+  </form>
 
-
-    <!-- Students Table -->
+  <!-- TABLE -->
+  <div class="card max-w-6xl mx-auto bg-white rounded-xl shadow-md border overflow-hidden">
     <div class="overflow-x-auto">
-        <table class="min-w-full bg-white shadow-md rounded-lg overflow-hidden">
-            <thead class="bg-gray-50 border-b">
-                <tr>
-                    <th class="px-4 py-2 text-left text-gray-600 font-medium">Photo</th>
-                    <th class="px-4 py-2 text-left text-gray-600 font-medium">Name</th>
-                    <th class="px-4 py-2 text-left text-gray-600 font-medium">Admission No</th>
-                    <th class="px-4 py-2 text-left text-gray-600 font-medium">Class</th>
-                    <th class="px-4 py-2 text-left text-gray-600 font-medium">Actions</th>
-                </tr>
-            </thead>
+      <table id="studentTable" class="min-w-full text-sm">
+        <thead class="bg-gray-50 border-b">
+          <tr>
+            <th class="px-4 py-3 text-left">Photo</th>
+            <th class="px-4 py-3 text-left">Name</th>
+            <th class="px-4 py-3 text-left">Admission No</th>
+            <th class="px-4 py-3 text-left">Class</th>
+            <th class="px-4 py-3 text-left no-print">Actions</th>
+          </tr>
+        </thead>
 
-            <tbody>
-                {% for student in students %}
-                <tr class="border-b hover:bg-gray-50">
-                    <td class="px-4 py-2">
-                        {% if student.photo %}
-                        <img src="{{ student.photo.url }}" alt="Photo" class="h-12 w-12 rounded-full object-cover">
-                        {% else %}
-                        <div class="h-12 w-12 rounded-full bg-gray-200 flex items-center justify-center text-gray-500">
-                            N/A
-                        </div>
-                        {% endif %}
-                    </td>
-                    <td class="px-4 py-2 text-gray-700">{{ student.full_name }}</td>
-                    <td class="px-4 py-2 text-gray-700">{{ student.admission_no }}</td>
-                    <td class="px-4 py-2 text-gray-700">{{ student.school_class }}</td>
-                    <td class="px-4 py-2 space-x-2">
-                        <a href="{% url 'school_admin:admin_student_edit' school.id student.id %}"
-                           class="px-3 py-1 bg-yellow-400 text-white rounded hover:bg-yellow-500 transition">
-                            Edit
-                        </a>
-                        <a href="{% url 'school_admin:admin_student_delete' school.id student.id %}"
-                           class="px-3 py-1 bg-red-500 text-white rounded hover:bg-red-600 transition">
-                            Delete
-                        </a>
-                    </td>
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="5" class="px-4 py-6 text-center text-gray-500">No students found.</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+        <tbody>
+          {% for student in students %}
+          <tr class="border-b hover:bg-gray-50 transition">
+            <td class="px-4 py-3">
+              {% if student.photo %}
+                <img src="{{ student.photo.url }}" class="h-10 w-10 rounded-full object-cover border">
+              {% else %}
+                <div class="h-10 w-10 rounded-full bg-gray-200 flex items-center justify-center text-xs">
+                  N/A
+                </div>
+              {% endif %}
+            </td>
+            <td class="px-4 py-3 font-medium">{{ student.full_name }}</td>
+            <td class="px-4 py-3">{{ student.admission_no }}</td>
+            <td class="px-4 py-3">{{ student.school_class }}</td>
+            <td class="px-4 py-3 no-print">
+              <div class="flex gap-2">
+                <a href="{% url 'school_admin:admin_student_edit' school.id student.id %}"
+                   class="px-3 py-1 text-xs bg-yellow-400 text-white rounded">Edit</a>
+                <a href="{% url 'school_admin:admin_student_delete' school.id student.id %}"
+                   class="px-3 py-1 text-xs bg-red-500 text-white rounded">Delete</a>
+              </div>
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" class="px-4 py-8 text-center text-gray-500">
+              No students found.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
+  </div>
+
 </div>
+
+<!-- 🔍 LIVE SEARCH -->
+<script>
+  document.getElementById("searchInput").addEventListener("keyup", function () {
+    const value = this.value.toLowerCase();
+    document.querySelectorAll("#studentTable tbody tr").forEach(row => {
+      row.style.display = row.innerText.toLowerCase().includes(value) ? "" : "none";
+    });
+  });
+
+  /* 📄 EXCEL EXPORT */
+  function exportTableToExcel() {
+    let table = document.getElementById("studentTable").outerHTML;
+    let blob = new Blob([table], { type: "application/vnd.ms-excel" });
+    let url = URL.createObjectURL(blob);
+
+    let a = document.createElement("a");
+    a.href = url;
+    a.download = "students.xls";
+    a.click();
+  }
+</script>
+
 {% endblock %}

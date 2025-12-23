@@ -23,27 +23,34 @@ def exam_list(request):
     if not student:
         return HttpResponseForbidden("You must be logged in as a student to view available exams.")
 
-    # ✅ Filter exams by:
+    # ✅ Get exams for:
     # 1. Student's school
-    # 2. Active status
-    # 3. Time window
+    # 2. Student's class
+    # 3. Active status
+    # 4. Valid time window
     exams = CBTExam.objects.filter(
         school=student.school,
+        school_class=student.school_class,   # 🔑 restrict to class
         active=True,
         start_time__lte=now,
         end_time__gte=now
-    )
+    ).select_related("subject")
 
     # ✅ Mark already-taken exams
-    taken_exam_ids = CBTSubmission.objects.filter(
-        student=student,
-        completed_on__isnull=False
-    ).values_list('exam_id', flat=True)
+    taken_exam_ids = set(
+        CBTSubmission.objects.filter(
+            student=student,
+            completed_on__isnull=False
+        ).values_list('exam_id', flat=True)
+    )
 
     for exam in exams:
         exam.already_taken = exam.id in taken_exam_ids
 
-    return render(request, "cbt/exam_list.html", {"exams": exams})
+    return render(request, "cbt/exam_list.html", {
+        "exams": exams,
+    })
+
 
 
 

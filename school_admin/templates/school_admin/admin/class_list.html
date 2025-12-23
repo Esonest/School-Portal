@@ -1,70 +1,113 @@
 {% extends "accounts/base.html" %}
 
 {% block content %}
-<div class="max-w-5xl mx-auto bg-white shadow rounded-lg p-6 mt-6">
 
-    <h2 class="text-2xl font-bold text-{{ school.theme_color }}-600">All Classes</h2>
+<style>
+/* ===================== */
+/* DARK MODE SUPPORT */
+/* ===================== */
+.dark body {
+  background-color: #0f172a;
+  color: #e5e7eb;
+}
+.dark .card,
+.dark select,
+.dark input {
+  background-color: #020617 !important;
+  color: #e5e7eb;
+}
+</style>
 
-    <!-- Filter Form -->
-    <div class="mb-4 flex gap-4">
-        <form method="get" class="flex gap-3">
+<div class="max-w-7xl mx-auto px-4 py-8 space-y-8">
 
-            <!-- Session Selector -->
-            <select name="session" class="border rounded px-3 py-2">
-                <option value="">Select Session</option>
-                {% for s in sessions %}
-                    <option value="{{ s }}" {% if s == selected_session %}selected{% endif %}>{{ s }}</option>
-                {% endfor %}
-            </select>
+  <!-- ========================== -->
+  <!-- HEADER -->
+  <!-- ========================== -->
+  <div class="bg-white dark:bg-slate-900 border rounded-2xl p-6 shadow flex flex-col md:flex-row justify-between md:items-center gap-4">
+    <h2 class="text-2xl font-bold text-{{ school.theme_color }}-700">
+      All Classes — {{ school.name }}
+    </h2>
+  </div>
 
-            <!-- Term Selector -->
-            <select name="term" class="border rounded px-3 py-2">
-                <option value="">Select Term</option>
-                <option value="1" {% if selected_term == "1" %}selected{% endif %}>First Term</option>
-                <option value="2" {% if selected_term == "2" %}selected{% endif %}>Second Term</option>
-                <option value="3" {% if selected_term == "3" %}selected{% endif %}>Third Term</option>
-                <option value="cumulative" {% if selected_term == "cumulative" %}selected{% endif %}>Cumulative</option>
-            </select>
+  <!-- ========================== -->
+  <!-- FILTER BAR -->
+  <!-- ========================== -->
+  <form method="get"
+        class="bg-white dark:bg-slate-900 border rounded-xl p-4 shadow flex flex-col md:flex-row gap-4">
 
-            <button class="bg-blue-600 text-white rounded px-4 py-2 hover:bg-blue-700">
-                Filter
-            </button>
-        </form>
-    </div>
+    <!-- Session Selector -->
+    <select name="session" class="border rounded px-3 py-2 w-full md:w-56">
+      <option value="">Select Session</option>
+      {% for s in sessions %}
+        <option value="{{ s }}" {% if s == selected_session %}selected{% endif %}>
+          {{ s }}
+        </option>
+      {% endfor %}
+    </select>
 
-    <!-- Classes List -->
-    <ul class="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {% for c in classes %}
-        <li class="p-4 border bg-gray-50 rounded shadow flex justify-between items-center">
-            <span class="font-semibold">{{ c.name }}</span>
+    <!-- Term Selector -->
+    <select name="term" class="border rounded px-3 py-2 w-full md:w-56">
+      <option value="">Select Term</option>
+      <option value="1" {% if selected_term == "1" %}selected{% endif %}>First Term</option>
+      <option value="2" {% if selected_term == "2" %}selected{% endif %}>Second Term</option>
+      <option value="3" {% if selected_term == "3" %}selected{% endif %}>Third Term</option>
+      <option value="cumulative" {% if selected_term == "cumulative" %}selected{% endif %}>
+        Cumulative
+      </option>
+    </select>
 
-            <div class="flex gap-2">
+    <button class="px-6 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 transition">
+      Filter
+    </button>
+  </form>
 
-                <!-- View Students -->
-                <a href="{% url 'school_admin:admin-class-students' c.id %}?term={{ selected_term }}&session={{ selected_session }}"
-                   class="text-blue-600 hover:text-blue-800 font-medium">
-                   View Students →
-                </a>
+  <!-- ========================== -->
+  <!-- CLASSES GRID -->
+  <!-- ========================== -->
+  <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
 
-                <!-- Cumulative Results -->
-                {% if selected_session and selected_term == "cumulative" %}
-                <a href="{% url 'school_admin:admin-class-cumulative' c.id %}?session={{ selected_session }}"
-                   class="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 transition">
-                   Cumulative Results
-                </a>
-                {% endif %}
+    {% for c in classes %}
+    <li class="bg-white dark:bg-slate-900 border rounded-xl shadow p-5 flex flex-col justify-between hover:shadow-lg transition">
 
-                <!-- Promote Class -->
-                <a href="{% url 'school_admin:promote_students' c.id %}?from={{ selected_session }}"
-                   class="bg-purple-600 text-white px-3 py-1 rounded hover:bg-purple-700 transition">
-                   Promote Class
-                </a>
+      <div class="mb-4">
+        <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100">
+          {{ c.name }}
+        </h3>
+      </div>
 
-            </div>
-        </li>
-        {% empty %}
-        <p class="text-gray-500">No classes available.</p>
-        {% endfor %}
-    </ul>
+      <div class="flex flex-wrap gap-2 text-sm">
+
+        <!-- View Students -->
+        <a href="{% url 'school_admin:admin-class-students' c.id %}?term={{ selected_term }}&session={{ selected_session }}"
+           class="px-3 py-1 bg-blue-100 text-blue-700 rounded hover:bg-blue-200 transition">
+          View Students
+        </a>
+
+        <!-- Cumulative Results -->
+        {% if selected_session and selected_term == "cumulative" %}
+        <a href="{% url 'school_admin:admin-class-cumulative' c.id %}?session={{ selected_session }}"
+           class="px-3 py-1 bg-green-600 text-white rounded hover:bg-green-700 transition">
+          Cumulative Results
+        </a>
+        {% endif %}
+
+        <!-- Promote Class -->
+        <a href="{% url 'school_admin:promote_students' c.id %}?from={{ selected_session }}"
+           class="px-3 py-1 bg-purple-600 text-white rounded hover:bg-purple-700 transition">
+          Promote Class
+        </a>
+
+      </div>
+
+    </li>
+    {% empty %}
+    <li class="col-span-full text-center text-gray-500 py-10">
+      No classes available.
+    </li>
+    {% endfor %}
+
+  </ul>
+
 </div>
+
 {% endblock %}

@@ -1,129 +1,216 @@
 {% extends "accounts/base.html" %}
 
 {% block content %}
-<h2 class="text-2xl font-bold text-{{ school.theme_color }}-600">Teachers Dashboard – {{ school.name }}</h2>
 
-<!-- ========================== -->
-<!-- Top Action Bar -->
-<!-- ========================== -->
-<div class="flex justify-between items-center mb-6">
-    <!-- Add Teacher Button -->
+<style>
+/* ===================== */
+/* DARK MODE SUPPORT */
+/* ===================== */
+.dark body {
+  background-color: #0f172a;
+  color: #e5e7eb;
+}
+.dark .card,
+.dark table,
+.dark select,
+.dark input {
+  background-color: #020617 !important;
+  color: #e5e7eb;
+}
+.dark thead {
+  background-color: #020617 !important;
+}
+
+/* ===================== */
+/* PRINT – A4 OPTIMIZED */
+/* ===================== */
+@media print {
+
+  @page {
+    size: A4 portrait;
+    margin: 15mm;
+  }
+
+  body {
+    background: white !important;
+    color: black !important;
+    font-size: 11px;
+  }
+
+  /* WATERMARK */
+  body::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    background-image: url("{% if school.logo %}{{ school.logo.url }}{% endif %}");
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 380px;
+    opacity: 0.06;
+    z-index: -1;
+  }
+
+  /* HIDE UI */
+  form, button, a[href], canvas {
+    display: none !important;
+  }
+
+  /* TABLE FIX */
+  table {
+    width: 100% !important;
+    border-collapse: collapse;
+  }
+
+  th, td {
+    border: 1px solid #333 !important;
+    padding: 6px !important;
+  }
+
+  thead {
+    display: table-header-group;
+  }
+
+  tr {
+    page-break-inside: avoid;
+  }
+}
+</style>
+
+<div class="max-w-7xl mx-auto px-4 py-8 space-y-8">
+
+  <!-- ========================== -->
+  <!-- HEADER -->
+  <!-- ========================== -->
+  <div class="flex flex-col md:flex-row justify-between md:items-center gap-4 bg-white dark:bg-slate-900 border rounded-2xl p-6 shadow">
+    <h2 class="text-2xl font-bold text-{{ school.theme_color }}-700">
+      Teachers Dashboard — {{ school.name }}
+    </h2>
+
     <a href="{% url 'school_admin:teacher_create' school.id %}"
-       class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700">
-       + Add Teacher
+       class="px-4 py-2 bg-indigo-600 text-white rounded-lg shadow hover:bg-indigo-700 transition">
+      + Add Teacher
     </a>
+  </div>
 
-    <!-- Filter Form -->
-    <form method="GET" class="flex gap-4">
-        <select name="class" class="border p-2 rounded">
-            <option value="">All Classes</option>
-            {% for cls in classes %}
-                <option value="{{ cls.id }}" {% if cls.id|stringformat:"s" == selected_class %}selected{% endif %}>
-                    {{ cls.name }}
-                </option>
-            {% endfor %}
-        </select>
+  <!-- ========================== -->
+  <!-- FILTER BAR -->
+  <!-- ========================== -->
+  <form method="GET"
+        class="flex flex-col md:flex-row gap-4 bg-white dark:bg-slate-900 border rounded-xl p-4 shadow">
+    <select name="class" class="border p-2 rounded w-full md:w-56">
+      <option value="">All Classes</option>
+      {% for cls in classes %}
+        <option value="{{ cls.id }}" {% if cls.id|stringformat:"s" == selected_class %}selected{% endif %}>
+          {{ cls.name }}
+        </option>
+      {% endfor %}
+    </select>
 
-        <select name="subject" class="border p-2 rounded">
-            <option value="">All Subjects</option>
-            {% for s in subjects %}
-                <option value="{{ s.id }}" {% if s.id|stringformat:"s" == selected_subject %}selected{% endif %}>
-                    {{ s.name }}
-                </option>
-            {% endfor %}
-        </select>
+    <select name="subject" class="border p-2 rounded w-full md:w-56">
+      <option value="">All Subjects</option>
+      {% for s in subjects %}
+        <option value="{{ s.id }}" {% if s.id|stringformat:"s" == selected_subject %}selected{% endif %}>
+          {{ s.name }}
+        </option>
+      {% endfor %}
+    </select>
 
-        <button class="bg-gray-800 text-white px-4 py-2 rounded hover:bg-black">Apply</button>
-    </form>
-</div>
+    <button class="px-6 py-2 bg-gray-800 text-white rounded hover:bg-black">
+      Apply Filters
+    </button>
+  </form>
 
-<!-- ========================== -->
-<!-- Charts Section -->
-<!-- ========================== -->
-<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-10">
-    <!-- Teachers per Class Chart -->
-    <div class="bg-white p-4 rounded-lg shadow">
-        <h3 class="font-semibold mb-2">Teachers per Class</h3>
-        <canvas id="classChart"></canvas>
+  <!-- ========================== -->
+  <!-- CHARTS -->
+  <!-- ========================== -->
+  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div class="bg-white dark:bg-slate-900 border rounded-xl p-4 shadow">
+      <h3 class="font-semibold mb-3">Teachers per Class</h3>
+      <canvas id="classChart"></canvas>
     </div>
 
-    <!-- Teachers per Subject Chart -->
-    <div class="bg-white p-4 rounded-lg shadow">
-        <h3 class="font-semibold mb-2">Teachers per Subject</h3>
-        <canvas id="subjectChart"></canvas>
+    <div class="bg-white dark:bg-slate-900 border rounded-xl p-4 shadow">
+      <h3 class="font-semibold mb-3">Teachers per Subject</h3>
+      <canvas id="subjectChart"></canvas>
     </div>
-</div>
+  </div>
 
-<!-- ========================== -->
-<!-- Teachers Table -->
-<!-- ========================== -->
-<div class="overflow-x-auto bg-white shadow rounded-lg">
-    <table class="w-full min-w-max border-collapse">
-        <thead class="bg-gray-100 border-b">
-            <tr>
-                <th class="p-3 text-left">Name</th>
-                <th class="p-3 text-left">Staff ID</th>
-                <th class="p-3 text-left">Classes</th>
-                <th class="p-3 text-left">Subjects</th>
-                <th class="p-3 text-left">Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for t in teachers %}
-            <tr class="border-b hover:bg-gray-50">
-                <td class="p-3">{{ t.get_full_name }}</td>
-                <td class="p-3">{{ t.staff_id }}</td>
-                <td class="p-3">
-                    {% for cls in t.classes.all %}{{ cls.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
-                </td>
-                <td class="p-3">
-                    {% for s in t.subjects.all %}{{ s.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
-                </td>
-                <td class="p-3">
-                    <a href="{% url 'school_admin:teacher_edit' school.id t.id %}" 
-                       class="text-blue-600 hover:underline mr-2">Edit</a>
-                    <a href="{% url 'school_admin:teacher_delete' school.id t.id %}" 
-                       class="text-red-600 hover:underline">Delete</a>
-                </td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="5" class="p-4 text-center text-gray-500">No teachers found.</td>
-            </tr>
-            {% endfor %}
-        </tbody>
+  <!-- ========================== -->
+  <!-- TEACHERS TABLE -->
+  <!-- ========================== -->
+  <div class="overflow-x-auto bg-white dark:bg-slate-900 border rounded-xl shadow">
+    <table class="w-full min-w-max">
+      <thead class="bg-gray-100 dark:bg-slate-800 border-b">
+        <tr>
+          <th class="p-3 text-left">Name</th>
+          <th class="p-3 text-left">Staff ID</th>
+          <th class="p-3 text-left">Classes</th>
+          <th class="p-3 text-left">Subjects</th>
+          <th class="p-3 text-left">Actions</th>
+        </tr>
+      </thead>
+
+      <tbody>
+        {% for t in teachers %}
+        <tr class="border-b hover:bg-gray-50 dark:hover:bg-slate-800">
+          <td class="p-3 font-medium">{{ t.get_full_name }}</td>
+          <td class="p-3">{{ t.staff_id }}</td>
+          <td class="p-3 text-sm">
+            {% for cls in t.classes.all %}{{ cls.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+          </td>
+          <td class="p-3 text-sm">
+            {% for s in t.subjects.all %}{{ s.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
+          </td>
+          <td class="p-3 space-x-2">
+            <a href="{% url 'school_admin:teacher_edit' school.id t.id %}"
+               class="text-indigo-600 hover:underline">Edit</a>
+            <a href="{% url 'school_admin:teacher_delete' school.id t.id %}"
+               class="text-red-600 hover:underline">Delete</a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="5" class="p-6 text-center text-gray-500">
+            No teachers found.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
     </table>
+  </div>
+
 </div>
 
 <!-- ========================== -->
-<!-- Chart.js Scripts -->
+<!-- CHART.JS -->
 <!-- ========================== -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 const classData = {{ class_chart|safe }};
 new Chart(document.getElementById('classChart'), {
-    type: 'bar',
-    data: {
-        labels: classData.map(d => d['classes__name']),
-        datasets: [{ 
-            label: 'Teachers', 
-            data: classData.map(d => d.total), 
-            backgroundColor: '#3b82f6' 
-        }]
-    }
+  type: 'bar',
+  data: {
+    labels: classData.map(d => d['classes__name']),
+    datasets: [{
+      label: 'Teachers',
+      data: classData.map(d => d.total),
+      backgroundColor: '#3b82f6'
+    }]
+  }
 });
 
 const subjectData = {{ subject_chart|safe }};
 new Chart(document.getElementById('subjectChart'), {
-    type: 'bar',
-    data: {
-        labels: subjectData.map(d => d['subjects__name']),
-        datasets: [{ 
-            label: 'Teachers', 
-            data: subjectData.map(d => d.total), 
-            backgroundColor: '#10b981' 
-        }]
-    }
+  type: 'bar',
+  data: {
+    labels: subjectData.map(d => d['subjects__name']),
+    datasets: [{
+      label: 'Teachers',
+      data: subjectData.map(d => d.total),
+      backgroundColor: '#10b981'
+    }]
+  }
 });
 </script>
+
 {% endblock %}

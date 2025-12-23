@@ -37,7 +37,6 @@ from results.utils import portal_required
 @student_required
 def student_dashboard(request):
 
-    print("🚀 DASHBOARD VIEW REACHED")
 
 
     student = getattr(request.user, 'student_profile', None) or getattr(request.user, 'student', None)
