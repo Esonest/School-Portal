@@ -113,10 +113,10 @@
 
 <!-- STYLES -->
 <style>
+/* Animations */
 .animate-fade-in {
   animation: fadeIn 0.9s ease forwards;
 }
-
 .animate-rise {
   animation: riseUp 0.6s ease forwards;
 }
@@ -125,14 +125,14 @@
   from { opacity: 0; transform: translateY(20px); }
   to { opacity: 1; transform: translateY(0); }
 }
-
 @keyframes riseUp {
   from { opacity: 0; transform: translateY(30px); }
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* CONTACT CARDS */
 .contact-card {
-  background: white;
+  background: #ffffff;
   padding: 1.5rem;
   border-radius: 1rem;
   box-shadow: 0 10px 15px rgba(0,0,0,0.08);
@@ -145,13 +145,24 @@
   color: #f9fafb;
 }
 
+/* Card titles */
 .contact-title {
   font-size: 1.1rem;
-  font-weight: bold;
+  font-weight: 700;
   margin-bottom: 0.75rem;
   color: inherit;
 }
 
+/* Ensure paragraph text is readable */
+.contact-card p {
+  color: #374151;
+}
+
+.dark .contact-card p {
+  color: #e5e7eb;
+}
+
+/* FORM LABELS */
 .form-label {
   display: block;
   margin-bottom: 0.5rem;
@@ -163,27 +174,56 @@
   color: #f9fafb;
 }
 
+/* INPUTS & TEXTAREA */
 .form-input {
   width: 100%;
   padding: 0.75rem;
   border-radius: 0.5rem;
   border: 1px solid #d1d5db;
   outline: none;
-  background: white;
+  background: #ffffff;
   color: #111827;
 }
 
+.form-input::placeholder {
+  color: #6b7280;
+}
+
 .dark .form-input {
-  background: #111827;
-  border-color: #374151;
+  background: #020617;
+  border-color: #334155;
   color: #f9fafb;
 }
 
+.dark .form-input::placeholder {
+  color: #9ca3af;
+}
+
+/* Focus states */
 .form-input:focus {
   border-color: #2563eb;
-  box-shadow: 0 0 0 2px rgba(37,99,235,0.2);
+  box-shadow: 0 0 0 2px rgba(37,99,235,0.25);
+}
+
+/* ALERT MESSAGES */
+.alert-message {
+  color: #ffffff;
+}
+
+/* ICONS visibility */
+.contact-title i {
+  filter: brightness(1.1);
+}
+
+/* HEADINGS DARK MODE SAFETY */
+.dark h1,
+.dark h2,
+.dark h3,
+.dark p {
+  color: #f9fafb;
 }
 </style>
+
 
 <script>
   setTimeout(() => {
