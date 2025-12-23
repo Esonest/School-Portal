@@ -1,5 +1,4 @@
 {% extends 'accounts/base.html' %}
-
 {% block title %}Contact Us - TECHCENTER School Portal{% endblock %}
 
 {% block content %}
@@ -7,9 +6,7 @@
 <!-- HERO SECTION -->
 <section class="relative h-56 sm:h-64 md:h-72 lg:h-80 bg-cover bg-center flex items-center justify-center"
          style="background-image: url('https://images.unsplash.com/photo-1504384308090-c894fdcc538d');">
-
   <div class="absolute inset-0 bg-gradient-to-b from-black/70 via-black/60 to-black/80"></div>
-
   <div class="relative z-10 text-center px-4 sm:px-6 max-w-3xl animate-fade-in">
     <h1 class="text-2xl sm:text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight drop-shadow-lg">
       Get in Touch With Us
@@ -18,9 +15,9 @@
       Have questions or need support? Reach out and our team will be happy to assist you.
     </p>
   </div>
-</section> 
+</section>
 
-<main class="px-4 sm:px-6 md:px-8 py-12 max-w-7xl mx-auto bg-gray-50 dark:bg-gray-900">
+<main class="px-4 sm:px-6 md:px-8 py-12 max-w-7xl mx-auto">
 
   <!-- CONTACT INFO -->
   <h2 class="text-xl sm:text-2xl md:text-3xl font-semibold mb-10 text-center text-gray-800 dark:text-gray-100">
@@ -28,37 +25,25 @@
   </h2>
 
   <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8 mb-14">
-
     <div class="contact-card animate-rise">
-      <h3 class="contact-title">
-        <i class="bi bi-geo-alt-fill text-blue-600 mr-2"></i>Our Address
-      </h3>
-      <p class="text-gray-700 dark:text-gray-300">
-        Close 3 Block One Elekahia Housing Estate, Port Harcourt, Nigeria
-      </p>
+      <h3 class="contact-title"><i class="bi bi-geo-alt-fill text-blue-600 mr-2"></i>Our Address</h3>
+      <p>Close 3 Block One Elekahia Housing Estate, Port Harcourt, Nigeria</p>
     </div>
 
     <div class="contact-card animate-rise">
-      <h3 class="contact-title">
-        <i class="bi bi-telephone-fill text-blue-600 mr-2"></i>Phone
-      </h3>
-      <p class="text-gray-700 dark:text-gray-300">+234 708 573 4441</p>
+      <h3 class="contact-title"><i class="bi bi-telephone-fill text-blue-600 mr-2"></i>Phone</h3>
+      <p>+234 708 573 4441</p>
     </div>
 
     <div class="contact-card animate-rise">
-      <h3 class="contact-title">
-        <i class="bi bi-envelope-fill text-blue-600 mr-2"></i>Email
-      </h3>
-      <p class="text-gray-700 dark:text-gray-300">techcenter652@gmail.com</p>
+      <h3 class="contact-title"><i class="bi bi-envelope-fill text-blue-600 mr-2"></i>Email</h3>
+      <p>techcenter652@gmail.com</p>
     </div>
 
     <div class="contact-card animate-rise">
-      <h3 class="contact-title">
-        <i class="bi bi-globe text-blue-600 mr-2"></i>Website
-      </h3>
-      <p class="text-gray-700 dark:text-gray-300">www.techcenter.com.ng</p>
+      <h3 class="contact-title"><i class="bi bi-globe text-blue-600 mr-2"></i>Website</h3>
+      <p>www.techcenter.com.ng</p>
     </div>
-
   </div>
 
   <!-- CONTACT FORM -->
@@ -74,6 +59,21 @@
       {% for message in messages %}
         <div class="alert-message flex items-center gap-3 p-4 rounded-lg text-white font-medium
           {% if message.tags == 'success' %}bg-green-600{% else %}bg-red-600{% endif %}">
+          
+          {% if message.tags == 'success' %}
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
+                 viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M5 13l4 4L19 7" />
+            </svg>
+          {% else %}
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
+                 viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          {% endif %}
+
           <span>{{ message }}</span>
         </div>
       {% endfor %}
@@ -82,23 +82,23 @@
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <div>
         <label class="form-label">Full Name</label>
-        <input class="form-input" type="text" name="name" required>
+        <input class="form-input" type="text" name="name" value="{{ request.POST.name|default:'' }}" required>
       </div>
 
       <div>
         <label class="form-label">Email</label>
-        <input class="form-input" type="email" name="email" required>
+        <input class="form-input" type="email" name="email" value="{{ request.POST.email|default:'' }}" required>
       </div>
     </div>
 
     <div>
       <label class="form-label">Subject</label>
-      <input class="form-input" type="text" name="subject" required>
+      <input class="form-input" type="text" name="subject" value="{{ request.POST.subject|default:'' }}" required>
     </div>
 
     <div>
       <label class="form-label">Message</label>
-      <textarea class="form-input h-32 resize-none" name="message" required></textarea>
+      <textarea class="form-input h-32 resize-none" name="message" required>{{ request.POST.message|default:'' }}</textarea>
     </div>
 
     <div class="text-center pt-4">
@@ -108,123 +108,43 @@
       </button>
     </div>
   </form>
-
 </main>
 
 <!-- STYLES -->
 <style>
-/* Animations */
-.animate-fade-in {
-  animation: fadeIn 0.9s ease forwards;
-}
-.animate-rise {
-  animation: riseUp 0.6s ease forwards;
-}
+.animate-fade-in { animation: fadeIn 0.9s ease forwards; }
+.animate-rise { animation: riseUp 0.6s ease forwards; }
+@keyframes fadeIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+@keyframes riseUp { from { opacity:0; transform:translateY(30px); } to { opacity:1; transform:translateY(0); } }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(20px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-@keyframes riseUp {
-  from { opacity: 0; transform: translateY(30px); }
-  to { opacity: 1; transform: translateY(0); }
-}
+.contact-card { background:white; padding:1.5rem; border-radius:1rem; box-shadow:0 10px 15px rgba(0,0,0,0.08); transition: all 0.3s ease; }
+.contact-card:hover { transform: translateY(-5px); box-shadow:0 18px 30px rgba(0,0,0,0.15); }
+.dark .contact-card { background: #1f2937; color:#f9fafb; }
 
-/* CONTACT CARDS */
-.contact-card {
-  background: #ffffff;
-  padding: 1.5rem;
-  border-radius: 1rem;
-  box-shadow: 0 10px 15px rgba(0,0,0,0.08);
-  transition: all 0.3s ease;
-  color: #1f2937;
-}
+.contact-title { font-size:1.1rem; font-weight:bold; margin-bottom:0.75rem; color:#1f2937; }
+.dark .contact-title { color:#f9fafb; }
 
-.dark .contact-card {
-  background: #1f2937;
-  color: #f9fafb;
-}
+h2 { color:#1f2937; }
+.dark h2 { color:#f9fafb; }
 
-/* Card titles */
-.contact-title {
-  font-size: 1.1rem;
-  font-weight: 700;
-  margin-bottom: 0.75rem;
-  color: inherit;
-}
+h3 { color:#1f2937; }
+.dark h3 { color:#f9fafb; }
 
-/* Ensure paragraph text is readable */
-.contact-card p {
-  color: #374151;
-}
+p { color:#374151; }
+.dark p { color:#d1d5db; }
 
-.dark .contact-card p {
-  color: #e5e7eb;
-}
+.form-label { display:block; margin-bottom:0.5rem; font-weight:600; color:#1f2937; }
+.dark .form-label { color:#f9fafb; }
 
-/* FORM LABELS */
-.form-label {
-  display: block;
-  margin-bottom: 0.5rem;
-  font-weight: 600;
-  color: #1f2937;
-}
+.form-input { width:100%; padding:0.75rem; border-radius:0.5rem; border:1px solid #d1d5db; outline:none; color:#1f2937; background:#fff; }
+.form-input:focus { border-color:#2563eb; box-shadow:0 0 0 2px rgba(37,99,235,0.2); }
+.dark .form-input { background:#111827; border-color:#374151; color:#f9fafb; }
+.dark .form-input::placeholder { color:#9ca3af; }
 
-.dark .form-label {
-  color: #f9fafb;
-}
-
-/* INPUTS & TEXTAREA */
-.form-input {
-  width: 100%;
-  padding: 0.75rem;
-  border-radius: 0.5rem;
-  border: 1px solid #d1d5db;
-  outline: none;
-  background: #ffffff;
-  color: #111827;
-}
-
-.form-input::placeholder {
-  color: #6b7280;
-}
-
-.dark .form-input {
-  background: #020617;
-  border-color: #334155;
-  color: #f9fafb;
-}
-
-.dark .form-input::placeholder {
-  color: #9ca3af;
-}
-
-/* Focus states */
-.form-input:focus {
-  border-color: #2563eb;
-  box-shadow: 0 0 0 2px rgba(37,99,235,0.25);
-}
-
-/* ALERT MESSAGES */
-.alert-message {
-  color: #ffffff;
-}
-
-/* ICONS visibility */
-.contact-title i {
-  filter: brightness(1.1);
-}
-
-/* HEADINGS DARK MODE SAFETY */
-.dark h1,
-.dark h2,
-.dark h3,
-.dark p {
-  color: #f9fafb;
-}
+.alert-message { transition: opacity 0.5s ease; }
 </style>
 
-
+<!-- AUTO HIDE ALERT -->
 <script>
   setTimeout(() => {
     document.querySelectorAll(".alert-message").forEach(alert => {
