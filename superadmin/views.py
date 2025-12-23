@@ -950,12 +950,35 @@ from django.shortcuts import render
 from accounts.models import ContactMessage
 
 
+from django.shortcuts import render, get_object_or_404, redirect
+
+
 @superadmin_required
 def contact_messages_view(request):
-    messages_list = ContactMessage.objects.order_by('-created_at')
+    status = request.GET.get("status", "")
+
+    messages_list = ContactMessage.objects.all().order_by("-created_at")
+
+    if status == "read":
+        messages_list = messages_list.filter(is_handled=True)
+    elif status == "unread":
+        messages_list = messages_list.filter(is_handled=False)
+
     return render(request, "superadmin/contact_messages.html", {
-        "messages_list": messages_list
+        "messages_list": messages_list,
+        "status": status,
     })
+
+
+@superadmin_required
+def bulk_delete_messages(request):
+    if request.method == "POST":
+        ids = request.POST.getlist("message_ids")
+        ContactMessage.objects.filter(id__in=ids).delete()
+        messages.success(request, "Selected messages deleted successfully.")
+
+    return redirect("superadmin:contact_messages")
+
 
 
 
@@ -965,3 +988,19 @@ def mark_message_read(request, message_id):
     msg.is_handled = True
     msg.save()
     return redirect("superadmin:contact_messages")
+
+
+
+
+@superadmin_required
+def delete_contact_message(request, message_id):
+    msg = get_object_or_404(ContactMessage, id=message_id)
+
+    if request.method == "POST":
+        msg.delete()
+        messages.success(request, "Message deleted successfully.")
+        return redirect("superadmin:contact_messages")
+
+    return render(request, "superadmin/contact_message_confirm_delete.html", {
+        "message": msg
+    })

@@ -58,6 +58,8 @@ urlpatterns = [
     # urls.py
     path("contact-messages/mark-read/<int:message_id>/", views.mark_message_read, name="mark_message_read"),
     path("contact-messages/", views.contact_messages_view, name="contact_messages"),
+    path("contact-messages/bulk-delete/", views.bulk_delete_messages, name="bulk_delete_messages"),
+    path("contact-messages/delete/<int:message_id>/", views.delete_contact_message, name="delete_contact_message"),
     path("super-admin/portals/",views.school_portal_setting_list, name="superadmin_portal_list"),
     path("super-admin/portals/<int:school_id>/edit/",views.school_portal_setting_update,name="superadmin_portal_update"),
 

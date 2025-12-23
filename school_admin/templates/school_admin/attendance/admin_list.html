@@ -61,25 +61,23 @@
 <!-- CHARTS SECTION -->
 <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-10">
 
-    <!-- Daily Chart -->
-    <div class="bg-white p-4 rounded-lg shadow">
-        <h3 class="font-semibold mb-2">Daily Attendance Count</h3>
-        <canvas id="dailyChart"></canvas>
-    </div>
+  <div class="bg-white p-4 rounded-lg shadow h-80">
+    <h3 class="font-semibold mb-2">Daily Attendance Count</h3>
+    <canvas id="dailyChart"></canvas>
+  </div>
 
-    <!-- Status Chart -->
-    <div class="bg-white p-4 rounded-lg shadow">
-        <h3 class="font-semibold mb-2">Status Distribution</h3>
-        <canvas id="statusChart"></canvas>
-    </div>
+  <div class="bg-white p-4 rounded-lg shadow h-80">
+    <h3 class="font-semibold mb-2">Status Distribution</h3>
+    <canvas id="statusChart"></canvas>
+  </div>
 
-    <!-- Class Chart -->
-    <div class="bg-white p-4 rounded-lg shadow">
-        <h3 class="font-semibold mb-2">Class Distribution</h3>
-        <canvas id="classChart"></canvas>
-    </div>
+  <div class="bg-white p-4 rounded-lg shadow h-80">
+    <h3 class="font-semibold mb-2">Class Distribution</h3>
+    <canvas id="classChart"></canvas>
+  </div>
 
 </div>
+
 
 <!-- TABLE -->
 <div class="bg-white shadow rounded-lg overflow-hidden">
@@ -122,54 +120,82 @@
 
 <!-- CHART.JS -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script>
-const dailyData = {{ daily_chart|default:"[]"|safe }};
-const statusData = {{ status_chart|default:"[]"|safe }};
-const classData = {{ class_chart|default:"[]"|safe }};
 
-// Daily Chart
-new Chart(document.getElementById('dailyChart'), {
-    type: 'line',
-    data: {
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+  const dailyData  = {{ daily_chart|default:"[]"|safe }};
+  const statusData = {{ status_chart|default:"[]"|safe }};
+  const classData  = {{ class_chart|default:"[]"|safe }};
+
+  /* =========================
+     DAILY LINE CHART
+  ========================== */
+  if (dailyData.length) {
+    new Chart(document.getElementById('dailyChart'), {
+      type: 'line',
+      data: {
         labels: dailyData.map(d => d.date),
         datasets: [{
-            label: "Total",
-            data: dailyData.map(d => d.total),
-            borderColor: "rgb(34,197,94)",
-            backgroundColor: "rgba(34,197,94,0.2)",
-            borderWidth: 2,
-            tension: 0.3
+          label: "Attendance",
+          data: dailyData.map(d => d.total),
+          borderColor: "#22c55e",
+          backgroundColor: "rgba(34,197,94,0.2)",
+          borderWidth: 2,
+          tension: 0.4,
+          fill: true
         }]
-    },
-    options: { responsive: true, maintainAspectRatio: false }
-});
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false
+      }
+    });
+  }
 
-// Status Chart
-new Chart(document.getElementById('statusChart'), {
-    type: 'pie',
-    data: {
+  /* =========================
+     STATUS PIE CHART
+  ========================== */
+  if (statusData.length) {
+    new Chart(document.getElementById('statusChart'), {
+      type: 'pie',
+      data: {
         labels: statusData.map(d => d.status),
         datasets: [{
-            data: statusData.map(d => d.total),
-            backgroundColor: ["#34D399","#F87171","#60A5FA","#FBBF24"]
+          data: statusData.map(d => d.total),
+          backgroundColor: ["#22c55e", "#ef4444"]
         }]
-    },
-    options: { responsive: true, maintainAspectRatio: false }
-});
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false
+      }
+    });
+  }
 
-// Class Distribution Chart
-new Chart(document.getElementById('classChart'), {
-    type: 'bar',
-    data: {
+  /* =========================
+     CLASS BAR CHART
+  ========================== */
+  if (classData.length) {
+    new Chart(document.getElementById('classChart'), {
+      type: 'bar',
+      data: {
         labels: classData.map(d => d.student__school_class__name),
         datasets: [{
-            label: "Records",
-            data: classData.map(d => d.total),
-            backgroundColor: "#3B82F6"
+          label: "Attendance Records",
+          data: classData.map(d => d.total),
+          backgroundColor: "#3b82f6"
         }]
-    },
-    options: { responsive: true, maintainAspectRatio: false }
+      },
+      options: {
+        responsive: true,
+        maintainAspectRatio: false
+      }
+    });
+  }
+
 });
 </script>
+
 
 {% endblock %}

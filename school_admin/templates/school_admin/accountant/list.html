@@ -10,6 +10,7 @@
   background-color: #0f172a;
   color: #e5e7eb;
 }
+
 .dark .card,
 .dark table,
 .dark select,
@@ -17,8 +18,33 @@
   background-color: #020617 !important;
   color: #e5e7eb;
 }
+
 .dark thead {
   background-color: #020617 !important;
+}
+
+.dark th {
+  color: #f9fafb;
+}
+
+.dark td {
+  color: #e5e7eb;
+}
+
+.dark .text-gray-500 {
+  color: #9ca3af !important;
+}
+
+.dark a.text-blue-600 {
+  color: #60a5fa !important;
+}
+
+.dark a.text-orange-600 {
+  color: #fb923c !important;
+}
+
+.dark .border {
+  border-color: #1e293b;
 }
 </style>
 
@@ -27,13 +53,15 @@
   <!-- ========================== -->
   <!-- HEADER -->
   <!-- ========================== -->
-  <div class="flex flex-col md:flex-row justify-between items-center gap-4 bg-white dark:bg-slate-900 border rounded-2xl p-6 shadow">
-    <h2 class="text-2xl font-bold text-{{ school.theme_color }}-700">
+  <div class="flex flex-col md:flex-row justify-between items-center gap-4
+              bg-white dark:bg-slate-900 border rounded-2xl p-6 shadow">
+    <h2 class="text-2xl font-bold text-{{ school.theme_color }}-700 dark:text-{{ school.theme_color }}-400">
       School Accountants
     </h2>
 
     <a href="{% url 'school_admin:accountant_create' school.id %}"
-       class="px-4 py-2 bg-indigo-600 text-white rounded-lg shadow hover:bg-indigo-700 transition">
+       class="px-4 py-2 bg-indigo-600 hover:bg-indigo-700
+              text-white rounded-lg shadow transition">
        + Add Accountant
     </a>
   </div>
@@ -42,38 +70,58 @@
   <!-- ACCOUNTANTS TABLE -->
   <!-- ========================== -->
   <div class="overflow-x-auto bg-white dark:bg-slate-900 border rounded-xl shadow">
-    <table class="w-full min-w-max divide-y divide-gray-200">
+    <table class="w-full min-w-max divide-y divide-gray-200 dark:divide-slate-700">
       <thead class="bg-gray-100 dark:bg-slate-800">
         <tr>
-          <th class="p-3 text-left">Name</th>
-          <th class="p-3 text-left">Email</th>
-          <th class="p-3 text-left">Staff ID</th>
-          <th class="p-3 text-left">Status</th>
-          <th class="p-3 text-left">Actions</th>
+          <th class="p-3 text-left font-semibold">Name</th>
+          <th class="p-3 text-left font-semibold">Email</th>
+          <th class="p-3 text-left font-semibold">Staff ID</th>
+          <th class="p-3 text-left font-semibold">Status</th>
+          <th class="p-3 text-left font-semibold">Actions</th>
         </tr>
       </thead>
-      <tbody class="bg-white dark:bg-slate-900 divide-y divide-gray-100">
+
+      <tbody class="bg-white dark:bg-slate-900 divide-y divide-gray-100 dark:divide-slate-800">
         {% for a in accountants %}
         <tr class="hover:bg-gray-50 dark:hover:bg-slate-800 transition">
-          <td class="p-3 font-medium">{{ a.user.get_full_name }}</td>
-          <td class="p-3 text-sm">{{ a.user.email }}</td>
-          <td class="p-3 text-sm">{{ a.staff_id }}</td>
-          <td class="p-3">
+          <td class="p-3 font-medium">
+            {{ a.user.get_full_name }}
+          </td>
+
+          <td class="p-3 text-sm text-gray-600 dark:text-gray-300">
+            {{ a.user.email }}
+          </td>
+
+          <td class="p-3 text-sm text-gray-600 dark:text-gray-300">
+            {{ a.staff_id }}
+          </td>
+
+          <td class="p-3 font-medium">
             {% if a.is_active %}
-              <span class="text-green-600">Active</span>
+              <span class="text-green-600 dark:text-green-400">Active</span>
             {% else %}
-              <span class="text-red-600">Inactive</span>
+              <span class="text-red-600 dark:text-red-400">Inactive</span>
             {% endif %}
           </td>
+
           <td class="p-3 space-x-2 text-sm">
-            <a href="{% url 'school_admin:accountant_update' a.id %}" class="text-blue-600 hover:underline">Edit</a>
+            <a href="{% url 'school_admin:accountant_update' a.id %}"
+               class="text-blue-600 hover:underline">
+              Edit
+            </a>
             |
-            <a href="{% url 'school_admin:accountant_toggle' a.id %}" class="text-orange-600 hover:underline">Toggle</a>
+            <a href="{% url 'school_admin:accountant_toggle' a.id %}"
+               class="text-orange-600 hover:underline">
+              Toggle
+            </a>
           </td>
         </tr>
         {% empty %}
         <tr>
-          <td colspan="5" class="p-6 text-center text-gray-500">No accountants</td>
+          <td colspan="5"
+              class="p-6 text-center text-gray-500 dark:text-gray-400">
+            No accountants
+          </td>
         </tr>
         {% endfor %}
       </tbody>
