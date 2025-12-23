@@ -442,9 +442,16 @@ TAILWIND_INPUT = "w-full border-gray-300 rounded px-3 py-2"
 User = get_user_model()
 
 class AccountantUserForm(forms.ModelForm):
-    password1 = forms.CharField(widget=forms.PasswordInput(attrs={"class": TAILWIND_INPUT}))
-    password2 = forms.CharField(widget=forms.PasswordInput(attrs={"class": TAILWIND_INPUT}))
-    role = forms.ChoiceField(choices=User.ROLE_CHOICES, widget=forms.Select(attrs={"class": TAILWIND_INPUT}))
+    password1 = forms.CharField(
+        widget=forms.PasswordInput(attrs={"class": TAILWIND_INPUT})
+    )
+    password2 = forms.CharField(
+        widget=forms.PasswordInput(attrs={"class": TAILWIND_INPUT})
+    )
+    role = forms.CharField(
+        widget=forms.HiddenInput(),  # hide role field from form
+        initial="accountant"         # force role to accountant
+    )
 
     class Meta:
         model = User
@@ -463,6 +470,15 @@ class AccountantUserForm(forms.ModelForm):
             self.add_error("password2", "Passwords do not match")
         return cleaned
 
+    def save(self, commit=True):
+        user = super().save(commit=False)
+        user.set_password(self.cleaned_data["password1"])
+        user.role = "accountant"  # ensure role is accountant
+        if commit:
+            user.save()
+        return user
+
+
 class SchoolAccountantForm(forms.ModelForm):
     """
     Handles SchoolAccountant-specific fields only.
@@ -480,3 +496,4 @@ class SchoolAccountantForm(forms.ModelForm):
         if commit:
             accountant.save()
         return accountant
+

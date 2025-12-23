@@ -1,26 +1,80 @@
 {% extends "accounts/base.html" %}
 {% block content %}
 
-<div class="max-w-lg mx-auto mt-10 bg-white p-6 rounded-2xl shadow-md">
-  <h2 class="text-2xl font-bold mb-4">💳 Payment Receipt</h2>
+<div class="max-w-lg mx-auto mt-10 bg-white dark:bg-gray-900 p-6 rounded-2xl shadow-md" x-data="receiptPage()">
 
-  <p><strong>Student:</strong> {{ payment.invoice.student }}</p>
-  <p><strong>Class:</strong> {{ payment.invoice.school_class }}</p>
-  <p><strong>Invoice:</strong> {{ payment.invoice.title }}</p>
-  <p><strong>Amount Paid:</strong> ₦{{ payment.amount|floatformat:2 }}</p>
-  <p><strong>Payment Method:</strong> {{ payment.get_payment_method_display }}</p>
-  <p><strong>Session:</strong> {{ payment.invoice.session }}</p>
-  <p><strong>Term:</strong> {{ payment.invoice.term }}</p>
-  <p><strong>Date:</strong> {{ payment.payment_date|date:"M. d, Y" }}</p>
+  <!-- Header -->
+  <h2 class="text-2xl font-bold mb-4 text-gray-800 dark:text-gray-100 flex items-center gap-2">
+    💳 Payment Receipt
+  </h2>
 
-  <div class="mt-6 flex justify-between">
-    <button onclick="window.print()" class="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-lg">
-      Print Receipt
+  <!-- Receipt Details -->
+  <div class="space-y-2 text-gray-700 dark:text-gray-300">
+    <p><strong>Student:</strong> {{ payment.invoice.student }}</p>
+    <p><strong>Class:</strong> {{ payment.invoice.school_class }}</p>
+    <p><strong>Invoice:</strong> {{ payment.invoice.title }}</p>
+    <p><strong>Amount Paid:</strong> ₦{{ payment.amount|floatformat:2 }}</p>
+    <p><strong>Payment Method:</strong> {{ payment.get_payment_method_display }}</p>
+    <p><strong>Session:</strong> {{ payment.invoice.session }}</p>
+    <p><strong>Term:</strong> {{ payment.invoice.term }}</p>
+    <p><strong>Date:</strong> {{ payment.payment_date|date:"M. d, Y" }}</p>
+  </div>
+
+  <!-- Desktop Buttons -->
+  <div class="mt-6 hidden sm:flex justify-between">
+    <button @click="printReceipt()"
+            class="bg-indigo-600 hover:bg-indigo-700 text-white py-2 px-4 rounded-lg shadow transition">
+      🖨 Print Receipt
     </button>
-    <a href="{% url 'finance:student_dashboard' %}" class="bg-gray-200 hover:bg-gray-300 py-2 px-4 rounded-lg">
+    <button @click="downloadPDF()"
+            class="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg shadow transition">
+      📥 Download PDF
+    </button>
+    <a href="{% url 'finance:student_dashboard' %}"
+       class="bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600
+              text-gray-800 dark:text-gray-200 py-2 px-4 rounded-lg shadow transition">
       Close
     </a>
   </div>
+
 </div>
+
+<!-- Sticky Mobile Actions -->
+<div class="sm:hidden fixed bottom-0 inset-x-0 bg-white dark:bg-gray-900
+            border-t dark:border-gray-700 p-4 z-50 flex gap-2">
+  <button @click="printReceipt()"
+          class="w-1/3 py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow">
+    🖨 Print
+  </button>
+  <button @click="downloadPDF()"
+          class="w-1/3 py-3 bg-green-600 hover:bg-green-700 text-white font-bold rounded-xl shadow">
+    📥 PDF
+  </button>
+  <a href="{% url 'finance:student_dashboard' %}"
+     class="w-1/3 py-3 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600
+            text-gray-800 dark:text-gray-200 font-bold rounded-xl shadow text-center">
+    Close
+  </a>
+</div>
+
+<script>
+function receiptPage() {
+  return {
+    printReceipt() {
+      window.print();
+    },
+    downloadPDF() {
+      // Assumes backend endpoint: /finance/payment/receipt/{{ payment.id }}/pdf/
+      const url = `/finance/payment/receipt/{{ payment.id }}/pdf/`;
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `PaymentReceipt_{{ payment.invoice.student }}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+  }
+}
+</script>
 
 {% endblock %}

@@ -6,7 +6,7 @@ from accounts.models import School  # already correct
 
 class SchoolClass(models.Model):
     name = models.CharField(max_length=100)
-    school = models.ForeignKey(School, on_delete=models.CASCADE)
+    school = models.ForeignKey(School, on_delete=models.CASCADE, related_name="classes")
 
     class Meta:
         unique_together = ('name', 'school')  # ensures no duplicate class names within same school

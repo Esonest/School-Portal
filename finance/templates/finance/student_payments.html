@@ -2,37 +2,40 @@
 {% block content %}
 
 <div class="max-w-7xl mx-auto px-4 py-8">
-  <h2 class="text-3xl font-bold mb-6">💳 Payment History — {{ student }}</h2>
 
-  <div class="bg-white rounded-2xl shadow overflow-x-auto">
-    <table class="min-w-full divide-y divide-gray-200">
-      <thead class="bg-gray-100">
+  <!-- Page Title -->
+  <h2 class="text-3xl font-bold mb-6 text-gray-800 dark:text-gray-100 flex items-center gap-2">
+    💳 Payment History — {{ student }}
+  </h2>
+
+  <!-- Desktop Table -->
+  <div class="hidden sm:block bg-white dark:bg-gray-900 rounded-2xl shadow overflow-x-auto">
+    <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+      <thead class="bg-gray-100 dark:bg-gray-800">
         <tr>
-          <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase">Invoice</th>
-          <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase">Amount</th>
-          <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase">Method</th>
-          <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase">Date</th>
-          <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase">Actions</th>
+          <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase">Invoice</th>
+          <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase">Amount</th>
+          <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase">Method</th>
+          <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase">Date</th>
+          <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 dark:text-gray-300 uppercase">Actions</th>
         </tr>
       </thead>
-      <tbody class="divide-y divide-gray-100">
+      <tbody class="divide-y divide-gray-100 dark:divide-gray-700">
         {% for payment in payments %}
-        <tr class="hover:bg-gray-50">
+        <tr class="hover:bg-gray-50 dark:hover:bg-gray-800">
           <td class="px-6 py-4">{{ payment.invoice.title }}</td>
           <td class="px-6 py-4">₦{{ payment.amount|floatformat:2 }}</td>
           <td class="px-6 py-4">{{ payment.get_payment_method_display }}</td>
           <td class="px-6 py-4">{{ payment.payment_date }}</td>
-          <td class="px-6 py-4">
+          <td class="px-6 py-4 flex gap-2">
             <a href="{% url 'finance:payment_receipt' payment.id %}" class="text-indigo-600 hover:underline">Receipt</a>
-            |
             <a href="{% url 'finance:payment_edit' payment.id %}" class="text-yellow-600 hover:underline">Edit</a>
-            |
             <a href="{% url 'finance:payment_reverse' payment.id %}" class="text-red-600 hover:underline">Reverse</a>
           </td>
         </tr>
         {% empty %}
         <tr>
-          <td colspan="5" class="px-6 py-10 text-center text-gray-500">
+          <td colspan="5" class="px-6 py-10 text-center text-gray-500 dark:text-gray-400">
             No payments found.
           </td>
         </tr>
@@ -40,6 +43,35 @@
       </tbody>
     </table>
   </div>
+
+  <!-- Mobile Card View -->
+  <div class="sm:hidden space-y-4">
+    {% for payment in payments %}
+    <div class="bg-white dark:bg-gray-900 rounded-2xl shadow p-4 space-y-2">
+      <p><strong>Invoice:</strong> {{ payment.invoice.title }}</p>
+      <p><strong>Amount:</strong> ₦{{ payment.amount|floatformat:2 }}</p>
+      <p><strong>Method:</strong> {{ payment.get_payment_method_display }}</p>
+      <p><strong>Date:</strong> {{ payment.payment_date }}</p>
+      <div class="flex justify-between mt-2 flex-wrap gap-2">
+        <a href="{% url 'finance:payment_receipt' payment.id %}"
+           class="flex-1 text-center py-2 rounded-lg bg-indigo-600 text-white font-semibold hover:bg-indigo-700 transition">
+           🧾 Receipt
+        </a>
+        <a href="{% url 'finance:payment_edit' payment.id %}"
+           class="flex-1 text-center py-2 rounded-lg bg-yellow-500 text-white font-semibold hover:bg-yellow-600 transition">
+           ✏️ Edit
+        </a>
+        <a href="{% url 'finance:payment_reverse' payment.id %}"
+           class="flex-1 text-center py-2 rounded-lg bg-red-600 text-white font-semibold hover:bg-red-700 transition">
+           ⚠️ Reverse
+        </a>
+      </div>
+    </div>
+    {% empty %}
+    <p class="text-center text-gray-500 dark:text-gray-400">No payments found.</p>
+    {% endfor %}
+  </div>
+
 </div>
 
 {% endblock %}

@@ -370,9 +370,25 @@ def receipt_pdf(request, pk):
 
 
 
+from django.contrib import messages
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from .forms import BulkInvoiceForm
+from .models import Invoice, FeeTemplate
+from datetime import date, timedelta
+
+
 @login_required
 def bulk_generate_invoices(request):
-    school = request.user.school
+    # Determine the school of the logged-in user
+    school = getattr(request.user, "school", None)
+    if not school:
+        messages.error(request, "No school assigned to your account.")
+        return redirect("dashboard")  # or another safe page
+
+    # Fetch active fee templates and classes
+    templates = FeeTemplate.objects.filter(school=school, is_active=True)
+    classes = school.classes.prefetch_related("students").all()  # Ensure School has 'classes' related_name
 
     if request.method == "POST":
         form = BulkInvoiceForm(request.POST, school=school)
@@ -382,15 +398,18 @@ def bulk_generate_invoices(request):
             session = form.cleaned_data["session"]
             term = form.cleaned_data["term"]
 
-            # Safety check
+            # Validate that the fee template matches the selected class
             if fee_template.school_class != school_class:
                 messages.error(request, "Fee template does not match selected class.")
                 return redirect("finance:bulk_generate_invoices")
 
             students = school_class.students.all()
-            created = 0
+            created_count = 0
 
             for student in students:
+                # Set a default due date 30 days from today
+                due_date = date.today() + timedelta(days=30)
+
                 obj, was_created = Invoice.objects.get_or_create(
                     student=student,
                     school=school,
@@ -400,47 +419,56 @@ def bulk_generate_invoices(request):
                     title=fee_template.name,
                     defaults={
                         "total_amount": fee_template.amount,
+                        "due_date": due_date,  # <-- add due_date here
                     }
                 )
                 if was_created:
-                    created += 1
+                    created_count += 1
 
             messages.success(
                 request,
-                f"{created} invoices generated using '{fee_template.name}'"
+                f"{created_count} invoices generated using '{fee_template.name}'."
             )
-            return redirect("finance:invoice_list")
+
+            # Optional: redirect with ?generated=true to trigger PDF download
+            return redirect(f"{request.path}?generated=true")
     else:
         form = BulkInvoiceForm(school=school)
 
     return render(
         request,
-        "finance/invoice/bulk_form.html",
-        {"form": form}
+        "finance/invoice_bulk_form.html",
+        {
+            "form": form,
+            "templates": templates,
+            "classes": classes,
+        }
     )
+
 
 
 
 @login_required
 def fee_template_list(request):
     templates = FeeTemplate.objects.filter(school=request.user.school)
-    return render(request, "finance/fee_template/list.html", {"templates": templates})
+    return render(request, "finance/fee_list.html", {"templates": templates})
 
 
 @login_required
 def fee_template_create(request):
     if request.method == "POST":
-        form = FeeTemplateForm(request.POST)
+        form = FeeTemplateForm(request.POST, user=request.user)
         if form.is_valid():
             obj = form.save(commit=False)
-            obj.school = request.user.school
+            obj.school = request.user.accountant_profile.school  # assign school
             obj.save()
             messages.success(request, "Fee template created")
             return redirect("finance:fee_template_list")
     else:
-        form = FeeTemplateForm()
+        form = FeeTemplateForm(user=request.user)
 
-    return render(request, "finance/fee_template/form.html", {"form": form})
+    return render(request, "finance/fee_form.html", {"form": form})
+
 
 
 

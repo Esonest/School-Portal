@@ -44,6 +44,9 @@ urlpatterns = [
 
     path("invoice/<int:invoice_id>/payments/", views.invoice_payments_json, name="invoice_payments_json"),
 
+    path("fee-templates/", views.fee_template_list, name="fee_template_list"),
+    path("fee-templates/create/", views.fee_template_create, name="fee_template_create"),
+
 
 
     

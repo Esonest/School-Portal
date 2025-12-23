@@ -1,54 +1,65 @@
 {% extends "accounts/base.html" %}
-{% block content %}
+{% load static %}
 
-<div class="max-w-3xl mx-auto px-4 py-10">
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 py-10" x-data="recordPayment()">
 
   <!-- Header -->
-<div class="mb-8 bg-white shadow-md rounded-2xl p-6">
-  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-    
-    <!-- Title and School -->
-    <div>
-      <h2 class="text-3xl font-bold text-gray-800 flex items-center gap-2">💳 Record Payment</h2>
-      <p class="text-2xl font-bold text-{{ school.theme_color }}-600">{{ school.name }}</p>
-    </div>
+  <div class="mb-8 bg-white dark:bg-gray-900 shadow-md rounded-2xl p-6">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 
-    <!-- Session & Term Dropdowns -->
-    <div class="flex flex-col sm:flex-row gap-4">
-      
-      <!-- Session -->
-      <div class="flex flex-col">
-        <label class="text-sm font-medium text-gray-700 mb-1">Session</label>
-        <select name="session" class="border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-400 focus:outline-none">
-          {% for s in sessions %}
-            <option value="{{ s }}" {% if s == session %}selected{% endif %}>{{ s }}</option>
-          {% endfor %}
-        </select>
+      <div>
+        <h2 class="text-3xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
+          💳 Record Payment
+        </h2>
+        <p class="text-2xl font-bold text-{{ school.theme_color }}-600">
+          {{ school.name }}
+        </p>
       </div>
 
-      <!-- Term -->
-      <div class="flex flex-col">
-        <label class="text-sm font-medium text-gray-700 mb-1">Term</label>
-        <select name="term" class="border-gray-300 rounded-lg px-3 py-2 focus:ring-2 focus:ring-indigo-400 focus:outline-none">
-          {% for key, value in term_choices %}
-            <option value="{{ key }}" {% if key == term %}selected{% endif %}>{{ value }}</option>
-          {% endfor %}
-        </select>
-      </div>
+      <div class="flex flex-col sm:flex-row gap-4">
 
+        <!-- Session -->
+        <div>
+          <label class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
+            Session
+          </label>
+          <select name="session"
+                  class="rounded-xl border-gray-300 dark:border-gray-700
+                         bg-white dark:bg-gray-800
+                         px-3 py-2 focus:ring-2 focus:ring-indigo-400">
+            {% for s in sessions %}
+              <option value="{{ s }}" {% if s == session %}selected{% endif %}>{{ s }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Term -->
+        <div>
+          <label class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
+            Term
+          </label>
+          <select name="term"
+                  class="rounded-xl border-gray-300 dark:border-gray-700
+                         bg-white dark:bg-gray-800
+                         px-3 py-2 focus:ring-2 focus:ring-indigo-400">
+            {% for key, value in term_choices %}
+              <option value="{{ key }}" {% if key == term %}selected{% endif %}>{{ value }}</option>
+            {% endfor %}
+          </select>
+        </div>
+
+      </div>
     </div>
-    
   </div>
-</div>
-
 
   <!-- Form -->
-  <form method="post" class="bg-white rounded-2xl shadow p-8 space-y-6">
+  <form method="post" class="bg-white dark:bg-gray-900 rounded-2xl shadow p-8 space-y-6" @submit="submitForm">
     {% csrf_token %}
 
     <!-- Class -->
     <div>
-      <label class="block text-sm font-semibold text-gray-700 mb-1">
+      <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
         Class
       </label>
       {{ form.school_class }}
@@ -56,18 +67,33 @@
 
     <!-- Invoice -->
     <div>
-      <label class="block text-sm font-semibold text-gray-700 mb-1">
+      <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
         Invoice
       </label>
       {{ form.invoice }}
-      <p class="text-xs text-gray-500 mt-1">
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
         Invoices are filtered by selected class
       </p>
     </div>
 
+    <!-- Payment Impact Card -->
+    <div class="bg-indigo-50 dark:bg-indigo-900/30 rounded-xl p-4">
+      <p class="text-sm font-semibold text-indigo-700 dark:text-indigo-300">
+        📊 Payment Impact Preview
+      </p>
+
+      <div class="mt-3 space-y-1 text-sm">
+        <p>Total Invoice: ₦ <span x-text="invoiceTotal.toLocaleString()">0</span></p>
+        <p>Already Paid: ₦ <span x-text="paidSoFar.toLocaleString()">0</span></p>
+        <p class="font-bold text-indigo-800 dark:text-indigo-200">
+          Remaining Balance: ₦ <span x-text="remaining.toLocaleString()">0</span>
+        </p>
+      </div>
+    </div>
+
     <!-- Amount -->
     <div>
-      <label class="block text-sm font-semibold text-gray-700 mb-1">
+      <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
         Amount Paid
       </label>
       {{ form.amount }}
@@ -75,27 +101,95 @@
 
     <!-- Payment Method -->
     <div>
-      <label class="block text-sm font-semibold text-gray-700 mb-1">
+      <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
         Payment Method
       </label>
       {{ form.payment_method }}
     </div>
 
-    <!-- Buttons -->
-    <div class="flex justify-end gap-4 pt-6">
+    <!-- Desktop Buttons -->
+    <div class="hidden sm:flex justify-end gap-4 pt-6 border-t dark:border-gray-700">
       <a href="{% url 'finance:dashboard' %}"
-         class="px-6 py-3 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-50 transition">
+         class="px-6 py-3 rounded-xl border border-gray-300 dark:border-gray-600
+                text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800">
         Cancel
       </a>
 
       <button type="submit"
-        class="px-8 py-3 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold transition">
-        Save Payment
+              class="px-8 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700
+                     text-white font-bold"
+              :disabled="loading">
+        <span x-show="!loading">💾 Save Payment</span>
+        <span x-show="loading">⏳ Saving…</span>
       </button>
     </div>
 
   </form>
 
+  <!-- Sticky Mobile Bar -->
+  <div class="sm:hidden fixed bottom-0 inset-x-0 bg-white dark:bg-gray-900
+              border-t dark:border-gray-700 p-4 z-50">
+    <button type="submit"
+            form="payment-form"
+            @click="submitForm"
+            class="w-full py-3 rounded-xl bg-emerald-600 text-white font-bold">
+      💾 Save Payment
+    </button>
+  </div>
+
 </div>
+
+<script>
+function recordPayment() {
+  return {
+    loading: false,
+    invoiceTotal: 0,
+    paidSoFar: 0,
+    remaining: 0,
+
+    init() {
+      this.updateInvoiceData();
+
+      document.querySelector('[name="invoice"]')
+        ?.addEventListener('change', () => this.updateInvoiceData());
+
+      document.querySelector('[name="amount"]')
+        ?.addEventListener('input', () => this.calculate());
+
+      // Auto-download receipt after save
+      if (new URLSearchParams(window.location.search).get('saved') === 'true') {
+        this.downloadReceipt();
+      }
+    },
+
+    updateInvoiceData() {
+      const opt = document.querySelector('[name="invoice"] option:checked');
+      this.invoiceTotal = Number(opt?.dataset.total || 0);
+      this.paidSoFar = Number(opt?.dataset.paid || 0);
+      this.calculate();
+    },
+
+    calculate() {
+      const entered = Number(document.querySelector('[name="amount"]')?.value || 0);
+      this.remaining = Math.max(this.invoiceTotal - (this.paidSoFar + entered), 0);
+    },
+
+    submitForm() {
+      if (this.loading) return;
+      this.loading = true;
+    },
+
+    downloadReceipt() {
+      const url = `/finance/payment/receipt/latest/`;
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'payment_receipt.pdf';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+    }
+  }
+}
+</script>
 
 {% endblock %}

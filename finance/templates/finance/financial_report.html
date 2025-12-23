@@ -2,24 +2,28 @@
 {% load static %}
 {% block content %}
 
-<div class="max-w-7xl mx-auto px-4 py-8">
+<div class="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-8">
 
-  <!-- Header -->
-  <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-6 gap-2">
-    <h2 class="text-3xl font-bold text-gray-800">📊 Financial Report</h2>
-    <p class="text-2xl font-bold text-{{ school.theme_color }}-600">
-      {{ school.name }} — {{ selected_session|default:"All Sessions" }} / Term {{ selected_term|default:"All Terms" }}
+  <!-- HEADER -->
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-3">
+    <h2 class="text-2xl sm:text-3xl font-bold text-gray-800">
+      📊 Financial Report
+    </h2>
+    <p class="text-lg sm:text-2xl font-bold text-{{ school.theme_color }}-600">
+      {{ school.name }} —
+      {{ selected_session|default:"All Sessions" }}
+      / Term {{ selected_term|default:"All Terms" }}
     </p>
   </div>
 
-  <!-- Filters -->
-  <form method="get" class="bg-white rounded-2xl shadow p-6 mb-8">
-    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+  <!-- FILTERS -->
+  <form method="get" class="bg-white rounded-xl shadow p-4 sm:p-6">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
 
-      <!-- Class -->
       <div>
         <label class="block text-sm font-semibold text-gray-700 mb-1">Class</label>
-        <select name="school_class" class="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-indigo-400">
+        <select name="school_class"
+                class="w-full rounded-md border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500">
           <option value="">All Classes</option>
           {% for cls in classes %}
             <option value="{{ cls.id }}" {% if cls.id|stringformat:"s" == selected_class %}selected{% endif %}>
@@ -29,32 +33,35 @@
         </select>
       </div>
 
-      <!-- Session -->
       <div>
         <label class="block text-sm font-semibold text-gray-700 mb-1">Session</label>
-        <select name="session" class="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-indigo-400">
+        <select name="session"
+                class="w-full rounded-md border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500">
           <option value="">All Sessions</option>
           {% for s in sessions %}
-            <option value="{{ s }}" {% if s == selected_session %}selected{% endif %}>{{ s }}</option>
+            <option value="{{ s }}" {% if s == selected_session %}selected{% endif %}>
+              {{ s }}
+            </option>
           {% endfor %}
         </select>
       </div>
 
-      <!-- Term -->
       <div>
         <label class="block text-sm font-semibold text-gray-700 mb-1">Term</label>
-        <select name="term" class="w-full rounded-lg border-gray-300 focus:ring-2 focus:ring-indigo-400">
+        <select name="term"
+                class="w-full rounded-md border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-indigo-500">
           <option value="">All Terms</option>
           {% for key, value in terms %}
-            <option value="{{ key }}" {% if key == selected_term %}selected{% endif %}>{{ value }}</option>
+            <option value="{{ key }}" {% if key == selected_term %}selected{% endif %}>
+              {{ value }}
+            </option>
           {% endfor %}
         </select>
       </div>
 
-      <!-- Button -->
       <div class="flex items-end">
         <button type="submit"
-          class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-3 rounded-lg transition">
+                class="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-semibold py-2 rounded-md">
           Apply Filter
         </button>
       </div>
@@ -62,102 +69,153 @@
     </div>
   </form>
 
-  <!-- Summary Cards -->
-  <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
-    <div class="bg-gradient-to-r from-blue-500 to-blue-600 text-white rounded-2xl p-6 shadow">
+  <!-- SUMMARY CARDS -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+    <div class="bg-blue-600 text-white rounded-lg p-4 shadow">
       <p class="text-sm opacity-90">Total Invoiced</p>
-      <h3 class="text-2xl font-bold mt-2">₦{{ total_invoiced|floatformat:2 }}</h3>
+      <p class="text-xl font-bold mt-1">₦{{ total_invoiced|floatformat:2 }}</p>
     </div>
-    <div class="bg-gradient-to-r from-green-500 to-green-600 text-white rounded-2xl p-6 shadow">
+    <div class="bg-green-600 text-white rounded-lg p-4 shadow">
       <p class="text-sm opacity-90">Total Paid</p>
-      <h3 class="text-2xl font-bold mt-2">₦{{ total_paid|floatformat:2 }}</h3>
+      <p class="text-xl font-bold mt-1">₦{{ total_paid|floatformat:2 }}</p>
     </div>
-    <div class="bg-gradient-to-r from-red-500 to-red-600 text-white rounded-2xl p-6 shadow">
+    <div class="bg-red-600 text-white rounded-lg p-4 shadow">
       <p class="text-sm opacity-90">Outstanding</p>
-      <h3 class="text-2xl font-bold mt-2">₦{{ total_balance|floatformat:2 }}</h3>
+      <p class="text-xl font-bold mt-1">₦{{ total_balance|floatformat:2 }}</p>
     </div>
-    <div class="bg-gradient-to-r from-yellow-500 to-yellow-600 text-white rounded-2xl p-6 shadow">
+    <div class="bg-yellow-500 text-white rounded-lg p-4 shadow">
       <p class="text-sm opacity-90">Invoices Count</p>
-      <h3 class="text-2xl font-bold mt-2">{{ invoices|length }}</h3>
+      <p class="text-xl font-bold mt-1">{{ invoices|length }}</p>
     </div>
   </div>
 
-  <!-- Invoices Table -->
-  <div class="bg-white rounded-2xl shadow overflow-x-auto">
-    <table class="min-w-full divide-y divide-gray-200">
-      <thead class="bg-gray-100">
-        <tr>
-          <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase">Student</th>
-          <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase">Class</th>
-          <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase">Invoice</th>
-          <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase">Total</th>
-          <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase">Paid</th>
-          <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase">Balance</th>
-          <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase">Term</th>
-          <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase">Actions</th>
-        </tr>
-      </thead>
-      <tbody class="divide-y divide-gray-100">
-        {% for invoice in invoices %}
-        <tr class="hover:bg-gray-50">
-          <td class="px-6 py-4">{{ invoice.student }}</td>
-          <td class="px-6 py-4">{{ invoice.school_class }}</td>
-          <td class="px-6 py-4">{{ invoice.title }}</td>
-          <td class="px-6 py-4 font-semibold">₦{{ invoice.total_amount|floatformat:2 }}</td>
-          <td class="px-6 py-4 font-semibold text-green-600">₦{{ invoice.amount_paid|floatformat:2 }}</td>
-          <td class="px-6 py-4 font-semibold text-red-600">₦{{ invoice.balance|floatformat:2 }}</td>
-          <td class="px-6 py-4">{{ invoice.get_term_display }}</td>
-          <td class="px-6 py-4">
-            <button
-              class="bg-indigo-500 hover:bg-indigo-600 text-white px-4 py-1 rounded-lg"
-              @click="showReceipt({{ invoice.id }})">
-              View Receipts
-            </button>
-          </td>
-        </tr>
-        {% empty %}
-        <tr>
-          <td colspan="8" class="px-6 py-10 text-center text-gray-500">
-            No invoices found for selected filters.
-          </td>
-        </tr>
-        {% endfor %}
-      </tbody>
-    </table>
+  <!-- INVOICES -->
+  <div class="bg-white rounded-xl shadow p-4 space-y-4">
+    <h3 class="font-semibold text-lg">Invoices</h3>
+
+    <!-- MOBILE: CARD VIEW -->
+    <div class="space-y-4 lg:hidden">
+      {% for invoice in invoices %}
+      <div class="border rounded-lg p-4 space-y-2">
+        <div class="flex justify-between items-center">
+          <p class="font-semibold">{{ invoice.student }}</p>
+          <span class="text-xs text-gray-500">{{ invoice.get_term_display }}</span>
+        </div>
+
+        <p class="text-sm text-gray-600">
+          {{ invoice.school_class }} • {{ invoice.title }}
+        </p>
+
+        <div class="grid grid-cols-3 gap-2 text-sm">
+          <div>
+            <p class="text-gray-500">Total</p>
+            <p class="font-semibold">₦{{ invoice.total_amount|floatformat:2 }}</p>
+          </div>
+          <div>
+            <p class="text-gray-500">Paid</p>
+            <p class="font-semibold text-green-600">₦{{ invoice.amount_paid|floatformat:2 }}</p>
+          </div>
+          <div>
+            <p class="text-gray-500">Balance</p>
+            <p class="font-semibold text-red-600">₦{{ invoice.balance|floatformat:2 }}</p>
+          </div>
+        </div>
+
+        <button
+          class="w-full mt-2 bg-indigo-600 text-white py-2 rounded-md font-semibold"
+          @click="showReceipt({{ invoice.id }})">
+          View Receipts
+        </button>
+      </div>
+      {% empty %}
+        <p class="text-center text-gray-500 py-6">
+          No invoices found for selected filters.
+        </p>
+      {% endfor %}
+    </div>
+
+    <!-- DESKTOP: TABLE VIEW -->
+    <div class="hidden lg:block overflow-x-auto">
+      <table class="min-w-full text-sm border-collapse">
+        <thead class="bg-gray-100">
+          <tr>
+            <th class="p-3 text-left">Student</th>
+            <th class="p-3">Class</th>
+            <th class="p-3">Invoice</th>
+            <th class="p-3">Total</th>
+            <th class="p-3">Paid</th>
+            <th class="p-3">Balance</th>
+            <th class="p-3">Term</th>
+            <th class="p-3"></th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for invoice in invoices %}
+          <tr class="border-t hover:bg-gray-50">
+            <td class="p-3">{{ invoice.student }}</td>
+            <td class="p-3">{{ invoice.school_class }}</td>
+            <td class="p-3">{{ invoice.title }}</td>
+            <td class="p-3 font-semibold">₦{{ invoice.total_amount|floatformat:2 }}</td>
+            <td class="p-3 font-semibold text-green-600">₦{{ invoice.amount_paid|floatformat:2 }}</td>
+            <td class="p-3 font-semibold text-red-600">₦{{ invoice.balance|floatformat:2 }}</td>
+            <td class="p-3">{{ invoice.get_term_display }}</td>
+            <td class="p-3 text-right">
+              <button
+                class="bg-indigo-600 hover:bg-indigo-700 text-white px-4 py-1 rounded-md"
+                @click="showReceipt({{ invoice.id }})">
+                View Receipts
+              </button>
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
   </div>
 
 </div>
 
-<!-- Receipt Modal (Single Modal) -->
-<div x-data="receiptModal()" x-show="show" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50" style="display:none;">
-  <div class="bg-white rounded-2xl shadow-lg w-full max-w-3xl p-6 relative">
-    <button @click="close()" class="absolute top-3 right-3 text-gray-600 font-bold text-lg">✖</button>
-    <h3 class="text-xl font-bold mb-4">💳 Payment History - <span x-text="studentName"></span></h3>
+<!-- RECEIPT MODAL (STYLED) -->
+<div x-data="receiptModal()" x-show="show"
+     class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50"
+     style="display:none;">
+  <div class="bg-white rounded-xl shadow-lg w-full max-w-3xl p-6 relative">
+    <button @click="close()" class="absolute top-3 right-3 text-gray-500 text-lg">✖</button>
+
+    <h3 class="text-lg font-bold mb-4">
+      💳 Payment History — <span x-text="studentName"></span>
+    </h3>
+
     <div class="overflow-x-auto">
-      <table class="min-w-full divide-y divide-gray-200">
+      <table class="min-w-full text-sm">
         <thead class="bg-gray-100">
           <tr>
-            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Invoice</th>
-            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Amount</th>
-            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Method</th>
-            <th class="px-4 py-2 text-left text-xs font-bold text-gray-600 uppercase">Date</th>
+            <th class="p-2 text-left">Invoice</th>
+            <th class="p-2">Amount</th>
+            <th class="p-2">Method</th>
+            <th class="p-2">Date</th>
           </tr>
         </thead>
         <tbody>
           <template x-for="p in payments" :key="p.id">
-            <tr>
-              <td class="px-4 py-2" x-text="p.title"></td>
-              <td class="px-4 py-2" x-text="p.amount"></td>
-              <td class="px-4 py-2" x-text="p.method"></td>
-              <td class="px-4 py-2" x-text="p.date"></td>
+            <tr class="border-t">
+              <td class="p-2" x-text="p.title"></td>
+              <td class="p-2" x-text="p.amount"></td>
+              <td class="p-2" x-text="p.method"></td>
+              <td class="p-2" x-text="p.date"></td>
             </tr>
           </template>
         </tbody>
       </table>
     </div>
+
     <div class="flex justify-end gap-2 mt-4">
-      <button @click="print()" class="bg-green-500 hover:bg-green-600 text-white px-4 py-2 rounded-lg">Print</button>
-      <button @click="close()" class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-lg">Close</button>
+      <button @click="print()" class="bg-green-600 text-white px-4 py-2 rounded-md">
+        Print
+      </button>
+      <button @click="close()" class="bg-red-600 text-white px-4 py-2 rounded-md">
+        Close
+      </button>
     </div>
   </div>
 </div>
@@ -169,7 +227,7 @@ function receiptModal() {
         studentName: '',
         payments: [],
         showReceipt(invoiceId) {
-            fetch(`/finance/invoice/${invoiceId}/payments/`) // create this view to return JSON payments
+            fetch(`/finance/invoice/${invoiceId}/payments/`)
               .then(res => res.json())
               .then(data => {
                   this.studentName = data.student;
@@ -185,14 +243,14 @@ function receiptModal() {
             document.body.style.overflow = 'auto';
         },
         print() {
-            const printWindow = window.open('', '', 'width=900,height=600');
-            printWindow.document.write('<html><head><title>Payment History</title>');
-            printWindow.document.write('<link rel="stylesheet" href="{% static "css/tailwind.css" %}">');
-            printWindow.document.write('</head><body>');
-            printWindow.document.write(document.querySelector('[x-show="show"] .overflow-x-auto').innerHTML);
-            printWindow.document.write('</body></html>');
-            printWindow.document.close();
-            printWindow.print();
+            const w = window.open('', '', 'width=900,height=600');
+            w.document.write('<html><head><title>Payment History</title>');
+            w.document.write('<link rel="stylesheet" href="{% static "css/tailwind.css" %}">');
+            w.document.write('</head><body>');
+            w.document.write(document.querySelector('[x-show="show"] table').outerHTML);
+            w.document.write('</body></html>');
+            w.document.close();
+            w.print();
         }
     }
 }

@@ -138,7 +138,7 @@ class BulkInvoiceForm(forms.Form):
         school = kwargs.pop("school")
         super().__init__(*args, **kwargs)
 
-        self.fields["school_class"].queryset = school.classes.all()
+        self.fields["school_class"].queryset = SchoolClass.objects.filter(school=school)
         self.fields["fee_template"].queryset = FeeTemplate.objects.filter(
             school=school,
             is_active=True
@@ -146,15 +146,29 @@ class BulkInvoiceForm(forms.Form):
 
 
 
+from django import forms
+from .models import FeeTemplate  # adjust imports
+
 class FeeTemplateForm(forms.ModelForm):
     class Meta:
         model = FeeTemplate
-        fields = ["school_class", "name", "amount", "is_active"]
-        widgets = {
-            "school_class": forms.Select(attrs={"class": TAILWIND}),
-            "name": forms.TextInput(attrs={"class": TAILWIND}),
-            "amount": forms.NumberInput(attrs={"class": TAILWIND}),
-        }
+        fields = ["name", "amount", "school_class"]  # adjust fields
+
+    def __init__(self, *args, **kwargs):
+        # Pop the user from kwargs; don't pass it to super()
+        user = kwargs.pop("user", None)
+        super(FeeTemplateForm, self).__init__(*args, **kwargs)
+        
+        if user:
+            # Determine the school from the user's accountant profile
+            school = getattr(user, "accountant_profile", None)
+            if school:
+                self.fields["school_class"].queryset = SchoolClass.objects.filter(school=school.school)
+            else:
+                self.fields["school_class"].queryset = SchoolClass.objects.none()
+        else:
+            self.fields["school_class"].queryset = SchoolClass.objects.none()
+
 
 
 class FinanceReportForm(forms.Form):

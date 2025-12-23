@@ -1,107 +1,257 @@
 {% extends "accounts/base.html" %}
 {% load static %}
-
 {% block content %}
-<div class="max-w-3xl mx-auto p-6">
 
-  <!-- Page Title -->
-  <div class="mb-6">
-    <h1 class="text-2xl font-bold text-gray-800">
-      Bulk Generate Invoices
+<div class="max-w-4xl mx-auto px-4 py-8" x-data="invoiceBulk()" x-init="init()">
+
+  <!-- Header -->
+  <div class="mb-8">
+    <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-100">
+      📦 Bulk Generate Invoices
     </h1>
-    <p class="text-gray-500 text-sm">
+    <p class="text-gray-500 dark:text-gray-400 mt-1">
       Generate invoices for all students in a class using a fee template
     </p>
   </div>
 
   <!-- Form Card -->
-  <div class="bg-white shadow rounded-lg p-6">
-
-    <form method="post" class="space-y-6">
+  <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-lg p-6 md:p-8">
+    <form method="post" class="space-y-6" id="bulk-form" @submit="submitForm">
       {% csrf_token %}
 
-      <!-- School Class -->
-      <div>
-        <label class="block text-sm font-semibold text-gray-700 mb-1">
-          Class
-        </label>
-        {{ form.school_class }}
-        {% if form.school_class.errors %}
-          <p class="text-red-600 text-sm mt-1">
-            {{ form.school_class.errors|striptags }}
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        <!-- Class -->
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
+            Class
+          </label>
+          <select name="school_class" class="w-full border rounded-lg px-3 py-2">
+            <option value="">Select Class</option>
+            {% for cls in classes %}
+              <option value="{{ cls.id }}" data-count="{{ cls.students.count }}">
+                {{ cls.name }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <!-- Fee Template -->
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
+            Fee Template
+          </label>
+          <select name="fee_template" class="w-full border rounded-lg px-3 py-2">
+            <option value="">Select Template</option>
+            {% for template in templates %}
+              <option value="{{ template.id }}" data-amount="{{ template.amount }}">
+                {{ template.name }} — ₦{{ template.amount|floatformat:2 }}
+              </option>
+            {% endfor %}
+          </select>
+          <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+            Determines the fee breakdown for all students
           </p>
-        {% endif %}
+        </div>
+
+        <!-- Session -->
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
+            Academic Session
+          </label>
+          {{ form.session }}
+        </div>
+
+        <!-- Term -->
+        <div>
+          <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
+            Term
+          </label>
+          {{ form.term }}
+        </div>
+
       </div>
 
-      <!-- Fee Template -->
-      <div>
-        <label class="block text-sm font-semibold text-gray-700 mb-1">
-          Fee Template
-        </label>
-        {{ form.fee_template }}
-        {% if form.fee_template.errors %}
-          <p class="text-red-600 text-sm mt-1">
-            {{ form.fee_template.errors|striptags }}
-          </p>
-        {% endif %}
-        <p class="text-xs text-gray-500 mt-1">
-          This template determines the fee breakdown for all students
+      <!-- Estimated Total -->
+      <div class="mt-4 p-4 bg-indigo-50 dark:bg-indigo-900/30 rounded-xl">
+        <p class="text-sm font-semibold text-indigo-700 dark:text-indigo-300">
+          📊 Estimated Total Invoice Amount
+        </p>
+        <p class="text-2xl font-bold text-indigo-800 dark:text-indigo-200 mt-1">
+          ₦ <span x-text="estimate.toLocaleString()">0</span>
         </p>
       </div>
 
-      <!-- Session -->
-      <div>
-        <label class="block text-sm font-semibold text-gray-700 mb-1">
-          Academic Session
-        </label>
-        {{ form.session }}
-        {% if form.session.errors %}
-          <p class="text-red-600 text-sm mt-1">
-            {{ form.session.errors|striptags }}
-          </p>
-        {% endif %}
-      </div>
+      <!-- Add this inside the <form> grid with other fields -->
+<div>
+  <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
+    Due Date
+  </label>
+  <input 
+    type="date" 
+    name="due_date" 
+    x-model="dueDate" 
+    :min="new Date().toISOString().split('T')[0]" 
+    class="w-full border rounded-lg px-3 py-2 dark:bg-gray-800 dark:text-gray-200"
+    required
+  >
+  <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
+    Set the due date for the invoices
+  </p>
+</div>
 
-      <!-- Term -->
-      <div>
-        <label class="block text-sm font-semibold text-gray-700 mb-1">
-          Term
-        </label>
-        {{ form.term }}
-        {% if form.term.errors %}
-          <p class="text-red-600 text-sm mt-1">
-            {{ form.term.errors|striptags }}
-          </p>
-        {% endif %}
-      </div>
 
-      <!-- Action Buttons -->
-      <div class="flex items-center justify-between pt-4 border-t">
-        <a
-          href="{% url 'finance:invoice_list' %}"
-          class="text-sm text-gray-600 hover:text-gray-800"
-        >
+      <!-- Desktop Actions -->
+      <div class="hidden sm:flex justify-between items-center pt-6 border-t dark:border-gray-700">
+        <a href="{% url 'finance:invoice_list' %}"
+           class="px-4 py-3 rounded-xl border border-gray-300 dark:border-gray-600
+                  text-sm font-semibold text-gray-700 dark:text-gray-300
+                  hover:bg-gray-100 dark:hover:bg-gray-800 transition">
           ← Back to Invoices
         </a>
 
-        <button
-          type="submit"
-          class="px-6 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded font-semibold"
-        >
-          Generate Invoices
-        </button>
+        <div class="flex gap-3">
+          <button type="button" @click="preview = true"
+                  class="px-6 py-3 rounded-xl bg-gray-200 dark:bg-gray-800
+                         text-gray-800 dark:text-gray-200 font-semibold">
+            👁 Preview
+          </button>
+
+          <button type="submit"
+                  class="px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700
+                         text-white font-bold shadow-md transition"
+                  :disabled="loading">
+            <span x-show="!loading">⚡ Generate Invoices</span>
+            <span x-show="loading">⏳ Processing…</span>
+          </button>
+        </div>
       </div>
 
     </form>
   </div>
 
-  <!-- Warning Box -->
-  <div class="mt-6 bg-yellow-50 border border-yellow-200 p-4 rounded">
-    <p class="text-sm text-yellow-800">
-      ⚠️ Existing invoices for the selected class, session and term
-      will not be duplicated.
+  <!-- Warning -->
+  <div class="mt-6 bg-yellow-50 dark:bg-yellow-900/30
+              border border-yellow-200 dark:border-yellow-700
+              rounded-2xl p-4">
+    <p class="text-sm text-yellow-800 dark:text-yellow-300">
+      ⚠️ Existing invoices for the selected class, session, and term will not be duplicated.
     </p>
   </div>
 
+  <!-- Sticky Mobile Action Bar -->
+  <div class="sm:hidden fixed bottom-0 inset-x-0 bg-white dark:bg-gray-900
+              border-t dark:border-gray-700 p-4 z-50">
+    <div class="flex gap-3">
+      <button @click="preview = true"
+              class="w-1/2 py-3 rounded-xl bg-gray-200 dark:bg-gray-800
+                     font-semibold text-gray-800 dark:text-gray-200">
+        👁 Preview
+      </button>
+
+      <button type="submit"
+              form="bulk-form"
+              @click="submitForm"
+              class="w-1/2 py-3 rounded-xl bg-indigo-600
+                     text-white font-bold">
+        ⚡ Generate
+      </button>
+    </div>
+  </div>
+
+  <!-- Preview Modal -->
+  <div x-show="preview"
+       x-transition
+       class="fixed inset-0 bg-black/50 flex items-center justify-center z-50"
+       style="display:none;">
+    <div class="bg-white dark:bg-gray-900 rounded-2xl shadow-xl max-w-lg w-full p-6">
+      <h3 class="text-xl font-bold mb-4 text-gray-800 dark:text-gray-100">
+        🧾 Invoice Preview
+      </h3>
+
+      <div class="space-y-2 text-sm text-gray-600 dark:text-gray-300">
+        <p><strong>Class:</strong> <span x-text="document.querySelector('[name=school_class] option:checked')?.textContent">-</span></p>
+        <p><strong>Fee Template:</strong> <span x-text="document.querySelector('[name=fee_template] option:checked')?.textContent">-</span></p>
+        <p><strong>Session:</strong> <span x-text="document.querySelector('[name=session]')?.value">-</span></p>
+        <p><strong>Term:</strong> <span x-text="document.querySelector('[name=term]')?.value">-</span></p>
+      </div>
+
+      <div class="bg-indigo-50 dark:bg-indigo-900/30 rounded-xl p-4 my-4">
+        <p class="text-sm font-semibold text-indigo-700 dark:text-indigo-300">
+          📊 Estimated Total Invoice Amount
+        </p>
+        <p class="text-2xl font-bold text-indigo-800 dark:text-indigo-200 mt-1">
+          ₦ <span x-text="estimate.toLocaleString()">0</span>
+        </p>
+      </div>
+
+      <div class="mt-4 flex justify-end gap-3">
+        <button @click="preview=false"
+                class="px-4 py-2 rounded-xl bg-gray-300 dark:bg-gray-700">
+          Close
+        </button>
+        <button @click="preview=false"
+                class="px-4 py-2 rounded-xl bg-indigo-600 text-white font-semibold">
+          Confirm
+        </button>
+      </div>
+    </div>
+  </div>
+
 </div>
+
+<script>
+function invoiceBulk() {
+  return {
+    loading: false,
+    preview: false,
+    estimate: 0,
+    dueDate: new Date().toISOString().split('T')[0],  // default today
+
+    init() {
+      this.calculateEstimate();
+      document.querySelectorAll('select, [name="due_date"]').forEach(el => {
+        el.addEventListener('change', () => this.calculateEstimate());
+      });
+
+      if (new URLSearchParams(window.location.search).get('generated') === 'true') {
+        this.downloadPDF();
+      }
+    },
+
+    calculateEstimate() {
+      const fee = document.querySelector('[name="fee_template"] option:checked');
+      const cls = document.querySelector('[name="school_class"] option:checked');
+
+      const amount = parseFloat(fee?.dataset.amount) || 0;
+      const count = parseInt(cls?.dataset.count) || 1;
+
+      this.estimate = amount * count;
+    },
+
+    submitForm(e) {
+      if (this.loading) return;
+      this.loading = true;
+
+      // Optional: validate due date
+      if (!this.dueDate) {
+        alert("Please select a due date");
+        this.loading = false;
+        e.preventDefault();
+      }
+    },
+
+    downloadPDF() {
+      const link = document.createElement('a');
+      link.href = `/finance/invoices/bulk-pdf/`;
+      link.download = 'bulk_invoices.pdf';
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  }
+}
+</script>
+
+
 {% endblock %}

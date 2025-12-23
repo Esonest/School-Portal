@@ -1,22 +1,46 @@
 {% extends "accounts/base.html" %}
 {% block content %}
 
-<div class="max-w-lg mx-auto mt-20 bg-white shadow-md rounded-2xl p-8 text-center">
-  <h2 class="text-2xl font-bold mb-4">⚠️ Reverse Payment</h2>
-  <p class="text-gray-600 mb-6">
-    Are you sure you want to reverse the payment of ₦{{ payment.amount|floatformat:2 }} for 
-    {{ payment.student }} on invoice "{{ payment.invoice.title }}"?
+<div class="max-w-lg mx-auto mt-20 bg-white dark:bg-gray-900 shadow-md rounded-2xl p-8 text-center">
+
+  <!-- Header -->
+  <h2 class="text-2xl font-bold mb-4 text-red-600 flex items-center justify-center gap-2">
+    ⚠️ Reverse Payment
+  </h2>
+
+  <!-- Warning Text -->
+  <p class="text-gray-600 dark:text-gray-300 mb-6">
+    Are you sure you want to reverse the payment of 
+    <strong>₦{{ payment.amount|floatformat:2 }}</strong> for 
+    <strong>{{ payment.student }}</strong> on invoice 
+    "<strong>{{ payment.invoice.title }}</strong>"?
   </p>
 
-  <form method="post" class="flex justify-center gap-4">
+  <!-- Desktop Buttons -->
+  <form method="post" class="hidden sm:flex justify-center gap-4">
     {% csrf_token %}
-    <button type="submit" class="px-6 py-3 rounded-lg bg-red-600 hover:bg-red-700 text-white font-bold">
+    <button type="submit"
+            class="px-6 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold shadow transition">
       Yes, Reverse
     </button>
-    <a href="{% url 'finance:student_payments' payment.student.id %}" class="px-6 py-3 rounded-lg border border-gray-300 hover:bg-gray-100 text-gray-700">
+    <a href="{% url 'finance:student_payments' payment.student.id %}"
+       class="px-6 py-3 rounded-xl border border-gray-300 hover:bg-gray-100 dark:border-gray-600 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 shadow transition">
       Cancel
     </a>
   </form>
+
+  <!-- Mobile Sticky Bar -->
+  <div class="sm:hidden fixed bottom-0 inset-x-0 bg-white dark:bg-gray-900 border-t dark:border-gray-700 p-4 z-50 flex gap-2">
+    <button type="submit" form="reverse-form"
+            class="w-1/2 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl shadow">
+      Yes, Reverse
+    </button>
+    <a href="{% url 'finance:student_payments' payment.student.id %}"
+       class="w-1/2 py-3 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-800 dark:text-gray-200 font-bold rounded-xl shadow text-center">
+      Cancel
+    </a>
+  </div>
+
 </div>
 
 {% endblock %}

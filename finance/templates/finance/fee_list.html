@@ -1,0 +1,40 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+<div class="max-w-4xl mx-auto px-4 py-8">
+  <h1 class="text-2xl font-bold mb-6">💰 Fee Templates</h1>
+
+  <a href="{% url 'finance:fee_template_create' %}"
+     class="mb-4 inline-block bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-lg font-semibold">
+    ➕ Create Fee Template
+  </a>
+
+  <div class="bg-white rounded-2xl shadow overflow-x-auto">
+    <table class="min-w-full divide-y divide-gray-200">
+      <thead class="bg-gray-100">
+        <tr>
+          <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase">Class</th>
+          <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase">Name</th>
+          <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase">Amount</th>
+          <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase">Active</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {% for template in templates %}
+        <tr class="hover:bg-gray-50">
+          <td class="px-6 py-4">{{ template.school_class }}</td>
+          <td class="px-6 py-4">{{ template.name }}</td>
+          <td class="px-6 py-4">₦{{ template.amount|floatformat:2 }}</td>
+          <td class="px-6 py-4">{{ template.is_active|yesno:"Yes,No" }}</td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="4" class="px-6 py-10 text-center text-gray-500">
+            No fee templates found.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}
