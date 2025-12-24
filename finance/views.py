@@ -14,6 +14,8 @@ from .models import SchoolTransaction
 from .utils import generate_invoice_pdf, generate_receipt_pdf
 from .models import Invoice, Receipt
 from .forms import FeeTemplate, FeeTemplateForm
+from collections import defaultdict
+
 
 
 
@@ -329,19 +331,26 @@ def invoice_list(request):
     return render(request, "finance/invoice_list.html", {"invoices": invoices})
 
 
+
+from collections import defaultdict
+
+
 @login_required
 def invoice_create(request):
     school = getattr(request.user, "school", None)
     if not school:
         return HttpResponse("User is not assigned to any school")
 
-    # Get system settings
+    # System settings
     system_setting, _ = SystemSetting.objects.get_or_create(id=1)
     current_session = system_setting.current_session
     current_term = system_setting.current_term
 
-    # Fetch all active fee templates for the school and group by class
+    # Fetch classes and active fee templates
+    classes = school.classes.prefetch_related("students").all()
     templates = FeeTemplate.objects.filter(school=school, is_active=True).select_related("school_class")
+
+    # Group templates by class for JS filtering
     templates_by_class = defaultdict(list)
     for template in templates:
         templates_by_class[template.school_class.id].append(template)
@@ -364,9 +373,6 @@ def invoice_create(request):
             },
         )
 
-    # Pass the classes as well for JS dropdowns
-    classes = school.classes.all()  # assuming related_name='classes' in School model
-
     return render(
         request,
         "finance/invoice_form.html",
@@ -376,6 +382,8 @@ def invoice_create(request):
             "templates_by_class": templates_by_class,
         },
     )
+
+
 
 
 

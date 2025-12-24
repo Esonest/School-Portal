@@ -37,9 +37,19 @@ from .models import Invoice, Payment, Expense
 TAILWIND = "w-full border rounded px-3 py-2"
 
 class InvoiceForm(forms.ModelForm):
+    fee_template = forms.ModelChoiceField(
+        queryset=FeeTemplate.objects.none(),  # initially empty
+        empty_label="Select Template",
+        widget=forms.Select(attrs={"class": TAILWIND}),
+        required=False
+    )
+
     class Meta:
         model = Invoice
-        fields = ["school_class", "student", "title", "total_amount", "due_date", "session", "term"]
+        fields = [
+            "school_class", "student", "fee_template",
+            "title", "total_amount", "due_date", "session", "term"
+        ]
         widgets = {
             "title": forms.TextInput(attrs={"class": TAILWIND}),
             "total_amount": forms.NumberInput(attrs={"class": TAILWIND}),
@@ -51,11 +61,21 @@ class InvoiceForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         school = kwargs.pop("school", None)
         super().__init__(*args, **kwargs)
+
         if school:
-            # Only show classes from this school
+            # Filter school_class and student by school
             self.fields["school_class"].queryset = SchoolClass.objects.filter(school=school)
-            # Initially show all students from the school
             self.fields["student"].queryset = Student.objects.filter(school=school)
+            self.fields["fee_template"].queryset = FeeTemplate.objects.filter(school=school)
+
+            # Add data attributes to fee_template options for JS
+            for template in self.fields["fee_template"].queryset:
+                template.attrs = {
+                    "data-class": str(template.school_class.id),
+                    "data-amount": str(template.amount)
+                }
+
+
 
 
 
