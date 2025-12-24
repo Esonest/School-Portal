@@ -1,0 +1,22 @@
+{% extends "finance/base_finance.html" %}
+{% block title %}Delete Payment{% endblock %}
+
+{% block body %}
+<div class="max-w-lg mx-auto bg-white shadow rounded p-6">
+  <h2 class="text-lg font-bold text-red-600 mb-4">Delete Payment</h2>
+  <p class="mb-6">
+    Delete payment of ₦{{ payment.amount }} for
+    {{ payment.invoice.student }}?
+  </p>
+
+  <form method="post" class="flex justify-end gap-3">
+    {% csrf_token %}
+    <a href="{% url 'finance:payment_list' %}" class="px-4 py-2 border rounded">
+      Cancel
+    </a>
+    <button class="px-4 py-2 bg-red-600 text-white rounded">
+      Delete
+    </button>
+  </form>
+</div>
+{% endblock %}

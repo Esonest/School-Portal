@@ -710,19 +710,6 @@ def student_payments(request, student_id):
     })
 
 
-@login_required
-def payment_edit(request, pk):
-    payment = get_object_or_404(Payment, pk=pk, school=request.user.school)
-    if request.method == "POST":
-        form = PaymentForm(request.POST, instance=payment, school=request.user.school)
-        if form.is_valid():
-            form.save()
-            messages.success(request, "Payment updated successfully.")
-            return redirect("finance:student_payments", student_id=payment.student.id)
-    else:
-        form = PaymentForm(instance=payment, school=request.user.school)
-
-    return render(request, "finance/payment_form.html", {"form": form, "payment": payment})
 
 
 @login_required
@@ -773,3 +760,64 @@ def invoice_payments_json(request, invoice_id):
 
 
 
+
+@login_required
+def invoice_delete(request, pk):
+    invoice = get_object_or_404(Invoice, pk=pk, school=request.user.school)
+
+    if request.method == "POST":
+        invoice.delete()
+        messages.success(request, "Invoice deleted successfully.")
+        return redirect("finance:invoice_list")
+
+    return render(request, "finance/invoice_confirm_delete.html", {
+        "invoice": invoice
+    })
+
+
+
+@login_required
+def payment_delete(request, pk):
+    payment = get_object_or_404(
+        Payment, pk=pk, school=request.user.school
+    )
+
+    if request.method == "POST":
+        payment.delete()
+        messages.success(request, "Payment deleted.")
+        return redirect("finance:payment_list")
+
+    return render(request, "finance/payment_confirm_delete.html", {
+        "payment": payment
+    })
+
+@login_required
+def payment_list(request):
+    payments = Payment.objects.filter(
+        school=request.user.school
+    ).select_related("invoice", "invoice__student")
+
+    return render(request, "finance/payment_list.html", {
+        "payments": payments
+    })
+
+
+@login_required
+def payment_update(request, pk):
+    payment = get_object_or_404(
+        Payment, pk=pk, school=request.user.school
+    )
+
+    if request.method == "POST":
+        form = PaymentForm(request.POST, instance=payment, school=request.user.school)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Payment updated.")
+            return redirect("finance:payment_list")
+    else:
+        form = PaymentForm(instance=payment, school=request.user.school)
+
+    return render(request, "finance/payment_form.html", {
+        "form": form,
+        "title": "Edit Payment"
+    })

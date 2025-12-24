@@ -102,23 +102,64 @@
     {% endif %}
 
     <!-- ACCOUNTANT -->
-    {% if 'accountant' in roles %}
-    <div>
-      <h3 class="text-xl sm:text-2xl font-bold text-yellow-700 mb-6">💰 Accountant / Finance Portals</h3>
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-        <a href="{% url 'finance:dashboard' %}" class="portal-card bg-gradient-to-r from-yellow-500 to-yellow-600">📈 Finance Dashboard</a>
-        <a href="{% url 'finance:invoice_list' %}" class="portal-card bg-gradient-to-r from-orange-500 to-orange-600">📄 View Invoices</a>
-        <a href="{% url 'finance:fee_template_list' %}" class="portal-card bg-gradient-to-r from-purple-500 to-purple-600">🏷 Fee Templates</a>
-        <a href="{% url 'finance:invoice_create' %}" class="portal-card bg-gradient-to-r from-indigo-500 to-indigo-600">➕ Create Invoice</a>
-        <a href="{% url 'finance:generate_invoices' %}" class="portal-card bg-gradient-to-r from-green-500 to-green-600">⚙️ Generate Invoices</a>
-        <a href="{% url 'finance:record_payment' %}" class="portal-card bg-gradient-to-r from-emerald-500 to-emerald-600">💳 Record Payment</a>
-        <a href="{% url 'finance:financial_reports' %}" class="portal-card bg-gradient-to-r from-slate-600 to-slate-700">
-          📊 Financial Reports
-          <span class="text-sm opacity-90">(Session / Term)</span>
-        </a>
-      </div>
-    </div>
-    {% endif %}
+{% if 'accountant' in roles %}
+<div>
+  <h3 class="text-xl sm:text-2xl font-bold text-yellow-700 mb-6">
+    💰 Accountant / Finance Portals
+  </h3>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+
+    <!-- Dashboard -->
+    <a href="{% url 'finance:dashboard' %}"
+       class="portal-card bg-gradient-to-r from-yellow-500 to-yellow-600">
+      📈 Finance Dashboard
+    </a>
+
+    <!-- Invoices -->
+    <a href="{% url 'finance:invoice_list' %}"
+       class="portal-card bg-gradient-to-r from-orange-500 to-orange-600">
+      📄 View Invoices
+    </a>
+
+    <a href="{% url 'finance:invoice_create' %}"
+       class="portal-card bg-gradient-to-r from-indigo-500 to-indigo-600">
+      ➕ Create Invoice
+    </a>
+
+    <a href="{% url 'finance:generate_invoices' %}"
+       class="portal-card bg-gradient-to-r from-green-500 to-green-600">
+      ⚙️ Generate Invoices
+    </a>
+
+    <!-- Payments -->
+    <a href="{% url 'finance:payment_list' %}"
+       class="portal-card bg-gradient-to-r from-emerald-500 to-emerald-600">
+      💵 Payments
+    </a>
+
+    <a href="{% url 'finance:record_payment' %}"
+       class="portal-card bg-gradient-to-r from-teal-500 to-teal-600">
+      💳 Record Payment
+    </a>
+
+    <!-- Fees -->
+    <a href="{% url 'finance:fee_template_list' %}"
+       class="portal-card bg-gradient-to-r from-purple-500 to-purple-600">
+      🏷 Fee Templates
+    </a>
+
+    <!-- Reports -->
+    <a href="{% url 'finance:financial_reports' %}"
+       class="portal-card bg-gradient-to-r from-slate-600 to-slate-700">
+      📊 Financial Reports
+      <span class="text-sm opacity-90">(Session / Term)</span>
+    </a>
+
+  </div>
+</div>
+{% endif %}
+
 
     <!-- SUPER ADMIN -->
     {% if 'superadmin' in roles %}

@@ -39,13 +39,17 @@ urlpatterns = [
 
     path("student/<int:student_id>/payments/", views.student_payments, name="student_payments"),
     
-    path("payment/edit/<int:pk>/", views.payment_edit, name="payment_edit"),
+    
     path("payment/reverse/<int:pk>/", views.payment_reverse, name="payment_reverse"),
 
     path("invoice/<int:invoice_id>/payments/", views.invoice_payments_json, name="invoice_payments_json"),
 
     path("fee-templates/", views.fee_template_list, name="fee_template_list"),
     path("fee-templates/create/", views.fee_template_create, name="fee_template_create"),
+
+    path("payments/", views.payment_list, name="payment_list"),
+    path("payments/<int:pk>/edit/", views.payment_update, name="payment_update"),
+    path("payments/<int:pk>/delete/", views.payment_delete, name="payment_delete"),
 
 
 

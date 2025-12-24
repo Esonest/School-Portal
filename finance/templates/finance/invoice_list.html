@@ -32,8 +32,8 @@
         <td>{{ invoice.session }}</td>
         <td>{{ invoice.get_term_display }}</td>
         <td class="text-right space-x-2">
-          <a href="{% url 'finance:invoice_detail' invoice.id %}" class="text-indigo-600">View</a>
           <a href="{% url 'finance:invoice_update' invoice.id %}" class="text-green-600">Edit</a>
+          <a href="{% url 'finance:invoice_delete' invoice.id %}"class="text-red-600">Delete</a>
         </td>
       </tr>
       {% empty %}
