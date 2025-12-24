@@ -35,7 +35,7 @@
     background-image: url("{% if student.school.logo %}{{ student.school.logo.url }}{% endif %}");
     background-repeat: no-repeat;
     background-position: center;
-    background-size: 380px;
+    background-size: 300px;
     opacity: 0.05;
     pointer-events: none;
     z-index: 0;
@@ -65,11 +65,11 @@
   }
 </style>
 
-<div class="watermark relative z-10 max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 min-h-screen bg-gradient-to-br from-indigo-50 via-white to-blue-50">
+<div class="watermark relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-8 min-h-screen bg-gradient-to-br from-indigo-50 via-white to-blue-50">
 
   <!-- 🧑‍🎓 HEADER -->
-  <div class="card bg-white border rounded-2xl shadow-sm p-4 sm:p-6 mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-    <div class="flex items-center gap-4">
+  <div class="card bg-white border rounded-2xl shadow-sm p-4 sm:p-6 mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 flex-wrap">
+    <div class="flex items-center gap-4 flex-wrap">
       {% if student.photo %}
         <img src="{{ student.photo.url }}" class="w-12 h-12 sm:w-16 sm:h-16 rounded-full object-cover border">
       {% else %}
@@ -88,7 +88,7 @@
     </div>
 
     <a href="{% url 'students:profile' %}"
-       class="no-print inline-flex justify-center px-4 py-2 text-sm text-white rounded-lg shadow"
+       class="no-print inline-flex justify-center px-4 py-2 text-sm text-white rounded-lg shadow mt-2 sm:mt-0"
        style="background:var(--theme)">
       Edit Profile
     </a>
@@ -153,38 +153,24 @@
     </div>
 
     <!-- RESULTS -->
-    <div class="card lg:col-span-2 bg-white p-4 sm:p-6 rounded-xl shadow border">
-      <div class="flex flex-col sm:flex-row sm:justify-between gap-3 mb-4">
-        <h2 class="font-semibold" style="color:var(--theme)">Recent Results</h2>
-        <a href="{% url 'cbt:exam_list' %}"
-           class="no-print px-4 py-2 text-sm text-white rounded"
-           style="background:var(--theme)">
-          CBT Exams
-        </a>
-      </div>
+    <div class="card bg-white p-4 sm:p-6 rounded-xl shadow border flex flex-col gap-3">
+      <h2 class="font-semibold mb-2" style="color:var(--theme)">Recent Results</h2>
 
-      <ul class="divide-y">
-        {% for r in results %}
-        <li class="py-3 flex flex-col sm:flex-row sm:justify-between gap-2">
-          <div>
-            <p class="font-medium text-sm">{{ r.exam.title }}</p>
-            <p class="text-xs muted">
-              {{ r.exam.term }} {{ r.exam.session }} · {{ r.total_score }} · {{ r.grade }}
-            </p>
-          </div>
-          <div class="no-print flex gap-2">
-            <a href="{% url 'students:result_detail' pk=r.pk %}"
-               class="px-3 py-1 text-xs text-white rounded"
-               style="background:var(--theme)">View</a>
-            <a href="{% url 'students:result_pdf' pk=r.pk %}"
-               class="px-3 py-1 text-xs bg-gray-100 rounded">PDF</a>
-          </div>
-        </li>
-        {% empty %}
-        <li class="py-3 text-center text-sm muted">No results</li>
-        {% endfor %}
-      </ul>
+      {% if recent_results %}
+        <div class="flex flex-wrap gap-2">
+          {% for submission in recent_results %}
+            <a href="{% url 'cbt:student_exam_result' submission.exam.id %}"
+               class="no-print px-3 py-1 text-xs sm:text-sm text-white rounded"
+               style="background:var(--theme)">
+              {{ submission.exam.title }} — {{ submission.score }}%
+            </a>
+          {% endfor %}
+        </div>
+      {% else %}
+        <span class="text-gray-500 text-sm">No recent results</span>
+      {% endif %}
     </div>
+
   </div>
 
   <!-- 📝 ASSIGNMENTS + NOTES -->
@@ -195,15 +181,15 @@
       <h2 class="font-semibold mb-4" style="color:var(--theme)">Assignments</h2>
       <ul class="divide-y">
         {% for a in assignments %}
-        <li class="py-3 flex justify-between text-sm">
+        <li class="py-3 flex justify-between text-sm flex-wrap">
           <div>
             <p class="font-medium">{{ a.title }}</p>
             <p class="text-xs muted">{{ a.due_date|date:"M d, Y" }}</p>
           </div>
           {% if a.due_date < now %}
-            <span class="text-xs text-red-600">Overdue</span>
+            <span class="text-xs text-red-600 mt-1 sm:mt-0">Overdue</span>
           {% else %}
-            <span class="text-xs text-green-600">Active</span>
+            <span class="text-xs text-green-600 mt-1 sm:mt-0">Active</span>
           {% endif %}
         </li>
         {% empty %}
@@ -235,13 +221,13 @@
       {% if active_cbts %}
         <ul class="space-y-3">
           {% for exam in active_cbts %}
-          <li class="flex justify-between text-sm">
+          <li class="flex justify-between text-sm flex-wrap">
             <div>
               <p class="font-medium">{{ exam.title }} ({{ exam.subject }})</p>
               <p class="text-xs muted">{{ exam.start_time|date:"M d, Y H:i" }}</p>
             </div>
             <a href="{% url 'cbt:exam_list' %}"
-               class="no-print px-3 py-1 text-xs text-white rounded"
+               class="no-print px-3 py-1 text-xs text-white rounded mt-1 sm:mt-0"
                style="background:var(--theme)">Start</a>
           </li>
           {% endfor %}

@@ -44,6 +44,7 @@ def student_dashboard(request):
         return redirect("accounts:portal_selection")
 
     now = localtime(timezone.now())
+    
 
     # ✅ Assignments
     assignments = list(Assignment.objects.filter(
@@ -65,10 +66,16 @@ def student_dashboard(request):
         school_class=student.school_class,
         start_time__gt=now
     ).order_by('start_time'))
+    
+    recent_results = CBTSubmission.objects.filter(
+        student=student,
+        completed_on__isnull=False
+    ).order_by('-completed_on')[:5]
 
     context = {
         'student': student,
         'assignments': assignments,
+        'recent_results': recent_results,
         'active_cbts': active_cbts,
         'upcoming_cbts': upcoming_cbts,
         'now': now,
