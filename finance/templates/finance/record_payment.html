@@ -2,28 +2,22 @@
 {% load static %}
 
 {% block content %}
-<div class="max-w-3xl mx-auto px-4 py-10" x-data="recordPayment()">
+<div class="max-w-3xl mx-auto px-4 py-10">
 
   <!-- Header -->
   <div class="mb-8 bg-white dark:bg-gray-900 shadow-md rounded-2xl p-6">
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-
       <div>
         <h2 class="text-3xl font-bold text-gray-800 dark:text-gray-100 flex items-center gap-2">
           💳 Record Payment
         </h2>
-        <p class="text-2xl font-bold text-{{ school.theme_color }}-600">
-          {{ school.name }}
-        </p>
+        <p class="text-2xl font-bold text-{{ school.theme_color }}-600">{{ school.name }}</p>
       </div>
 
       <div class="flex flex-col sm:flex-row gap-4">
-
         <!-- Session -->
         <div>
-          <label class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
-            Session
-          </label>
+          <label class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">Session</label>
           <select name="session"
                   class="rounded-xl border-gray-300 dark:border-gray-700
                          bg-white dark:bg-gray-800
@@ -36,9 +30,7 @@
 
         <!-- Term -->
         <div>
-          <label class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">
-            Term
-          </label>
+          <label class="text-sm font-medium text-gray-700 dark:text-gray-300 mb-1 block">Term</label>
           <select name="term"
                   class="rounded-xl border-gray-300 dark:border-gray-700
                          bg-white dark:bg-gray-800
@@ -48,40 +40,30 @@
             {% endfor %}
           </select>
         </div>
-
       </div>
     </div>
   </div>
 
   <!-- Form -->
-  <form method="post" class="bg-white dark:bg-gray-900 rounded-2xl shadow p-8 space-y-6" @submit="submitForm">
+  <form method="post" x-data="recordPayment()" x-ref="paymentForm" @submit.prevent="submitForm" class="bg-white dark:bg-gray-900 rounded-2xl shadow p-8 space-y-6">
     {% csrf_token %}
 
     <!-- Class -->
     <div>
-      <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
-        Class
-      </label>
+      <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Class</label>
       {{ form.school_class }}
     </div>
 
     <!-- Invoice -->
     <div>
-      <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
-        Invoice
-      </label>
+      <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Invoice</label>
       {{ form.invoice }}
-      <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">
-        Invoices are filtered by selected class
-      </p>
+      <p class="text-xs text-gray-500 dark:text-gray-400 mt-1">Invoices are filtered by selected class</p>
     </div>
 
     <!-- Payment Impact Card -->
     <div class="bg-indigo-50 dark:bg-indigo-900/30 rounded-xl p-4">
-      <p class="text-sm font-semibold text-indigo-700 dark:text-indigo-300">
-        📊 Payment Impact Preview
-      </p>
-
+      <p class="text-sm font-semibold text-indigo-700 dark:text-indigo-300">📊 Payment Impact Preview</p>
       <div class="mt-3 space-y-1 text-sm">
         <p>Total Invoice: ₦ <span x-text="invoiceTotal.toLocaleString()">0</span></p>
         <p>Already Paid: ₦ <span x-text="paidSoFar.toLocaleString()">0</span></p>
@@ -93,17 +75,13 @@
 
     <!-- Amount -->
     <div>
-      <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
-        Amount Paid
-      </label>
+      <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Amount Paid</label>
       {{ form.amount }}
     </div>
 
     <!-- Payment Method -->
     <div>
-      <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">
-        Payment Method
-      </label>
+      <label class="block text-sm font-semibold text-gray-700 dark:text-gray-300 mb-1">Payment Method</label>
       {{ form.payment_method }}
     </div>
 
@@ -114,7 +92,6 @@
                 text-gray-700 dark:text-gray-300 hover:bg-gray-100 dark:hover:bg-gray-800">
         Cancel
       </a>
-
       <button type="submit"
               class="px-8 py-3 rounded-xl bg-emerald-600 hover:bg-emerald-700
                      text-white font-bold"
@@ -126,15 +103,28 @@
 
   </form>
 
-  <!-- Sticky Mobile Bar -->
+  <!-- Mobile sticky buttons with auto-hide -->
   <div class="sm:hidden fixed bottom-0 inset-x-0 bg-white dark:bg-gray-900
-              border-t dark:border-gray-700 p-4 z-50">
-    <button type="submit"
-            form="payment-form"
-            @click="submitForm"
-            class="w-full py-3 rounded-xl bg-emerald-600 text-white font-bold">
+              border-t dark:border-gray-700 p-4 z-50 flex gap-4 transition-transform duration-300"
+       x-data="{ lastScroll: 0, hidden: false }"
+       :class="{ '-translate-y-full': hidden }"
+       x-init="
+         window.addEventListener('scroll', () => {
+           if (window.scrollY > lastScroll + 10) { hidden = true; }
+           else if (window.scrollY < lastScroll - 10) { hidden = false; }
+           lastScroll = window.scrollY;
+         });
+       ">
+    <button type="button"
+            @click="document.querySelector('form').requestSubmit()"
+            class="flex-1 py-3 rounded-xl bg-emerald-600 text-white font-bold">
       💾 Save Payment
     </button>
+    <a href="{% url 'finance:dashboard' %}"
+       class="flex-1 py-3 rounded-xl border border-gray-300 dark:border-gray-600
+              text-gray-700 dark:text-gray-300 text-center hover:bg-gray-100 dark:hover:bg-gray-800">
+      Cancel
+    </a>
   </div>
 
 </div>
@@ -156,7 +146,6 @@ function recordPayment() {
       document.querySelector('[name="amount"]')
         ?.addEventListener('input', () => this.calculate());
 
-      // Auto-download receipt after save
       if (new URLSearchParams(window.location.search).get('saved') === 'true') {
         this.downloadReceipt();
       }
@@ -177,6 +166,9 @@ function recordPayment() {
     submitForm() {
       if (this.loading) return;
       this.loading = true;
+
+      // Submit the form
+      this.$el.submit();
     },
 
     downloadReceipt() {

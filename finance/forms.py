@@ -178,18 +178,24 @@ class BulkInvoiceForm(forms.Form):
 from django import forms
 from .models import FeeTemplate  # adjust imports
 
+
+
 class FeeTemplateForm(forms.ModelForm):
+    amount = forms.CharField(  # Use CharField to allow commas in input
+        widget=forms.TextInput(attrs={
+            "placeholder": "Enter amount",
+            "class": "w-full px-3 py-2 border rounded-md dark:bg-gray-800 dark:text-white",
+        })
+    )
+
     class Meta:
         model = FeeTemplate
-        fields = ["name", "amount", "school_class"]  # adjust fields
+        fields = ["name", "amount", "school_class"]
 
     def __init__(self, *args, **kwargs):
-        # Pop the user from kwargs; don't pass it to super()
         user = kwargs.pop("user", None)
-        super(FeeTemplateForm, self).__init__(*args, **kwargs)
-        
+        super().__init__(*args, **kwargs)
         if user:
-            # Determine the school from the user's accountant profile
             school = getattr(user, "accountant_profile", None)
             if school:
                 self.fields["school_class"].queryset = SchoolClass.objects.filter(school=school.school)
@@ -197,6 +203,17 @@ class FeeTemplateForm(forms.ModelForm):
                 self.fields["school_class"].queryset = SchoolClass.objects.none()
         else:
             self.fields["school_class"].queryset = SchoolClass.objects.none()
+
+    def clean_amount(self):
+        # Remove commas and convert to decimal
+        amount = self.cleaned_data.get("amount", "")
+        try:
+            # Remove commas
+            amount = amount.replace(",", "")
+            return float(amount)
+        except ValueError:
+            raise forms.ValidationError("Enter a valid number.")
+
 
 
 
