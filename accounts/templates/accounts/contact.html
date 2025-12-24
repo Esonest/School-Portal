@@ -52,14 +52,15 @@
   </h2>
 
   <form action="{% url 'accounts:contact_us' %}" method="POST"
-        class="bg-white dark:bg-gray-800 shadow-lg rounded-xl p-6 sm:p-8 space-y-6 animate-fade-in">
+        class="bg-white dark:bg-gray-800 shadow-lg rounded-xl p-6 sm:p-8 space-y-6 animate-fade-in max-w-3xl mx-auto" 
+        id="contactForm">
     {% csrf_token %}
 
+    <!-- Messages -->
     {% if messages %}
       {% for message in messages %}
         <div class="alert-message flex items-center gap-3 p-4 rounded-lg text-white font-medium
           {% if message.tags == 'success' %}bg-green-600{% else %}bg-red-600{% endif %}">
-          
           {% if message.tags == 'success' %}
             <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none"
                  viewBox="0 0 24 24" stroke="currentColor">
@@ -73,7 +74,6 @@
                     d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
           {% endif %}
-
           <span>{{ message }}</span>
         </div>
       {% endfor %}
@@ -82,28 +82,33 @@
     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
       <div>
         <label class="form-label">Full Name</label>
-        <input class="form-input" type="text" name="name" value="{{ request.POST.name|default:'' }}" required>
+        <input class="form-input" type="text" name="name" id="name" required>
+        <p class="text-red-600 text-sm mt-1 hidden" id="nameError">Please enter your full name.</p>
       </div>
-
       <div>
         <label class="form-label">Email</label>
-        <input class="form-input" type="email" name="email" value="{{ request.POST.email|default:'' }}" required>
+        <input class="form-input" type="email" name="email" id="email" required>
+        <p class="text-red-600 text-sm mt-1 hidden" id="emailError">Please enter a valid email address.</p>
       </div>
     </div>
 
     <div>
       <label class="form-label">Subject</label>
-      <input class="form-input" type="text" name="subject" value="{{ request.POST.subject|default:'' }}" required>
+      <input class="form-input" type="text" name="subject" id="subject" required>
+      <p class="text-red-600 text-sm mt-1 hidden" id="subjectError">Please enter a subject.</p>
     </div>
 
     <div>
       <label class="form-label">Message</label>
-      <textarea class="form-input h-32 resize-none" name="message" required>{{ request.POST.message|default:'' }}</textarea>
+      <textarea class="form-input h-32 resize-none" name="message" id="message" required></textarea>
+      <p class="text-red-600 text-sm mt-1 hidden" id="messageError">Please enter your message.</p>
     </div>
 
     <div class="text-center pt-4">
       <button type="submit"
-              class="px-8 py-3 rounded-lg bg-blue-700 hover:bg-blue-800 text-white font-semibold shadow transition">
+              id="sendBtn"
+              class="px-8 py-3 rounded-lg bg-blue-700 hover:bg-blue-800 text-white font-semibold shadow transition
+                     w-full sm:w-auto">
         Send Message
       </button>
     </div>
@@ -114,6 +119,7 @@
 <style>
 .animate-fade-in { animation: fadeIn 0.9s ease forwards; }
 .animate-rise { animation: riseUp 0.6s ease forwards; }
+
 @keyframes fadeIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
 @keyframes riseUp { from { opacity:0; transform:translateY(30px); } to { opacity:1; transform:translateY(0); } }
 
@@ -124,11 +130,8 @@
 .contact-title { font-size:1.1rem; font-weight:bold; margin-bottom:0.75rem; color:#1f2937; }
 .dark .contact-title { color:#f9fafb; }
 
-h2 { color:#1f2937; }
-.dark h2 { color:#f9fafb; }
-
-h3 { color:#1f2937; }
-.dark h3 { color:#f9fafb; }
+h2, h3 { color:#1f2937; }
+.dark h2, .dark h3 { color:#f9fafb; }
 
 p { color:#374151; }
 .dark p { color:#d1d5db; }
@@ -144,14 +147,60 @@ p { color:#374151; }
 .alert-message { transition: opacity 0.5s ease; }
 </style>
 
-<!-- AUTO HIDE ALERT -->
+<!-- AUTO HIDE ALERT + FORM VALIDATION -->
 <script>
+  // auto-hide messages
   setTimeout(() => {
     document.querySelectorAll(".alert-message").forEach(alert => {
       alert.style.opacity = "0";
       setTimeout(() => alert.remove(), 500);
     });
   }, 5000);
+
+  // disable button on submit
+  const form = document.getElementById("contactForm");
+  const btn = document.getElementById("sendBtn");
+
+  form.addEventListener("submit", function(e) {
+    let valid = true;
+
+    // Clear all previous errors
+    document.querySelectorAll("p.text-red-600").forEach(p => p.classList.add("hidden"));
+
+    // Validate name
+    if (!document.getElementById("name").value.trim()) {
+      document.getElementById("nameError").classList.remove("hidden");
+      valid = false;
+    }
+
+    // Validate email
+    const emailVal = document.getElementById("email").value.trim();
+    if (!emailVal || !/^\S+@\S+\.\S+$/.test(emailVal)) {
+      document.getElementById("emailError").classList.remove("hidden");
+      valid = false;
+    }
+
+    // Validate subject
+    if (!document.getElementById("subject").value.trim()) {
+      document.getElementById("subjectError").classList.remove("hidden");
+      valid = false;
+    }
+
+    // Validate message
+    if (!document.getElementById("message").value.trim()) {
+      document.getElementById("messageError").classList.remove("hidden");
+      valid = false;
+    }
+
+    if (!valid) {
+      e.preventDefault(); // stop form submission
+      return;
+    }
+
+    // Disable button while submitting
+    btn.disabled = true;
+    btn.innerText = "Sending...";
+  });
 </script>
 
 {% endblock %}

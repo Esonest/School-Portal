@@ -5,7 +5,7 @@
     <h2 class="text-2xl font-bold mb-4">Create Invoice</h2>
     <form method="POST" id="invoice-form" class="space-y-4">
         {% csrf_token %}
-        
+
         <!-- School Class -->
         <div>
             <label class="block font-medium mb-1">{{ form.school_class.label }}</label>
@@ -24,19 +24,43 @@
             {% endif %}
         </div>
 
-        <!-- Other fields -->
+        <!-- Fee Template Dropdown -->
+        <div>
+            <label class="block font-medium mb-1">Fee Template</label>
+            <select id="fee-template-select" class="w-full border rounded px-3 py-2">
+                <option value="">Select Template</option>
+                {% for cls_id, cls_templates in templates_by_class.items %}
+                    {% for template in cls_templates %}
+                        <option value="{{ template.id }}"
+                                data-name="{{ template.name }}"
+                                data-amount="{{ template.amount }}"
+                                data-class="{{ cls_id }}">
+                            {{ template.name }} — ₦{{ template.amount|floatformat:2 }}
+                        </option>
+                    {% endfor %}
+                {% endfor %}
+            </select>
+        </div>
+
+        <!-- Title (auto-populated) -->
         <div>
             <label class="block font-medium mb-1">{{ form.title.label }}</label>
             {{ form.title }}
         </div>
+
+        <!-- Total Amount (auto-populated) -->
         <div>
             <label class="block font-medium mb-1">{{ form.total_amount.label }}</label>
             {{ form.total_amount }}
         </div>
+
+        <!-- Due Date -->
         <div>
             <label class="block font-medium mb-1">{{ form.due_date.label }}</label>
             {{ form.due_date }}
         </div>
+
+        <!-- Session & Term -->
         <div>
             <label class="block font-medium mb-1">{{ form.session.label }}</label>
             {{ form.session }}
@@ -55,16 +79,21 @@
 </div>
 
 <script>
-    // Dynamic student filtering based on selected class
     const schoolClassSelect = document.getElementById("id_school_class");
     const studentSelect = document.getElementById("id_student");
+    const feeTemplateSelect = document.getElementById("fee-template-select");
+    const titleInput = document.getElementById("id_title");
+    const totalInput = document.getElementById("id_total_amount");
 
+    const allTemplates = Array.from(feeTemplateSelect.options);
+
+    // Update students based on selected class
     schoolClassSelect.addEventListener("change", function() {
         const classId = this.value;
 
-        // Fetch students via AJAX endpoint (create in views)
+        // Filter students
         fetch(`/finance/students-by-class/${classId}/`)
-            .then(response => response.json())
+            .then(res => res.json())
             .then(data => {
                 studentSelect.innerHTML = "";
                 data.forEach(student => {
@@ -74,6 +103,30 @@
                     studentSelect.appendChild(option);
                 });
             });
+
+        // Filter templates by class
+        feeTemplateSelect.innerHTML = '<option value="">Select Template</option>';
+        allTemplates.forEach(option => {
+            if(option.dataset.class === classId) {
+                feeTemplateSelect.appendChild(option.cloneNode(true));
+            }
+        });
+
+        // Reset title and amount
+        titleInput.value = "";
+        totalInput.value = "";
+    });
+
+    // Update title and amount based on selected template
+    feeTemplateSelect.addEventListener("change", function() {
+        const selected = this.selectedOptions[0];
+        if(selected && selected.value !== "") {
+            titleInput.value = selected.dataset.name;
+            totalInput.value = selected.dataset.amount;
+        } else {
+            titleInput.value = "";
+            totalInput.value = "";
+        }
     });
 </script>
 {% endblock %}

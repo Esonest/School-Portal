@@ -161,53 +161,76 @@ from django.conf import settings
 from django.contrib import messages
 from .models import ContactMessage
 
+
 def contact_us(request):
     if request.method == "POST":
-        name = request.POST.get("name")
-        email = request.POST.get("email")
-        subject = request.POST.get("subject")
-        message_text = request.POST.get("message")
+        name = request.POST.get("name", "").strip()
+        email = request.POST.get("email", "").strip()
+        subject = request.POST.get("subject", "").strip()
+        message_text = request.POST.get("message", "").strip()
 
-        # Save to DB
-        contact = ContactMessage.objects.create(
-            name=name, email=email, subject=subject, message=message_text
+        # -------------------------
+        # Save to database
+        # -------------------------
+        ContactMessage.objects.create(
+            name=name,
+            email=email,
+            subject=subject,
+            message=message_text,
         )
 
-        # Send email to techcenter
-        full_message = f"""
-New Contact Message from TECHCENTER Website
+        # -------------------------
+        # Email content
+        # -------------------------
+        admin_message = (
+            "New Contact Message from TECHCENTER Website\n\n"
+            f"Name: {name}\n"
+            f"Email: {email}\n"
+            f"Subject: {subject}\n\n"
+            "Message:\n"
+            f"{message_text}"
+        )
 
-Name: {name}
-Email: {email}
-Subject: {subject}
-
-Message:
-{message_text}
-        """
         try:
+            # Send email to TECHCENTER
             send_mail(
                 subject=f"[TECHCENTER Contact] {subject}",
-                message=full_message,
+                message=admin_message,
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=["techcenter652@gmail.com"],
-                fail_silently=False,
             )
-            # Auto-reply to sender
+
+            # Auto-reply to sender (non-blocking)
             send_mail(
                 subject="Thank you for contacting TECHCENTER",
-                message=f"Hi {name},\n\nWe received your message and will get back to you soon.\n\nRegards,\nTECHCENTER Team",
+                message=(
+                    f"Hi {name},\n\n"
+                    "We received your message and will get back to you shortly.\n\n"
+                    "Regards,\n"
+                    "TECHCENTER Team"
+                ),
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[email],
                 fail_silently=True,
             )
 
-            messages.success(request, "Your message has been sent successfully.")
-        except Exception:
-            messages.error(request, "Failed to send message. Please try again later.")
+            messages.success(
+                request,
+                "Your message has been sent successfully."
+            )
 
+        except Exception:
+            messages.error(
+                request,
+                "Failed to send message. Please try again later."
+            )
+
+        # 🔑 POST → REDIRECT → GET (prevents freeze)
         return redirect("accounts:contact_us")
 
+    # GET request
     return render(request, "accounts/contact.html")
+
 
 
 

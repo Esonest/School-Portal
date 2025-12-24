@@ -1,34 +1,53 @@
 {% extends "accounts/base.html" %}
 {% block content %}
-<div class="max-w-4xl mx-auto px-4 py-8">
-  <h1 class="text-2xl font-bold mb-6">💰 Fee Templates</h1>
+<div class="max-w-6xl mx-auto px-4 py-6 sm:py-8">
 
-  <a href="{% url 'finance:fee_template_create' %}"
-     class="mb-4 inline-block bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-lg font-semibold">
-    ➕ Create Fee Template
-  </a>
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <h1 class="text-2xl font-bold">💰 Fee Templates</h1>
 
-  <div class="bg-white rounded-2xl shadow overflow-x-auto">
-    <table class="min-w-full divide-y divide-gray-200">
+    <a href="{% url 'finance:fee_template_create' %}"
+       class="inline-flex justify-center bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-lg font-semibold text-sm sm:text-base">
+      ➕ Create Fee Template
+    </a>
+  </div>
+
+  <!-- DESKTOP / TABLET TABLE -->
+  <div class="hidden sm:block bg-white rounded-2xl shadow overflow-x-auto">
+    <table class="min-w-full divide-y divide-gray-200 text-sm md:text-base">
       <thead class="bg-gray-100">
         <tr>
-          <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase">Class</th>
-          <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase">Name</th>
-          <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase">Amount</th>
-          <th class="px-6 py-3 text-left text-xs font-bold text-gray-600 uppercase">Active</th>
+          <th class="px-6 py-3 text-left font-bold text-gray-600 uppercase">Class</th>
+          <th class="px-6 py-3 text-left font-bold text-gray-600 uppercase">Name</th>
+          <th class="px-6 py-3 text-left font-bold text-gray-600 uppercase">Amount</th>
+          <th class="px-6 py-3 text-left font-bold text-gray-600 uppercase">Active</th>
+          <th class="px-6 py-3 text-right font-bold text-gray-600 uppercase">Actions</th>
         </tr>
       </thead>
       <tbody class="divide-y divide-gray-100">
         {% for template in templates %}
-        <tr class="hover:bg-gray-50">
+        <tr class="hover:bg-gray-50 transition">
           <td class="px-6 py-4">{{ template.school_class }}</td>
-          <td class="px-6 py-4">{{ template.name }}</td>
+          <td class="px-6 py-4 font-medium">{{ template.name }}</td>
           <td class="px-6 py-4">₦{{ template.amount|floatformat:2 }}</td>
-          <td class="px-6 py-4">{{ template.is_active|yesno:"Yes,No" }}</td>
+          <td class="px-6 py-4">
+            <span class="{% if template.is_active %}text-green-600{% else %}text-red-600{% endif %} font-semibold">
+              {{ template.is_active|yesno:"Yes,No" }}
+            </span>
+          </td>
+          <td class="px-6 py-4 text-right space-x-3 whitespace-nowrap">
+            <a href="{% url 'finance:fee_template_edit' template.id %}"
+               class="text-green-600 hover:underline font-semibold">
+              Edit
+            </a>
+            <a href="{% url 'finance:fee_template_delete' template.id %}"
+               class="text-red-600 hover:underline font-semibold">
+              Delete
+            </a>
+          </td>
         </tr>
         {% empty %}
         <tr>
-          <td colspan="4" class="px-6 py-10 text-center text-gray-500">
+          <td colspan="5" class="px-6 py-10 text-center text-gray-500">
             No fee templates found.
           </td>
         </tr>
@@ -36,5 +55,45 @@
       </tbody>
     </table>
   </div>
+
+  <!-- MOBILE CARD VIEW -->
+  <div class="sm:hidden space-y-4">
+    {% for template in templates %}
+    <div class="bg-white rounded-xl shadow p-4 space-y-3">
+      <div class="flex justify-between items-start">
+        <div>
+          <p class="text-sm text-gray-500">{{ template.school_class }}</p>
+          <h3 class="font-semibold text-gray-800">{{ template.name }}</h3>
+        </div>
+        <span class="font-semibold text-indigo-600">
+          ₦{{ template.amount|floatformat:2 }}
+        </span>
+      </div>
+
+      <div class="flex justify-between items-center text-sm">
+        <span class="text-gray-500">Active:</span>
+        <span class="{% if template.is_active %}text-green-600{% else %}text-red-600{% endif %} font-semibold">
+          {{ template.is_active|yesno:"Yes,No" }}
+        </span>
+      </div>
+
+      <div class="flex justify-end gap-4 pt-3 border-t">
+        <a href="{% url 'finance:fee_template_edit' template.id %}"
+           class="text-green-600 font-semibold text-sm">
+          Edit
+        </a>
+        <a href="{% url 'finance:fee_template_delete' template.id %}"
+           class="text-red-600 font-semibold text-sm">
+          Delete
+        </a>
+      </div>
+    </div>
+    {% empty %}
+    <div class="bg-white rounded-xl shadow p-6 text-center text-gray-500">
+      No fee templates found.
+    </div>
+    {% endfor %}
+  </div>
+
 </div>
 {% endblock %}

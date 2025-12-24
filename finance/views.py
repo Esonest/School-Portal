@@ -31,51 +31,53 @@ TERM_CHOICES = [('1', 'Term 1'), ('2', 'Term 2'), ('3', 'Term 3')]
 
 
 
+
 @login_required
 def dashboard(request):
     school = request.user.school
 
+    # Get filters from request
     current_session = request.GET.get("session")
     current_term = request.GET.get("term")
 
-    # ✅ last 12 months range
+    # Last 12 months range
     start_date = timezone.now() - timedelta(days=365)
 
-    invoices = Invoice.objects.filter(
-        school=school,
-        created_at__gte=start_date
-    )
+    # Filter invoices by school and date
+    invoices = Invoice.objects.filter(school=school, created_at__gte=start_date)
 
-    # ✅ OPTIONAL filters (only apply if selected)
     if current_session:
         invoices = invoices.filter(session=current_session)
-
     if current_term:
         invoices = invoices.filter(term=current_term)
 
-    # ✅ aggregates
-    total_expected = invoices.aggregate(
-        total=Sum("total_amount")
-    )["total"] or 0
-
-    total_received = invoices.aggregate(
-        total=Sum("amount_paid")
-    )["total"] or 0
-
+    # Aggregates for totals
+    total_expected = invoices.aggregate(total=Sum("total_amount"))["total"] or 0
+    total_received = invoices.aggregate(total=Sum("amount_paid"))["total"] or 0
     outstanding = total_expected - total_received
 
-    # ✅ recent payments (NO session/term filter here)
-    recent_payments = Payment.objects.filter(
-        school=school
-    ).select_related("invoice", "invoice__student").order_by("-payment_date")[:5]
+    # Recent payments (latest 5)
+    recent_payments = Payment.objects.filter(school=school).select_related(
+        "invoice", "invoice__student"
+    ).order_by("-payment_date")[:5]
+
+    # Recent expenses (filtered by session & term if applicable)
+    recent_expenses = Expense.objects.filter(school=school, date__gte=start_date)
+    if current_session:
+        recent_expenses = recent_expenses.filter(session=current_session)
+    if current_term:
+        recent_expenses = recent_expenses.filter(term=current_term)
+
+    recent_expenses = recent_expenses.order_by("-date")[:5]
 
     context = {
         "school": school,
-        "invoices": invoices,  # 🔥 THIS NAME MUST MATCH TEMPLATE
+        "invoices": invoices,
         "total_expected": total_expected,
         "total_received": total_received,
         "outstanding": outstanding,
         "recent_payments": recent_payments,
+        "recent_expenses": recent_expenses,
         "sessions": SESSION_LIST,
         "current_session": current_session,
         "current_term": current_term,
@@ -83,6 +85,7 @@ def dashboard(request):
     }
 
     return render(request, "finance/dashboard.html", context)
+
 
 
 
@@ -151,53 +154,91 @@ from django.db.models import Sum
 from django.utils import timezone
 from django.db.models.functions import TruncMonth
 
+
+
 @login_required
 def finance_summary_json(request):
     school = request.user.school
 
+    current_session = request.GET.get("session")
+    current_term = request.GET.get("term")
+
     today = timezone.now()
     start_date = today - timedelta(days=365)
 
+    # =====================
+    # INCOME (Payments)
+    # =====================
+    payments = Payment.objects.filter(
+        school=school,
+        payment_date__gte=start_date
+    )
+
+    if current_session:
+        payments = payments.filter(invoice__session=current_session)
+
+    if current_term:
+        payments = payments.filter(invoice__term=current_term)
+
     income = (
-        Payment.objects.filter(
-            school=school,
-            payment_date__gte=start_date
-        )
+        payments
         .annotate(month=TruncMonth("payment_date"))
         .values("month")
         .annotate(total=Sum("amount"))
         .order_by("month")
     )
 
+    # =====================
+    # EXPENSES
+    # =====================
+    expenses = Expense.objects.filter(
+        school=school,
+        date__gte=start_date
+    )
+
+    if current_session:
+        expenses = expenses.filter(session=current_session)
+
+    if current_term:
+        expenses = expenses.filter(term=current_term)
+
     expense = (
-        Expense.objects.filter(
-            school=school,
-            date__gte=start_date
-        )
+        expenses
         .annotate(month=TruncMonth("date"))
         .values("month")
         .annotate(total=Sum("amount"))
         .order_by("month")
     )
 
-    labels = []
-    income_data = []
-    expense_data = []
-
+    # =====================
+    # MERGE MONTHS
+    # =====================
     months = sorted(
         {i["month"] for i in income} | {e["month"] for e in expense}
     )
 
+    labels = []
+    income_data = []
+    expense_data = []
+
     for m in months:
         labels.append(m.strftime("%b %Y"))
-        income_data.append(next((i["total"] for i in income if i["month"] == m), 0))
-        expense_data.append(next((e["total"] for e in expense if e["month"] == m), 0))
+
+        income_data.append(
+            next((i["total"] for i in income if i["month"] == m), 0)
+        )
+
+        expense_data.append(
+            next((e["total"] for e in expense if e["month"] == m), 0)
+        )
 
     return JsonResponse({
         "labels": labels,
         "income": income_data,
         "expense": expense_data,
     })
+
+
 
 
 
@@ -290,30 +331,52 @@ def invoice_list(request):
 
 @login_required
 def invoice_create(request):
-    school = getattr(request.user, "school", None)  # make sure user has a school
+    school = getattr(request.user, "school", None)
     if not school:
         return HttpResponse("User is not assigned to any school")
 
+    # Get system settings
     system_setting, _ = SystemSetting.objects.get_or_create(id=1)
     current_session = system_setting.current_session
     current_term = system_setting.current_term
+
+    # Fetch all active fee templates for the school and group by class
+    templates = FeeTemplate.objects.filter(school=school, is_active=True).select_related("school_class")
+    templates_by_class = defaultdict(list)
+    for template in templates:
+        templates_by_class[template.school_class.id].append(template)
 
     if request.method == "POST":
         form = InvoiceForm(request.POST, school=school)
         if form.is_valid():
             invoice = form.save(commit=False)
-            invoice.school = school  # <-- assign school here
+            invoice.school = school
             invoice.save()
             return redirect("finance:invoice_list")
         else:
             print(form.errors)
     else:
-        form = InvoiceForm(school=school, initial={
-            "session": current_session,
-            "term": current_term,
-        })
+        form = InvoiceForm(
+            school=school,
+            initial={
+                "session": current_session,
+                "term": current_term,
+            },
+        )
 
-    return render(request, "finance/invoice_form.html", {"form": form})
+    # Pass the classes as well for JS dropdowns
+    classes = school.classes.all()  # assuming related_name='classes' in School model
+
+    return render(
+        request,
+        "finance/invoice_form.html",
+        {
+            "form": form,
+            "classes": classes,
+            "templates_by_class": templates_by_class,
+        },
+    )
+
 
 
 
@@ -821,3 +884,116 @@ def payment_update(request, pk):
         "form": form,
         "title": "Edit Payment"
     })
+
+
+@login_required
+def fee_template_edit(request, pk):
+    school = request.user.school
+
+    template = get_object_or_404(
+        FeeTemplate,
+        pk=pk,
+        school=school
+    )
+
+    if request.method == "POST":
+        form = FeeTemplateForm(
+            request.POST,
+            instance=template
+        )
+        if form.is_valid():
+            form.save()
+            messages.success(
+                request,
+                "Fee template updated successfully."
+            )
+            return redirect("finance:fee_template_list")
+    else:
+        # 🔑 Binds existing data (including school_class)
+        form = FeeTemplateForm(instance=template)
+
+    return render(
+        request,
+        "finance/fee_form.html",
+        {
+            "form": form,
+            "is_edit": True,
+            "page_title": "Edit Fee Template",
+        }
+    )
+
+
+
+@login_required
+def fee_template_delete(request, pk):
+    school = request.user.school
+    template = get_object_or_404(FeeTemplate, pk=pk, school=school)
+
+    if request.method == "POST":
+        template.delete()
+        messages.success(request, "Fee template deleted successfully.")
+        return redirect("finance:fee_template_list")
+
+    return render(request, "finance/fee_confirm_delete.html", {
+        "template": template
+    })
+
+
+
+# finance/views.py
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, get_object_or_404, redirect
+from .models import Expense
+from .forms import ExpenseForm
+
+@login_required
+def expense_list(request):
+    school = getattr(request.user, "school", None)
+    expenses = Expense.objects.filter(school=school).order_by("-date")
+    return render(request, "finance/expense_list.html", {"expenses": expenses})
+
+
+@login_required
+def expense_create(request):
+    school = getattr(request.user, "school", None)
+    if not school:
+        return HttpResponse("User is not assigned to any school")
+
+    if request.method == "POST":
+        form = ExpenseForm(request.POST)
+        if form.is_valid():
+            expense = form.save(commit=False)
+            expense.school = school
+            expense.save()
+            return redirect("finance:expense_list")
+    else:
+        form = ExpenseForm()
+
+    context = {
+        "form": form,
+        "sessions": SESSION_LIST,  # Pass sessions to template if needed
+    }
+    return render(request, "finance/expense_form.html", context)
+
+
+@login_required
+def expense_update(request, pk):
+    school = getattr(request.user, "school", None)
+    expense = get_object_or_404(Expense, pk=pk, school=school)
+    if request.method == "POST":
+        form = ExpenseForm(request.POST, instance=expense)
+        if form.is_valid():
+            form.save()
+            return redirect("finance:expense_list")
+    else:
+        form = ExpenseForm(instance=expense)
+    return render(request, "finance/expense_form.html", {"form": form})
+
+@login_required
+def expense_delete(request, pk):
+    school = getattr(request.user, "school", None)
+    expense = get_object_or_404(Expense, pk=pk, school=school)
+    if request.method == "POST":
+        expense.delete()
+        return redirect("finance:expense_list")
+    return render(request, "finance/expense_confirm_delete.html", {"expense": expense})

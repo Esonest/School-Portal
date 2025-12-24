@@ -164,14 +164,19 @@ class Payment(models.Model):
 class Expense(models.Model):
     title = models.CharField(max_length=255, default='')
     amount = models.DecimalField(max_digits=20, decimal_places=2)
-    date = models.DateField(auto_now_add=True)
+    date = models.DateField()
     session = models.CharField(max_length=150, default='')
-    school_class = models.ForeignKey(SchoolClass, on_delete=models.CASCADE, default='')
     term = models.CharField(max_length=10, default='', choices=Score.TERM_CHOICES)
-    school = models.ForeignKey(School, on_delete=models.CASCADE)
+    school = models.ForeignKey(School, on_delete=models.CASCADE, related_name='expenses')
+    description = models.TextField(blank=True, null=True)
+    amount = models.DecimalField(max_digits=12, decimal_places=2)
+    created_at = models.DateTimeField(auto_now_add=True)
+
 
     def __str__(self):
-        return f"{self.title} - {self.amount}"
+        return f"{self.title} - ₦{self.amount}"
+
+    
 
 
 class Receipt(models.Model):

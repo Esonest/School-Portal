@@ -1,0 +1,85 @@
+{% extends "finance/base_finance.html" %}
+{% load widget_tweaks %}
+
+{% block title %}Expense{% endblock %}
+
+{% block content %}
+<div class="max-w-3xl mx-auto px-4 py-8">
+    <div class="bg-white dark:bg-gray-900 p-6 md:p-8 rounded-2xl shadow-lg">
+        <h2 class="text-2xl font-bold mb-6 text-gray-800 dark:text-gray-100">
+            {{ form.instance.pk|yesno:"Edit Expense,Create Expense" }}
+        </h2>
+        <form method="POST" class="space-y-6">
+            {% csrf_token %}
+
+            <!-- Session -->
+<div>
+        <label class="text-sm font-semibold text-gray-700 dark:text-gray-300">Session</label>
+        <select name="session" class="w-full mt-1 border rounded-lg px-3 py-2 dark:bg-gray-800 dark:text-gray-100">
+          <option value="">All Sessions</option>
+          {% for sess in sessions %}
+            <option value="{{ sess }}" {% if sess == current_session %}selected{% endif %}>
+              {{ sess }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+<!-- Term -->
+<div>
+    <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1">{{ form.term.label }}</label>
+    {{ form.term|add_class:"w-full border rounded-lg px-3 py-2" }}
+    {% if form.term.errors %}
+        <p class="text-red-600 text-sm mt-1">{{ form.term.errors }}</p>
+    {% endif %}
+</div>
+
+            <!-- Title -->
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1">{{ form.title.label }}</label>
+                {{ form.title|add_class:"w-full border rounded-lg px-3 py-2" }}
+                {% if form.title.errors %}
+                    <p class="text-red-600 text-sm mt-1">{{ form.title.errors }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Amount -->
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1">{{ form.amount.label }}</label>
+                {{ form.amount|add_class:"w-full border rounded-lg px-3 py-2" }}
+                {% if form.amount.errors %}
+                    <p class="text-red-600 text-sm mt-1">{{ form.amount.errors }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Expense Date -->
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1">{{ form.date.label }}</label>
+                {{ form.date|add_class:"w-full border rounded-lg px-3 py-2" }}
+                {% if form.date.errors %}
+                    <p class="text-red-600 text-sm mt-1">{{ form.date.errors }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Description -->
+            <div>
+                <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1">{{ form.description.label }}</label>
+                {{ form.description|add_class:"w-full border rounded-lg px-3 py-2" }}
+                {% if form.description.errors %}
+                    <p class="text-red-600 text-sm mt-1">{{ form.description.errors }}</p>
+                {% endif %}
+            </div>
+
+            <!-- Buttons -->
+            <div class="flex justify-end gap-4 pt-4 border-t border-gray-200 dark:border-gray-700">
+                <a href="{% url 'finance:expense_list' %}" class="px-6 py-3 rounded-lg border border-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200">
+                    Cancel
+                </a>
+                <button type="submit" class="px-6 py-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold">
+                    Save Expense
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

@@ -46,12 +46,18 @@ urlpatterns = [
 
     path("fee-templates/", views.fee_template_list, name="fee_template_list"),
     path("fee-templates/create/", views.fee_template_create, name="fee_template_create"),
+    path("fee-templates/<int:pk>/edit/", views.fee_template_edit, name="fee_template_edit"),
+    path("fee-templates/<int:pk>/delete/", views.fee_template_delete, name="fee_template_delete"),
 
     path("payments/", views.payment_list, name="payment_list"),
     path("payments/<int:pk>/edit/", views.payment_update, name="payment_update"),
     path("payments/<int:pk>/delete/", views.payment_delete, name="payment_delete"),
 
-
+    
+    path("expenses/", views.expense_list, name="expense_list"),
+    path("expenses/create/", views.expense_create, name="expense_create"),
+    path("expenses/<int:pk>/edit/", views.expense_update, name="expense_update"),
+    path("expenses/<int:pk>/delete/", views.expense_delete, name="expense_delete"),
 
     
 ]

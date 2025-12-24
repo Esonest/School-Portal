@@ -1,73 +1,128 @@
 {% extends "accounts/base.html" %}
 {% block content %}
 
-<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
 
   <!-- Header -->
   <div class="mb-8 text-center sm:text-left">
-    <h1 class="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-white">📝 Create Fee Template</h1>
+   <h1 class="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-white">
+  {% if is_edit %}✏️ Edit Fee Template{% else %}📝 Create Fee Template{% endif %}
+</h1>
+
     <p class="text-gray-500 dark:text-gray-300 text-sm sm:text-base mt-1">
       Define the fee structure for a class
     </p>
   </div>
 
   <!-- Form Card -->
-  <div class="bg-white dark:bg-gray-900 shadow-md hover:shadow-xl transition-shadow duration-300 rounded-2xl p-6 sm:p-8 transform hover:-translate-y-1">
+  <div
+    class="bg-white dark:bg-gray-900 shadow-md sm:shadow-lg rounded-2xl p-5 sm:p-8 transition-all">
+
     <form method="post" class="space-y-6">
       {% csrf_token %}
 
       <!-- Class -->
-      <div>
-        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1">
+      <div class="space-y-1">
+        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200">
           Class
         </label>
-        {{ form.school_class }}
+        <div class="w-full">
+          {{ form.school_class }}
+        </div>
         {% if form.school_class.errors %}
-          <p class="text-red-600 text-sm mt-1">{{ form.school_class.errors|striptags }}</p>
+          <p class="text-red-600 text-sm">{{ form.school_class.errors|striptags }}</p>
         {% endif %}
       </div>
 
       <!-- Template Name -->
-      <div>
-        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1">
+      <div class="space-y-1">
+        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200">
           Template Name
         </label>
-        {{ form.name }}
+        <div class="w-full">
+          {{ form.name }}
+        </div>
         {% if form.name.errors %}
-          <p class="text-red-600 text-sm mt-1">{{ form.name.errors|striptags }}</p>
+          <p class="text-red-600 text-sm">{{ form.name.errors|striptags }}</p>
         {% endif %}
       </div>
 
       <!-- Amount -->
-      <div>
-        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200 mb-1">
+      <div class="space-y-1">
+        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200">
           Amount
         </label>
-        {{ form.amount }}
+        <div class="w-full">
+          {{ form.amount }}
+        </div>
         {% if form.amount.errors %}
-          <p class="text-red-600 text-sm mt-1">{{ form.amount.errors|striptags }}</p>
+          <p class="text-red-600 text-sm">{{ form.amount.errors|striptags }}</p>
         {% endif %}
       </div>
 
       <!-- Active -->
-      <div class="flex items-center gap-2">
+      <div class="flex items-center gap-3 pt-2">
         {{ form.is_active }}
-        <label class="text-sm text-gray-700 dark:text-gray-200">Active?</label>
+        <label class="text-sm font-medium text-gray-700 dark:text-gray-200">
+          Active?
+        </label>
       </div>
 
       <!-- Buttons -->
-      <div class="flex flex-col sm:flex-row justify-end gap-4 pt-6 border-t border-gray-200 dark:border-gray-700">
-        <a href="{% url 'finance:fee_template_list' %}" class="px-6 py-3 rounded-lg border border-gray-300 hover:bg-gray-50 dark:hover:bg-gray-800 text-gray-700 dark:text-gray-200 text-center transition duration-200">
+      <div
+        class="flex flex-col-reverse sm:flex-row justify-end gap-3 sm:gap-4 pt-6 border-t border-gray-200 dark:border-gray-700">
+
+        <a href="{% url 'finance:fee_template_list' %}"
+           class="w-full sm:w-auto px-6 py-3 rounded-lg border border-gray-300
+                  hover:bg-gray-50 dark:hover:bg-gray-800
+                  text-gray-700 dark:text-gray-200 text-center font-medium transition">
           Cancel
         </a>
-        <button type="submit" class="px-6 py-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold text-center transition duration-200 transform hover:-translate-y-0.5 hover:shadow-lg">
-          Save Template
-        </button>
+
+        <button type="submit"
+        id="submitBtn"
+        class="w-full sm:w-auto px-6 py-3 rounded-lg
+               bg-indigo-600 hover:bg-indigo-700
+               text-white font-bold transition
+               disabled:opacity-60 disabled:cursor-not-allowed">
+               {% if is_edit %}Update Template{% else %}Save Template{% endif %}
+  Save Template
+</button>
+
       </div>
 
     </form>
   </div>
 
 </div>
+
+<script>
+  
+  const form = document.querySelector("form");
+  const btn = document.getElementById("submitBtn");
+
+  if (form && btn) {
+    form.addEventListener("submit", () => {
+      btn.disabled = true;
+      btn.innerText = "Saving...";
+    });
+  }
+
+
+  document.addEventListener("DOMContentLoaded", () => {
+    const amountInput = document.querySelector('input[name="amount"]');
+    if (!amountInput) return;
+
+    amountInput.addEventListener("input", () => {
+      const raw = amountInput.value.replace(/,/g, "").replace(/[^\d.]/g, "");
+      if (raw === "") return;
+
+      const parts = raw.split(".");
+      parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+      amountInput.value = parts.join(".");
+    });
+  });
+</script>
+
 
 {% endblock %}

@@ -127,9 +127,9 @@
       ➕ Create Invoice
     </a>
 
-    <a href="{% url 'finance:generate_invoices' %}"
+    <a href="{% url 'finance:bulk_invoice_create' %}?{% if current_session %}session={{ current_session }}{% endif %}{% if current_term %}&term={{ current_term }}{% endif %}"
        class="portal-card bg-gradient-to-r from-green-500 to-green-600">
-      ⚙️ Generate Invoices
+      ⚙️ Generate Bulk Invoices
     </a>
 
     <!-- Payments -->
@@ -148,6 +148,24 @@
        class="portal-card bg-gradient-to-r from-purple-500 to-purple-600">
       🏷 Fee Templates
     </a>
+
+
+      <!-- Expenses Card -->
+<div class="portal-card bg-gradient-to-r from-red-500 to-red-600 flex flex-col justify-between p-6">
+  <div>
+    💸 Expenses
+  </div>
+  <div class="mt-4 flex flex-col gap-2">
+    <a href="{% url 'finance:expense_create' %}" 
+       class="px-3 py-2 bg-white/20 hover:bg-white/30 text-white rounded font-semibold text-sm text-center">
+       ➕ Create Expense
+    </a>
+    <a href="{% url 'finance:expense_list' %}" 
+       class="px-3 py-2 bg-white/20 hover:bg-white/30 text-white rounded font-semibold text-sm text-center">
+       📄 View Expenses
+    </a>
+  </div>
+</div>
 
     <!-- Reports -->
     <a href="{% url 'finance:financial_reports' %}"

@@ -1,0 +1,21 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+
+<div class="max-w-lg mx-auto bg-white shadow rounded p-6">
+  <h2 class="text-lg font-bold text-red-600 mb-4">Delete Fee Template</h2>
+  <p class="mb-6">
+    Are you sure you want to delete the fee template "<strong>{{ template.name }}</strong>" for class "{{ template.school_class }}"?
+  </p>
+
+  <form method="post" class="flex justify-end gap-3">
+    {% csrf_token %}
+    <a href="{% url 'finance:fee_template_list' %}" class="px-4 py-2 border rounded">
+      Cancel
+    </a>
+    <button class="px-4 py-2 bg-red-600 text-white rounded">
+      Delete
+    </button>
+  </form>
+</div>
+
+{% endblock %}

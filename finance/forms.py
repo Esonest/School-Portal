@@ -103,14 +103,23 @@ class PaymentForm(forms.ModelForm):
 
 
 
+# finance/forms.py
+from django import forms
+from .models import Expense
+
 class ExpenseForm(forms.ModelForm):
     class Meta:
         model = Expense
-        fields = ["title", "amount", "school_class", "session", "term"]
+        fields = ["title", "description", "amount", "date","session", "term"]
         widgets = {
-            "session": forms.Select(choices=[(s, s) for s in SESSION_LIST], attrs={"class": TAILWIND}),
-            "term": forms.Select(choices=Score.TERM_CHOICES, attrs={"class": TAILWIND}),
+            "title": forms.TextInput(attrs={"class": "w-full border rounded px-3 py-2"}),
+            "description": forms.Textarea(attrs={"class": "w-full border rounded px-3 py-2", "rows": 3}),
+            "amount": forms.NumberInput(attrs={"class": "w-full border rounded px-3 py-2"}),
+            "date": forms.DateInput(attrs={"type": "date", "class": "w-full border rounded px-3 py-2"}),
+            "session": forms.Select(attrs={"class": "w-full border rounded-lg px-3 py-2"}),
+            "term": forms.Select(attrs={"class": "w-full border rounded-lg px-3 py-2"}),
         }
+
 
 
 
