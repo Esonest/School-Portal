@@ -1524,7 +1524,30 @@ def verify_result(request, admission_no):
             or getattr(student.school, "current_session", None)
             or "2024/2025"
         )
+    
 
+    promotion = (
+        PromotionHistory.objects
+       .filter(student=student, session__lte=selected_session)
+       .order_by('-promoted_on')
+       .first()
+    )
+
+    exam_class = promotion.old_class if promotion else student.school_class
+
+    base_class_size = Student.objects.filter(school_class=exam_class).count()
+
+    was_promoted_from_exam_class = PromotionHistory.objects.filter(
+        student=student,
+        old_class=exam_class,
+        session=selected_session
+    ).exists()
+
+    class_size_at_session = (
+        base_class_size + 1 if was_promoted_from_exam_class else base_class_size
+    )
+
+    promotion_history = student.promotion_records.order_by('-promoted_on')
     # ---------------------------
     # Verify token
     # ---------------------------
@@ -1596,28 +1619,7 @@ def verify_result(request, admission_no):
         return HttpResponseBadRequest("Invalid view type.")
     
 
-    promotion = (
-        PromotionHistory.objects
-       .filter(student=student, session__lte=selected_session)
-       .order_by('-promoted_on')
-       .first()
-    )
-
-    exam_class = promotion.old_class if promotion else student.school_class
-
-    base_class_size = Student.objects.filter(school_class=exam_class).count()
-
-    was_promoted_from_exam_class = PromotionHistory.objects.filter(
-        student=student,
-        old_class=exam_class,
-        session=selected_session
-    ).exists()
-
-    class_size_at_session = (
-        base_class_size + 1 if was_promoted_from_exam_class else base_class_size
-    )
-
-    promotion_history = student.promotion_records.order_by('-promoted_on')
+    
 
     # ---------------------------
     # Ensure verification exists
