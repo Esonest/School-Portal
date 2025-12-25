@@ -61,32 +61,54 @@
 
   <div class="max-w-5xl mx-auto bg-white p-6 rounded shadow relative z-10 result-container">
 
-    <!-- Header -->
-    <table class="header-table w-full mb-4">
-      <tr>
-        <td class="w-1/2">
-          {% if school_logo_url %}
-            <img src="{{ school_logo_url }}" alt="{{ school.name }} Logo" class="h-20">
-          {% else %}
-            <div class="text-gray-400 text-sm">School Logo</div>
-          {% endif %}
-          <h1 class="text-2xl font-bold text-{{ school.theme_color }}-600">{{ school.name }}</h1>
-          <p class="text-sm italic">{{ school.motto }}</p>
-          <p class="text-xs text-gray-500">{{ school.address }}</p>
-        </td>
-        <td class="w-1/2 text-right align-top">
-          <p class="text-sm font-semibold">{{ student.user.get_full_name }}</p>
-          <p class="text-sm">{{ student.admission_no }}</p>
-          <p class="text-sm">{{ exam_class }}</p>
-          <p class="text-sm">
-            {% if is_cumulative %}Cumulative{% else %}Term: {{ selected_term }}{% endif %} • Session: {{ selected_session }}
-          </p>
-          {% if student_photo_url %}
-            <img src="{{ student_photo_url }}" alt="Student Photo" class="h-20 w-20 rounded object-cover mt-2 border">
-          {% endif %}
-        </td>
-      </tr>
-    </table>
+   <!-- Header -->
+<div class="w-full mb-6 relative bg-white p-4 rounded shadow-sm">
+
+  <!-- Watermark -->
+  {% if school_logo_url %}
+    <div class="absolute inset-0 flex justify-center items-center pointer-events-none opacity-5">
+      <img src="{{ school_logo_url }}" alt="Watermark" class="h-40 md:h-52 object-contain">
+    </div>
+  {% endif %}
+
+  <!-- Header Content -->
+  <div class="flex flex-col md:flex-row items-center md:items-start justify-between relative z-10">
+
+    <!-- School Info -->
+    <div class="flex items-center md:items-start space-x-4 md:space-x-6 flex-1">
+      {% if school_logo_url %}
+        <img src="{{ school_logo_url }}" alt="{{ school.name }} Logo" class="h-24 w-24 md:h-28 md:w-28 object-contain">
+      {% else %}
+        <div class="h-24 w-24 md:h-28 md:w-28 flex items-center justify-center bg-gray-100 text-gray-400 text-sm rounded">Logo</div>
+      {% endif %}
+      <div class="flex flex-col">
+        <h1 class="text-xl md:text-2xl font-bold text-{{ school.theme_color }}-600">{{ school.name }}</h1>
+        <p class="text-sm italic text-gray-600">{{ school.motto }}</p>
+        <p class="text-xs text-gray-500">{{ school.address }}</p>
+      </div>
+    </div>
+
+    <!-- Vertical Divider (Optional for WAEC style) -->
+    <div class="hidden md:block w-px bg-gray-300 mx-6"></div>
+
+    <!-- Student Info -->
+    <div class="flex flex-col items-end mt-4 md:mt-0 space-y-1 flex-shrink-0">
+      <p class="text-sm font-semibold">{{ student.user.get_full_name }}</p>
+      <p class="text-sm">Admission No: {{ student.admission_no }}</p>
+      <p class="text-sm">{{ exam_class }}</p>
+      <p class="text-sm">{% if is_cumulative %}Cumulative{% else %}Term: {{ selected_term }}{% endif %} • Session: {{ selected_session }}</p>
+      {% if student_photo_url %}
+        <img src="{{ student_photo_url }}" alt="Student Photo" class="h-20 w-20 md:h-24 md:w-24 rounded object-cover border mt-2">
+      {% endif %}
+    </div>
+
+  </div>
+
+  <!-- Horizontal Divider -->
+  <hr class="mt-4 border-gray-300">
+
+</div>
+
 
     <!-- Verified Badge -->
     {% if status == "verified" %}
