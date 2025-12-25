@@ -1549,6 +1549,8 @@ def verify_result(request, admission_no):
 
         if selected_term not in ("1", "2", "3"):
             return HttpResponseBadRequest("Invalid term value.")
+        
+
 
         # IMPORTANT: use Score.objects (NOT student.scores)
         has_scores = Score.objects.filter(
@@ -1563,7 +1565,8 @@ def verify_result(request, admission_no):
         context = build_student_result_context(
             student,
             term=selected_term,
-            session=selected_session
+            session=selected_session,
+            exam_class=exam_class
         )
 
         context.update({
@@ -1571,6 +1574,7 @@ def verify_result(request, admission_no):
             "status": "verified" if is_verified else "invalid",
             "selected_term": selected_term,
             "selected_session": selected_session,
+            "exam_class": exam_class
         })
 
     # ---------------------------
@@ -1590,6 +1594,30 @@ def verify_result(request, admission_no):
 
     else:
         return HttpResponseBadRequest("Invalid view type.")
+    
+
+    promotion = (
+        PromotionHistory.objects
+       .filter(student=student, session__lte=selected_session)
+       .order_by('-promoted_on')
+       .first()
+    )
+
+    exam_class = promotion.old_class if promotion else student.school_class
+
+    base_class_size = Student.objects.filter(school_class=exam_class).count()
+
+    was_promoted_from_exam_class = PromotionHistory.objects.filter(
+        student=student,
+        old_class=exam_class,
+        session=selected_session
+    ).exists()
+
+    class_size_at_session = (
+        base_class_size + 1 if was_promoted_from_exam_class else base_class_size
+    )
+
+    promotion_history = student.promotion_records.order_by('-promoted_on')
 
     # ---------------------------
     # Ensure verification exists
