@@ -101,81 +101,98 @@
       </button>
     </div>
 
-  </form>
-
-  <!-- Mobile sticky buttons with auto-hide -->
-  <div class="sm:hidden fixed bottom-0 inset-x-0 bg-white dark:bg-gray-900
-              border-t dark:border-gray-700 p-4 z-50 flex gap-4 transition-transform duration-300"
-       x-data="{ lastScroll: 0, hidden: false }"
-       :class="{ '-translate-y-full': hidden }"
-       x-init="
-         window.addEventListener('scroll', () => {
-           if (window.scrollY > lastScroll + 10) { hidden = true; }
-           else if (window.scrollY < lastScroll - 10) { hidden = false; }
-           lastScroll = window.scrollY;
-         });
-       ">
-    <button type="button"
-            @click="document.querySelector('form').requestSubmit()"
-            class="flex-1 py-3 rounded-xl bg-emerald-600 text-white font-bold">
-      💾 Save Payment
+    <!-- ✅ Mobile Sticky Bar (INSIDE form) -->
+  <div class="sm:hidden fixed bottom-0 left-0 right-0
+              bg-white dark:bg-gray-900
+              border-t dark:border-gray-700
+              p-4 z-50">
+    <button type="submit"
+            class="w-full py-3 rounded-xl bg-emerald-600
+                   text-white font-bold"
+            :disabled="loading">
+      <span x-show="!loading">💾 Save Payment</span>
+      <span x-show="loading">⏳ Saving…</span>
     </button>
-    <a href="{% url 'finance:dashboard' %}"
-       class="flex-1 py-3 rounded-xl border border-gray-300 dark:border-gray-600
-              text-gray-700 dark:text-gray-300 text-center hover:bg-gray-100 dark:hover:bg-gray-800">
-      Cancel
-    </a>
   </div>
 
-</div>
+
+  <!-- ✅ Mobile Sticky Bar (INSIDE form) -->
+  <div class="sm:hidden fixed bottom-0 left-0 right-0
+              bg-white dark:bg-gray-900
+              border-t dark:border-gray-700
+              p-4 z-50">
+    <button type="submit"
+            class="w-full py-3 rounded-xl bg-emerald-600
+                   text-white font-bold"
+            :disabled="loading">
+      <span x-show="!loading">💾 Save Payment</span>
+      <span x-show="loading">⏳ Saving…</span>
+    </button>
+  </div>
+
+
+  </form>
+
+  
 
 <script>
 function recordPayment() {
   return {
     loading: false,
+
     invoiceTotal: 0,
     paidSoFar: 0,
     remaining: 0,
 
     init() {
-      this.updateInvoiceData();
+      this.refreshInvoice();
 
-      document.querySelector('[name="invoice"]')
-        ?.addEventListener('change', () => this.updateInvoiceData());
+      this.$watch('$refs.invoice?.value', () => this.refreshInvoice());
 
-      document.querySelector('[name="amount"]')
-        ?.addEventListener('input', () => this.calculate());
+      this.$refs.amount?.addEventListener('input', () => {
+        this.calculateRemaining();
+      });
 
+      // Auto-download receipt after redirect
       if (new URLSearchParams(window.location.search).get('saved') === 'true') {
         this.downloadReceipt();
       }
     },
 
-    updateInvoiceData() {
-      const opt = document.querySelector('[name="invoice"] option:checked');
+    refreshInvoice() {
+      const opt = this.$refs.invoice?.selectedOptions[0];
       this.invoiceTotal = Number(opt?.dataset.total || 0);
-      this.paidSoFar = Number(opt?.dataset.paid || 0);
-      this.calculate();
+      this.paidSoFar   = Number(opt?.dataset.paid || 0);
+      this.calculateRemaining();
     },
 
-    calculate() {
-      const entered = Number(document.querySelector('[name="amount"]')?.value || 0);
-      this.remaining = Math.max(this.invoiceTotal - (this.paidSoFar + entered), 0);
+    calculateRemaining() {
+      let raw = this.$refs.amount?.value || "0";
+
+      // Remove commas or non-digits
+      raw = raw.replace(/[^\d.]/g, "");
+
+      const entered = Number(raw) || 0;
+      this.remaining = Math.max(
+        this.invoiceTotal - (this.paidSoFar + entered),
+        0
+      );
     },
 
-    submitForm() {
-      if (this.loading) return;
+    submitForm(e) {
+      if (this.loading) {
+        e.preventDefault();
+        return;
+      }
+
       this.loading = true;
-
-      // Submit the form
-      this.$el.submit();
+      // Let browser submit naturally
     },
 
     downloadReceipt() {
-      const url = `/finance/payment/receipt/latest/`;
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = 'payment_receipt.pdf';
+      const a = document.createElement("a");
+      a.href = "/finance/payment/receipt/latest/";
+      a.download = "payment_receipt.pdf";
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
