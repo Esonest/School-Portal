@@ -15,6 +15,8 @@ from .utils import generate_invoice_pdf, generate_receipt_pdf
 from .models import Invoice, Receipt
 from .forms import FeeTemplate, FeeTemplateForm
 from collections import defaultdict
+from django.db.models import Q
+
 
 
 
@@ -862,15 +864,83 @@ def payment_delete(request, pk):
         "payment": payment
     })
 
+from django.contrib.auth.decorators import login_required
+from results.utils import SESSION_LIST
+from results.models import Score
+from students.models import SchoolClass
+
+
+def filter_by_student_name(queryset, name):
+    """
+    Filter payments by student user name (first, last, or username).
+    Supports multi-word searches.
+    """
+    if not name:
+        return queryset
+
+    terms = name.split()
+    name_q = Q()
+
+    for term in terms:
+        name_q &= (
+            Q(invoice__student__user__first_name__icontains=term) |
+            Q(invoice__student__user__last_name__icontains=term) |
+            Q(invoice__student__user__username__icontains=term)
+        )
+
+    return queryset.filter(name_q)
+
+
 @login_required
 def payment_list(request):
-    payments = Payment.objects.filter(
-        school=request.user.school
-    ).select_related("invoice", "invoice__student")
+    school = request.user.school
+
+    payments = (
+        Payment.objects
+        .filter(school=school)
+        .select_related(
+            "invoice",
+            "invoice__student",
+            "invoice__student__school_class",
+            "invoice__student__user",
+        )
+    )
+
+    # ---- READ FILTERS ----
+    filters = {
+        "class": request.GET.get("class"),
+        "term": request.GET.get("term"),
+        "session": request.GET.get("session"),
+        "name": request.GET.get("name"),
+    }
+
+    # ---- APPLY FILTERS ----
+    if filters["class"]:
+        payments = payments.filter(
+            invoice__student__school_class_id=filters["class"]
+        )
+
+    if filters["term"]:
+        payments = payments.filter(
+            invoice__term=filters["term"]
+        )
+
+    if filters["session"]:
+        payments = payments.filter(
+            invoice__session=filters["session"]
+        )
+
+    payments = filter_by_student_name(payments, filters["name"])
 
     return render(request, "finance/payment_list.html", {
-        "payments": payments
+        "payments": payments,
+        "classes": school.classes.all(),
+        "terms": Score.TERM_CHOICES,
+        "sessions": SESSION_LIST,
+        "filters": filters,
     })
+
+
 
 
 @login_required

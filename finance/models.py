@@ -139,7 +139,8 @@ class Payment(models.Model):
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
-        blank=True
+        blank=True,
+        related_name="recorded_payments"
     )
 
     class Meta:

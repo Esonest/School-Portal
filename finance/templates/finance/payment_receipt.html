@@ -18,6 +18,7 @@
     <p><strong>Session:</strong> {{ payment.invoice.session }}</p>
     <p><strong>Term:</strong> {{ payment.invoice.term }}</p>
     <p><strong>Date:</strong> {{ payment.payment_date|date:"M. d, Y" }}</p>
+    <p><strong>Recorded By:</strong> {{ payment.recorded_by.get_full_name|default:payment.recorded_by.username }}</p>
   </div>
 
   <!-- Desktop Buttons -->

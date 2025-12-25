@@ -10,6 +10,60 @@
 
 {% block body %}
 <div class="bg-white shadow rounded overflow-x-auto">
+  <form method="get" class="p-4 bg-gray-50 border-b flex flex-wrap gap-3 text-sm">
+
+  <!-- Student Name -->
+  <input type="text" name="name"
+         value="{{ filters.name }}"
+         placeholder="Student name"
+         class="border rounded px-3 py-2 w-40">
+
+  <!-- Class -->
+  <select name="class" class="border rounded px-3 py-2">
+    <option value="">All Classes</option>
+    {% for c in classes %}
+      <option value="{{ c.id }}"
+        {% if filters.class == c.id|stringformat:"s" %}selected{% endif %}>
+        {{ c.name }}
+      </option>
+    {% endfor %}
+  </select>
+
+  <!-- Term -->
+  <select name="term" class="border rounded px-3 py-2">
+    <option value="">All Terms</option>
+    {% for value, label in terms %}
+      <option value="{{ value }}"
+        {% if filters.term == value %}selected{% endif %}>
+        {{ label }}
+      </option>
+    {% endfor %}
+  </select>
+
+  <!-- Session -->
+  <select name="session" class="border rounded px-3 py-2">
+    <option value="">All Sessions</option>
+    {% for s in sessions %}
+      <option value="{{ s }}"
+        {% if filters.session == s %}selected{% endif %}>
+        {{ s }}
+      </option>
+    {% endfor %}
+  </select>
+
+  <!-- Actions -->
+  <button type="submit"
+          class="bg-indigo-600 text-white px-4 py-2 rounded">
+    Filter
+  </button>
+
+  <a href="{% url 'finance:payment_list' %}"
+     class="px-4 py-2 border rounded text-gray-600">
+    Reset
+  </a>
+
+</form>
+
 <table class="w-full text-sm">
   <thead class="bg-gray-100">
     <tr>
@@ -18,7 +72,8 @@
       <th>Amount</th>
       <th>Date</th>
       <th>Method</th>
-      <th></th>
+      <th>Recorded By</th>
+      <th>Action</th>
     </tr>
   </thead>
   <tbody>
@@ -28,7 +83,8 @@
       <td>{{ payment.invoice.title }}</td>
       <td>₦{{ payment.amount }}</td>
       <td>{{ payment.payment_date }}</td>
-      <td>{{ payment.get_method_display }}</td>
+      <td>{{ payment.get_payment_method_display }}</td>
+      <td>{{ payment.recorded_by.get_full_name|default:payment.recorded_by.username }}</td>
       <td class="text-right space-x-2">
         <a href="{% url 'finance:payment_update' payment.id %}" class="text-green-600">Edit</a>
         <a href="{% url 'finance:payment_delete' payment.id %}" class="text-red-600">Delete</a>
