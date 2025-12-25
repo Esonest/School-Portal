@@ -1591,6 +1591,15 @@ def verify_result(request, admission_no):
             session=selected_session,
             exam_class=exam_class
         )
+        
+        # Fix for term view: compute best/weak subject
+        scores = context.get("scores", [])
+        if scores:
+            averages = {s['subject']: s['total'] for s in scores}
+            context["best_subject"] = max(averages, key=averages.get)
+            context["weak_subject"] = min(averages, key=averages.get)
+        else:
+            context["best_subject"] = context["weak_subject"] = None
 
         context.update({
             "is_cumulative": False,
