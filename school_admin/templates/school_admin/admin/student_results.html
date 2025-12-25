@@ -35,7 +35,7 @@
       <div class="text-right">
         <div class="text-sm">{{ student.user.get_full_name }}</div>
         <div class="text-sm">{{ student.admission_no }}</div>
-        <div class="text-sm">{{ student.school_class.name }}</div>
+        <div class="text-sm">{{ student.exam_class.name }}</div>
         <div class="text-sm">Term: {{ selected_term }} • Session: {{ selected_session }}</div>
         {% if student.photo %}
           <img src="{{ student.photo.url }}" alt="photo" class="h-20 w-20 rounded object-cover mt-2 border"/>

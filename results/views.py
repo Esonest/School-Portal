@@ -2603,13 +2603,33 @@ from .models import (
 )
 from .utils import SESSION_LIST, interpret_grade  # import SESSION_LIST
 
-def build_student_result_context(student, term, session):
+def build_student_result_context(student, term, session, exam_class):
     """
     Build the context for a student's result for a specific term and session only.
     NO fallback to another session.
     """
     if session not in SESSION_LIST:
         raise ValueError(f"Invalid session supplied: {session}")
+    
+
+    promotion = (
+        PromotionHistory.objects
+       .filter(student=student, session__lte=session)
+       .order_by('-promoted_on')
+       .first()
+    )
+    base_class_size = Student.objects.filter(school_class=exam_class).count()
+    exam_class = promotion.old_class if promotion else student.school_class
+
+    was_promoted_from_exam_class = PromotionHistory.objects.filter(
+        student=student,
+        old_class=exam_class,
+        session=session
+    ).exists()
+
+    class_size_at_session = (
+        base_class_size + 1 if was_promoted_from_exam_class else base_class_size
+    )
 
     scores_qs = Score.objects.filter(
         student=student,
@@ -2625,7 +2645,13 @@ def build_student_result_context(student, term, session):
         school_class=student.school_class,
         subject__in=[s.subject for s in scores_qs]
     ).select_related("teacher__user")
-    cst_map = {cst.subject_id: cst for cst in cst_qs}
+    cst_map = {
+        cst.subject_id: cst
+        for cst in ClassSubjectTeacher.objects.filter(
+            school_class=exam_class  # ✅ FIX
+        ).select_related("teacher", "teacher__user")
+    }
+
 
     class_has_ca = False  # flag to detect if any CA is set
 
@@ -2767,7 +2793,7 @@ def build_student_result_context(student, term, session):
         "overall_total": overall_total,
         "avg": avg,
         "position": position,
-        "class_size": class_size,
+        "class_size": class_size_at_session,
         "best_subject": best_subject,
         "least_subject": least_subject,
         "psychomotor": psychomotor,
@@ -2781,6 +2807,7 @@ def build_student_result_context(student, term, session):
         "sessions": SESSION_LIST,
         "selected_session": session,
         "selected_term": term,
+        "exam_class": exam_class,
         "class_has_ca": class_has_ca,  # <- template logic
     }
 
@@ -2799,7 +2826,7 @@ def student_view_result(request, result_id):
             "student": student,
             "reason": student.block_reason or "Your result access has been restricted."
         })
-
+    
     rep = get_object_or_404(Score.objects.select_related("student"), id=result_id)
     if rep.student_id != student.id:
         raise Http404("Not allowed.")
@@ -2807,13 +2834,23 @@ def student_view_result(request, result_id):
     selected_session = request.GET.get("session") or rep.session
     if selected_session not in SESSION_LIST:
         selected_session = rep.session
-    selected_term = rep.term
+    selected_term = rep.term    
+    
+    promotion = (
+        PromotionHistory.objects
+       .filter(student=student, session__lte=selected_session)
+       .order_by('-promoted_on')
+       .first()
+    )
 
-    context = build_student_result_context(student, term=selected_term, session=selected_session)
+    exam_class = promotion.old_class if promotion else student.school_class
+
+
+    context = build_student_result_context(student, term=selected_term,session=selected_session, exam_class=exam_class)
     context.update({
         "term": selected_term,
         "session": selected_session,
-        "sessions": SESSION_LIST,
+        "sessions": SESSION_LIST
     })
 
     return render(request, "results/student_result.html", context)
@@ -2967,10 +3004,34 @@ def build_cumulative_result_context(student, session=None):
         "3": {"principal": "", "teacher": ""},
     }
 
+
+    promotion = (
+        PromotionHistory.objects
+       .filter(student=student, session__lte=current_session)
+       .order_by('-promoted_on')
+       .first()
+    )
+
+    exam_class = promotion.old_class if promotion else student.school_class
+
+    base_class_size = Student.objects.filter(school_class=exam_class).count()
+
+    was_promoted_from_exam_class = PromotionHistory.objects.filter(
+        student=student,
+        old_class=exam_class,
+        session=current_session
+    ).exists()
+
+    class_size_at_session = (
+        base_class_size + 1 if was_promoted_from_exam_class else base_class_size
+    )
+
+    promotion_history = student.promotion_records.order_by('-promoted_on')
+
     # ---------- COLLECT TERM RESULTS ----------
     for term in terms:
         term_code = TERM_MAP[term]
-        term_context = build_student_result_context(student, term_code, session)
+        term_context = build_student_result_context(student, term_code,session,exam_class)
 
         for s in term_context.get("scores", []):
             subj_name = s["subject"]
@@ -3079,11 +3140,7 @@ def build_cumulative_result_context(student, session=None):
 
     colspan_terms = 4 * len(terms)
 
-    promotion_history = list(
-        PromotionHistory.objects
-        .filter(student=student)
-        .order_by("-promoted_on")
-    )
+    
 
     # ---------- RETURN CONTEXT ----------
     return {
@@ -3099,7 +3156,7 @@ def build_cumulative_result_context(student, session=None):
         "best_subject": best_subject,
         "weak_subject": weak_subject,
         "position": position,
-        "class_size": class_size,
+        "class_size": class_size_at_session,
         "principal_comment": principal_comment,
         "teacher_comment": teacher_comment,
         "qr_data_uri": qr_data_uri,
@@ -3111,6 +3168,7 @@ def build_cumulative_result_context(student, session=None):
         "selected_session":current_session,
         "show_ca": show_ca,
         "promotion_history": promotion_history,
+        "exam_class": exam_class,
         "is_cumulative": True,  # <-- useful for watermark/badge
     }
 

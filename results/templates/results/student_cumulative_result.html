@@ -78,13 +78,15 @@
     <div class="space-y-1">
       <p><strong>Name:</strong> {{ student.user.get_full_name }}</p>
       <p><strong>Admission No:</strong> {{ student.admission_no }}</p>
-      <p><strong>Class:</strong> {{ student.school_class.name }}</p>
+       <p><strong>Class:</strong> {{ exam_class.name }}</p>
     </div>
 
     <div class="space-y-1">
       <p><strong>Session:</strong> {{ selected_session }}</p>
       <p><strong>Class Size:</strong> {{ class_size }}</p>
     </div>
+
+
 
     <div class="text-right">
       {% if student.photo %}
@@ -233,6 +235,17 @@
   <!-- COMMENTS -->
   <div class="mt-4 border border-black p-2 text-sm">
     <p><strong>Principal’s Comment:</strong> {{ principal_comment }}</p>
+    {% for p in promotion_history %}
+  <p class="text-green-600 font-bold"> <strong>
+    {{ p.session }}: PROMOTED FROM 
+    {{ p.old_class }} TO {{ p.new_class }}
+    ({{ p.promoted_on|date:"M d, Y" }})
+    </strong>
+  </p>
+{% empty %}
+  <p>No promotion history recorded.</p>
+{% endfor %}
+
     <p class="mt-2"><strong>Teacher’s Comment:</strong> {{ teacher_comment }}</p>
   </div>
 

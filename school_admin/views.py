@@ -1891,7 +1891,26 @@ def admin_student_results(request, student_id):
 
     if session not in SESSION_LIST:
         raise ValueError(f"Invalid session supplied: {session}")
+    
+    promotion = (
+        PromotionHistory.objects
+       .filter(student=student, session__lte=session)
+       .order_by('-promoted_on')
+       .first()
+    )
+    exam_class = promotion.old_class if promotion else student.school_class
+    base_class_size = Student.objects.filter(school_class=exam_class).count()
+    
 
+    was_promoted_from_exam_class = PromotionHistory.objects.filter(
+        student=student,
+        old_class=exam_class,
+        session=session
+    ).exists()
+
+    class_size_at_session = (
+        base_class_size + 1 if was_promoted_from_exam_class else base_class_size
+    )
     # scores for this student, term, session
     scores_qs = Score.objects.filter(
         student=student, term=term, session=session
@@ -1987,7 +2006,8 @@ def admin_student_results(request, student_id):
         "overall_total": overall_total,
         "avg": avg,
         "position": position,
-        "class_size": class_size,
+        "class_size": class_size_at_session,
+        "exam_class": exam_class,
         "best_subject": best_subject,
         "least_subject": least_subject,
         "psychomotor": psychomotor,
@@ -2056,6 +2076,27 @@ def admin_student_cumulative(request, student_id):
     selected_session = request.GET.get("session") or (SESSION_LIST[-1] if SESSION_LIST else "")
     if selected_session not in SESSION_LIST:
         selected_session = SESSION_LIST[-1] if SESSION_LIST else selected_session
+
+    promotion = (
+        PromotionHistory.objects
+       .filter(student=student, session__lte=selected_session)
+       .order_by('-promoted_on')
+       .first()
+    )
+
+    exam_class = promotion.old_class if promotion else student.school_class
+    base_class_size = Student.objects.filter(school_class=exam_class).count()
+    
+
+    was_promoted_from_exam_class = PromotionHistory.objects.filter(
+        student=student,
+        old_class=exam_class,
+        session=selected_session
+    ).exists()
+
+    class_size_at_session = (
+        base_class_size + 1 if was_promoted_from_exam_class else base_class_size
+    )    
 
     TERM_KEYS = ["1", "2", "3"]
     TERM_LABEL = {"1": "First", "2": "Second", "3": "Third"}
@@ -2192,7 +2233,17 @@ def admin_student_cumulative(request, student_id):
     teacher_comment = rc.teacher_comment if rc else ""
     principal_comment = rc.principal_comment if rc else ""
 
-    verification_obj, _ = ResultVerification.objects.get_or_create(student=student)
+    verification_obj = ResultVerification.objects.filter(student=student).first()
+    if not verification_obj:
+        verification_obj = ResultVerification.objects.create(
+            student=student,
+            school=student.school,
+            valid=True
+        )
+
+
+
+
     base = getattr(settings,"SITE_URL","/")
     verify_url = f"{base}/results/verify/{student.admission_no}/?token={verification_obj.verification_token}"
     qr_data_uri = _generate_qr_data_uri(verify_url, box_size=6) if "_generate_qr_data_uri" in globals() else ""
@@ -2217,7 +2268,7 @@ def admin_student_cumulative(request, student_id):
         "best_subject": best_subject,
         "weak_subject": weak_subject,
         "position": position,
-        "class_size": class_size,
+        "class_size": class_size_at_session,
         "psychomotor": psychomotor,
         "affective": affective,
         "teacher_comment": teacher_comment,
@@ -2226,9 +2277,8 @@ def admin_student_cumulative(request, student_id):
         'photo_url': student.photo.url if student.photo else None,
         "principal_signature_url": principal_signature_url,
         "show_ca": show_ca,
-
-        # ⭐ ADDED INSIDE CONTEXT ⭐
-        "promotion_history": promotion_history,
+        "exam_class": exam_class,
+        "promotion_history": promotion_history
     }
 
     return render(request, "school_admin/admin/student_cumulative_edit.html", context)

@@ -26,18 +26,38 @@
       body { -webkit-print-color-adjust: exact; }
       .result-container { page-break-inside: avoid; }
     }
+
+
+    /* Watermark for both screen and print */
+.result-container::before {
+  content: "";
+  position: absolute;
+  top: 30%;
+  left: 25%;
+  width: 50%;
+  height: 50%;
+  background: url('{{ school_logo_url }}') no-repeat center;
+  background-size: contain;
+  opacity: 0.05; /* subtle on screen */
+  z-index: 0;
+  pointer-events: none; /* ensures clicks go through */
+}
+
+.result-container {
+  position: relative;
+  z-index: 1; /* main content above watermark */
+}
+
+@media print {
+  .result-container::before {
+    opacity: 0.08; /* slightly stronger for print */
+  }
+}
+
   </style>
 </head>
 <body class="bg-gray-50 p-4">
 
-  <!-- Watermark -->
-  {% if is_cumulative %}
-    {% if school_logo_url %}
-      <img src="{{ school_logo_url }}" class="print-watermark mx-auto my-auto w-2/3 h-auto" />
-    {% else %}
-      <div class="print-watermark">CUMULATIVE RESULT</div>
-    {% endif %}
-  {% endif %}
 
   <div class="max-w-5xl mx-auto bg-white p-6 rounded shadow relative z-10 result-container">
 
