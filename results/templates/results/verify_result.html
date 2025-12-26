@@ -3,14 +3,65 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <title>Result — {{ student.user.get_full_name }}</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <style>
-    body { font-family: 'Arial', sans-serif; font-size: 14px; margin: 0; padding: 0; }
-    table { border-collapse: collapse; width: 100%; }
-    th, td { border: 1px solid #ccc; padding: 6px; text-align: center; font-size: 0.875rem; }
-    .header-table td { border: none; padding: 2px; }
+<meta charset="UTF-8">
+<title>Result — {{ student.user.get_full_name }}</title>
+
+<style>
+@page { size: A4; margin: 12mm; }
+
+body {
+  font-family: "Times New Roman", serif;
+  font-size: 11px;
+  margin: 0;
+  background: #fff;
+}
+
+/* ================= CONTAINER ================= */
+.result-container {
+  width: 190mm;
+  min-height: 277mm;
+  margin: auto;
+  padding: 8mm;
+  border: 2px solid #000;
+  position: relative;
+}
+
+/* ================= HEADER ================= */
+.school-header {
+  text-align: center;
+  border-bottom: 2px solid #000;
+  padding-bottom: 6px;
+  margin-bottom: 8px;
+}
+
+.school-header h1 {
+  font-size: 18px;
+  margin: 0;
+  font-weight: bold;
+  text-transform: uppercase;
+}
+
+/* ================= BIO DATA ================= */
+.bio-grid {
+  display: grid;
+  grid-template-columns: 1fr 120px;
+  gap: 8px;
+  border: 1px solid #000;
+  padding: 6px;
+  margin-bottom: 8px;
+}
+
+.bio-table td {
+  padding: 2px 4px;
+}
+
+.passport {
+  border: 1px solid #000;
+  height: 120px;
+  width: 100px;
+  object-fit: cover;
+}
+
 
     /* Watermark */
     .result-container::before {
@@ -35,54 +86,99 @@
       .result-container { page-break-inside: avoid; }
     }
 
-    /* Table Styling */
-    thead { background-color: #f3f4f6; }
-    th { font-weight: 600; }
-    tbody tr:hover { background-color: #f9fafb; }
 
-    /* Cards for small sections */
-    .summary-card, .psych-card, .affective-card {
-      background-color: #f9fafb;
-      padding: 0.75rem;
-      border-radius: 0.375rem;
-      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-      font-size: 0.875rem;
-    }
-    .flex-between { display: flex; justify-content: space-between; align-items: center; }
-    .text-small { font-size: 0.875rem; }
+/* ================= TABLE ================= */
+table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 10.5px;
+}
 
-  </style>
+th, td {
+  border: 1px solid #000;
+  padding: 3px;
+  text-align: center;
+}
+
+/* ================= SUMMARY + DOMAIN ================= */
+.summary-domain {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+  border: 1px solid #000;
+  padding: 6px;
+  margin-top: 6px;
+}
+
+.domain-box h3 {
+  text-align: center;
+  border-bottom: 1px solid #000;
+  font-size: 11px;
+}
+
+.domain-box li {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10.5px;
+}
+
+/* ================= STARS ================= */
+.star .filled { color: #b8860b; font-weight: bold; }
+.star .empty { color: #000; }
+
+/* ================= LEGEND ================= */
+.legend-box {
+  margin-top: 6px;
+  border: 1px solid #000;
+  padding: 6px;
+  font-size: 10.5px;
+  width: fit-content;
+}
+
+/* ================= SIGNATURE ================= */
+.signatures {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 10px;
+  align-items: flex-end;
+}
+
+.sign-box { text-align: center; font-size: 10.5px; }
+
+@media print { .no-print { display: none; } }
+</style>
 </head>
-<body class="bg-gray-50 p-4">
 
-  <div class="max-w-5xl mx-auto bg-white p-6 rounded shadow relative z-10 result-container">
+<body>
+<div class="result-container">
 
-    <!-- Header -->
-    <div class="w-full mb-6 relative bg-white p-4 rounded shadow-sm flex flex-col md:flex-row justify-between items-center">
-      <div class="flex items-center space-x-4">
-        {% if school_logo_url %}
-          <img src="{{ school_logo_url }}" alt="{{ school.name }} Logo" class="h-24 w-24 md:h-28 md:w-28 object-contain">
-        {% else %}
-          <div class="h-24 w-24 md:h-28 md:w-28 flex items-center justify-center bg-gray-100 text-gray-400 text-sm rounded">Logo</div>
-        {% endif %}
-        <div class="flex flex-col">
-          <h1 class="text-xl md:text-2xl font-bold text-{{ school.theme_color }}-600">{{ school.name }}</h1>
-          <p class="text-sm italic text-gray-600">{{ school.motto }}</p>
-          <p class="text-xs text-gray-500">{{ school.address }}</p>
-        </div>
-      </div>
+<!-- HEADER -->
+<div class="school-header">
+  <h1>{{ school.name }}</h1>
+  <p>{{ school.address }}</p>
+  <p><strong>{{ school.motto }}</strong></p>
+  <p>
+    {% if is_cumulative %}CUMULATIVE RESULT{% else %}TERMINAL RESULT{% endif %}
+    — {{ selected_session }}
+  </p>
+</div>
 
-      <div class="flex flex-col items-end mt-4 md:mt-0 space-y-1">
-        <p class="text-sm font-semibold">{{ student.user.get_full_name }}</p>
-        <p class="text-sm">Admission No: {{ student.admission_no }}</p>
-        <p class="text-sm">{{ exam_class }}</p>
-        <p class="text-sm">{% if is_cumulative %}Cumulative{% else %}Term: {{ selected_term }}{% endif %} • Session: {{ selected_session }}</p>
-        {% if student_photo_url %}
-          <img src="{{ student_photo_url }}" alt="Student Photo" class="h-20 w-20 md:h-24 md:w-24 rounded object-cover border mt-2">
-        {% endif %}
-      </div>
-    </div>
+<!-- BIO DATA -->
+<div class="bio-grid">
+  <table class="bio-table">
+    <tr><td><strong>Name:</strong></td><td>{{ student.user.get_full_name }}</td></tr>
+    <tr><td><strong>Admission No:</strong></td><td>{{ student.admission_no }}</td></tr>
+    <tr><td><strong>Class:</strong></td><td>{{ exam_class }}</td></tr>
+    <tr><td><strong>Term:</strong></td><td>{{ selected_term }}</td></tr>
+    <tr><td><strong>Position:</strong></td><td>{{ position }} of {{ class_size }}</td></tr>
+  </table>
+  {% if student_photo_url %}
+    <img src="{{ student_photo_url }}" class="passport">
+  {% endif %}
+</div>
 
+
+    
     <!-- Verified Badge -->
     {% if status == "verified" %}
       <div class="mb-4 flex justify-end">
@@ -162,48 +258,62 @@
       </table>
     </div>
 
-    <!-- Summary & Psychomotor/Affective -->
-    <div class="mt-6 grid md:grid-cols-2 gap-4">
-      <div class="summary-card">
-        <p><strong>Total:</strong> {{ overall_total }}</p>
-        <p><strong>Average:</strong> {{ avg_total|floatformat:2 }}</p>
-        <p><strong>Position:</strong> {{ position }} of {{ class_size }}</p>
-        {% if best_subject %}<p><strong>Best Subject:</strong> {{ best_subject }}</p>{% endif %}
-        {% if weak_subject %}<p><strong>Weakest Subject:</strong> {{ weak_subject }}</p>{% endif %}
-      </div>
+    <!-- SUMMARY + DOMAIN -->
+<div class="summary-domain">
 
-      <div class="space-y-4">
-        <div class="psych-card">
-          <h3 class="font-semibold text-blue-700 mb-2">Psychomotor</h3>
-          {% if psychomotor %}
-            <ul class="space-y-1">
-              {% for attr in "neatness,agility,creativity,sports,handwriting"|split:"," %}
-                <li class="flex justify-between">
-                  <span>{{ attr|capfirst }}</span>
-                  <span>{% for i in "12345" %}{% if i|add:"0" <= psychomotor|get_attr:attr %}⭐{% else %}☆{% endif %}{% endfor %}</span>
-                </li>
-              {% endfor %}
-            </ul>
-          {% else %}<p class="text-gray-500">Not recorded</p>{% endif %}
-        </div>
+  <div>
+    <p><strong>Total:</strong> {{ overall_total }}</p>
+    <p><strong>Average:</strong> {{ avg_total|floatformat:2 }}</p>
+    <p><strong>Best Subject:</strong> {{ best_subject }}</p>
+    <p><strong>Weakest Subject:</strong> {{ weak_subject }}</p>
+  </div>
 
-        <div class="affective-card">
-          <h3 class="font-semibold text-green-700 mb-2">Affective</h3>
-          {% if affective %}
-            <ul class="space-y-1">
-              {% for attr in "punctuality,cooperation,behavior,attentiveness,perseverance"|split:"," %}
-                <li class="flex justify-between">
-                  <span>{{ attr|capfirst }}</span>
-                  <span>{% for i in "12345" %}{% if i|add:"0" <= affective|get_attr:attr %}⭐{% else %}☆{% endif %}{% endfor %}</span>
-                </li>
-              {% endfor %}
-            </ul>
-          {% else %}<p class="text-gray-500">Not recorded</p>{% endif %}
-        </div>
-      </div>
-    </div>
+  <div class="domain-box">
+    <h3>PSYCHOMOTOR</h3>
+    {% for attr in "neatness,agility,creativity,handwriting,sports"|split:"," %}
+    <li>
+      {{ attr|capfirst }}
+      <span class="star">
+        {% for i in "12345" %}
+          {% if i|add:"0" <= psychomotor|get_attr:attr %}
+            <span class="filled">★</span>
+          {% else %}
+            <span class="empty">☆</span>
+          {% endif %}
+        {% endfor %}
+      </span>
+    </li>
+    {% endfor %}
 
-    <!-- Comments -->
+    <h3>AFFECTIVE</h3>
+    {% for attr in "punctuality,cooperation,behavior,attentiveness,perseverance"|split:"," %}
+    <li>
+      {{ attr|capfirst }}
+      <span class="star">
+        {% for i in "12345" %}
+          {% if i|add:"0" <= affective|get_attr:attr %}
+            <span class="filled">★</span>
+          {% else %}
+            <span class="empty">☆</span>
+          {% endif %}
+        {% endfor %}
+      </span>
+    </li>
+    {% endfor %}
+  </div>
+
+</div>
+
+<!-- LEGEND -->
+<div class="legend-box">
+  ★★★★★ = Excellent |
+  ★★★★☆ = Very Good |
+  ★★★☆☆ = Good |
+  ★★☆☆☆ = Fair |
+  ★☆☆☆☆ = Poor
+</div>
+
+ <!-- Comments -->
     <div class="mt-6">
       <h3 class="font-semibold">Principal's Comment</h3>
       <p class="italic">{{ principal_comment }}</p>
@@ -217,6 +327,8 @@
       <h3 class="font-semibold mt-2">Teacher's Comment</h3>
       <p class="italic">{{ teacher_comment }}</p>
     </div>
+
+<!-- SIGNATURE -->
 
     <!-- Signature & QR -->
     <div class="mt-6 flex justify-between items-center">
@@ -235,7 +347,8 @@
       </div>
     </div>
 
-    <!-- Print Button -->
+
+<!-- Print Button -->
     <div class="mt-4 no-print flex justify-end">
       <button onclick="window.print()" class="px-4 py-2 bg-green-600 text-white rounded">Print</button>
     </div>
@@ -243,3 +356,7 @@
   </div>
 </body>
 </html>
+
+   
+
+    
