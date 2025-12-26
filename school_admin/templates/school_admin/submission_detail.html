@@ -45,32 +45,27 @@
 
     {% for question in questions %}
       {% with qid=question.id|stringformat:"s" %}
-        <div class="bg-white border rounded-lg shadow-sm p-4 space-y-2">
+      <div class="bg-white border rounded-lg shadow-sm p-4 space-y-2">
 
-          <p class="text-sm font-semibold text-gray-800">
-            Q{{ forloop.counter }}. {{ question.text }}
-          </p>
+        <p class="text-sm font-semibold text-gray-800">
+          Q{{ forloop.counter }}. {{ question.text }}
+        </p>
 
-          <p class="text-sm">
-            <span class="font-medium">Selected:</span>
-            {{ answers|get_item:qid|default:"-" }}
-          </p>
+        {% if answers|get_item:qid %}
+          {% if answers|get_item:qid == correct_map|get_item:question.id %}
+            <p class="text-green-600 font-semibold flex items-center gap-2">
+              ✓ {{ answers|get_item:qid }}
+            </p>
+          {% else %}
+            <p class="text-red-600 font-semibold flex items-center gap-2">
+              ✗ {{ answers|get_item:qid }}
+            </p>
+          {% endif %}
+        {% else %}
+          <p class="text-gray-400 italic">Not answered</p>
+        {% endif %}
 
-          <p class="text-sm">
-            <span class="font-medium">Correct:</span>
-            {{ correct_map|get_item:question.id }}
-          </p>
-
-          <p class="text-sm">
-            <span class="font-medium">Marks:</span>
-            {% if answers|get_item:qid == correct_map|get_item:question.id %}
-              <span class="text-green-600 font-semibold">{{ question.marks }}</span>
-            {% else %}
-              <span class="text-red-600 font-semibold">0</span>
-            {% endif %}
-          </p>
-
-        </div>
+      </div>
       {% endwith %}
     {% empty %}
       <p class="text-center text-gray-500">No answers available.</p>
@@ -98,31 +93,41 @@
         <tbody class="divide-y">
           {% for question in questions %}
             {% with qid=question.id|stringformat:"s" %}
-              <tr class="hover:bg-gray-50 transition">
-                <td class="px-3 py-2 border font-medium">
-                  {{ forloop.counter }}
-                </td>
+            <tr class="hover:bg-gray-50 transition">
 
-                <td class="px-3 py-2 border">
-                  {{ question.text }}
-                </td>
+              <td class="px-3 py-2 border font-medium">
+                {{ forloop.counter }}
+              </td>
 
-                <td class="px-3 py-2 border">
-                  {{ answers|get_item:qid|default:"-" }}
-                </td>
+              <td class="px-3 py-2 border">
+                {{ question.text }}
+              </td>
 
-                <td class="px-3 py-2 border">
-                  {{ correct_map|get_item:question.id }}
-                </td>
-
-                <td class="px-3 py-2 border text-center font-semibold">
+              <td class="px-3 py-2 border">
+                {% if answers|get_item:qid %}
                   {% if answers|get_item:qid == correct_map|get_item:question.id %}
-                    <span class="text-green-600">{{ question.marks }}</span>
+                    <span class="text-green-600 font-semibold">✓ {{ answers|get_item:qid }}</span>
                   {% else %}
-                    <span class="text-red-600">0</span>
+                    <span class="text-red-600 font-semibold">✗ {{ answers|get_item:qid }}</span>
                   {% endif %}
-                </td>
-              </tr>
+                {% else %}
+                  <span class="text-gray-400 italic">—</span>
+                {% endif %}
+              </td>
+
+              <td class="px-3 py-2 border">
+                {{ correct_map|get_item:question.id }}
+              </td>
+
+              <td class="px-3 py-2 border text-center font-semibold">
+                {% if answers|get_item:qid == correct_map|get_item:question.id %}
+                  <span class="text-green-600">{{ question.marks }}</span>
+                {% else %}
+                  <span class="text-red-600">0</span>
+                {% endif %}
+              </td>
+
+            </tr>
             {% endwith %}
           {% empty %}
             <tr>

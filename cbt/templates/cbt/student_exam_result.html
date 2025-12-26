@@ -52,10 +52,10 @@
        class="h-20 w-20 sm:h-24 sm:w-24 object-contain mb-2">
 {% endif %}
 
-        <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-800">
+        <h1 class="text-3xl sm:text-4xl font-bold text-gray-800">
           {{ exam.subject.name }} - <span class="text-blue-700 font-bold">Result</span>
         </h1>
-        <p class="text-sm text-gray-600">
+        <p class="text-xl md:text-2xl font-semibold text-{{ school.theme_color }}-600">
           <span class="font-semibold">Class:</span> {{ student.school_class }}
           <span class="mx-2">•</span>
           <span class="font-semibold">Exam Date:</span> {{ exam.start_time|date:"F j, Y" }}
