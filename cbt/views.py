@@ -444,6 +444,7 @@ def student_exam_result(request, exam_id):
         "wrong": wrong,
         "percentage": percentage,
         "status": status,
+        "school": submission.student.user.school,
         "school_logo_url": school_logo_url,
     })
 

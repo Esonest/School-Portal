@@ -46,6 +46,12 @@
     <!-- Header -->
     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-gray-200 pb-6 mb-6">
       <div class="space-y-2">
+        <!-- Add this in the header section, e.g., above the exam title -->
+{% if school.logo %}
+  <img src="{{ school.logo.url }}" alt="{{ school.name }} Logo" 
+       class="h-20 w-20 sm:h-24 sm:w-24 object-contain mb-2">
+{% endif %}
+
         <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-800">
           {{ exam.subject.name }} - <span class="text-blue-700 font-bold">Result</span>
         </h1>

@@ -47,12 +47,21 @@
     <div class="md:hidden space-y-4 relative z-10">
         {% for question in questions %}
             {% with qid=question.id|stringformat:"s" %}
+            {% with selected=answers|get_item:qid correct=correct_map|get_item:question.id %}
             <div class="bg-white p-4 rounded shadow-sm border">
                 <p class="font-semibold">Q{{ forloop.counter }}: {{ question.text }}</p>
-                <p><strong>Selected Answer:</strong> {{ answers|get_item:qid|default:"-" }}</p>
-                <p><strong>Correct Answer:</strong> {{ correct_map|get_item:question.id }}</p>
-                <p><strong>Marks:</strong> {% if answers|get_item:qid == correct_map|get_item:question.id %}{{ question.marks }}{% else %}0{% endif %}</p>
+                <p>
+                    <strong>Selected Answer:</strong> 
+                    {% if selected == correct %}
+                        <span class="text-green-700 font-semibold">✅ {{ selected }}</span>
+                    {% else %}
+                        <span class="text-red-700 font-semibold">❌ {{ selected|default:"-" }}</span>
+                    {% endif %}
+                </p>
+                <p><strong>Correct Answer:</strong> <span class="text-green-700 font-semibold">{{ correct }}</span></p>
+                <p><strong>Marks:</strong> {% if selected == correct %}{{ question.marks }}{% else %}0{% endif %}</p>
             </div>
+            {% endwith %}
             {% endwith %}
         {% endfor %}
     </div>
@@ -72,13 +81,21 @@
             <tbody>
                 {% for question in questions %}
                     {% with qid=question.id|stringformat:"s" %}
+                    {% with selected=answers|get_item:qid correct=correct_map|get_item:question.id %}
                     <tr class="border hover:bg-gray-50">
                         <td class="border p-2">{{ forloop.counter }}</td>
                         <td class="border p-2">{{ question.text }}</td>
-                        <td class="border p-2">{{ answers|get_item:qid|default:"-" }}</td>
-                        <td class="border p-2">{{ correct_map|get_item:question.id }}</td>
-                        <td class="border p-2">{% if answers|get_item:qid == correct_map|get_item:question.id %}{{ question.marks }}{% else %}0{% endif %}</td>
+                        <td class="border p-2">
+                            {% if selected == correct %}
+                                <span class="text-green-700 font-semibold">✅ {{ selected }}</span>
+                            {% else %}
+                                <span class="text-red-700 font-semibold">❌ {{ selected|default:"-" }}</span>
+                            {% endif %}
+                        </td>
+                        <td class="border p-2 text-green-700 font-semibold">{{ correct }}</td>
+                        <td class="border p-2">{% if selected == correct %}{{ question.marks }}{% else %}0{% endif %}</td>
                     </tr>
+                    {% endwith %}
                     {% endwith %}
                 {% endfor %}
             </tbody>
