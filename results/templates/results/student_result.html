@@ -58,6 +58,39 @@
     z-index: 1;
   }
 
+
+  /* ===== STAR LEGEND (WAEC / NECO STYLE) ===== */
+.legend-box {
+  margin-top: 6px;
+  border: 1px solid #000;
+  padding: 6px;
+  font-size: 10.5px;
+  width: 100%;
+  page-break-inside: avoid;
+}
+
+
+.legend-title {
+  font-weight: bold;
+  text-transform: uppercase;
+  margin-bottom: 4px;
+}
+
+.legend-row {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.legend-stars {
+  letter-spacing: 1px;
+}
+
+.legend-stars .gold {
+  color: #b8860b; /* Gold */
+  font-weight: bold;
+}
+
   @media print {
     .result-watermark::before {
       opacity: 0.05;
@@ -78,7 +111,7 @@
       <img src="{{ school_logo_url }}" class="h-16 mx-auto mb-1" />
     {% endif %}
     <h1 class="text-2xl font-bold text-{{ school.theme_color }}-600">{{ school.name }}</h1>
-    <p class="italic text-sm">{{ school.motto }}</p>
+    <p class="italic text-sm"><strong>{{ school.motto }}</strong></p>
     <p class="text-xs">{{ school.address }}</p>
   </div>
 
@@ -249,6 +282,37 @@
       {% endif %}
     </div>
   </div>
+
+  <!-- STAR RATING LEGEND -->
+<div class="legend-box">
+  <div class="legend-title">Legend</div>
+
+  <div class="legend-row">
+    <span class="legend-stars"><span class="gold">★★★★★</span></span>
+    <span>Excellent</span>
+  </div>
+
+  <div class="legend-row">
+    <span class="legend-stars"><span class="gold">★★★★</span>☆</span>
+    <span>Very Good</span>
+  </div>
+
+  <div class="legend-row">
+    <span class="legend-stars"><span class="gold">★★★</span>☆☆</span>
+    <span>Good</span>
+  </div>
+
+  <div class="legend-row">
+    <span class="legend-stars"><span class="gold">★★</span>☆☆☆</span>
+    <span>Fair</span>
+  </div>
+
+  <div class="legend-row">
+    <span class="legend-stars"><span class="gold">★</span>☆☆☆☆</span>
+    <span>Poor</span>
+  </div>
+</div>
+
 
   <!-- COMMENTS -->
   <div class="mt-4 border border-black p-2 text-sm">
