@@ -3,265 +3,243 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<title>Result — {{ student.user.get_full_name }}</title>
+  <meta charset="UTF-8">
+  <title>Result — {{ student.user.get_full_name }}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: 'Arial', sans-serif; font-size: 14px; margin: 0; padding: 0; }
+    table { border-collapse: collapse; width: 100%; }
+    th, td { border: 1px solid #ccc; padding: 6px; text-align: center; font-size: 0.875rem; }
+    .header-table td { border: none; padding: 2px; }
 
-<style>
-@page { size: A4; margin: 12mm; }
+    /* Watermark */
+    .result-container::before {
+      content: "";
+      position: absolute;
+      top: 30%;
+      left: 25%;
+      width: 50%;
+      height: 50%;
+      background: url('{{ school_logo_url }}') no-repeat center;
+      background-size: contain;
+      opacity: 0.05;
+      z-index: 0;
+      pointer-events: none;
+    }
+    .result-container { position: relative; z-index: 1; }
 
-body {
-  font-family: "Times New Roman", serif;
-  font-size: 11px;
-  margin: 0;
-  background: #fff;
-}
+    @media print {
+      body { -webkit-print-color-adjust: exact; margin: 0; }
+      .no-print { display: none !important; }
+      .result-container::before { opacity: 0.08; }
+      .result-container { page-break-inside: avoid; }
+    }
 
-/* ================= CONTAINER ================= */
-.result-container {
-  width: 190mm;
-  min-height: 277mm;
-  margin: auto;
-  padding: 8mm;
-  border: 2px solid #000;
-  position: relative;
-}
+    /* Table Styling */
+    thead { background-color: #f3f4f6; }
+    th { font-weight: 600; }
+    tbody tr:hover { background-color: #f9fafb; }
 
-/* ================= HEADER ================= */
-.school-header {
-  text-align: center;
-  border-bottom: 2px solid #000;
-  padding-bottom: 6px;
-  margin-bottom: 8px;
-}
+    /* Cards for small sections */
+    .summary-card, .psych-card, .affective-card {
+      background-color: #f9fafb;
+      padding: 0.75rem;
+      border-radius: 0.375rem;
+      box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+      font-size: 0.875rem;
+    }
+    .flex-between { display: flex; justify-content: space-between; align-items: center; }
+    .text-small { font-size: 0.875rem; }
 
-.school-header h1 {
-  font-size: 18px;
-  margin: 0;
-  font-weight: bold;
-  text-transform: uppercase;
-}
-
-/* ================= BIO DATA ================= */
-.bio-grid {
-  display: grid;
-  grid-template-columns: 1fr 120px;
-  gap: 8px;
-  border: 1px solid #000;
-  padding: 6px;
-  margin-bottom: 8px;
-}
-
-.bio-table td {
-  padding: 2px 4px;
-}
-
-.passport {
-  border: 1px solid #000;
-  height: 120px;
-  width: 100px;
-  object-fit: cover;
-}
-
-/* ================= TABLE ================= */
-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 10.5px;
-}
-
-th, td {
-  border: 1px solid #000;
-  padding: 3px;
-  text-align: center;
-}
-
-/* ================= SUMMARY + DOMAIN ================= */
-.summary-domain {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-  border: 1px solid #000;
-  padding: 6px;
-  margin-top: 6px;
-}
-
-.domain-box h3 {
-  text-align: center;
-  border-bottom: 1px solid #000;
-  font-size: 11px;
-}
-
-.domain-box li {
-  display: flex;
-  justify-content: space-between;
-  font-size: 10.5px;
-}
-
-/* ================= STARS ================= */
-.star .filled { color: #b8860b; font-weight: bold; }
-.star .empty { color: #000; }
-
-/* ================= LEGEND ================= */
-.legend-box {
-  margin-top: 6px;
-  border: 1px solid #000;
-  padding: 6px;
-  font-size: 10.5px;
-  width: fit-content;
-}
-
-/* ================= SIGNATURE ================= */
-.signatures {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 10px;
-  align-items: flex-end;
-}
-
-/* ================= PROMOTION HISTORY ================= */
-.promotion-box {
-  margin-top: 6px;
-  border: 1px solid #000;
-  padding: 6px;
-  font-size: 10.5px;
-}
-
-.promotion-box p {
-  margin: 2px 0;
-}
-
-
-.sign-box { text-align: center; font-size: 10.5px; }
-
-@media print { .no-print { display: none; } }
-</style>
+  </style>
 </head>
+<body class="bg-gray-50 p-4">
 
-<body>
-<div class="result-container">
+  <div class="max-w-5xl mx-auto bg-white p-6 rounded shadow relative z-10 result-container">
 
-<!-- HEADER -->
-<div class="school-header">
-  <h1 class="text-2xl font-bold text-{{ school.theme_color }}-600">{{ school.name }}</h1>
-  <p class="text-xs">{{ school.address }}</p>
-  <p class="italic text-sm"><strong>{{ school.motto }}</strong></p>
-  <p>
-    {% if is_cumulative %}CUMULATIVE RESULT{% else %}TERMINAL RESULT{% endif %}
-    — {{ selected_session }}
-  </p>
-</div>
+    <!-- Header -->
+    <div class="w-full mb-6 relative bg-white p-4 rounded shadow-sm flex flex-col md:flex-row justify-between items-center">
+      <div class="flex items-center space-x-4">
+        {% if school_logo_url %}
+          <img src="{{ school_logo_url }}" alt="{{ school.name }} Logo" class="h-24 w-24 md:h-28 md:w-28 object-contain">
+        {% else %}
+          <div class="h-24 w-24 md:h-28 md:w-28 flex items-center justify-center bg-gray-100 text-gray-400 text-sm rounded">Logo</div>
+        {% endif %}
+        <div class="flex flex-col">
+          <h1 class="text-xl md:text-2xl font-bold text-{{ school.theme_color }}-600">{{ school.name }}</h1>
+          <p class="text-sm italic text-gray-600">{{ school.motto }}</p>
+          <p class="text-xs text-gray-500">{{ school.address }}</p>
+        </div>
+      </div>
 
-<!-- BIO DATA -->
-<div class="bio-grid">
-  <table class="bio-table">
-    <tr><td><strong>Name:</strong></td><td>{{ student.user.get_full_name }}</td></tr>
-    <tr><td><strong>Admission No:</strong></td><td>{{ student.admission_no }}</td></tr>
-    <tr><td><strong>Class:</strong></td><td>{{ exam_class }}</td></tr>
-    <tr><td><strong>Term:</strong></td><td>{{ selected_term }}</td></tr>
-    <tr><td><strong>Position:</strong></td><td>{{ position }} of {{ class_size }}</td></tr>
-  </table>
-  {% if student_photo_url %}
-    <img src="{{ student_photo_url }}" class="passport">
-  {% endif %}
-</div>
+      <div class="flex flex-col items-end mt-4 md:mt-0 space-y-1">
+        <p class="text-sm font-semibold">{{ student.user.get_full_name }}</p>
+        <p class="text-sm">Admission No: {{ student.admission_no }}</p>
+        <p class="text-sm">{{ exam_class }}</p>
+        <p class="text-sm">{% if is_cumulative %}Cumulative{% else %}Term: {{ selected_term }}{% endif %} • Session: {{ selected_session }}</p>
+        {% if student_photo_url %}
+          <img src="{{ student_photo_url }}" alt="Student Photo" class="h-20 w-20 md:h-24 md:w-24 rounded object-cover border mt-2">
+        {% endif %}
+      </div>
+    </div>
 
-<!-- ACADEMIC TABLE (UNCHANGED LOGIC) -->
-<h3>Academic Performance</h3>
-<table>
-  <!-- YOUR EXISTING TABLE LOGIC REMAINS EXACTLY THE SAME -->
-  {{ block.super }}
-</table>
+    <!-- Verified Badge -->
+    {% if status == "verified" %}
+      <div class="mb-4 flex justify-end">
+        <span class="inline-flex items-center px-4 py-1.5 rounded-full bg-green-100 text-green-800 text-sm font-semibold border border-green-300">
+          ✅ Verified Result
+        </span>
+      </div>
+    {% endif %}
 
-<!-- SUMMARY + DOMAIN -->
-<div class="summary-domain">
-
-  <div>
-    <p><strong>Total:</strong> {{ overall_total }}</p>
-    <p><strong>Average:</strong> {{ avg_total|floatformat:2 }}</p>
-    <p><strong>Best Subject:</strong> {{ best_subject }}</p>
-    <p><strong>Weakest Subject:</strong> {{ weak_subject }}</p>
-  </div>
-
-  <div class="domain-box">
-    <h3>PSYCHOMOTOR</h3>
-    {% for attr in "neatness,agility,creativity,handwriting,sports"|split:"," %}
-    <li>
-      {{ attr|capfirst }}
-      <span class="star">
-        {% for i in "12345" %}
-          {% if i|add:"0" <= psychomotor|get_attr:attr %}
-            <span class="filled">★</span>
+    <!-- Academic Table -->
+    <h2 class="font-semibold mb-2">Academic Performance</h2>
+    <div class="overflow-x-auto">
+      <table class="min-w-full border">
+        <thead class="bg-gray-100">
+          <tr>
+            <th>Subject</th>
+            {% if is_cumulative %}
+              {% for term in terms %}
+                {% if show_ca %}<th>CA ({{ term }})</th>{% endif %}
+                <th>Exam ({{ term }})</th>
+                <th>Total ({{ term }})</th>
+                <th>Grade ({{ term }})</th>
+                <th>Teacher ({{ term }})</th>
+              {% endfor %}
+              <th>Average</th>
+              <th>Grade</th>
+            {% else %}
+              {% if class_has_ca %}<th>CA</th>{% endif %}
+              <th>Exam</th>
+              <th>Total</th>
+              <th>Class Avg</th>
+              <th>Grade</th>
+              <th>Grade Interpretation</th>
+              <th>Teacher</th>
+            {% endif %}
+          </tr>
+        </thead>
+        <tbody>
+          {% if is_cumulative %}
+            {% for subj, data in subjects.items %}
+              <tr>
+                <td>{{ subj }}</td>
+                {% for term in terms %}
+                  {% with term_data=data|dict_get:term %}
+                    {% if show_ca %}<td>{{ term_data.ca|default:"0" }}</td>{% endif %}
+                    <td>{{ term_data.exam|default:"0" }}</td>
+                    <td>{{ term_data.total|default:"0" }}</td>
+                    <td>{{ term_data.grade|default:"N/A" }}</td>
+                    <td>{{ term_data.teacher|default:"N/A" }}</td>
+                  {% endwith %}
+                {% endfor %}
+                <td>{{ data.Average|floatformat:2 }}</td>
+                <td>{{ data.AverageGrade }}</td>
+              </tr>
+            {% endfor %}
           {% else %}
-            <span class="empty">☆</span>
+            {% for s in scores %}
+              <tr>
+                <td>{{ s.subject }}</td>
+                {% if class_has_ca %}<td>{{ s.ca|default:"0" }}</td>{% endif %}
+                <td>{{ s.exam }}</td>
+                <td>{{ s.total }}</td>
+                <td>{{ s.class_average }}</td>
+                <td>{{ s.grade }}</td>
+                <td>{{ s.grade_interpretation }}</td>
+                <td>{{ s.teacher }}</td>
+              </tr>
+            {% empty %}
+              <tr>
+                <td colspan="{% if class_has_ca %}8{% else %}7{% endif %}" class="p-3 text-center text-gray-500">
+                  No scores available
+                </td>
+              </tr>
+            {% endfor %}
           {% endif %}
-        {% endfor %}
-      </span>
-    </li>
-    {% endfor %}
+        </tbody>
+      </table>
+    </div>
 
-    <h3>AFFECTIVE</h3>
-    {% for attr in "punctuality,cooperation,behavior,attentiveness,perseverance"|split:"," %}
-    <li>
-      {{ attr|capfirst }}
-      <span class="star">
-        {% for i in "12345" %}
-          {% if i|add:"0" <= affective|get_attr:attr %}
-            <span class="filled">★</span>
-          {% else %}
-            <span class="empty">☆</span>
-          {% endif %}
-        {% endfor %}
-      </span>
-    </li>
-    {% endfor %}
-  </div>
+    <!-- Summary & Psychomotor/Affective -->
+    <div class="mt-6 grid md:grid-cols-2 gap-4">
+      <div class="summary-card">
+        <p><strong>Total:</strong> {{ overall_total }}</p>
+        <p><strong>Average:</strong> {{ avg_total|floatformat:2 }}</p>
+        <p><strong>Position:</strong> {{ position }} of {{ class_size }}</p>
+        {% if best_subject %}<p><strong>Best Subject:</strong> {{ best_subject }}</p>{% endif %}
+        {% if weak_subject %}<p><strong>Weakest Subject:</strong> {{ weak_subject }}</p>{% endif %}
+      </div>
 
-</div>
+      <div class="space-y-4">
+        <div class="psych-card">
+          <h3 class="font-semibold text-blue-700 mb-2">Psychomotor</h3>
+          {% if psychomotor %}
+            <ul class="space-y-1">
+              {% for attr in "neatness,agility,creativity,sports,handwriting"|split:"," %}
+                <li class="flex justify-between">
+                  <span>{{ attr|capfirst }}</span>
+                  <span>{% for i in "12345" %}{% if i|add:"0" <= psychomotor|get_attr:attr %}⭐{% else %}☆{% endif %}{% endfor %}</span>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}<p class="text-gray-500">Not recorded</p>{% endif %}
+        </div>
 
-<!-- LEGEND -->
-<div class="legend-box">
-  ★★★★★ = Excellent |
-  ★★★★☆ = Very Good |
-  ★★★☆☆ = Good |
-  ★★☆☆☆ = Fair |
-  ★☆☆☆☆ = Poor
-</div>
+        <div class="affective-card">
+          <h3 class="font-semibold text-green-700 mb-2">Affective</h3>
+          {% if affective %}
+            <ul class="space-y-1">
+              {% for attr in "punctuality,cooperation,behavior,attentiveness,perseverance"|split:"," %}
+                <li class="flex justify-between">
+                  <span>{{ attr|capfirst }}</span>
+                  <span>{% for i in "12345" %}{% if i|add:"0" <= affective|get_attr:attr %}⭐{% else %}☆{% endif %}{% endfor %}</span>
+                </li>
+              {% endfor %}
+            </ul>
+          {% else %}<p class="text-gray-500">Not recorded</p>{% endif %}
+        </div>
+      </div>
+    </div>
 
-<!-- COMMENTS -->
-<div class="comment-box">
-  <p><strong>Principal’s Comment:</strong> {{ principal_comment }}</p>
-
-  {% if promotion_history %}
-    <div class="promotion-box">
-      <p><strong>PROMOTION HISTORY</strong></p>
+    <!-- Comments -->
+    <div class="mt-6">
+      <h3 class="font-semibold">Principal's Comment</h3>
+      <p class="italic">{{ principal_comment }}</p>
       {% for p in promotion_history %}
         <p class="text-green-600 font-bold">
-          {{ p.session }}:
-          PROMOTED FROM {{ p.old_class }}
-          TO {{ p.new_class }}
-          ({{ p.promoted_on|date:"M d, Y" }})
+          <strong>{{ p.session }}: PROMOTED FROM {{ p.old_class }} TO {{ p.new_class }} ({{ p.promoted_on|date:"M d, Y" }})</strong>
         </p>
+      {% empty %}
+        <p>No promotion history recorded.</p>
       {% endfor %}
+      <h3 class="font-semibold mt-2">Teacher's Comment</h3>
+      <p class="italic">{{ teacher_comment }}</p>
     </div>
-  {% endif %}
 
-  <p style="margin-top:4px;">
-    <strong>Teacher’s Comment:</strong> {{ teacher_comment }}
-  </p>
-</div>
+    <!-- Signature & QR -->
+    <div class="mt-6 flex justify-between items-center">
+      <div class="flex items-center space-x-4">
+        {% if principal_signature_url %}
+          <img src="{{ principal_signature_url }}" alt="Principal's Signature" class="h-16 w-32 object-contain rounded border" />
+        {% else %}
+          <div class="h-16 w-32 flex items-center justify-center border rounded text-sm text-gray-500">Principal's Signature</div>
+        {% endif %}
+        <div class="text-sm font-medium">Principal</div>
+      </div>
 
-<!-- SIGNATURE -->
-<div class="signatures">
-  <div class="sign-box">
-    {% if principal_signature_url %}<img src="{{ principal_signature_url }}" height="40">{% endif %}
-    <div>Principal</div>
+      <div class="text-right">
+        <img src="{{ qr_data_uri }}" alt="Verification QR Code" class="h-20 w-20 border bg-white p-1" />
+        <div class="text-xs text-gray-500">Scan to verify</div>
+      </div>
+    </div>
+
+    <!-- Print Button -->
+    <div class="mt-4 no-print flex justify-end">
+      <button onclick="window.print()" class="px-4 py-2 bg-green-600 text-white rounded">Print</button>
+    </div>
+
   </div>
-  <div class="sign-box">
-    <img src="{{ qr_data_uri }}" height="60">
-    <div>Verification QR</div>
-  </div>
-</div>
-
-</div>
 </body>
 </html>
