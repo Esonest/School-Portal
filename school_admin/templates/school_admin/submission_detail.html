@@ -2,56 +2,140 @@
 {% load custom_filters %}
 
 {% block content %}
-<h1 class="text-2xl font-bold text-{{ school.theme_color }}-600">{{ school.name }}</h1>
-<h2 class="text-2xl font-bold mb-4">Submission Detail - {{ submission.student.full_name }}</h2>
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
 
-<p><strong>Exam:</strong> {{ exam.title }}</p>
-<p><strong>Score:</strong> {{ submission.score }} / {{ submission.total_questions }}</p>
-<p><strong>Percentage:</strong> {{ submission.percentage }}%</p>
-<p><strong>Status:</strong> {{ submission.status }}</p>
-<p><strong>Started On:</strong> {{ submission.started_on }}</p>
-<p><strong>Completed On:</strong> {{ submission.completed_on|default:"Not completed" }}</p>
+  <!-- HEADER -->
+  <div class="mb-6">
+    <h1 class="text-xl sm:text-2xl font-bold text-{{ school.theme_color }}-800">
+      {{ school.name }}
+    </h1>
+    <p class="text-sm text-gray-600 mt-1">
+      Submission Detail – {{ submission.student.full_name }}
+    </p>
+  </div>
 
-<hr class="my-4">
+  <!-- SUMMARY CARD -->
+  <div class="bg-white border rounded-lg shadow-sm p-4 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 text-sm mb-6">
 
-<h2 class="text-xl font-semibold mb-2">Answers</h2>
-<table class="w-full border-collapse border border-gray-300">
-  <thead>
-    <tr class="bg-gray-100">
-      <th class="border p-2">#</th>
-      <th class="border p-2">Question</th>
-      <th class="border p-2">Selected Answer</th>
-      <th class="border p-2">Correct Answer</th>
-      <th class="border p-2">Marks</th>
-    </tr>
-  </thead>
-  <tbody>
-   {% for question in questions %}
-<tr>
-  <td class="border p-2">{{ forloop.counter }}</td>
+    <p><span class="font-medium">Exam:</span> {{ exam.title }}</p>
+    <p><span class="font-medium">Score:</span> {{ submission.score }} / {{ submission.total_questions }}</p>
+    <p><span class="font-medium">Percentage:</span> {{ submission.percentage }}%</p>
 
-  <td class="border p-2">{{ question.text }}</td>
+    <p>
+      <span class="font-medium">Status:</span>
+      <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-semibold text-white
+        {% if submission.status == 'Pass' %}bg-green-600
+        {% elif submission.status == 'Fail' %}bg-red-600
+        {% else %}bg-gray-500{% endif %}">
+        {{ submission.status }}
+      </span>
+    </p>
 
-  {% with qid=question.id|stringformat:"s" %}
-    <td class="border p-2">
-      {{ answers|get_item:qid|default:"-" }}
-    </td>
+    <p><span class="font-medium">Started:</span> {{ submission.started_on }}</p>
+    <p><span class="font-medium">Completed:</span> {{ submission.completed_on|default:"Not completed" }}</p>
 
-    <td class="border p-2">
-      {{ correct_map|get_item:question.id }}
-    </td>
+  </div>
 
-    <td class="border p-2">
-      {% if answers|get_item:qid == correct_map|get_item:question.id %}
-        {{ question.marks }}
-      {% else %}
-        0
-      {% endif %}
-    </td>
-  {% endwith %}
-</tr>
-{% endfor %}
+  <!-- ===================== -->
+  <!-- MOBILE ANSWERS VIEW -->
+  <!-- ===================== -->
+  <div class="md:hidden space-y-4">
 
-  </tbody>
-</table>
+    <h2 class="text-lg font-semibold text-gray-700">Answers</h2>
+
+    {% for question in questions %}
+      {% with qid=question.id|stringformat:"s" %}
+        <div class="bg-white border rounded-lg shadow-sm p-4 space-y-2">
+
+          <p class="text-sm font-semibold text-gray-800">
+            Q{{ forloop.counter }}. {{ question.text }}
+          </p>
+
+          <p class="text-sm">
+            <span class="font-medium">Selected:</span>
+            {{ answers|get_item:qid|default:"-" }}
+          </p>
+
+          <p class="text-sm">
+            <span class="font-medium">Correct:</span>
+            {{ correct_map|get_item:question.id }}
+          </p>
+
+          <p class="text-sm">
+            <span class="font-medium">Marks:</span>
+            {% if answers|get_item:qid == correct_map|get_item:question.id %}
+              <span class="text-green-600 font-semibold">{{ question.marks }}</span>
+            {% else %}
+              <span class="text-red-600 font-semibold">0</span>
+            {% endif %}
+          </p>
+
+        </div>
+      {% endwith %}
+    {% empty %}
+      <p class="text-center text-gray-500">No answers available.</p>
+    {% endfor %}
+  </div>
+
+  <!-- ===================== -->
+  <!-- DESKTOP TABLE VIEW -->
+  <!-- ===================== -->
+  <div class="hidden md:block bg-white border rounded-lg shadow-sm overflow-hidden">
+
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm text-left border-collapse">
+
+        <thead class="bg-gray-100 text-gray-700 uppercase text-xs tracking-wide">
+          <tr>
+            <th class="px-3 py-3 border">#</th>
+            <th class="px-3 py-3 border">Question</th>
+            <th class="px-3 py-3 border">Selected Answer</th>
+            <th class="px-3 py-3 border">Correct Answer</th>
+            <th class="px-3 py-3 border text-center">Marks</th>
+          </tr>
+        </thead>
+
+        <tbody class="divide-y">
+          {% for question in questions %}
+            {% with qid=question.id|stringformat:"s" %}
+              <tr class="hover:bg-gray-50 transition">
+                <td class="px-3 py-2 border font-medium">
+                  {{ forloop.counter }}
+                </td>
+
+                <td class="px-3 py-2 border">
+                  {{ question.text }}
+                </td>
+
+                <td class="px-3 py-2 border">
+                  {{ answers|get_item:qid|default:"-" }}
+                </td>
+
+                <td class="px-3 py-2 border">
+                  {{ correct_map|get_item:question.id }}
+                </td>
+
+                <td class="px-3 py-2 border text-center font-semibold">
+                  {% if answers|get_item:qid == correct_map|get_item:question.id %}
+                    <span class="text-green-600">{{ question.marks }}</span>
+                  {% else %}
+                    <span class="text-red-600">0</span>
+                  {% endif %}
+                </td>
+              </tr>
+            {% endwith %}
+          {% empty %}
+            <tr>
+              <td colspan="5" class="text-center py-6 text-gray-500">
+                No answers available.
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+
+      </table>
+    </div>
+  </div>
+
+</div>
 {% endblock %}

@@ -50,6 +50,10 @@
           </span>
         {% endif %}
       </p>
+      <a href="{% url 'school_admin:submission_detail' row.student.school.id row.exam.id row.id %}"
+                     class="text-blue-600 hover:underline font-medium">
+                    View Details
+                  </a>
       <p class="mt-2 text-sm text-gray-600">
         Submitted on: {{ submission.completed_on|date:"d M Y, H:i" }}
       </p>
