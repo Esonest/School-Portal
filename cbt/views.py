@@ -379,6 +379,9 @@ def student_exam_result(request, exam_id):
         return render(request, "cbt/student_result.html", {
             "error": "You are not registered as a student."
         })
+    
+    school = getattr(student, "school", None)
+    school_logo_url = getattr(school.logo, 'url', None) if school and school.logo else None
 
     submission = get_object_or_404(CBTSubmission, exam=exam, student=student)
     answers = submission.raw_answers or {}
@@ -441,5 +444,67 @@ def student_exam_result(request, exam_id):
         "wrong": wrong,
         "percentage": percentage,
         "status": status,
+        "school_logo_url": school_logo_url,
     })
 
+
+
+
+from django.core.exceptions import PermissionDenied
+
+
+@login_required
+def student_submission_detail(request, submission_id):
+    # assumes user has related Student object
+    student = getattr(request.user, 'student', None)
+    if not request.user.is_student_user:
+        raise PermissionDenied("Only students can view this page.")
+    
+    school = getattr(student, "school", None)
+    school_logo_url = getattr(school.logo, 'url', None) if school and school.logo else None
+
+    submission = get_object_or_404(
+        CBTSubmission.objects.select_related("student", "exam"),
+        id=submission_id,
+        student__user=request.user
+    )
+
+    answers = submission.raw_answers or {}
+
+    answered_ids = [int(k) for k in answers.keys() if str(k).isdigit()]
+
+    questions = list(submission.exam.questions.filter(id__in=answered_ids))
+    questions.sort(key=lambda q: answered_ids.index(q.id))  # preserve answer order
+
+    # append unanswered questions
+    unanswered = submission.exam.questions.exclude(id__in=answered_ids)
+    questions.extend(unanswered)
+
+    # rebuild correct answers after shuffle
+    correct_map = {}
+    for q in questions:
+        original = {"A": q.option_a, "B": q.option_b, "C": q.option_c, "D": q.option_d}
+        orig_text = original.get(q.correct_option, "").strip().lower()
+        shuffled = answers.get(f"_shuffle_text_{q.id}", [])
+        if not shuffled:
+            correct_map[q.id] = q.correct_option
+            continue
+        shuffled_norm = [s.strip().lower() for s in shuffled]
+        try:
+            idx = shuffled_norm.index(orig_text)
+            correct_map[q.id] = chr(65 + idx)
+        except ValueError:
+            correct_map[q.id] = q.correct_option
+
+    context = {
+        "submission": submission,
+        "exam": submission.exam,
+        "questions": questions,
+        "answers": answers,
+        "correct_map": correct_map,
+        "school": submission.student.user.school,
+        "school_logo_url": school_logo_url,
+
+    }
+
+    return render(request, "cbt/student_submission_detail.html", context)

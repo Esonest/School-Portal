@@ -1,0 +1,96 @@
+{% extends "accounts/base.html" %}
+{% load custom_filters %}
+
+{% block content %}
+<div class="p-4 md:p-6 max-w-5xl mx-auto space-y-6 relative result-container">
+
+    <!-- Watermark -->
+    {% if school.logo %}
+        <div class="absolute inset-0 flex justify-center items-center pointer-events-none z-0">
+            <img src="{{ school.logo.url }}" alt="School Watermark" 
+                 class="h-40 md:h-52 object-contain opacity-5 print:opacity-15">
+        </div>
+    {% endif %}
+
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row items-start md:items-center justify-between bg-white p-4 rounded shadow-sm relative z-10">
+        <div class="flex items-center space-x-4">
+            {% if school.logo %}
+                <img src="{{ school.logo.url }}" alt="{{ school.name }} Logo" class="h-20 w-20 md:h-24 md:w-24 object-contain">
+            {% endif %}
+            <div>
+                <h1 class="text-xl md:text-2xl font-bold text-{{ school.theme_color }}-600">{{ school.name }}</h1>
+                <p class="text-sm italic text-gray-600">{{ school.motto }}</p>
+            </div>
+        </div>
+
+        <div class="mt-4 md:mt-0 flex flex-col items-end">
+            <p class="text-sm font-semibold">{{ submission.student.full_name }}</p>
+            <p class="text-sm">Admission No: {{ submission.student.admission_no }}</p>
+            <p class="text-sm">Exam: {{ exam.title }}</p>
+            <p class="text-sm">Score: {{ submission.score }} / {{ submission.total_questions }} ({{ submission.percentage }}%)</p>
+            <p class="text-sm">Status: 
+                <span class="px-2 py-1 rounded text-white 
+                    {% if submission.status == 'Pass' %}bg-green-600
+                    {% elif submission.status == 'Fail' %}bg-red-600
+                    {% else %}bg-gray-500{% endif %}">
+                    {{ submission.status }}
+                </span>
+            </p>
+        </div>
+    </div>
+
+    <!-- Answers Section -->
+    <h2 class="text-lg md:text-xl font-semibold relative z-10">Answers</h2>
+
+    <!-- Mobile Cards View -->
+    <div class="md:hidden space-y-4 relative z-10">
+        {% for question in questions %}
+            {% with qid=question.id|stringformat:"s" %}
+            <div class="bg-white p-4 rounded shadow-sm border">
+                <p class="font-semibold">Q{{ forloop.counter }}: {{ question.text }}</p>
+                <p><strong>Selected Answer:</strong> {{ answers|get_item:qid|default:"-" }}</p>
+                <p><strong>Correct Answer:</strong> {{ correct_map|get_item:question.id }}</p>
+                <p><strong>Marks:</strong> {% if answers|get_item:qid == correct_map|get_item:question.id %}{{ question.marks }}{% else %}0{% endif %}</p>
+            </div>
+            {% endwith %}
+        {% endfor %}
+    </div>
+
+    <!-- Desktop Table View -->
+    <div class="hidden md:block overflow-x-auto relative z-10">
+        <table class="w-full border-collapse border border-gray-300 text-sm bg-white">
+            <thead>
+                <tr class="bg-gray-100">
+                    <th class="border p-2">#</th>
+                    <th class="border p-2">Question</th>
+                    <th class="border p-2">Selected Answer</th>
+                    <th class="border p-2">Correct Answer</th>
+                    <th class="border p-2">Marks</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for question in questions %}
+                    {% with qid=question.id|stringformat:"s" %}
+                    <tr class="border hover:bg-gray-50">
+                        <td class="border p-2">{{ forloop.counter }}</td>
+                        <td class="border p-2">{{ question.text }}</td>
+                        <td class="border p-2">{{ answers|get_item:qid|default:"-" }}</td>
+                        <td class="border p-2">{{ correct_map|get_item:question.id }}</td>
+                        <td class="border p-2">{% if answers|get_item:qid == correct_map|get_item:question.id %}{{ question.marks }}{% else %}0{% endif %}</td>
+                    </tr>
+                    {% endwith %}
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Print Button -->
+    <div class="mt-4 text-center relative z-10">
+        <button onclick="window.print()" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+            Print My Result
+        </button>
+    </div>
+
+</div>
+{% endblock %}

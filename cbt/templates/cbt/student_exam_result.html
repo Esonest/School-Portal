@@ -1,4 +1,6 @@
 {% load static %}
+{% load custom_filters %}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -6,82 +8,106 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{{ exam.subject.name }} - CBT Result</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    body { font-family: 'Arial', sans-serif; }
+
+    /* Watermark */
+    .watermark {
+      position: absolute;
+      top: 30%;
+      left: 50%;
+      transform: translate(-50%, -50%) rotate(-30deg);
+      opacity: 0.05;
+      z-index: 0;
+      width: 200px;
+      height: 200px;
+      background-size: contain;
+      background-repeat: no-repeat;
+      pointer-events: none;
+    }
+
+    @media print {
+      body { -webkit-print-color-adjust: exact; }
+      .no-print { display: none !important; }
+      .watermark { opacity: 0.08; }
+    }
+  </style>
 </head>
 
-<body class="bg-gradient-to-br from-blue-50 via-slate-100 to-indigo-50 min-h-screen flex items-center justify-center p-6">
-  <div class="w-full max-w-3xl backdrop-blur-lg bg-white/80 border border-slate-200 rounded-3xl shadow-2xl p-8 animate-fadeIn">
-    
+<body class="bg-gray-50 min-h-screen flex justify-center p-6 relative">
+
+  <!-- Watermark -->
+  {% if school.logo %}
+    <div class="watermark" style="background-image: url('{{ school.logo.url }}');"></div>
+  {% endif %}
+
+  <div class="w-full max-w-3xl bg-white rounded-3xl shadow-xl border border-gray-200 p-8 relative z-10">
+
     <!-- Header -->
-    <div class="border-b border-gray-200 pb-6 mb-6 flex flex-col sm:flex-row justify-between items-start sm:items-center">
-      <div>
-        <h1 class="text-3xl font-extrabold text-slate-800 tracking-tight">
-          {{ exam.subject.name }} - <span class="text-blue-700">Result</span>
+    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-gray-200 pb-6 mb-6">
+      <div class="space-y-2">
+        <h1 class="text-3xl sm:text-4xl font-extrabold text-gray-800">
+          {{ exam.subject.name }} - <span class="text-blue-700 font-bold">Result</span>
         </h1>
-        <p class="text-sm text-gray-600 mt-2">
-          <span class="font-medium">Class:</span> {{ student.school_class }}
+        <p class="text-sm text-gray-600">
+          <span class="font-semibold">Class:</span> {{ student.school_class }}
           <span class="mx-2">•</span>
-          <span class="font-medium">Exam Date:</span> {{ exam.start_time|date:"F j, Y" }}
+          <span class="font-semibold">Exam Date:</span> {{ exam.start_time|date:"F j, Y" }}
         </p>
       </div>
-      <div class="mt-4 sm:mt-0 text-sm text-gray-700 bg-blue-50 border border-blue-100 px-4 py-2 rounded-lg">
-        <strong>Duration:</strong> {{ exam.duration_minutes }} mins
+      <div class="mt-4 sm:mt-0 text-sm text-gray-700 bg-blue-50 border border-blue-100 px-4 py-2 rounded-lg font-medium">
+        Duration: {{ exam.duration_minutes }} mins
       </div>
     </div>
 
     <!-- Student Summary -->
-    <div class="bg-white/90 border border-gray-200 rounded-xl shadow-sm p-6 mb-8">
-      <p class="text-lg font-semibold text-slate-800 mb-2">
+    <div class="bg-white shadow-sm rounded-xl border border-gray-200 p-6 mb-6">
+      <h2 class="text-lg sm:text-xl font-semibold text-gray-800 mb-3">
         Student: <span class="text-blue-700">{{ request.user.get_full_name }}</span>
-      </p>
-      <p><strong>Score:</strong> {{ submission.score }}</p>
-      <p><strong>Total Questions:</strong> {{ total_questions }}</p>
-      <p><strong>Attempted:</strong> {{ attempted }}</p>
-      <p><strong>Correct Answers:</strong> {{ correct }}</p>
-      <p><strong>Wrong Answers:</strong> {{ wrong }}</p>
-      <p><strong>Percentage:</strong> {{ percentage }}%</p>
-      <p><strong>Status:</strong>
-        {% if status == "Pass" %}
-          <span class="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full">
-            ✅ Pass
-          </span>
-        {% else %}
-          <span class="inline-flex items-center gap-1 px-3 py-1 bg-red-100 text-red-700 text-xs font-semibold rounded-full">
-            ❌ Fail
-          </span>
-        {% endif %}
-      </p>
-      <a href="{% url 'school_admin:submission_detail' row.student.school.id row.exam.id row.id %}"
-                     class="text-blue-600 hover:underline font-medium">
-                    View Details
-                  </a>
-      <p class="mt-2 text-sm text-gray-600">
-        Submitted on: {{ submission.completed_on|date:"d M Y, H:i" }}
-      </p>
+      </h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-gray-700 text-sm">
+        <p><strong>Score:</strong> {{ submission.score }}</p>
+        <p><strong>Total Questions:</strong> {{ total_questions }}</p>
+        <p><strong>Attempted:</strong> {{ attempted }}</p>
+        <p><strong>Correct Answers:</strong> {{ correct }}</p>
+        <p><strong>Wrong Answers:</strong> {{ wrong }}</p>
+        <p><strong>Percentage:</strong> {{ percentage }}%</p>
+        <p><strong>Status:</strong>
+          {% if status == "Pass" %}
+            <span class="inline-flex items-center gap-1 px-3 py-1 bg-green-100 text-green-700 text-xs font-semibold rounded-full">
+              ✅ Pass
+            </span>
+          {% else %}
+            <span class="inline-flex items-center gap-1 px-3 py-1 bg-red-100 text-red-700 text-xs font-semibold rounded-full">
+              ❌ Fail
+            </span>
+          {% endif %}
+        </p>
+        <p><strong>Submitted on:</strong> {{ submission.completed_on|date:"d M Y, H:i" }}</p>
+      </div>
+
+      <!-- View My Submission Link -->
+      <div class="mt-4">
+        <a href="{% url 'cbt:student_submission_detail' submission.id %}" 
+           class="text-blue-600 hover:underline font-medium">
+          View My Submission
+        </a>
+      </div>
     </div>
 
-    <!-- Buttons -->
-    <div class="flex flex-col sm:flex-row justify-center gap-4">
-      <a href="{% url 'accounts:logout' %}"
+    <!-- Actions -->
+    <div class="flex flex-col sm:flex-row justify-center sm:justify-end gap-4">
+      <a href="{% url 'accounts:logout' %}" 
          class="flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white font-medium py-2 px-6 rounded-lg shadow-md transition">
         ⬅ Logout
       </a>
-
-      <button onclick="window.print()"
+      <button onclick="window.print()" 
          class="flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-800 font-medium py-2 px-6 rounded-lg shadow-md transition">
         🖨 Print / Save as PDF
       </button>
     </div>
+
   </div>
 
-  <!-- Fade Animation -->
-  <style>
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    .animate-fadeIn {
-      animation: fadeIn 0.6s ease-in-out;
-    }
-  </style>
 </body>
 </html>
