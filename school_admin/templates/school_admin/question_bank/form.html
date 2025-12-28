@@ -1,0 +1,135 @@
+{% extends "accounts/base.html" %}
+{% load widget_tweaks %}
+
+{% block content %}
+
+<div class="max-w-6xl mx-auto px-4 py-6">
+
+  <h1 class="text-2xl font-bold text-{{ school.theme_color }}-600">Add Questions to Question Bank</h1>
+
+    <form method="post" class="space-y-6 bg-white rounded-xl shadow p-6">
+  {% csrf_token %}
+
+  <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
+    <div>
+      <label>Subject</label>
+      <select name="subject" class="w-full border rounded-lg px-3 py-2">
+        <option value="">Select Subject</option>
+        {% for subj in subjects %}
+          <option value="{{ subj.id }}">{{ subj.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div>
+      <label>Class</label>
+      <select name="school_class" class="w-full border rounded-lg px-3 py-2">
+        <option value="">Select Class</option>
+        {% for cls in classes %}
+          <option value="{{ cls.id }}">{{ cls.name }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div>
+      <label>Term</label>
+      <select name="term" class="w-full border rounded-lg px-3 py-2">
+        {% for t in terms %}
+          <option value="{{ t }}">Term {{ t }}</option>
+        {% endfor %}
+      </select>
+    </div>
+
+    <div>
+      <label>Session</label>
+      <select name="session" class="w-full border rounded-lg px-3 py-2">
+        {% for s in sessions %}
+          <option value="{{ s }}">{{ s }}</option>
+        {% endfor %}
+      </select>
+    </div>
+  </div>
+
+    {{ formset.management_form }}
+
+    <div id="questions-container">
+      {% for form in formset %}
+        <div class="question-form border-b py-4 relative">
+          <h2 class="font-semibold mb-2">Question {{ forloop.counter }}</h2>
+
+          {% if form.DELETE %}
+            <label class="absolute top-2 right-2 text-sm text-red-600">
+              {{ form.DELETE }} Delete
+            </label>
+          {% endif %}
+
+          <div class="mt-3">
+            <label class="block text-sm font-medium mb-1">Question</label>
+            {{ form.text|add_class:"w-full min-h-[140px] text-base rounded-lg border border-gray-300 px-3 py-2" }}
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
+            <div>{{ form.option_a.label_tag }}{{ form.option_a }}</div>
+            <div>{{ form.option_b.label_tag }}{{ form.option_b }}</div>
+            <div>{{ form.option_c.label_tag }}{{ form.option_c }}</div>
+            <div>{{ form.option_d.label_tag }}{{ form.option_d }}</div>
+          </div>
+
+          <div class="grid grid-cols-2 gap-4 mt-3">
+            <div>{{ form.correct_option.label_tag }}{{ form.correct_option }}</div>
+            <div>{{ form.marks.label_tag }}{{ form.marks }}</div>
+          </div>
+        </div>
+      {% endfor %}
+    </div>
+
+    <div class="flex gap-3 mt-4">
+      <button type="button" id="add-question" class="px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700">
+        Add Another Question
+      </button>
+    </div>
+
+    <div class="flex justify-end gap-3 pt-4">
+      <a href="{% url 'school_admin:question_bank_list' %}" class="px-4 py-2 rounded-lg border">
+        Cancel
+      </a>
+      <button type="submit" class="px-6 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700">
+        Save All Questions
+      </button>
+    </div>
+  </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+  const container = document.getElementById('questions-container');
+  const addButton = document.getElementById('add-question');
+  let totalForms = parseInt(document.getElementById('id_form-TOTAL_FORMS').value);
+
+  addButton.addEventListener('click', () => {
+    if (totalForms >= 20) return;
+
+    const emptyForm = container.querySelector('.question-form').cloneNode(true);
+
+    // Clear all fields
+    emptyForm.querySelectorAll('input, textarea, select').forEach(el => {
+      if (el.type === 'checkbox' || el.type === 'radio') {
+        el.checked = false;
+      } else {
+        el.value = '';
+      }
+    });
+
+    // Update form indices
+    emptyForm.innerHTML = emptyForm.innerHTML.replace(/form-(\d+)-/g, `form-${totalForms}-`);
+
+    container.appendChild(emptyForm);
+
+    totalForms++;
+    document.getElementById('id_form-TOTAL_FORMS').value = totalForms;
+  });
+});
+
+</script>
+
+{% endblock %}

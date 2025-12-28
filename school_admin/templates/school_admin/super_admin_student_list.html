@@ -4,67 +4,6 @@
 <style>
   :root {
     --theme: #2563eb;
-    --bg-dark: #020617;
-    --card-dark: #020617;
-    --border-dark: #1e293b;
-    --text-dark: #e5e7eb;
-    --muted-dark: #94a3b8;
-  }
-
-  /* 🌙 DARK MODE */
-  body.dark {
-    background: var(--bg-dark);
-    color: var(--text-dark);
-  }
-
-  body.dark .card {
-    background: var(--card-dark) !important;
-    border-color: var(--border-dark) !important;
-    color: var(--text-dark);
-  }
-
-  body.dark table {
-    color: var(--text-dark);
-  }
-
-  body.dark thead {
-    background: #020617;
-  }
-
-  body.dark th {
-    color: #f9fafb;
-  }
-
-  body.dark td {
-    color: var(--text-dark);
-  }
-
-  body.dark .border {
-    border-color: var(--border-dark);
-  }
-
-  body.dark .muted,
-  body.dark .text-gray-500 {
-    color: var(--muted-dark) !important;
-  }
-
-  body.dark tbody tr:hover {
-    background: #020617;
-  }
-
-  body.dark input,
-  body.dark select {
-    background: #020617;
-    color: var(--text-dark);
-    border-color: var(--border-dark);
-  }
-
-  body.dark .bg-gray-100 {
-    background: #020617 !important;
-  }
-
-  body.dark .bg-white {
-    background: var(--card-dark) !important;
   }
 
   /* 🏫 PRINT WATERMARK */
@@ -146,12 +85,12 @@
   }
 </style>
 
-<div class="min-h-screen px-3 sm:px-6 py-6 bg-gray-100 dark:bg-slate-950">
+<div class="min-h-screen px-3 sm:px-6 py-6 bg-gray-100">
 
   <!-- HEADER -->
   <div class="max-w-6xl mx-auto mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
     <h2 class="text-xl sm:text-2xl lg:text-3xl font-bold
-               text-{{ school.theme_color }}-800 dark:text-{{ school.theme_color }}-400">
+               text-{{ school.theme_color }}-800">
       {{ school.name }} — Students
     </h2>
 
@@ -175,7 +114,7 @@
 
   <!-- FILTER + SEARCH -->
   <form method="GET"
-        class="card max-w-6xl mx-auto mb-6 bg-white dark:bg-slate-900
+        class="card max-w-6xl mx-auto mb-6 bg-white
                rounded-xl shadow-sm border p-4 flex flex-col sm:flex-row gap-3 no-print">
 
     <select name="class_id"
@@ -200,10 +139,10 @@
   </form>
 
   <!-- TABLE -->
-  <div class="card max-w-6xl mx-auto bg-white dark:bg-slate-900 rounded-xl shadow-md border overflow-hidden">
+  <div class="card max-w-6xl mx-auto bg-white rounded-xl shadow-md border overflow-hidden">
     <div class="overflow-x-auto">
       <table id="studentTable" class="min-w-full text-sm">
-        <thead class="bg-gray-50 dark:bg-slate-800 border-b">
+        <thead class="bg-gray-50 border-b">
           <tr>
             <th class="px-4 py-3 text-left">Photo</th>
             <th class="px-4 py-3 text-left">Name</th>
@@ -215,12 +154,12 @@
 
         <tbody>
           {% for student in students %}
-          <tr class="border-b hover:bg-gray-50 dark:hover:bg-slate-800 transition">
+          <tr class="border-b hover:bg-gray-50 transition">
             <td class="px-4 py-3">
               {% if student.photo %}
                 <img src="{{ student.photo.url }}" class="h-10 w-10 rounded-full object-cover border">
               {% else %}
-                <div class="h-10 w-10 rounded-full bg-gray-200 dark:bg-slate-700
+                <div class="h-10 w-10 rounded-full bg-gray-200
                             flex items-center justify-center text-xs">
                   N/A
                 </div>
@@ -245,7 +184,7 @@
           {% empty %}
           <tr>
             <td colspan="5"
-                class="px-4 py-8 text-center text-gray-500 dark:text-gray-400">
+                class="px-4 py-8 text-center text-gray-500">
               No students found.
             </td>
           </tr>

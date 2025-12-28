@@ -1,29 +1,80 @@
 {% extends "accounts/base.html" %}
 
 {% block content %}
-<div class="p-6 space-y-6">
-    <h1 class="text-2xl font-bold text-{{ school.theme_color }}-600">Assignments - {{ school.name }}</h1>
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6 space-y-6">
 
-    <a href="{% url 'school_admin:assignment_create' school.id %}" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">+ Add Assignment</a>
+  <!-- HEADER -->
+  <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
+    <h1 class="text-2xl font-bold text-{{ school.theme_color }}-600">
+      Assignments – {{ school.name }}
+    </h1>
+    <a href="{% url 'school_admin:assignment_create' school.id %}"
+       class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm sm:text-base">
+       + Add Assignment
+    </a>
+  </div>
 
+  <!-- MOBILE CARDS -->
+  <div class="space-y-4 md:hidden">
     {% for assignment in assignments %}
-    <div class="bg-white shadow rounded border border-gray-200 p-4 mt-4">
-        <div class="flex justify-between items-center mb-2">
-            <h2 class="text-xl font-semibold">{{ assignment.title }}</h2>
-            <span class="text-gray-500">{{ assignment.subject }} | {{ assignment.publish_date|date:"d M Y" }}</span>
+      <div class="bg-white border rounded-lg shadow-sm p-4 space-y-2">
+        <div class="flex justify-between items-start">
+          <h2 class="font-semibold text-gray-800 text-sm">{{ assignment.title }}</h2>
+          <span class="text-gray-500 text-xs">
+            {{ assignment.subject }} | {{ assignment.publish_date|date:"d M Y" }}
+          </span>
         </div>
-        <p class="text-gray-700 mb-2">{{ assignment.description|truncatewords:30 }}</p>
-        <div class="flex space-x-2 mb-2">
-            <a href="{% url 'school_admin:assignment_edit' school.id assignment.id %}" class="text-blue-600 hover:underline">Edit</a>
-            <a href="{% url 'school_admin:assignment_delete' school.id assignment.id %}" class="text-red-600 hover:underline">Delete</a>
-            <a href="{% url 'school_admin:assignment_submissions' school.id assignment.id %}" class="text-green-600 hover:underline">Submissions</a>
-            {% if assignment.file %}
-            <a href="{{ assignment.file.url }}" class="text-indigo-600 hover:underline">Download File</a>
-            {% endif %}
+        <p class="text-gray-700 text-sm">{{ assignment.description|truncatewords:30 }}</p>
+        <div class="flex flex-wrap gap-2 text-xs">
+          <a href="{% url 'school_admin:assignment_edit' school.id assignment.id %}" class="text-blue-600 hover:underline">Edit</a>
+          <a href="{% url 'school_admin:assignment_delete' school.id assignment.id %}" class="text-red-600 hover:underline">Delete</a>
+          <a href="{% url 'school_admin:assignment_submissions' school.id assignment.id %}" class="text-green-600 hover:underline">Submissions</a>
+          {% if assignment.file %}
+          <a href="{{ assignment.file.url }}" class="text-indigo-600 hover:underline">Download</a>
+          {% endif %}
         </div>
-    </div>
+      </div>
     {% empty %}
-    <p class="text-gray-500 mt-4">No assignments found for this school.</p>
+      <p class="text-center text-gray-500 py-6">No assignments found for this school.</p>
     {% endfor %}
+  </div>
+
+  <!-- DESKTOP TABLE -->
+  <div class="hidden md:block bg-white border rounded-lg shadow-sm overflow-x-auto">
+    <table class="min-w-full text-sm text-left border-collapse">
+      <thead class="bg-gray-100 text-gray-700 uppercase text-xs tracking-wide">
+        <tr>
+          <th class="px-3 py-3 border">Title</th>
+          <th class="px-3 py-3 border">Subject</th>
+          <th class="px-3 py-3 border">Publish Date</th>
+          <th class="px-3 py-3 border">Description</th>
+          <th class="px-3 py-3 border">Actions</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y divide-gray-100">
+        {% for assignment in assignments %}
+          <tr class="hover:bg-gray-50 transition">
+            <td class="px-3 py-2 border font-medium">{{ assignment.title }}</td>
+            <td class="px-3 py-2 border">{{ assignment.subject }}</td>
+            <td class="px-3 py-2 border">{{ assignment.publish_date|date:"d M Y" }}</td>
+            <td class="px-3 py-2 border">{{ assignment.description|truncatewords:30 }}</td>
+            <td class="px-3 py-2 border space-x-2">
+              <a href="{% url 'school_admin:assignment_edit' school.id assignment.id %}" class="text-blue-600 hover:underline">Edit</a>
+              <a href="{% url 'school_admin:assignment_delete' school.id assignment.id %}" class="text-red-600 hover:underline">Delete</a>
+              <a href="{% url 'school_admin:assignment_submissions' school.id assignment.id %}" class="text-green-600 hover:underline">Submissions</a>
+              {% if assignment.file %}
+              <a href="{{ assignment.file.url }}" class="text-indigo-600 hover:underline">Download</a>
+              {% endif %}
+            </td>
+          </tr>
+        {% empty %}
+          <tr>
+            <td colspan="5" class="text-center py-6 text-gray-500">No assignments found for this school.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
 </div>
 {% endblock %}

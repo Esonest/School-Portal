@@ -4,51 +4,6 @@
 
 <style>
 /* ===================== */
-/* DARK MODE SUPPORT */
-/* ===================== */
-.dark body {
-  background-color: #0f172a;
-  color: #e5e7eb;
-}
-
-.dark .card,
-.dark table,
-.dark select,
-.dark input,
-.dark form {
-  background-color: #020617 !important;
-  color: #e5e7eb;
-}
-
-.dark thead {
-  background-color: #020617 !important;
-}
-
-.dark th {
-  color: #f9fafb;
-}
-
-.dark td {
-  color: #e5e7eb;
-}
-
-.dark .text-gray-500 {
-  color: #9ca3af !important;
-}
-
-.dark .border {
-  border-color: #1e293b;
-}
-
-.dark a.text-indigo-600 {
-  color: #818cf8 !important;
-}
-
-.dark a.text-red-600 {
-  color: #f87171 !important;
-}
-
-/* ===================== */
 /* PRINT – A4 OPTIMIZED */
 /* ===================== */
 @media print {
@@ -103,14 +58,14 @@
 }
 </style>
 
-<div class="max-w-7xl mx-auto px-4 py-8 space-y-8 bg-gray-50 dark:bg-slate-950">
+<div class="max-w-7xl mx-auto px-4 py-8 space-y-8 bg-gray-50">
 
   <!-- ========================== -->
   <!-- HEADER -->
   <!-- ========================== -->
   <div class="flex flex-col md:flex-row justify-between md:items-center gap-4
-              bg-white dark:bg-slate-900 border rounded-2xl p-6 shadow">
-    <h2 class="text-2xl font-bold text-{{ school.theme_color }}-700 dark:text-{{ school.theme_color }}-400">
+              bg-white border rounded-2xl p-6 shadow">
+    <h2 class="text-2xl font-bold text-{{ school.theme_color }}-700">
       Teachers Dashboard — {{ school.name }}
     </h2>
 
@@ -126,11 +81,9 @@
   <!-- ========================== -->
   <form method="GET"
         class="flex flex-col md:flex-row gap-4
-               bg-white dark:bg-slate-900 border rounded-xl p-4 shadow">
+               bg-white border rounded-xl p-4 shadow">
     <select name="class"
-            class="border p-2 rounded w-full md:w-56
-                   bg-white dark:bg-slate-950
-                   text-gray-800 dark:text-gray-200">
+            class="border p-2 rounded w-full md:w-56 bg-white text-gray-800">
       <option value="">All Classes</option>
       {% for cls in classes %}
         <option value="{{ cls.id }}" {% if cls.id|stringformat:"s" == selected_class %}selected{% endif %}>
@@ -140,9 +93,7 @@
     </select>
 
     <select name="subject"
-            class="border p-2 rounded w-full md:w-56
-                   bg-white dark:bg-slate-950
-                   text-gray-800 dark:text-gray-200">
+            class="border p-2 rounded w-full md:w-56 bg-white text-gray-800">
       <option value="">All Subjects</option>
       {% for s in subjects %}
         <option value="{{ s.id }}" {% if s.id|stringformat:"s" == selected_subject %}selected{% endif %}>
@@ -161,15 +112,15 @@
   <!-- CHARTS -->
   <!-- ========================== -->
   <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-    <div class="bg-white dark:bg-slate-900 border rounded-xl p-4 shadow">
-      <h3 class="font-semibold mb-3 text-gray-800 dark:text-gray-100">
+    <div class="bg-white border rounded-xl p-4 shadow">
+      <h3 class="font-semibold mb-3 text-gray-800">
         Teachers per Class
       </h3>
       <canvas id="classChart"></canvas>
     </div>
 
-    <div class="bg-white dark:bg-slate-900 border rounded-xl p-4 shadow">
-      <h3 class="font-semibold mb-3 text-gray-800 dark:text-gray-100">
+    <div class="bg-white border rounded-xl p-4 shadow">
+      <h3 class="font-semibold mb-3 text-gray-800">
         Teachers per Subject
       </h3>
       <canvas id="subjectChart"></canvas>
@@ -179,9 +130,9 @@
   <!-- ========================== -->
   <!-- TEACHERS TABLE -->
   <!-- ========================== -->
-  <div class="overflow-x-auto bg-white dark:bg-slate-900 border rounded-xl shadow">
+  <div class="overflow-x-auto bg-white border rounded-xl shadow">
     <table class="w-full min-w-max">
-      <thead class="bg-gray-100 dark:bg-slate-800 border-b">
+      <thead class="bg-gray-100 border-b">
         <tr>
           <th class="p-3 text-left font-semibold">Name</th>
           <th class="p-3 text-left font-semibold">Staff ID</th>
@@ -193,7 +144,7 @@
 
       <tbody>
         {% for t in teachers %}
-        <tr class="border-b hover:bg-gray-50 dark:hover:bg-slate-800 transition">
+        <tr class="border-b hover:bg-gray-50 transition">
           <td class="p-3 font-medium">{{ t.get_full_name }}</td>
           <td class="p-3 text-sm">{{ t.staff_id }}</td>
           <td class="p-3 text-sm">
@@ -216,7 +167,7 @@
         {% empty %}
         <tr>
           <td colspan="5"
-              class="p-6 text-center text-gray-500 dark:text-gray-400">
+              class="p-6 text-center text-gray-500">
             No teachers found.
           </td>
         </tr>

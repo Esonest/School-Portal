@@ -3,48 +3,46 @@
 {% block content %}
 
 <style>
-/* ===================== */
-/* DARK MODE SUPPORT */
-/* ===================== */
-.dark body {
-  background-color: #0f172a;
-  color: #e5e7eb;
+/* Light + subtle dark mode friendly colors */
+body {
+  background-color: #f9fafb; /* light gray for light mode */
+  color: #111827; /* dark text */
 }
 
-.dark .card,
-.dark table,
-.dark select,
-.dark input {
-  background-color: #020617 !important;
-  color: #e5e7eb;
+.card, table, select, input {
+  background-color: #ffffff; /* white cards */
+  color: #111827;
+  border-color: #d1d5db;
 }
 
-.dark thead {
-  background-color: #020617 !important;
+table th {
+  background-color: #f3f4f6; /* slightly muted gray header */
+  color: #111827;
 }
 
-.dark th {
-  color: #f9fafb;
+table td {
+  color: #374151;
 }
 
-.dark td {
-  color: #e5e7eb;
+a {
+  color: #2563eb; /* blue links */
 }
 
-.dark .text-gray-500 {
-  color: #9ca3af !important;
+a:hover {
+  text-decoration: underline;
 }
 
-.dark a.text-blue-600 {
-  color: #60a5fa !important;
+.hover\:bg-gray-50:hover {
+  background-color: #f9fafb;
 }
 
-.dark a.text-orange-600 {
-  color: #fb923c !important;
+.hover\:bg-slate-100:hover {
+  background-color: #f3f4f6;
 }
 
-.dark .border {
-  border-color: #1e293b;
+/* subtle borders for tables */
+table th, table td {
+  border-bottom: 1px solid #e5e7eb;
 }
 </style>
 
@@ -54,8 +52,8 @@
   <!-- HEADER -->
   <!-- ========================== -->
   <div class="flex flex-col md:flex-row justify-between items-center gap-4
-              bg-white dark:bg-slate-900 border rounded-2xl p-6 shadow">
-    <h2 class="text-2xl font-bold text-{{ school.theme_color }}-700 dark:text-{{ school.theme_color }}-400">
+              bg-white border rounded-2xl p-6 shadow">
+    <h2 class="text-2xl font-bold text-{{ school.theme_color }}-700">
       School Accountants
     </h2>
 
@@ -69,9 +67,9 @@
   <!-- ========================== -->
   <!-- ACCOUNTANTS TABLE -->
   <!-- ========================== -->
-  <div class="overflow-x-auto bg-white dark:bg-slate-900 border rounded-xl shadow">
-    <table class="w-full min-w-max divide-y divide-gray-200 dark:divide-slate-700">
-      <thead class="bg-gray-100 dark:bg-slate-800">
+  <div class="overflow-x-auto bg-white border rounded-xl shadow">
+    <table class="w-full min-w-max divide-y divide-gray-200">
+      <thead class="bg-gray-100">
         <tr>
           <th class="p-3 text-left font-semibold">Name</th>
           <th class="p-3 text-left font-semibold">Email</th>
@@ -81,26 +79,26 @@
         </tr>
       </thead>
 
-      <tbody class="bg-white dark:bg-slate-900 divide-y divide-gray-100 dark:divide-slate-800">
+      <tbody class="divide-y divide-gray-100">
         {% for a in accountants %}
-        <tr class="hover:bg-gray-50 dark:hover:bg-slate-800 transition">
+        <tr class="hover:bg-gray-50 transition">
           <td class="p-3 font-medium">
             {{ a.user.get_full_name }}
           </td>
 
-          <td class="p-3 text-sm text-gray-600 dark:text-gray-300">
+          <td class="p-3 text-sm text-gray-600">
             {{ a.user.email }}
           </td>
 
-          <td class="p-3 text-sm text-gray-600 dark:text-gray-300">
+          <td class="p-3 text-sm text-gray-600">
             {{ a.staff_id }}
           </td>
 
           <td class="p-3 font-medium">
             {% if a.is_active %}
-              <span class="text-green-600 dark:text-green-400">Active</span>
+              <span class="text-green-600">Active</span>
             {% else %}
-              <span class="text-red-600 dark:text-red-400">Inactive</span>
+              <span class="text-red-600">Inactive</span>
             {% endif %}
           </td>
 
@@ -119,7 +117,7 @@
         {% empty %}
         <tr>
           <td colspan="5"
-              class="p-6 text-center text-gray-500 dark:text-gray-400">
+              class="p-6 text-center text-gray-500">
             No accountants
           </td>
         </tr>

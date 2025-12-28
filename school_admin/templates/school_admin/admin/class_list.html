@@ -4,18 +4,8 @@
 
 <style>
 /* ===================== */
-/* DARK MODE SUPPORT */
+/* LIGHT MODE ONLY */
 /* ===================== */
-.dark body {
-  background-color: #0f172a;
-  color: #e5e7eb;
-}
-.dark .card,
-.dark select,
-.dark input {
-  background-color: #020617 !important;
-  color: #e5e7eb;
-}
 </style>
 
 <div class="max-w-7xl mx-auto px-4 py-8 space-y-8">
@@ -23,7 +13,7 @@
   <!-- ========================== -->
   <!-- HEADER -->
   <!-- ========================== -->
-  <div class="bg-white dark:bg-slate-900 border rounded-2xl p-6 shadow flex flex-col md:flex-row justify-between md:items-center gap-4">
+  <div class="bg-white border rounded-2xl p-6 shadow flex flex-col md:flex-row justify-between md:items-center gap-4">
     <h2 class="text-2xl font-bold text-{{ school.theme_color }}-700">
       All Classes — {{ school.name }}
     </h2>
@@ -33,7 +23,7 @@
   <!-- FILTER BAR -->
   <!-- ========================== -->
   <form method="get"
-        class="bg-white dark:bg-slate-900 border rounded-xl p-4 shadow flex flex-col md:flex-row gap-4">
+        class="bg-white border rounded-xl p-4 shadow flex flex-col md:flex-row gap-4">
 
     <!-- Session Selector -->
     <select name="session" class="border rounded px-3 py-2 w-full md:w-56">
@@ -67,10 +57,10 @@
   <ul class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
 
     {% for c in classes %}
-    <li class="bg-white dark:bg-slate-900 border rounded-xl shadow p-5 flex flex-col justify-between hover:shadow-lg transition">
+    <li class="bg-white border rounded-xl shadow p-5 flex flex-col justify-between hover:shadow-lg transition">
 
       <div class="mb-4">
-        <h3 class="text-lg font-semibold text-gray-800 dark:text-gray-100">
+        <h3 class="text-lg font-semibold text-gray-800">
           {{ c.name }}
         </h3>
       </div>

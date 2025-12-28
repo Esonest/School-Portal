@@ -130,6 +130,17 @@ urlpatterns = [
     path("accountants/<int:pk>/edit/", views.accountant_update, name="accountant_update"),
     path("accountants/<int:pk>/toggle/", views.accountant_toggle_status, name="accountant_toggle"),
 
+
+   
+    path("", views.question_bank_list, name="question_bank_list"),
+    path("add/", views.question_bank_create, name="question_bank_create"),
+    path('<int:pk>/edit/', views.question_bank_update, name='question_bank_update'),
+    path("<int:question_id>/delete/", views.question_bank_delete, name="question_bank_delete"),
+    # Import questions into exam
+    path("import/<int:exam_id>/",views.import_questions_to_exam,name="import_questions_to_exam"),
+
+
+
 ]
 
 

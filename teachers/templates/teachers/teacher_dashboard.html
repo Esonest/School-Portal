@@ -43,6 +43,30 @@
           </a>
         </div>
       </div>
+       
+
+      <!-- Question Bank -->
+<div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition duration-300">
+  <div class="flex items-center mb-4">
+    <svg xmlns="http://www.w3.org/2000/svg" class="w-6 h-6 text-purple-500 mr-2" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v8m4-4H8" />
+    </svg>
+    <h2 class="text-lg font-semibold text-gray-800">Question Bank</h2>
+  </div>
+  <p class="text-sm text-gray-500 mb-4">
+    Add and manage questions for your classes and exams.
+  </p>
+  <div class="space-y-3">
+    <a href="{% url 'school_admin:question_bank_create' %}" 
+       class="block bg-gradient-to-r from-purple-500 to-purple-600 text-white font-medium px-4 py-2 rounded-lg text-center hover:from-purple-600 hover:to-purple-700 transition">
+      ➕ Add Question
+    </a>
+    <a href="{% url 'school_admin:question_bank_list' %}" 
+       class="block bg-gradient-to-r from-indigo-500 to-indigo-600 text-white font-medium px-4 py-2 rounded-lg text-center hover:from-indigo-600 hover:to-indigo-700 transition">
+      📚 View Questions
+    </a>
+  </div>
+</div>
 
       <!-- Notes -->
       <div class="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm hover:shadow-lg hover:-translate-y-1 transition duration-300">

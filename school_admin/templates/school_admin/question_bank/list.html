@@ -1,0 +1,173 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+
+<div class="max-w-7xl mx-auto px-4 py-6">
+
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <h1 class="text-2xl font-bold text-{{ school.theme_color }}-600">
+      Question Repository
+    </h1>
+
+    <a href="{% url 'school_admin:question_bank_create' %}"
+       class="inline-flex items-center justify-center px-4 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700 transition">
+      + Add Question
+    </a>
+  </div>
+
+
+  <!-- Search & Filters -->
+<form method="get" class="mb-6 grid grid-cols-1 sm:grid-cols-4 gap-4">
+
+  <!-- Subject -->
+  <select name="subject"
+          class="border border-gray-300 rounded-lg px-3 py-2">
+    <option value="">All Subjects</option>
+    {% for subject in subjects %}
+      <option value="{{ subject.id }}"
+        {% if request.GET.subject == subject.id|stringformat:"s" %}selected{% endif %}>
+        {{ subject.name }}
+      </option>
+    {% endfor %}
+  </select>
+
+  <!-- Term -->
+  <select name="term"
+          class="border border-gray-300 rounded-lg px-3 py-2">
+    <option value="">All Terms</option>
+    <option value="1" {% if request.GET.term == "1" %}selected{% endif %}>Term 1</option>
+    <option value="2" {% if request.GET.term == "2" %}selected{% endif %}>Term 2</option>
+    <option value="3" {% if request.GET.term == "3" %}selected{% endif %}>Term 3</option>
+  </select>
+
+  
+      
+      <select id="global-session" class="border border-gray-300 rounded-lg px-3 py-2">
+        <option value="">Select Session</option>
+        {% for s in sessions %}
+          <option value="{{ s }}">{{ s }}</option>
+        {% endfor %}
+      </select>
+ 
+
+  <!-- Submit -->
+  <button type="submit"
+          class="bg-indigo-600 text-white rounded-lg px-4 py-2 hover:bg-indigo-700">
+    Search
+  </button>
+
+</form>
+
+
+  <!-- ================= MOBILE CARDS ================= -->
+  <div class="grid grid-cols-1 gap-4 sm:hidden">
+    {% for q in questions %}
+      <div class="bg-white rounded-xl shadow p-4 space-y-3">
+        <div class="text-gray-800 font-medium">
+          {{ q.text|truncatechars:120 }}
+        </div>
+
+        <div class="flex justify-between text-sm text-gray-600">
+          <span>
+            <strong>Subject:</strong> {{ q.subject.name }}
+          </span>
+          <span>
+            <strong>Marks:</strong> {{ q.marks }}
+          </span>
+        </div>
+
+        <div class="flex justify-end gap-4 pt-2 text-sm">
+          <a href="{% url 'school_admin:question_bank_update' q.id %}"
+             class="text-indigo-600 hover:underline">
+            Edit
+          </a>
+          <a href="{% url 'school_admin:question_bank_delete' q.id %}"
+             class="text-red-600 hover:underline">
+            Delete
+          </a>
+        </div>
+      </div>
+    {% empty %}
+      <div class="text-center text-gray-500 py-6">
+        No questions found.
+      </div>
+    {% endfor %}
+  </div>
+
+  <!-- ================= DESKTOP TABLE ================= -->
+  <div class="hidden sm:block overflow-x-auto bg-white rounded-xl shadow">
+    <table class="min-w-full text-sm">
+      <thead class="bg-gray-100 text-gray-700">
+        <tr>
+          <th class="px-4 py-3 text-left">Question</th>
+          <th class="px-4 py-3 text-center">Subject</th>
+          <th class="px-4 py-3 text-center">Marks</th>
+          <th class="px-4 py-3 text-right">Actions</th>
+        </tr>
+      </thead>
+
+      <tbody class="divide-y">
+        {% for q in questions %}
+        <tr class="hover:bg-gray-50">
+          <td class="px-4 py-3 max-w-xl truncate">
+            {{ q.text|truncatechars:80 }}
+          </td>
+          <td class="px-4 py-3 text-center">
+            {{ q.subject.name }}
+          </td>
+          <td class="px-4 py-3 text-center">
+            {{ q.marks }}
+          </td>
+          <td class="px-4 py-3 text-right space-x-3">
+            <a href="{% url 'school_admin:question_bank_update' q.id %}"
+               class="text-indigo-600 hover:underline">
+              Edit
+            </a>
+            <a href="{% url 'school_admin:question_bank_delete' q.id %}"
+               class="text-red-600 hover:underline">
+              Delete
+            </a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="4" class="px-4 py-6 text-center text-gray-500">
+            No questions found.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+
+  <!-- Pagination -->
+{% if page_obj.has_other_pages %}
+<div class="flex justify-center mt-8">
+  <nav class="inline-flex items-center gap-1 text-sm">
+
+    {% if page_obj.has_previous %}
+      <a href="?page={{ page_obj.previous_page_number }}&{{ request.GET.urlencode|cut:'page=' }}"
+         class="px-3 py-2 border rounded-lg hover:bg-gray-100">
+        Prev
+      </a>
+    {% endif %}
+
+    <span class="px-4 py-2 text-gray-600">
+      Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+    </span>
+
+    {% if page_obj.has_next %}
+      <a href="?page={{ page_obj.next_page_number }}&{{ request.GET.urlencode|cut:'page=' }}"
+         class="px-3 py-2 border rounded-lg hover:bg-gray-100">
+        Next
+      </a>
+    {% endif %}
+
+  </nav>
+</div>
+{% endif %}
+
+</div>
+
+{% endblock %}

@@ -567,8 +567,8 @@ def submissions_list(request, school_id, exam_id):
 # cbt/views.py
 from django.forms import modelformset_factory
 from django.shortcuts import render, redirect, get_object_or_404
-from cbt.models import CBTExam, CBTQuestion
-from .forms import CBTQuestionForm
+from cbt.models import CBTExam, CBTQuestion, QuestionBank
+from .forms import CBTQuestionForm, QuestionBankForm
 from django.contrib.auth.decorators import login_required, user_passes_test
 
 def is_admin(user):
@@ -813,6 +813,387 @@ def submission_detail(request, school_id, exam_id, submission_id):
         "answers": answers,
         "correct_map": correct_map,
     })
+
+
+from django.core.exceptions import PermissionDenied
+
+# -------------------------
+# Permission check
+# -------------------------
+
+
+
+# -------------------------
+# Question Bank List
+# -------------------------
+from django.core.paginator import Paginator
+
+
+@login_required
+@user_passes_test(is_admin)
+def question_bank_list(request):
+    user = request.user
+
+    # Determine accessible questions
+    if hasattr(user, "school_admin_profile"):
+        school = user.school_admin_profile.school
+        questions = QuestionBank.objects.filter(school=school).order_by('-created_at')
+        subjects = Subject.objects.filter(school=school)
+        classes = SchoolClass.objects.filter(school=school)
+    elif hasattr(user, "teacher_profile"):
+        teacher = user.teacher_profile
+        questions = QuestionBank.objects.filter(created_by=teacher).order_by('-created_at')
+        subjects = [s.subject for s in ClassSubjectTeacher.objects.filter(teacher=teacher)]
+        classes = SchoolClass.objects.filter(school=teacher.school)
+    else:
+        raise PermissionDenied("You do not have permission to view questions.")
+
+    # Filters
+    subject_id = request.GET.get("subject")
+    if subject_id:
+        questions = questions.filter(subject_id=subject_id)
+
+    class_id = request.GET.get("class")
+    if class_id:
+        questions = questions.filter(school_class_id=class_id)
+
+    term = request.GET.get("term")
+    if term:
+        questions = questions.filter(term=term)
+
+    session = request.GET.get("session")
+    if session:
+        questions = questions.filter(session=session)
+
+    # Pagination
+    paginator = Paginator(questions, 10)  # 10 per page
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+
+    return render(request, "school_admin/question_bank/list.html", {
+        "questions": page_obj,
+        "subjects": subjects,
+        "classes": classes,
+        "terms": ['1', '2', '3'],
+        "sessions": SESSION_LIST,
+        "page_obj": page_obj,
+    })
+
+
+
+# -------------------------
+# Create Question in Bank
+# -------------------------
+from django.forms import modelformset_factory
+from django.contrib import messages
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.core.exceptions import PermissionDenied
+from .forms import QuestionFormSet, BaseQuestionFormSet
+
+
+def is_admin(user):
+    return user.is_superadmin or hasattr(user, 'school_admin_profile') or hasattr(user, 'teacher_profile')
+
+
+@login_required
+@user_passes_test(is_admin)
+def question_bank_create(request):
+    user = request.user
+
+    # ---------- USER CONTEXT ----------
+    if hasattr(user, "school_admin_profile"):
+        school = user.school_admin_profile.school
+        subjects = Subject.objects.filter(school=school)
+        classes = SchoolClass.objects.filter(school=school)
+
+    elif hasattr(user, "teacher_profile"):
+        teacher = user.teacher_profile
+        school = teacher.school
+        subjects = teacher.subjects.all()
+        classes = teacher.classes.all()
+
+    else:
+        raise PermissionDenied("You do not have permission.")
+
+    terms = ['1', '2', '3']
+    sessions = SESSION_LIST
+
+    # ---------- FORMSET ----------
+    QuestionFormSet = modelformset_factory(
+        QuestionBank,
+        form=QuestionBankForm,
+        formset=BaseQuestionFormSet,
+        extra=10,
+        max_num=20,
+        can_delete=True,
+    )
+
+    if request.method == "POST":
+        formset = QuestionFormSet(
+            request.POST,
+            queryset=QuestionBank.objects.none(),
+            user=request.user
+        )
+
+        selected_subject = request.POST.get("subject")
+        selected_class = request.POST.get("school_class")
+        selected_term = request.POST.get("term")
+        selected_session = request.POST.get("session")
+
+        # ---------- GLOBAL VALIDATION ----------
+        if not selected_subject:
+            messages.error(request, "Please select a subject before saving.")
+            return render(request, "school_admin/question_bank/form.html", {
+                "formset": formset,
+                "subjects": subjects,
+                "classes": classes,
+                "terms": terms,
+                "sessions": sessions,
+            })
+
+        # ---------- SAVE ----------
+        if formset.is_valid():
+            questions = formset.save(commit=False)
+
+            for q in questions:
+                if not q.text:
+                    continue
+
+                q.subject_id = int(selected_subject)
+                q.school_class_id = selected_class or None
+                q.term = selected_term or ""
+                q.session = selected_session or ""
+                q.school = school
+                q.created_by = getattr(user, "teacher_profile", None)
+                q.save()
+
+            messages.success(request, "Questions saved successfully!")
+            return redirect("school_admin:question_bank_list")
+
+        else:
+            messages.error(request, "Please correct the errors below.")
+
+    else:
+        formset = QuestionFormSet(
+            queryset=QuestionBank.objects.none(),
+            user=request.user
+        )
+
+    return render(request, "school_admin/question_bank/form.html", {
+        "formset": formset,
+        "subjects": subjects,
+        "classes": classes,
+        "terms": terms,
+        "sessions": sessions,
+    })
+
+
+
+
+
+
+
+
+
+# -------------------------
+# Update Question in Bank
+# ------------------------
+
+@login_required
+@user_passes_test(is_admin)
+def question_bank_update(request, pk):
+    user = request.user
+
+    # Get the question to edit
+    question = get_object_or_404(QuestionBank, pk=pk)
+
+    # Permission check
+    if hasattr(user, "school_admin_profile"):
+        school = user.school_admin_profile.school
+    elif hasattr(user, "teacher_profile"):
+        school = user.teacher_profile.school
+    else:
+        raise PermissionDenied("You do not have permission to edit this question.")
+
+    # Dropdown data (optional, for display only)
+    subjects = Subject.objects.filter(school=school)
+    classes = SchoolClass.objects.filter(school=school)
+    terms = ['1', '2', '3']
+    sessions = SESSION_LIST
+
+    if request.method == "POST":
+        form = QuestionBankForm(request.POST, instance=question)
+
+        if form.is_valid():
+            q = form.save(commit=False)
+
+            # ✅ Do NOT update subject, class, term, session
+            # They were already captured during creation
+            q.school = school  # Keep school
+            q.save()
+
+            messages.success(request, "Question updated successfully.")
+            return redirect("school_admin:question_bank_list")
+        else:
+            messages.error(request, "Please correct the errors below.")
+    else:
+        form = QuestionBankForm(instance=question)
+
+    return render(request, "school_admin/question_bank/form_single.html", {
+        "form": form,
+        "subjects": subjects,
+        "classes": classes,
+        "terms": terms,
+        "sessions": sessions,
+        "edit_mode": True,
+    })
+
+
+
+
+
+# -------------------------
+# Delete Question in Bank
+# -------------------------
+@login_required
+@user_passes_test(is_admin)
+def question_bank_delete(request, question_id):
+    user = request.user
+
+    # Determine profile and allowed question
+    if hasattr(user, "school_admin_profile"):
+        question = get_object_or_404(
+            QuestionBank,
+            id=question_id,
+            school=user.school_admin_profile.school
+        )
+    elif hasattr(user, "teacher_profile"):
+        question = get_object_or_404(
+            QuestionBank,
+            id=question_id,
+            created_by=user.teacher_profile
+        )
+    else:
+        raise PermissionDenied("You do not have permission to delete this question.")
+
+    if request.method == "POST":
+        question.delete()
+        messages.success(request, "Question deleted successfully!")
+        return redirect("school_admin:question_bank_list")
+
+    return render(request, "school_admin/question_bank/confirm_delete.html", {"question": question})
+
+
+
+
+
+
+# -------------------------
+# Import Questions into Exam
+# -------------------------
+from django.core.paginator import Paginator
+from results.utils import SESSION_LIST
+
+@login_required
+@user_passes_test(is_admin)
+def import_questions_to_exam(request, exam_id):
+    user = request.user
+    exam = get_object_or_404(CBTExam, id=exam_id)
+
+    questions = QuestionBank.objects.select_related("subject")
+
+    # ---------------- ROLE-BASED ACCESS ----------------
+    if hasattr(user, "school_admin_profile"):
+        school = user.school_admin_profile.school
+        questions = questions.filter(school=school)
+        subjects = Subject.objects.filter(school=school)
+        classes = SchoolClass.objects.filter(school=school)
+
+    elif hasattr(user, "teacher_profile"):
+        teacher = user.teacher_profile
+
+        subjects = Subject.objects.filter(
+            class_teachers__teacher=teacher
+        ).distinct()
+
+        classes = SchoolClass.objects.filter(
+            subject_teachers__teacher=teacher
+        ).distinct()
+
+        questions = questions.filter(
+            created_by=teacher,
+            subject__in=subjects
+        )
+    else:
+        raise PermissionDenied("You do not have permission.")
+
+    # ---------------- FILTERS ----------------
+    subject_id = request.GET.get("subject")
+    term = request.GET.get("term")
+    session = request.GET.get("session")
+    class_id = request.GET.get("class")
+
+    if subject_id:
+        questions = questions.filter(subject_id=subject_id)
+
+    if term:
+        questions = questions.filter(exam__term=term)
+
+    if session:
+        questions = questions.filter(exam__session=session)
+
+    if class_id:
+        questions = questions.filter(school_class_id=class_id)
+
+    # ---------------- PAGINATION ----------------
+    paginator = Paginator(questions.order_by("-id"), 10)
+    page_obj = paginator.get_page(request.GET.get("page"))
+
+    # ---------------- ALREADY IMPORTED ----------------
+    imported_texts = set(
+        CBTQuestion.objects.filter(exam=exam)
+        .values_list("text", flat=True)
+    )
+
+    # ---------------- IMPORT ----------------
+    if request.method == "POST":
+        selected_ids = request.POST.getlist("questions")
+        created = 0
+
+        for q in questions.filter(id__in=selected_ids):
+            if q.text not in imported_texts:
+                CBTQuestion.objects.create(
+                    exam=exam,
+                    text=q.text,
+                    option_a=q.option_a,
+                    option_b=q.option_b,
+                    option_c=q.option_c,
+                    option_d=q.option_d,
+                    correct_option=q.correct_option,
+                    marks=q.marks
+                )
+                created += 1
+
+        messages.success(request, f"{created} question(s) imported.")
+        return redirect(
+            "school_admin:preview_questions",
+            school_id=exam.school.id,
+            exam_id=exam.id
+        )
+
+    return render(request, "school_admin/question_bank/import.html", {
+        "exam": exam,
+        "questions": page_obj,
+        "subjects": subjects,
+        "classes": classes,
+        "sessions": SESSION_LIST,
+        "imported_texts": imported_texts,
+        "page_obj": page_obj,
+    })
+
+
+
 
 
 
@@ -1231,6 +1612,9 @@ def assignment_create_edit(request, school_id, pk=None):
 
     if request.method == 'POST':
         form = AssignmentForm(request.POST, request.FILES, instance=assignment)
+        # Restrict classes to this school (use correct field name)
+        form.fields['classes'].queryset = SchoolClass.objects.filter(school=school)
+
         if form.is_valid():
             obj = form.save(commit=False)
             obj.school = school
@@ -1239,12 +1623,15 @@ def assignment_create_edit(request, school_id, pk=None):
             return redirect('school_admin:assignment_list', school_id=school.id)
     else:
         form = AssignmentForm(instance=assignment)
+        # Restrict classes to this school (use correct field name)
+        form.fields['classes'].queryset = SchoolClass.objects.filter(school=school)
 
     return render(request, 'school_admin/assignments/assignment_form.html', {
         'form': form,
         'school': school,
         'assignment': assignment
     })
+
 
 # ------------------------
 # Delete assignment

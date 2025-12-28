@@ -13,15 +13,15 @@
   <!-- ===================== -->
   <!-- MOBILE CARDS VIEW -->
   <!-- ===================== -->
-  <div class="md:hidden space-y-4">
+  <div class="md:hidden space-y-3">
     {% for sub in submissions %}
-      <div class="bg-white border rounded-lg shadow-sm p-4 space-y-2">
+      <div class="bg-white border rounded-lg shadow-sm p-3 space-y-1">
 
-        <div class="flex justify-between items-center">
+        <div class="flex justify-between items-center mb-1">
           <h3 class="font-semibold text-gray-800 text-sm">
             {{ sub.student.full_name }}
           </h3>
-          <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-semibold text-white
+          <span class="inline-flex px-2 py-0.5 rounded-full text-xs font-semibold text-white
             {% if sub.status == 'Submitted' %}bg-blue-600
             {% elif sub.status == 'Graded' %}bg-green-600
             {% elif sub.status == 'Pending' %}bg-yellow-500
@@ -30,11 +30,11 @@
           </span>
         </div>
 
-        <div class="grid grid-cols-2 gap-2 text-sm">
+        <div class="grid grid-cols-2 gap-1 text-xs sm:text-sm">
           <p><span class="font-medium">Score:</span> {{ sub.score|default:"-" }}</p>
-          <p><span class="font-medium">Feedback:</span> {{ sub.feedback|default:"-" }}</p>
           <p><span class="font-medium">Graded By:</span> {{ sub.graded_by|default:"-" }}</p>
-          <p><span class="font-medium">Submitted On:</span> {{ sub.submitted_on|date:"d M Y H:i" }}</p>
+          <p><span class="font-medium">Feedback:</span> {{ sub.feedback|default:"-" }}</p>
+          <p><span class="font-medium">Submitted:</span> {{ sub.submitted_on|date:"d M Y H:i" }}</p>
         </div>
 
       </div>
@@ -46,49 +46,45 @@
   <!-- ===================== -->
   <!-- DESKTOP / TABLE VIEW -->
   <!-- ===================== -->
-  <div class="hidden md:block bg-white border rounded-lg shadow-sm overflow-hidden">
+  <div class="hidden md:block bg-white border rounded-lg shadow-sm overflow-x-auto">
 
-    <div class="overflow-x-auto">
-      <table class="min-w-full text-sm text-left border-collapse">
+    <table class="min-w-full text-sm text-left border-collapse">
+      <thead class="bg-gray-100 text-gray-700 uppercase text-xs tracking-wide">
+        <tr>
+          <th class="px-3 py-3 border">Student</th>
+          <th class="px-3 py-3 border">Status</th>
+          <th class="px-3 py-3 border text-center">Score</th>
+          <th class="px-3 py-3 border">Feedback</th>
+          <th class="px-3 py-3 border">Graded By</th>
+          <th class="px-3 py-3 border text-center">Submitted On</th>
+        </tr>
+      </thead>
 
-        <thead class="bg-gray-100 text-gray-700 uppercase text-xs tracking-wide">
-          <tr>
-            <th class="px-3 py-3 border">Student</th>
-            <th class="px-3 py-3 border">Status</th>
-            <th class="px-3 py-3 border text-center">Score</th>
-            <th class="px-3 py-3 border">Feedback</th>
-            <th class="px-3 py-3 border">Graded By</th>
-            <th class="px-3 py-3 border text-center">Submitted On</th>
+      <tbody class="divide-y divide-gray-100">
+        {% for sub in submissions %}
+          <tr class="hover:bg-gray-50 transition">
+            <td class="px-3 py-2 border font-medium">{{ sub.student.full_name }}</td>
+            <td class="px-3 py-2 border">
+              <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-semibold text-white
+                {% if sub.status == 'Submitted' %}bg-blue-600
+                {% elif sub.status == 'Graded' %}bg-green-600
+                {% elif sub.status == 'Pending' %}bg-yellow-500
+                {% else %}bg-gray-500{% endif %}">
+                {{ sub.status }}
+              </span>
+            </td>
+            <td class="px-3 py-2 border text-center">{{ sub.score|default:"-" }}</td>
+            <td class="px-3 py-2 border">{{ sub.feedback|default:"-" }}</td>
+            <td class="px-3 py-2 border">{{ sub.graded_by|default:"-" }}</td>
+            <td class="px-3 py-2 border text-center">{{ sub.submitted_on|date:"d M Y H:i" }}</td>
           </tr>
-        </thead>
-
-        <tbody class="divide-y">
-          {% for sub in submissions %}
-            <tr class="hover:bg-gray-50 transition">
-              <td class="px-3 py-2 border font-medium">{{ sub.student.full_name }}</td>
-              <td class="px-3 py-2 border">
-                <span class="inline-flex px-2.5 py-1 rounded-full text-xs font-semibold text-white
-                  {% if sub.status == 'Submitted' %}bg-blue-600
-                  {% elif sub.status == 'Graded' %}bg-green-600
-                  {% elif sub.status == 'Pending' %}bg-yellow-500
-                  {% else %}bg-gray-500{% endif %}">
-                  {{ sub.status }}
-                </span>
-              </td>
-              <td class="px-3 py-2 border text-center">{{ sub.score|default:"-" }}</td>
-              <td class="px-3 py-2 border">{{ sub.feedback|default:"-" }}</td>
-              <td class="px-3 py-2 border">{{ sub.graded_by|default:"-" }}</td>
-              <td class="px-3 py-2 border text-center">{{ sub.submitted_on|date:"d M Y H:i" }}</td>
-            </tr>
-          {% empty %}
-            <tr>
-              <td colspan="6" class="text-center py-6 text-gray-500">No submissions yet.</td>
-            </tr>
-          {% endfor %}
-        </tbody>
-
-      </table>
-    </div>
+        {% empty %}
+          <tr>
+            <td colspan="6" class="text-center py-6 text-gray-500">No submissions yet.</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
   </div>
 
   <!-- BACK BUTTON -->

@@ -157,7 +157,7 @@ class StudentUpdateForm(forms.ModelForm):
 
 
 from django import forms
-from cbt.models import CBTExam, CBTQuestion, Subject
+from cbt.models import CBTExam, CBTQuestion, Subject, QuestionBank
 from results.utils import SESSION_LIST
 
 
@@ -191,19 +191,26 @@ class CBTExamForm(forms.ModelForm):
         # ---------- GLOBAL TAILWIND STYLING ----------
         for field in self.fields.values():
             field.widget.attrs.update({
-                "class": "w-full border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
-                "text-slate-800 placeholder-slate-400 "
-                "focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 "
-                "transition"
+                "class": (
+                    "w-full border-gray-300 rounded px-3 py-2 text-slate-800 "
+                    "placeholder-slate-400 focus:outline-none focus:ring-2 "
+                    "focus:ring-indigo-500 transition"
+                )
             })
 
         # ---------- SCHOOL FILTERING ----------
-        if user and not getattr(user, 'is_superadmin', False):
-            school = getattr(user.school_admin_profile, "school", None)
+        if user:
+            if getattr(user, 'is_superadmin', False):
+                # Superadmin: all subjects/classes
+                self.fields['subject'].queryset = Subject.objects.all()
+                self.fields['school_class'].queryset = SchoolClass.objects.all()
+            else:
+                # School admin: only subjects/classes in their school
+                school = getattr(user.school_admin_profile, "school", None)
+                if school:
+                    self.fields['subject'].queryset = Subject.objects.filter(school=school)
+                    self.fields['school_class'].queryset = SchoolClass.objects.filter(school=school)
 
-            if school:
-                self.fields['subject'].queryset = Subject.objects.filter(school=school)
-                self.fields['school_class'].queryset = SchoolClass.objects.filter(school=school)
 
 
 
@@ -223,6 +230,74 @@ class CBTQuestionForm(forms.ModelForm):
         # allow empty forms so unused questions don't block save
         for field in self.fields.values():
             field.required = False
+
+
+
+from results.utils import SESSION_LIST
+from students.models import SchoolClass
+from django.forms import modelformset_factory, BaseModelFormSet
+from django.forms import BaseModelFormSet
+
+
+
+
+class QuestionBankForm(forms.ModelForm):
+    text = forms.CharField(
+        required=False,
+        widget=forms.Textarea(attrs={
+            "class": "w-full min-h-[140px] text-base rounded-lg border border-gray-300 px-3 py-2 "
+                     "focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
+        })
+    )
+
+    option_a = forms.CharField( required=False,widget=forms.TextInput(attrs={"class": "w-full border rounded-lg px-3 py-2"}))
+    option_b = forms.CharField(required=False,widget=forms.TextInput(attrs={"class": "w-full border rounded-lg px-3 py-2"}))
+    option_c = forms.CharField(required=False, widget=forms.TextInput(attrs={"class": "w-full border rounded-lg px-3 py-2"}))
+    option_d = forms.CharField(required=False, widget=forms.TextInput(attrs={"class": "w-full border rounded-lg px-3 py-2"}))
+    correct_option = forms.ChoiceField(
+        required=False,
+        choices=[('A', 'A'), ('B', 'B'), ('C', 'C'), ('D', 'D')],
+        widget=forms.Select(attrs={"class": "w-full border rounded-lg px-3 py-2"})
+    )
+    marks = forms.IntegerField( required=False,widget=forms.NumberInput(attrs={"class": "w-full border rounded-lg px-3 py-2"}))
+
+    class Meta:
+        model = QuestionBank
+        fields = ['text', 'option_a', 'option_b', 'option_c', 'option_d', 'correct_option', 'marks']
+
+    def has_changed(self):
+        if not self.is_bound:
+            return False
+
+        text_key = f"{self.prefix}-text"
+        return bool(self.data.get(text_key, "").strip())    
+
+from django.forms import BaseModelFormSet
+
+
+class BaseQuestionFormSet(BaseModelFormSet):
+    """
+    Custom formset for QuestionBank.
+    Accepts a `user` keyword safely but does not touch `subject`.
+    """
+
+    def __init__(self, *args, **kwargs):
+        self.user = kwargs.pop('user', None)
+        super().__init__(*args, **kwargs)
+
+
+
+
+
+QuestionFormSet = modelformset_factory(
+    QuestionBank,
+    form=QuestionBankForm,
+    formset=BaseQuestionFormSet,
+    extra=10,
+    can_delete=True
+)
+
+
 
 
 

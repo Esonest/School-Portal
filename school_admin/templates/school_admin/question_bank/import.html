@@ -1,0 +1,204 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+
+<div class="max-w-7xl mx-auto px-4 py-6">
+
+  <!-- PAGE TITLE -->
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold text-{{ school.theme_color }}-600">
+      Import Questions to {{ exam.title }}
+    </h1>
+  </div>
+
+  <!-- FILTERS -->
+  <form method="get" id="filterForm"
+        class="mb-6 grid grid-cols-1 sm:grid-cols-4 gap-4">
+
+    <!-- CLASS -->
+    <select name="class"
+            onchange="this.form.submit()"
+            class="border rounded-lg px-3 py-2">
+      <option value="">All Classes</option>
+      {% for c in classes %}
+        <option value="{{ c.id }}"
+          {% if request.GET.class == c.id|stringformat:"s" %}selected{% endif %}>
+          {{ c.name }}
+        </option>
+      {% endfor %}
+    </select>
+
+    <!-- SUBJECT -->
+    <select name="subject"
+            class="border rounded-lg px-3 py-2">
+      <option value="">All Subjects</option>
+      {% for subject in subjects %}
+        <option value="{{ subject.id }}"
+          {% if request.GET.subject == subject.id|stringformat:"s" %}selected{% endif %}>
+          {{ subject.name }}
+        </option>
+      {% endfor %}
+    </select>
+
+    <!-- SESSION -->
+    <select name="session"
+            class="border rounded-lg px-3 py-2">
+      <option value="">All Sessions</option>
+      {% for s in sessions %}
+        <option value="{{ s }}"
+          {% if request.GET.session == s %}selected{% endif %}>
+          {{ s }}
+        </option>
+      {% endfor %}
+    </select>
+
+    <!-- SEARCH -->
+    <button class="bg-indigo-600 text-white rounded-lg px-4 py-2 hover:bg-indigo-700">
+      Search
+    </button>
+  </form>
+
+  <!-- IMPORT FORM -->
+  <form method="post">
+    {% csrf_token %}
+
+    <!-- ================= MOBILE CARDS ================= -->
+    <div class="grid grid-cols-1 gap-4 sm:hidden">
+      {% for q in questions %}
+        <label class="bg-white rounded-xl shadow p-4 space-y-3">
+
+          <div class="flex items-start gap-3">
+            <input type="checkbox"
+                   class="question-checkbox mt-1"
+                   name="questions"
+                   value="{{ q.id }}"
+                   {% if q.text in imported_texts %}disabled{% endif %}>
+
+            <div>
+              <p class="font-medium text-gray-800">
+                {{ q.text|truncatechars:140 }}
+              </p>
+
+              <p class="text-sm text-gray-500 mt-1">
+                {{ q.subject.name }} • {{ q.marks }} marks
+              </p>
+
+              {% if q.text in imported_texts %}
+                <span class="inline-block mt-2 text-xs font-semibold text-red-600">
+                  Already Imported
+                </span>
+              {% endif %}
+            </div>
+          </div>
+
+        </label>
+      {% empty %}
+        <div class="text-center text-gray-500 py-10">
+          No questions available.
+        </div>
+      {% endfor %}
+    </div>
+
+    <!-- ================= DESKTOP TABLE ================= -->
+    <div class="hidden sm:block bg-white rounded-xl shadow overflow-x-auto">
+      <table class="min-w-full text-sm">
+        <thead class="bg-gray-100 text-gray-700">
+          <tr>
+            <th class="px-4 py-3">
+              <input type="checkbox" id="selectAll">
+            </th>
+            <th class="px-4 py-3 text-left">Question</th>
+            <th class="px-4 py-3">Subject</th>
+            <th class="px-4 py-3">Marks</th>
+          </tr>
+        </thead>
+
+        <tbody class="divide-y">
+          {% for q in questions %}
+          <tr>
+            <td class="px-4 py-3">
+              <input type="checkbox"
+                     class="question-checkbox"
+                     name="questions"
+                     value="{{ q.id }}"
+                     {% if q.text in imported_texts %}disabled{% endif %}>
+            </td>
+
+            <td class="px-4 py-3 max-w-xl">
+              {{ q.text|truncatechars:100 }}
+              {% if q.text in imported_texts %}
+                <span class="ml-2 text-xs font-semibold text-red-600">
+                  Already Imported
+                </span>
+              {% endif %}
+            </td>
+
+            <td class="px-4 py-3 text-center">
+              {{ q.subject.name }}
+            </td>
+
+            <td class="px-4 py-3 text-center">
+              {{ q.marks }}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="4" class="px-4 py-8 text-center text-gray-500">
+              No questions available.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+
+    <!-- ================= PAGINATION ================= -->
+    {% if page_obj.has_other_pages %}
+    <div class="flex justify-center mt-8">
+      <div class="inline-flex items-center gap-2 text-sm">
+
+        {% if page_obj.has_previous %}
+          <a href="?page={{ page_obj.previous_page_number }}&{{ request.GET.urlencode|cut:'page=' }}"
+             class="px-3 py-2 border rounded hover:bg-gray-100">
+            Prev
+          </a>
+        {% endif %}
+
+        <span class="px-4 py-2 text-gray-600">
+          Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+        </span>
+
+        {% if page_obj.has_next %}
+          <a href="?page={{ page_obj.next_page_number }}&{{ request.GET.urlencode|cut:'page=' }}"
+             class="px-3 py-2 border rounded hover:bg-gray-100">
+            Next
+          </a>
+        {% endif %}
+
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- ================= ACTION BUTTON ================= -->
+    <div class="flex justify-end mt-8">
+      <button type="submit"
+              class="px-6 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700">
+        Import Selected Questions
+      </button>
+    </div>
+
+  </form>
+</div>
+
+<!-- ================= SELECT ALL SCRIPT ================= -->
+<script>
+  const selectAll = document.getElementById("selectAll");
+  if (selectAll) {
+    selectAll.addEventListener("change", function () {
+      document
+        .querySelectorAll(".question-checkbox:not(:disabled)")
+        .forEach(cb => cb.checked = this.checked);
+    });
+  }
+</script>
+
+{% endblock %}

@@ -93,6 +93,72 @@ class CBTQuestion(models.Model):
 
 
 # -------------------------
+# QUESTION BANK (REPOSITORY)
+# -------------------------
+# QUESTION BANK (REPOSITORY)
+# -------------------------
+class QuestionBank(models.Model):
+    school = models.ForeignKey(
+        School,
+        on_delete=models.CASCADE,
+        related_name="question_bank"
+    )
+    subject = models.ForeignKey(
+        Subject,
+        on_delete=models.CASCADE,
+        related_name="question_bank"
+    )
+    created_by = models.ForeignKey(
+        Teacher,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="created_questions"
+    )
+
+    # Optional: link to class, term, and session
+    school_class = models.ForeignKey(
+        "students.SchoolClass",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="question_bank"
+    )
+    term = models.CharField(
+        max_length=1,
+        choices=[('1', 'Term 1'), ('2', 'Term 2'), ('3', 'Term 3')],
+        blank=True
+    )
+    session = models.CharField(
+        max_length=20,
+        blank=True
+    )
+
+    text = models.TextField()
+
+    option_a = models.CharField(max_length=400)
+    option_b = models.CharField(max_length=400)
+    option_c = models.CharField(max_length=400, blank=True)
+    option_d = models.CharField(max_length=400, blank=True)
+
+    correct_option = models.CharField(
+        max_length=1,
+        choices=[('A', 'A'), ('B', 'B'), ('C', 'C'), ('D', 'D')]
+    )
+    marks = models.PositiveIntegerField(default=1)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "QuestionBank"
+        ordering = ["-created_at"]
+
+    def __str__(self):
+        return f"{self.subject.name} - Q{self.id}"
+
+
+
+# -------------------------
 # SUBMISSION MODEL
 # -------------------------
 class CBTSubmission(models.Model):
