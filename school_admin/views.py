@@ -952,27 +952,75 @@ def question_bank_create(request):
                 "sessions": sessions,
             })
 
+        # ---------- FORMSET VALIDATION ----------
+        if not formset.is_valid():
+            messages.error(request, "Please correct the errors in the questions below.")
+            return render(request, "school_admin/question_bank/form.html", {
+                "formset": formset,
+                "subjects": subjects,
+                "classes": classes,
+                "terms": terms,
+                "sessions": sessions,
+            })
+
+        # ---------- STRICT COMPLETENESS CHECK ----------
+        incomplete_forms = []
+
+        for i, form in enumerate(formset.forms, start=1):
+            if form.cleaned_data.get("DELETE"):
+                continue
+
+            data = form.cleaned_data
+
+            # Detect partial rows
+            has_any_value = any([
+                data.get("text"),
+                data.get("option_a"),
+                data.get("option_b"),
+                data.get("option_c"),
+                data.get("option_d"),
+            ])
+
+            required_missing = any([
+                not data.get("text"),
+                not data.get("option_a"),
+                not data.get("option_b"),
+                not data.get("option_c"),
+                not data.get("option_d"),
+                not data.get("correct_option"),
+                data.get("marks") in (None, ""),
+            ])
+
+            if has_any_value and required_missing:
+                incomplete_forms.append(i)
+
+        if incomplete_forms:
+            messages.error(
+                request,
+                f"Please complete all fields for question(s): {', '.join(map(str, incomplete_forms))}."
+            )
+            return render(request, "school_admin/question_bank/form.html", {
+                "formset": formset,
+                "subjects": subjects,
+                "classes": classes,
+                "terms": terms,
+                "sessions": sessions,
+            })
+
         # ---------- SAVE ----------
-        if formset.is_valid():
-            questions = formset.save(commit=False)
+        questions = formset.save(commit=False)
 
-            for q in questions:
-                if not q.text:
-                    continue
+        for q in questions:
+            q.subject_id = int(selected_subject)
+            q.school_class_id = selected_class or None
+            q.term = selected_term or ""
+            q.session = selected_session or ""
+            q.school = school
+            q.created_by = getattr(user, "teacher_profile", None)
+            q.save()
 
-                q.subject_id = int(selected_subject)
-                q.school_class_id = selected_class or None
-                q.term = selected_term or ""
-                q.session = selected_session or ""
-                q.school = school
-                q.created_by = getattr(user, "teacher_profile", None)
-                q.save()
-
-            messages.success(request, "Questions saved successfully!")
-            return redirect("school_admin:question_bank_list")
-
-        else:
-            messages.error(request, "Please correct the errors below.")
+        messages.success(request, "Questions saved successfully!")
+        return redirect("school_admin:question_bank_list")
 
     else:
         formset = QuestionFormSet(
@@ -987,6 +1035,7 @@ def question_bank_create(request):
         "terms": terms,
         "sessions": sessions,
     })
+
 
 
 

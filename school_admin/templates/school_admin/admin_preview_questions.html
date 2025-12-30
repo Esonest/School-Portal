@@ -1,76 +1,128 @@
 {% extends 'accounts/base.html' %}
 {% block content %}
 
-<div class="p-6 bg-gray-100 min-h-screen">
+<div class="min-h-screen bg-gray-100 px-4 py-6">
 
-    <!-- Page Title -->
-    <div class="flex items-center justify-between mb-6">
-        <h1 class="text-3xl font-bold text-gray-800">
-            Preview Questions – {{ exam.title }}
-        </h1>
+  <!-- ===================== -->
+  <!-- HEADER -->
+  <!-- ===================== -->
+  <div class="max-w-7xl mx-auto mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+    <h1 class="text-2xl sm:text-3xl font-bold text-gray-800">
+      Preview Questions – {{ exam.title }}
+    </h1>
 
-        <a href="{% url 'school_admin:bulk_question_admin' school.id exam.id %}"
-           class="px-5 py-2 bg-blue-600 text-white font-semibold rounded-lg shadow hover:bg-blue-700 transition">
-            + Add More Questions
-        </a>
+    <a href="{% url 'school_admin:bulk_question_admin' school.id exam.id %}"
+       class="inline-flex items-center justify-center px-5 py-2
+              bg-blue-600 text-white font-semibold rounded-lg
+              shadow hover:bg-blue-700 transition">
+      + Add More Questions
+    </a>
+  </div>
+
+  <!-- ===================== -->
+  <!-- MOBILE VIEW (CARDS) -->
+  <!-- ===================== -->
+  <div class="md:hidden max-w-7xl mx-auto space-y-4">
+    {% for q in questions %}
+      <div class="bg-white border rounded-xl shadow p-4 space-y-3">
+
+        <div class="flex justify-between items-center">
+          <span class="text-sm font-semibold text-gray-500">
+            Question {{ forloop.counter }}
+          </span>
+          <span class="px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">
+            {{ q.marks }} Marks
+          </span>
+        </div>
+
+        <p class="font-medium text-gray-800">
+          {{ q.text }}
+        </p>
+
+        <div class="text-sm text-gray-700 space-y-1">
+          <p><strong>A:</strong> {{ q.option_a }}</p>
+          <p><strong>B:</strong> {{ q.option_b }}</p>
+          {% if q.option_c %}
+            <p><strong>C:</strong> {{ q.option_c }}</p>
+          {% endif %}
+          {% if q.option_d %}
+            <p><strong>D:</strong> {{ q.option_d }}</p>
+          {% endif %}
+        </div>
+
+        <div class="text-sm font-semibold text-green-700">
+          Correct Answer: {{ q.correct_option }}
+        </div>
+
+      </div>
+    {% empty %}
+      <p class="text-center text-gray-500 py-10">
+        No questions added yet.
+      </p>
+    {% endfor %}
+  </div>
+
+  <!-- ===================== -->
+  <!-- DESKTOP / TABLE VIEW -->
+  <!-- ===================== -->
+  <div class="hidden md:block max-w-7xl mx-auto bg-white
+              rounded-xl shadow border overflow-hidden">
+
+    <div class="overflow-x-auto">
+      <table class="min-w-full text-sm text-left border-collapse">
+
+        <thead class="bg-gray-50 border-b">
+          <tr>
+            <th class="px-4 py-3 font-semibold text-gray-700">#</th>
+            <th class="px-4 py-3 font-semibold text-gray-700">Question</th>
+            <th class="px-4 py-3 font-semibold text-gray-700">Options</th>
+            <th class="px-4 py-3 font-semibold text-gray-700">Correct</th>
+            <th class="px-4 py-3 font-semibold text-gray-700 text-center">Marks</th>
+          </tr>
+        </thead>
+
+        <tbody class="divide-y">
+          {% for q in questions %}
+          <tr class="hover:bg-gray-50 transition">
+            <td class="px-4 py-3 font-medium text-gray-600">
+              {{ forloop.counter }}
+            </td>
+
+            <td class="px-4 py-3 text-gray-800 max-w-md">
+              {{ q.text }}
+            </td>
+
+            <td class="px-4 py-3 text-gray-700 space-y-1">
+              <div><strong>A:</strong> {{ q.option_a }}</div>
+              <div><strong>B:</strong> {{ q.option_b }}</div>
+              {% if q.option_c %}
+                <div><strong>C:</strong> {{ q.option_c }}</div>
+              {% endif %}
+              {% if q.option_d %}
+                <div><strong>D:</strong> {{ q.option_d }}</div>
+              {% endif %}
+            </td>
+
+            <td class="px-4 py-3 font-semibold text-green-700">
+              {{ q.correct_option }}
+            </td>
+
+            <td class="px-4 py-3 text-center text-gray-700">
+              {{ q.marks }}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="5" class="py-10 text-center text-gray-500">
+              No questions added yet.
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+
+      </table>
     </div>
-
-    <!-- Table Card -->
-    <div class="bg-white rounded-xl shadow-md overflow-hidden border border-gray-200">
-
-        <table class="min-w-full text-left text-sm">
-            <thead class="bg-gray-50 border-b border-gray-200">
-                <tr>
-                    <th class="px-6 py-3 font-semibold text-gray-700">#</th>
-                    <th class="px-6 py-3 font-semibold text-gray-700">Question</th>
-                    <th class="px-6 py-3 font-semibold text-gray-700">Options</th>
-                    <th class="px-6 py-3 font-semibold text-gray-700">Correct</th>
-                    <th class="px-6 py-3 font-semibold text-gray-700">Marks</th>
-                </tr>
-            </thead>
-
-            <tbody class="divide-y divide-gray-100">
-                {% for q in questions %}
-                <tr class="hover:bg-gray-50 transition">
-                    <td class="px-6 py-4 text-gray-700 font-medium">
-                        {{ forloop.counter }}
-                    </td>
-
-                    <td class="px-6 py-4 text-gray-800">
-                        {{ q.text }}
-                    </td>
-
-                    <td class="px-6 py-4 text-gray-700">
-                        <div><span class="font-semibold">A:</span> {{ q.option_a }}</div>
-                        <div><span class="font-semibold">B:</span> {{ q.option_b }}</div>
-                        {% if q.option_c %}
-                        <div><span class="font-semibold">C:</span> {{ q.option_c }}</div>
-                        {% endif %}
-                        {% if q.option_d %}
-                        <div><span class="font-semibold">D:</span> {{ q.option_d }}</div>
-                        {% endif %}
-                    </td>
-
-                    <td class="px-6 py-4 text-green-700 font-bold">
-                        {{ q.correct_option }}
-                    </td>
-
-                    <td class="px-6 py-4 text-gray-700">
-                        {{ q.marks }}
-                    </td>
-                </tr>
-
-                {% empty %}
-                <tr>
-                    <td colspan="5" class="py-10 text-center text-gray-500 text-lg">
-                        No questions added yet.
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-
-        </table>
-    </div>
+  </div>
 
 </div>
 
