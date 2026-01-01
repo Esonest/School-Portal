@@ -127,13 +127,10 @@ def start_exam(request, exam_id):
     return redirect("cbt:take_exam", exam_id=exam.id, question_index=0)
 
 
-# --------------------------------------
-# 🧩 Take Exam (Fixed Options + Resume Support)
-#@portal_required("cbt")
+@portal_required("cbt")
 @login_required
 def take_exam(request, exam_id, question_index):
     import random
-    from datetime import datetime
     from django.utils import timezone
 
     exam = get_object_or_404(CBTExam, id=exam_id)
@@ -150,7 +147,7 @@ def take_exam(request, exam_id, question_index):
     if submission.completed_on:
         return redirect("cbt:exam_result", exam_id=exam.id)
 
-    # Question order consistency
+    # ------------------ QUESTION ORDER ------------------
     question_order = request.session.get("question_order") or submission.raw_answers.get("_question_order")
     if not question_order:
         question_order = list(
@@ -167,9 +164,12 @@ def take_exam(request, exam_id, question_index):
     question_id = question_order[question_index]
     question = get_object_or_404(CBTQuestion, id=question_id)
 
-    # Shuffle option texts only
+    # ------------------ SHUFFLE OPTIONS (TEXT ONLY) ------------------
     shuffle_key = f"_shuffle_text_{question_id}"
+    correct_letter_key = f"_correct_letter_{question_id}"
+
     shuffled_texts = submission.raw_answers.get(shuffle_key)
+
     if not shuffled_texts:
         option_texts = [
             question.option_a,
@@ -179,7 +179,22 @@ def take_exam(request, exam_id, question_index):
         ]
         random.shuffle(option_texts)
         shuffled_texts = option_texts
+
+        # ✅ SAVE SHUFFLED TEXTS
         submission.raw_answers[shuffle_key] = shuffled_texts
+
+        # ✅ DETERMINE & SAVE CORRECT LETTER (BASED ON SHUFFLE)
+        correct_text = getattr(
+            question,
+            f"option_{question.correct_option.lower()}",
+            None
+        )
+
+        if correct_text in shuffled_texts:
+            correct_index = shuffled_texts.index(correct_text)
+            correct_letter = ["A", "B", "C", "D"][correct_index]
+            submission.raw_answers[correct_letter_key] = correct_letter
+
         submission.save(update_fields=["raw_answers"])
 
     options = [
@@ -189,45 +204,57 @@ def take_exam(request, exam_id, question_index):
         ("D", shuffled_texts[3]),
     ]
 
-    # Handle POST
+    # ------------------ HANDLE ANSWER ------------------
     if request.method == "POST":
         selected_option = request.POST.get("answer")
         if selected_option:
             submission.raw_answers[str(question.id)] = selected_option
             submission.save(update_fields=["raw_answers"])
 
-        next_index = question_index + 1
-        if next_index < len(question_order):
-            return redirect("cbt:take_exam", exam_id=exam.id, question_index=next_index)
+    # ---------------- CHECK UNANSWERED QUESTIONS ----------------
+        unanswered_indices = [
+            i for i, q_id in enumerate(question_order) if str(q_id) not in submission.raw_answers
+        ]
+
+        if unanswered_indices:
+            # Go to next unanswered question AFTER current index
+            next_unanswered = None
+            for idx in unanswered_indices:
+                if idx > question_index:
+                    next_unanswered = idx
+                    break
+            if next_unanswered is None:
+                # If none after current, go to first unanswered
+                next_unanswered = unanswered_indices[0]
+
+            return redirect("cbt:take_exam", exam_id=exam.id, question_index=next_unanswered)
         else:
+            # All questions answered → redirect to submit page
             return redirect("cbt:submit_exam", exam_id=exam.id)
 
-    # Progress
+
+    # ------------------ PROGRESS ------------------
     progress = int((question_index + 1) / len(question_order) * 100)
 
-    # --- Handle exam_start_time safely ---
+    # ------------------ EXAM START TIME ------------------
     exam_start_time = request.session.get("exam_start_time") or submission.raw_answers.get("_exam_start_time")
 
     if not exam_start_time:
-        # First question: store current timestamp
         exam_start_time = int(timezone.now().timestamp())
         request.session["exam_start_time"] = exam_start_time
         submission.raw_answers["_exam_start_time"] = exam_start_time
         submission.save(update_fields=["raw_answers"])
-
     else:
-        # If ISO string, convert to timestamp
         if isinstance(exam_start_time, str):
             from django.utils.dateparse import parse_datetime
             dt = parse_datetime(exam_start_time)
-            if dt is not None:
+            if dt:
                 exam_start_time = int(dt.timestamp())
                 request.session["exam_start_time"] = exam_start_time
 
-        # Ensure it is int
         exam_start_time = int(exam_start_time)
 
-    time_limit = exam.duration_minutes * 60  # seconds
+    time_limit = exam.duration_minutes * 60
 
     return render(request, "cbt/take_exam.html", {
         "exam": exam,
@@ -241,6 +268,7 @@ def take_exam(request, exam_id, question_index):
         "exam_start_time": exam_start_time,
         "student": student,
     })
+
 
 
 
@@ -310,45 +338,57 @@ def submit_exam(request, exam_id):
         qid = str(question.id)
         student_choice = submission.raw_answers.get(qid)  # 'A', 'B', 'C', 'D'
         if not student_choice:
-            continue  # skipped question
+            continue
 
         attempted += 1
 
-        # Retrieve the shuffled text order for this question
-        shuffle_key = f"_shuffle_text_{question.id}"
-        shuffled_texts = submission.raw_answers.get(shuffle_key)
-        if not shuffled_texts:
-            shuffled_texts = [question.option_a, question.option_b, question.option_c, question.option_d]
+        # ✅ FIRST: try locked correct letter (most reliable)
+        correct_letter = submission.raw_answers.get(f"_correct_letter_{question.id}")
 
-        # Map each letter to its option text
-        letter_to_text = {
-            "A": shuffled_texts[0],
-            "B": shuffled_texts[1],
-            "C": shuffled_texts[2],
-            "D": shuffled_texts[3],
-        }
+        # 🔁 FALLBACK: your original logic (UNCHANGED)
+        if not correct_letter:
+            shuffle_key = f"_shuffle_text_{question.id}"
+            shuffled_texts = submission.raw_answers.get(shuffle_key)
 
-        # Identify the *correct text* from the question
-        correct_text = getattr(question, f"option_{question.correct_option.lower()}", None)
+            if not shuffled_texts:
+                shuffled_texts = [
+                    question.option_a,
+                    question.option_b,
+                    question.option_c,
+                    question.option_d,
+                ]
 
-        # Find which letter (A–D) currently has that text
-        correct_letter = None
-        for letter, text in letter_to_text.items():
-            if text.strip().lower() == correct_text.strip().lower():
-                correct_letter = letter
-                break
+            letter_to_text = {
+                "A": shuffled_texts[0],
+                "B": shuffled_texts[1],
+                "C": shuffled_texts[2],
+                "D": shuffled_texts[3],
+            }
 
-        # Compare student’s selected letter vs mapped correct letter
+            correct_text = getattr(
+                question,
+                f"option_{question.correct_option.lower()}",
+                None
+            )
+
+            for letter, text in letter_to_text.items():
+                if (
+                    text
+                    and correct_text
+                    and text.strip().lower() == correct_text.strip().lower()
+                ):
+                    correct_letter = letter
+                    break
+
+        # Final comparison
         if student_choice == correct_letter:
             correct_count += 1
         else:
             wrong_count += 1
 
-    # Compute final stats
     percentage = (correct_count / total_questions) * 100 if total_questions > 0 else 0
     status = "Pass" if percentage >= 50 else "Fail"
 
-    # Update submission record
     submission.score = correct_count
     submission.total_questions = total_questions
     submission.correct_answers = correct_count

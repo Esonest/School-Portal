@@ -4,107 +4,168 @@
 {% block content %}
 <div class="p-4 md:p-6 max-w-5xl mx-auto space-y-6 relative result-container">
 
-    <!-- Watermark -->
     {% if school.logo %}
         <div class="absolute inset-0 flex justify-center items-center pointer-events-none z-0">
-            <img src="{{ school.logo.url }}" alt="School Watermark" 
-                 class="h-40 md:h-52 object-contain opacity-5 print:opacity-15">
+            <img src="{{ school.logo.url }}" class="h-40 md:h-52 object-contain opacity-5 print:opacity-15">
         </div>
     {% endif %}
 
-    <!-- Header -->
-    <div class="flex flex-col md:flex-row items-start md:items-center justify-between bg-white p-4 rounded shadow-sm relative z-10">
+    <div class="flex flex-col md:flex-row justify-between bg-white p-4 rounded shadow-sm relative z-10">
         <div class="flex items-center space-x-4">
             {% if school.logo %}
-                <img src="{{ school.logo.url }}" alt="{{ school.name }} Logo" class="h-20 w-20 md:h-24 md:w-24 object-contain">
+                <img src="{{ school.logo.url }}" class="h-20 w-20 md:h-24 md:w-24 object-contain">
             {% endif %}
             <div>
-                <h1 class="text-xl md:text-2xl font-bold text-{{ school.theme_color }}-600">{{ school.name }}</h1>
+                <h1 class="text-xl md:text-2xl font-bold text-{{ school.theme_color }}-600">
+                    {{ school.name }}
+                </h1>
                 <p class="text-sm italic text-gray-600">{{ school.motto }}</p>
             </div>
         </div>
 
-        <div class="mt-4 md:mt-0 flex flex-col items-end">
-            <p class="text-sm font-semibold">{{ submission.student.full_name }}</p>
-            <p class="text-sm">Admission No: {{ submission.student.admission_no }}</p>
-            <p class="text-sm">Exam: {{ exam.title }}</p>
-            <p class="text-sm">Score: {{ submission.score }} / {{ submission.total_questions }} ({{ submission.percentage }}%)</p>
-            <p class="text-sm">Status: 
-                <span class="px-2 py-1 rounded text-white 
-                    {% if submission.status == 'Pass' %}bg-green-600
-                    {% elif submission.status == 'Fail' %}bg-red-600
-                    {% else %}bg-gray-500{% endif %}">
+        <div class="mt-4 md:mt-0 text-sm">
+            <p><strong>{{ submission.student.full_name }}</strong></p>
+            <p>Admission No: {{ submission.student.admission_no }}</p>
+            <p>Exam: {{ exam.title }}</p>
+            <p>Score: {{ submission.score }} / {{ submission.total_questions }} ({{ submission.percentage }}%)</p>
+            <p>
+                Status:
+                <span class="px-2 py-1 rounded text-white
+                    {% if submission.status == 'Pass' %}bg-green-600{% else %}bg-red-600{% endif %}">
                     {{ submission.status }}
                 </span>
             </p>
         </div>
     </div>
 
-    <!-- Answers Section -->
     <h2 class="text-lg md:text-xl font-semibold relative z-10">Answers</h2>
 
-    <!-- Mobile Cards View -->
+    <!-- ================= MOBILE ================= -->
     <div class="md:hidden space-y-4 relative z-10">
         {% for question in questions %}
             {% with qid=question.id|stringformat:"s" %}
-            {% with selected=answers|get_item:qid correct=correct_map|get_item:question.id %}
-            <div class="bg-white p-4 rounded shadow-sm border">
+            {% with correct_key="_correct_letter_"|add:qid %}
+            {% with shuffle_key="_shuffle_text_"|add:qid %}
+            {% with selected=answers|get_item:qid %}
+            {% with correct=answers|get_item:correct_key %}
+            {% with shuffle=answers|get_item:shuffle_key %}
+
+            <div class="bg-white p-4 rounded shadow border">
                 <p class="font-semibold">Q{{ forloop.counter }}: {{ question.text }}</p>
+
                 <p>
-                    <strong>Selected Answer:</strong> 
-                    {% if selected == correct %}
-                        <span class="text-green-700 font-semibold">✅ {{ selected }}</span>
+                    <strong>Selected:</strong>
+                    {% if selected %}
+                        <span class="{% if selected == correct %}text-green-700{% else %}text-red-700{% endif %}">
+                            {{ selected }}.
+                            {% if shuffle %}
+                                {% if selected == "A" %}{{ shuffle.0 }}
+                                {% elif selected == "B" %}{{ shuffle.1 }}
+                                {% elif selected == "C" %}{{ shuffle.2 }}
+                                {% elif selected == "D" %}{{ shuffle.3 }}
+                                {% endif %}
+                            {% endif %}
+                        </span>
                     {% else %}
-                        <span class="text-red-700 font-semibold">❌ {{ selected|default:"-" }}</span>
+                        -
                     {% endif %}
                 </p>
-                <p><strong>Correct Answer:</strong> <span class="text-green-700 font-semibold">{{ correct }}</span></p>
+
+                <p>
+                    <strong>Correct:</strong>
+                    <span class="text-green-700">
+                        {{ correct }}.
+                        {% if shuffle %}
+                            {% if correct == "A" %}{{ shuffle.0 }}
+                            {% elif correct == "B" %}{{ shuffle.1 }}
+                            {% elif correct == "C" %}{{ shuffle.2 }}
+                            {% elif correct == "D" %}{{ shuffle.3 }}
+                            {% endif %}
+                        {% endif %}
+                    </span>
+                </p>
+
                 <p><strong>Marks:</strong> {% if selected == correct %}{{ question.marks }}{% else %}0{% endif %}</p>
             </div>
-            {% endwith %}
-            {% endwith %}
+
+            {% endwith %} {# shuffle #}
+            {% endwith %} {# correct #}
+            {% endwith %} {# selected #}
+            {% endwith %} {# shuffle_key #}
+            {% endwith %} {# correct_key #}
+            {% endwith %} {# qid #}
         {% endfor %}
     </div>
 
-    <!-- Desktop Table View -->
+    <!-- ================= DESKTOP ================= -->
     <div class="hidden md:block overflow-x-auto relative z-10">
-        <table class="w-full border-collapse border border-gray-300 text-sm bg-white">
-            <thead>
-                <tr class="bg-gray-100">
+        <table class="w-full border border-gray-300 bg-white text-sm">
+            <thead class="bg-gray-100">
+                <tr>
                     <th class="border p-2">#</th>
                     <th class="border p-2">Question</th>
-                    <th class="border p-2">Selected Answer</th>
-                    <th class="border p-2">Correct Answer</th>
+                    <th class="border p-2">Selected</th>
+                    <th class="border p-2">Correct</th>
                     <th class="border p-2">Marks</th>
                 </tr>
             </thead>
             <tbody>
                 {% for question in questions %}
                     {% with qid=question.id|stringformat:"s" %}
-                    {% with selected=answers|get_item:qid correct=correct_map|get_item:question.id %}
-                    <tr class="border hover:bg-gray-50">
+                    {% with correct_key="_correct_letter_"|add:qid %}
+                    {% with shuffle_key="_shuffle_text_"|add:qid %}
+                    {% with selected=answers|get_item:qid %}
+                    {% with correct=answers|get_item:correct_key %}
+                    {% with shuffle=answers|get_item:shuffle_key %}
+
+                    <tr class="border">
                         <td class="border p-2">{{ forloop.counter }}</td>
                         <td class="border p-2">{{ question.text }}</td>
+
                         <td class="border p-2">
-                            {% if selected == correct %}
-                                <span class="text-green-700 font-semibold">✅ {{ selected }}</span>
-                            {% else %}
-                                <span class="text-red-700 font-semibold">❌ {{ selected|default:"-" }}</span>
+                            {% if selected %}
+                                <span class="{% if selected == correct %}text-green-700{% else %}text-red-700{% endif %}">
+                                    {{ selected }}.
+                                    {% if shuffle %}
+                                        {% if selected == "A" %}{{ shuffle.0 }}
+                                        {% elif selected == "B" %}{{ shuffle.1 }}
+                                        {% elif selected == "C" %}{{ shuffle.2 }}
+                                        {% elif selected == "D" %}{{ shuffle.3 }}
+                                        {% endif %}
+                                    {% endif %}
+                                </span>
+                            {% else %}-{% endif %}
+                        </td>
+
+                        <td class="border p-2 text-green-700">
+                            {{ correct }}.
+                            {% if shuffle %}
+                                {% if correct == "A" %}{{ shuffle.0 }}
+                                {% elif correct == "B" %}{{ shuffle.1 }}
+                                {% elif correct == "C" %}{{ shuffle.2 }}
+                                {% elif correct == "D" %}{{ shuffle.3 }}
+                                {% endif %}
                             {% endif %}
                         </td>
-                        <td class="border p-2 text-green-700 font-semibold">{{ correct }}</td>
-                        <td class="border p-2">{% if selected == correct %}{{ question.marks }}{% else %}0{% endif %}</td>
+
+                        <td class="border p-2">
+                            {% if selected == correct %}{{ question.marks }}{% else %}0{% endif %}
+                        </td>
                     </tr>
-                    {% endwith %}
-                    {% endwith %}
+
+                    {% endwith %} {# shuffle #}
+                    {% endwith %} {# correct #}
+                    {% endwith %} {# selected #}
+                    {% endwith %} {# shuffle_key #}
+                    {% endwith %} {# correct_key #}
+                    {% endwith %} {# qid #}
                 {% endfor %}
             </tbody>
         </table>
     </div>
 
-    <!-- Print Button -->
-    <div class="mt-4 text-center relative z-10">
-        <button onclick="window.print()" class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
+    <div class="text-center mt-4 relative z-10">
+        <button onclick="window.print()" class="px-4 py-2 bg-green-600 text-white rounded">
             Print My Result
         </button>
     </div>

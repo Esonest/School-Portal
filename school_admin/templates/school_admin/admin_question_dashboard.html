@@ -46,6 +46,12 @@
        class="px-4 py-2 text-center bg-gray-100 hover:bg-gray-200 border rounded-lg">
         Preview Exam
     </a>
+     
+       <a href="{% url 'school_admin:exam_edit' school.id exam.id %}"
+   class="px-4 py-2 text-center bg-indigo-100 hover:bg-indigo-200
+          text-indigo-800 rounded-lg font-medium">
+    Edit Exam
+</a>
 
     <a href="{% url 'school_admin:question_list' school.id exam.id %}"
        class="px-4 py-2 text-center bg-blue-100 hover:bg-blue-200 text-blue-800 rounded-lg">
@@ -93,9 +99,8 @@
     {% endif %}
 
     <a href="{% url 'school_admin:delete_exam' school.id exam.id %}"
-       class="px-4 py-2 text-center bg-red-500 hover:bg-red-600 text-white rounded-lg"
-       onclick="return confirm('Are you sure you want to delete this exam?');">
-        Delete
+       class="px-4 py-2 text-center bg-red-500 hover:bg-red-600 text-white rounded-lg">
+        Delete Exam
     </a>
 
 </div>

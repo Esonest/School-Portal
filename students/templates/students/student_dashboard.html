@@ -162,7 +162,7 @@
             <a href="{% url 'cbt:student_exam_result' submission.exam.id %}"
                class="no-print px-3 py-1 text-xs sm:text-sm text-white rounded"
                style="background:var(--theme)">
-              {{ submission.exam.title }} — {{ submission.score }}%
+              Score: {{ submission.score }} / {{ submission.total_questions }} ({{ submission.percentage }}%)
             </a>
           {% endfor %}
         </div>

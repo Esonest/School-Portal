@@ -270,10 +270,10 @@ def exam_edit(request, school_id, exam_id):
         if form.is_valid():
             form.save()
             messages.success(request, "Exam updated.")
-            return redirect('cbt:admin_dashboard', school_id=school.id)
+            return redirect('school_admin:admin_dashboard', school_id=school.id)
     else:
         form = CBTExamForm(instance=exam, user=request.user)
-    return render(request, 'cbt/admin/exam_form.html', {'form': form, 'exam': exam, 'school': school})
+    return render(request, 'school_admin/exam_create.html', {'form': form, 'exam': exam, 'school': school})
 
 
 
@@ -285,8 +285,8 @@ def exam_delete(request, school_id, exam_id):
     if request.method == 'POST':
         exam.delete()
         messages.success(request, "Exam deleted.")
-        return redirect('cbt:admin_dashboard', school_id=school.id)
-    return render(request, 'cbt/admin/exam_confirm_delete.html', {'exam': exam, 'school': school})
+        return redirect('school_admin:admin_dashboard', school_id=school.id)
+    return render(request, 'school_admin/exam_delete.html', {'exam': exam, 'school': school})
 
 
 # Manage Questions list + add question

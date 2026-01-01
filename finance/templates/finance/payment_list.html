@@ -9,95 +9,160 @@
 {% endblock %}
 
 {% block body %}
-<div class="bg-white shadow rounded overflow-x-auto">
-  <form method="get" class="p-4 bg-gray-50 border-b flex flex-wrap gap-3 text-sm">
 
-  <!-- Student Name -->
-  <input type="text" name="name"
-         value="{{ filters.name }}"
-         placeholder="Student name"
-         class="border rounded px-3 py-2 w-40">
+<div class="space-y-4">
 
-  <!-- Class -->
-  <select name="class" class="border rounded px-3 py-2">
-    <option value="">All Classes</option>
-    {% for c in classes %}
-      <option value="{{ c.id }}"
-        {% if filters.class == c.id|stringformat:"s" %}selected{% endif %}>
-        {{ c.name }}
-      </option>
-    {% endfor %}
-  </select>
+  <!-- FILTERS -->
+  <form method="get"
+        class="bg-white rounded-xl shadow p-4
+               grid grid-cols-2 sm:flex sm:flex-wrap gap-3 text-sm">
 
-  <!-- Term -->
-  <select name="term" class="border rounded px-3 py-2">
-    <option value="">All Terms</option>
-    {% for value, label in terms %}
-      <option value="{{ value }}"
-        {% if filters.term == value %}selected{% endif %}>
-        {{ label }}
-      </option>
-    {% endfor %}
-  </select>
+    <input type="text" name="name"
+           value="{{ filters.name }}"
+           placeholder="Student name"
+           class="border rounded-lg px-3 py-2 col-span-2 sm:w-48">
 
-  <!-- Session -->
-  <select name="session" class="border rounded px-3 py-2">
-    <option value="">All Sessions</option>
-    {% for s in sessions %}
-      <option value="{{ s }}"
-        {% if filters.session == s %}selected{% endif %}>
-        {{ s }}
-      </option>
-    {% endfor %}
-  </select>
+    <select name="class" class="border rounded-lg px-3 py-2">
+      <option value="">All Classes</option>
+      {% for c in classes %}
+        <option value="{{ c.id }}"
+          {% if filters.class == c.id|stringformat:"s" %}selected{% endif %}>
+          {{ c.name }}
+        </option>
+      {% endfor %}
+    </select>
 
-  <!-- Actions -->
-  <button type="submit"
-          class="bg-indigo-600 text-white px-4 py-2 rounded">
-    Filter
-  </button>
+    <select name="term" class="border rounded-lg px-3 py-2">
+      <option value="">All Terms</option>
+      {% for value, label in terms %}
+        <option value="{{ value }}"
+          {% if filters.term == value %}selected{% endif %}>
+          {{ label }}
+        </option>
+      {% endfor %}
+    </select>
 
-  <a href="{% url 'finance:payment_list' %}"
-     class="px-4 py-2 border rounded text-gray-600">
-    Reset
-  </a>
+    <select name="session" class="border rounded-lg px-3 py-2">
+      <option value="">All Sessions</option>
+      {% for s in sessions %}
+        <option value="{{ s }}"
+          {% if filters.session == s %}selected{% endif %}>
+          {{ s }}
+        </option>
+      {% endfor %}
+    </select>
 
-</form>
+    <button type="submit"
+            class="bg-indigo-600 text-white rounded-lg px-4 py-2">
+      Filter
+    </button>
 
-<table class="w-full text-sm">
-  <thead class="bg-gray-100">
-    <tr>
-      <th class="p-3 text-left">Student</th>
-      <th>Invoice</th>
-      <th>Amount</th>
-      <th>Date</th>
-      <th>Method</th>
-      <th>Recorded By</th>
-      <th>Action</th>
-    </tr>
-  </thead>
-  <tbody>
+    <a href="{% url 'finance:payment_list' %}"
+       class="border rounded-lg px-4 py-2 text-gray-600 text-center">
+      Reset
+    </a>
+  </form>
+
+  <!-- DESKTOP TABLE -->
+  <div class="hidden md:block bg-white rounded-xl shadow overflow-x-auto">
+    <table class="w-full text-sm">
+      <thead class="bg-gray-100 text-gray-700">
+        <tr>
+          <th class="p-3 text-left">Student</th>
+          <th>Invoice</th>
+          <th>Amount</th>
+          <th>Date</th>
+          <th>Method</th>
+          <th>Recorded By</th>
+          <th class="text-right p-3">Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for payment in payments %}
+        <tr class="border-t hover:bg-gray-50">
+          <td class="p-3">{{ payment.invoice.student }}</td>
+          <td>{{ payment.invoice.title }}</td>
+          <td class="font-semibold">₦{{ payment.amount }}</td>
+          <td>{{ payment.payment_date }}</td>
+          <td>{{ payment.get_payment_method_display }}</td>
+          <td>
+            {{ payment.recorded_by.get_full_name|default:payment.recorded_by.username }}
+          </td>
+          <td class="text-right p-3 space-x-3">
+            <a href="{% url 'finance:payment_update' payment.id %}"
+               class="text-green-600 hover:underline">
+              Edit
+            </a>
+            <a href="{% url 'finance:payment_delete' payment.id %}"
+               class="text-red-600 hover:underline">
+              Delete
+            </a>
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="7" class="p-6 text-center text-gray-500">
+            No payments recorded
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <!-- MOBILE CARDS -->
+  <div class="md:hidden space-y-3">
     {% for payment in payments %}
-    <tr class="border-t">
-      <td class="p-3">{{ payment.invoice.student }}</td>
-      <td>{{ payment.invoice.title }}</td>
-      <td>₦{{ payment.amount }}</td>
-      <td>{{ payment.payment_date }}</td>
-      <td>{{ payment.get_payment_method_display }}</td>
-      <td>{{ payment.recorded_by.get_full_name|default:payment.recorded_by.username }}</td>
-      <td class="text-right space-x-2">
-        <a href="{% url 'finance:payment_update' payment.id %}" class="text-green-600">Edit</a>
-        <a href="{% url 'finance:payment_delete' payment.id %}" class="text-red-600">Delete</a>
-      </td>
-    </tr>
+    <div class="bg-white rounded-xl shadow p-4 space-y-2 text-sm">
+
+      <div class="flex justify-between items-start">
+        <div>
+          <p class="font-semibold text-gray-800">
+            {{ payment.invoice.student }}
+          </p>
+          <p class="text-gray-500">
+            {{ payment.invoice.title }}
+          </p>
+        </div>
+        <span class="font-bold text-indigo-600">
+          ₦{{ payment.amount }}
+        </span>
+      </div>
+
+      <div class="grid grid-cols-2 gap-2 text-xs text-gray-600">
+        <div>
+          <span class="font-medium">Date:</span><br>
+          {{ payment.payment_date }}
+        </div>
+        <div>
+          <span class="font-medium">Method:</span><br>
+          {{ payment.get_payment_method_display }}
+        </div>
+        <div class="col-span-2">
+          <span class="font-medium">Recorded by:</span>
+          {{ payment.recorded_by.get_full_name|default:payment.recorded_by.username }}
+        </div>
+      </div>
+
+      <div class="flex justify-end gap-4 pt-2 border-t">
+        <a href="{% url 'finance:payment_update' payment.id %}"
+           class="text-green-600 font-medium">
+          Edit
+        </a>
+        <a href="{% url 'finance:payment_delete' payment.id %}"
+           class="text-red-600 font-medium">
+          Delete
+        </a>
+      </div>
+
+    </div>
     {% empty %}
-    <tr>
-      <td colspan="6" class="p-6 text-center text-gray-500">
-        No payments recorded
-      </td>
-    </tr>
+    <div class="bg-white rounded-xl shadow p-6 text-center text-gray-500">
+      No payments recorded
+    </div>
     {% endfor %}
-  </tbody>
-</table>
+  </div>
+
 </div>
+
 {% endblock %}

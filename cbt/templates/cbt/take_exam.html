@@ -6,142 +6,504 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>{{ exam.subject.name }} - Question {{ current_question_number }}</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <script>
-document.addEventListener("DOMContentLoaded", function() {
-    const timeLimit = Number({{ time_limit|default:0 }}); // total seconds
-    const examStart = Number({{ exam_start_time|default:0 }}); // Unix timestamp in seconds
-
-    // Calculate remaining seconds safely
-    function getRemainingSeconds() {
-        const now = Math.floor(Date.now() / 1000); // current time in seconds
-        const elapsed = now - examStart;
-        return Math.max(timeLimit - elapsed, 0);
-    }
-
-    let remainingSeconds = getRemainingSeconds();
-
-    // Only start countdown if there is time left
-    if (remainingSeconds <= 0) {
-        remainingSeconds = timeLimit; // fallback to full time
-    }
-
-    function updateTimer() {
-        const minutes = Math.floor(remainingSeconds / 60);
-        const seconds = remainingSeconds % 60;
-        const timerEl = document.getElementById("timer");
-        if (timerEl) {
-            timerEl.textContent = minutes + ":" + (seconds < 10 ? "0" : "") + seconds;
-        }
-
-        // Submit only when time runs out
-        if (remainingSeconds === 0) {
-            const form = document.getElementById("exam-form");
-            if (form && !form.dataset.submitted) {
-                form.dataset.submitted = "true"; // prevent multiple submissions
-                form.submit();
-            }
-        }
-
-        remainingSeconds--;
-        if (remainingSeconds < 0) remainingSeconds = 0;
-    }
-
-    // Initial display
-    updateTimer();
-    // Update every second
-    setInterval(updateTimer, 1000);
-});
-</script>
-
-
 </head>
+<body
+  class="bg-slate-100 min-h-screen flex justify-center px-2 sm:px-4 py-3 sm:py-6"
+  data-exam-id="{{ exam.id }}"
+  data-question-number="{{ current_question_number }}"
+  data-total-questions="{{ total_questions }}"
+  data-student-id="{{ request.user.id }}"
+>
 
-<body class="bg-gradient-to-br from-blue-50 to-slate-100 min-h-screen flex items-center justify-center p-6">
-  <div class="w-full max-w-3xl bg-white rounded-2xl shadow-xl p-8 animate-fadeIn">
-    
-    <!-- Header Info -->
-    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center border-b border-gray-200 pb-4 mb-5">
-      <div>
-        <p class="text-lg font-semibold text-gray-800">{{ exam.subject.name }} CBT</p>
-        <p class="text-gray-600 text-sm">
+  <!-- MAIN CARD -->
+  <div class="w-full max-w-3xl bg-white rounded-xl sm:rounded-2xl shadow-lg sm:shadow-xl
+              p-4 sm:p-6 md:p-8 animate-fadeIn">
+
+    <!-- HEADER -->
+    <div class="flex flex-col gap-3 sm:flex-row sm:justify-between sm:items-center
+                border-b pb-4 mb-4">
+
+      <div class="space-y-1">
+        <h1 class="text-base sm:text-lg md:text-xl font-semibold text-gray-800">
+          {{ exam.subject.name }} CBT
+        </h1>
+
+        <p class="text-xs sm:text-sm text-gray-600 leading-snug">
           <strong>Student:</strong> {{ request.user.get_full_name }} <br>
           <strong>Class:</strong> {{ student.school_class }}
         </p>
       </div>
-      <div class="text-right mt-3 sm:mt-0">
-        <p class="text-blue-700 font-semibold">⏰ Time Left: <span id="timer">--:--</span></p>
+
+      <!-- TIMER -->
+      <div class="self-start sm:self-auto">
+        <div class="bg-blue-50 text-blue-700 font-semibold
+                    px-3 py-1.5 rounded-lg text-sm shadow-sm">
+          ⏰ <span id="timer">--:--</span>
+        </div>
       </div>
     </div>
 
-    <!-- Progress -->
-    <div class="mb-6">
-      <p class="text-sm text-gray-600 mb-1">Question {{ current_question_number }} of {{ total_questions }}</p>
-      <div class="w-full bg-gray-200 h-2 rounded-full">
-        <div class="h-2 bg-blue-600 rounded-full transition-all duration-300" style="width: {{ progress }}%;"></div>
+    <!-- PROGRESS -->
+    <div class="sticky top-0 z-20 bg-white -mx-4 sm:-mx-6 md:-mx-8
+                px-4 sm:px-6 md:px-8 py-2 border-b mb-4">
+
+      <p class="text-xs sm:text-sm text-gray-600 mb-1">
+        Question {{ current_question_number }} of {{ total_questions }}
+      </p>
+
+      <div id="progressGrid"
+           class="flex gap-1.5 overflow-x-auto scrollbar-hide py-1">
+        <!-- JS fills -->
+      </div>
+
+      <div class="flex items-center gap-4 text-xs text-gray-500 mt-1">
+        <span class="flex items-center gap-1">
+          <span class="w-3 h-3 bg-green-500 rounded"></span> Answered
+        </span>
+        <span class="flex items-center gap-1">
+          <span class="w-3 h-3 bg-red-400 rounded"></span> Unanswered
+        </span>
       </div>
     </div>
 
-    <!-- Question Text -->
-    <div class="mb-6">
-      <p class="text-lg font-medium text-gray-800 leading-relaxed">{{ question.text }}</p>
+    <!-- QUESTION -->
+    <div class="mb-5 sm:mb-6">
+      <p class="text-sm sm:text-base md:text-lg font-medium text-gray-800
+                leading-relaxed">
+        {{ question.text }}
+      </p>
     </div>
 
-    <!-- Options -->
+    <!-- OPTIONS -->
     <form id="exam-form" method="post" class="space-y-4">
       {% csrf_token %}
+
       <div class="space-y-3">
         {% for label, text in options %}
-          <label class="flex items-start space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-blue-50 cursor-pointer transition duration-200">
-            <input type="radio" name="answer" value="{{ label }}" class="mt-1 h-4 w-4 text-blue-600 focus:ring-blue-500">
-            <span><strong>{{ label }}.</strong> {{ text }}</span>
-          </label>
+        <label
+          class="flex gap-3 p-4 rounded-xl border border-gray-200
+                 cursor-pointer transition
+                 hover:bg-blue-50 hover:border-blue-300
+                 peer-checked:bg-blue-100 peer-checked:border-blue-400">
+
+          <input type="radio"
+                 name="answer"
+                 value="{{ label }}"
+                 class="peer mt-1 h-5 w-5 text-blue-600 focus:ring-blue-500"
+                 {% if selected_answer == label %}checked{% endif %}>
+
+          <span class="text-sm sm:text-base text-gray-800">
+            <strong>{{ label }}.</strong> {{ text }}
+          </span>
+        </label>
         {% endfor %}
       </div>
 
-      <!-- Navigation Buttons -->
-      <div class="flex justify-between mt-8">
+      <!-- NAVIGATION -->
+      <div class="flex flex-col sm:flex-row gap-3 sm:justify-between mt-6">
+
         {% if question_index > 0 %}
-          <a href="{% url 'cbt:take_exam' exam_id=exam.id question_index=question_index|add:'-1' %}" 
-             class="bg-red-600 hover:bg-red-700 text-white font-semibold py-2 px-5 rounded-lg shadow-md transition">
-            Previous
-          </a>
+        <a href="{% url 'cbt:take_exam' exam_id=exam.id question_index=question_index|add:'-1' %}"
+           class="w-full sm:w-auto text-center
+                  bg-red-600 hover:bg-red-700 text-white
+                  py-2.5 px-6 rounded-lg font-semibold shadow">
+          Previous
+        </a>
         {% else %}
-          <div></div>
+        <div></div>
         {% endif %}
 
         {% if current_question_number < total_questions %}
-          <button type="submit" 
-                  class="bg-blue-700 hover:bg-blue-800 text-white font-semibold py-2 px-5 rounded-lg shadow-md transition">
-            Next
-          </button>
+        <button type="submit"
+                class="w-full sm:w-auto
+                       bg-blue-700 hover:bg-blue-800 text-white
+                       py-2.5 px-6 rounded-lg font-semibold shadow">
+          Next
+        </button>
         {% else %}
-          <button type="submit" 
-                  class="bg-green-600 hover:bg-green-700 text-white font-semibold py-2 px-5 rounded-lg shadow-md transition"
-                  onclick="return confirm('Once you submit, you cannot change your answers. Proceed?');">
-            Submit Exam
-          </button>
+        <button type="button"
+                onclick="openSubmitModal()"
+                class="w-full sm:w-auto
+                       bg-green-600 hover:bg-green-700 text-white
+                       py-2.5 px-6 rounded-lg font-semibold shadow">
+          Submit Exam
+        </button>
         {% endif %}
       </div>
     </form>
 
-    <!-- Warning -->
-    <div class="bg-yellow-50 border border-yellow-200 text-yellow-800 p-4 rounded-lg mt-8 text-sm flex items-start gap-2">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mt-0.5 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
-              d="M12 9v2m0 4h.01M5.93 19h12.14A2 2 0 0020 17.07L13.07 4.93a2 2 0 00-2.14 0L4 17.07A2 2 0 005.93 19z" />
-      </svg>
-      <span><strong>Note:</strong> Do not refresh or close this page until you complete your exam.</span>
+    <!-- WARNING -->
+    <div class="mt-6 flex gap-2 bg-yellow-50 border border-yellow-200
+                rounded-lg p-3 text-xs sm:text-sm text-yellow-800">
+      ⚠️
+      <span>
+        <strong>Note:</strong> Do not refresh or close this page until you
+        complete your exam.
+      </span>
     </div>
+
   </div>
 
-  <style>
-    @keyframes fadeIn {
-      from { opacity: 0; transform: translateY(10px); }
-      to { opacity: 1; transform: translateY(0); }
+
+
+
+<!-- 🔴 SUBMIT WARNING MODAL -->
+<div id="submitModal"
+     class="fixed inset-0 bg-black/50 hidden items-center justify-center z-50 overflow-auto p-4">
+  <div class="bg-white rounded-2xl shadow-xl max-w-md w-full p-6 animate-fadeIn">
+
+    <div class="flex items-center gap-3 mb-4">
+      <span class="text-red-600 text-3xl">⚠️</span>
+      <h2 class="text-xl font-bold text-red-700">
+        Submission Check
+      </h2>
+    </div>
+
+    <div id="submitWarningText"
+         class="text-gray-800 font-semibold leading-relaxed mb-4">
+    </div>
+
+    <!-- Unanswered list -->
+    <div id="unansweredList"
+         class="hidden bg-red-50 border border-red-200 rounded-lg p-3 mb-4 text-sm">
+    </div>
+
+    <div class="flex justify-between items-center gap-3">
+
+      <button type="button"
+              id="jumpBtn"
+              class="hidden px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold shadow">
+        Go to First Unanswered
+      </button>
+
+      <div class="flex gap-3 ml-auto">
+        <button type="button"
+                onclick="closeSubmitModal()"
+                class="px-4 py-2 rounded-lg border border-gray-300 text-gray-700 hover:bg-gray-100 font-medium">
+          Cancel
+        </button>
+
+        <button id="confirmSubmitBtn"
+        type="button"
+        class="hidden px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold shadow">
+  Yes, Submit Exam
+</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 🧠 LOGIC -->
+<script>
+
+
+const examId = document.body.dataset.examId;
+const studentId = document.body.dataset.studentId;
+const totalQuestions = Number(document.body.dataset.totalQuestions);
+
+const examKey = `cbt_answered_${examId}_${studentId}`;
+const answerKey = `cbt_answers_${examId}_${studentId}`;
+
+const currentQuestionNumber = Number(document.body.dataset.questionNumber); // 1-based
+const currentQuestionIndex = currentQuestionNumber - 1; // 0-based
+
+/* =========================
+   STORAGE HELPERS
+========================= */
+const getAnswered = () =>
+  new Set(JSON.parse(localStorage.getItem(examKey) || "[]"));
+
+const getAnswers = () =>
+  JSON.parse(localStorage.getItem(answerKey) || "{}");
+
+function saveAnswer(qNum, value) {
+  const answers = getAnswers();
+  answers[qNum] = value;
+  localStorage.setItem(answerKey, JSON.stringify(answers));
+
+  const answered = getAnswered();
+  answered.add(qNum);
+  localStorage.setItem(examKey, JSON.stringify([...answered]));
+}
+
+/* =========================
+   RESTORE ANSWER
+========================= */
+(function restore() {
+  const answers = getAnswers();
+  const val = answers[currentQuestionNumber];
+  if (!val) return;
+
+  const input = document.querySelector(
+    `input[name="answer"][value="${val}"]`
+  );
+  if (input) input.checked = true;
+})();
+
+/* =========================
+   SAVE ON CHANGE
+========================= */
+document.querySelectorAll('input[name="answer"]').forEach(radio => {
+  radio.addEventListener("change", () => {
+    saveAnswer(currentQuestionNumber, radio.value);
+    renderProgress();
+  });
+});
+
+/* =========================
+   PROGRESS BAR
+========================= */
+function renderProgress() {
+  const answered = getAnswered();
+  const grid = document.getElementById("progressGrid");
+  grid.innerHTML = "";
+
+  for (let qNum = 1; qNum <= totalQuestions; qNum++) {
+    const wrap = document.createElement("div");
+    wrap.className = "flex flex-col items-center cursor-pointer";
+
+    const bar = document.createElement("div");
+    bar.className =
+      "w-5 h-3 rounded " +
+      (answered.has(qNum) ? "bg-green-500" : "bg-red-400");
+
+    if (qNum === currentQuestionNumber) {
+      bar.classList.add("ring-2", "ring-blue-500", "scale-110");
     }
-    .animate-fadeIn {
-      animation: fadeIn 0.5s ease-in-out;
+
+    const num = document.createElement("span");
+    num.textContent = qNum;
+    num.className =
+      "text-xs mt-1 " +
+      (qNum === currentQuestionNumber
+        ? "font-bold text-blue-600"
+        : "text-gray-700");
+
+    wrap.appendChild(bar);
+    wrap.appendChild(num);
+
+    /* ✅ GET navigation (NO POST) */
+    wrap.onclick = () => navigateGet(qNum - 1);
+
+    grid.appendChild(wrap);
+  }
+
+  grid.children[currentQuestionNumber - 1]?.scrollIntoView({
+    behavior: "smooth",
+    inline: "center",
+  });
+}
+
+/* =========================
+   SAFE NAVIGATION (GET)
+========================= */
+function navigateGet(targetIndex) {
+  const selected = document.querySelector('input[name="answer"]:checked');
+
+  if (selected) {
+    saveAnswerToServer(currentQuestionIndex, selected.value);
+  }
+
+  // Navigate immediately without checking backend
+  window.location.href = `/cbt/exam/${examId}/question/${targetIndex}/`;
+}
+
+
+
+
+
+
+/* =========================
+   SUBMIT MODAL
+========================= */
+function openSubmitModal() {
+  const answered = getAnswered();
+  const answers = getAnswers();
+  const unanswered = [];
+
+  for (let i = 1; i <= totalQuestions; i++) {
+    if (!answered.has(i)) unanswered.push(i);
+  }
+
+  const text = document.getElementById("submitWarningText");
+  const list = document.getElementById("unansweredList");
+  const submit = document.getElementById("confirmSubmitBtn");
+  const jump = document.getElementById("jumpBtn");
+
+  list.innerHTML = "";
+  for (let i = 1; i <= totalQuestions; i++) {
+    list.innerHTML += `
+      <div>Q${i}:
+        <span class="${answers[i] ? "text-green-600" : "text-red-600"} font-semibold">
+          ${answers[i] || "Not answered"}
+        </span>
+      </div>`;
+  }
+
+  list.classList.remove("hidden");
+
+  if (unanswered.length) {
+    text.innerHTML = `You have <b class="text-red-600">${unanswered.length}</b> unanswered question(s).`;
+    jump.onclick = () => navigateGet(unanswered[0] - 1);
+    jump.classList.remove("hidden");
+    submit.classList.add("hidden");
+  } else {
+    text.innerHTML = `Once submitted, answers cannot be changed.`;
+    jump.classList.add("hidden");
+    submit.classList.remove("hidden");
+  }
+
+  submitModal.classList.remove("hidden");
+  submitModal.classList.add("flex");
+}
+
+function closeSubmitModal() {
+  submitModal.classList.add("hidden");
+  submitModal.classList.remove("flex");
+}
+
+/* =========================
+   FINAL SUBMIT (POST ONCE)
+========================= */
+confirmSubmitBtn.addEventListener("click", () => {
+  const form = document.getElementById("exam-form");
+  const answers = getAnswers();
+
+  form.dataset.submitted = "true";  // Mark submitted here, not earlier
+
+  for (const q in answers) {
+    const input = document.createElement("input");
+    input.type = "hidden";
+    input.name = `answers[${q}]`;
+    input.value = answers[q];
+    form.appendChild(input);
+  }
+
+  localStorage.removeItem(examKey);
+  localStorage.removeItem(answerKey);
+
+  form.submit();  // ONLY final submission
+});
+
+
+function saveAnswerToServer(questionIndex, answerValue) {
+  const csrf = document.querySelector('input[name="csrfmiddlewaretoken"]')?.value;
+  if (!csrf || !answerValue) return Promise.resolve();
+
+  // Just save the answer, do NOT mark exam as submitted
+  return fetch(`/cbt/exam/${examId}/question/${questionIndex}/`, {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/x-www-form-urlencoded",
+      "X-CSRFToken": csrf,
+    },
+    body: new URLSearchParams({ answer: answerValue }),
+    credentials: "same-origin",
+  }).catch(() => {}); // ignore errors
+}
+
+
+ function allAnswered() {
+  const answered = getAnswered();
+  for (let i = 1; i <= totalQuestions; i++) {
+    if (!answered.has(i)) return false;
+  }
+  return true;
+}
+
+
+
+/* =========================
+   INIT
+========================= */
+renderProgress();
+</script>
+
+
+
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const timerEl = document.getElementById("timer");
+  if (!timerEl) return;
+
+  const examId = document.body.dataset.examId;
+  const studentId = document.body.dataset.studentId;
+
+  const TIME_LIMIT = Number({{ time_limit|default:0 }}); // seconds
+  const EXAM_START = Number({{ exam_start_time|default:0 }}); // unix seconds
+
+  if (!TIME_LIMIT || !EXAM_START) {
+    timerEl.textContent = "--:--";
+    return;
+  }
+
+  function updateTimer() {
+    const now = Math.floor(Date.now() / 1000);
+    const elapsed = now - EXAM_START;
+    const remaining = Math.max(TIME_LIMIT - elapsed, 0);
+
+    const minutes = Math.floor(remaining / 60);
+    const seconds = remaining % 60;
+
+    timerEl.textContent =
+      `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
+
+    /* ⏰ TIME UP — SUBMIT ONCE */
+    if (remaining <= 0) {
+      const form = document.getElementById("exam-form");
+      if (form && !form.dataset.submitted) {
+        form.dataset.submitted = "true";
+
+        /* Inject saved answers */
+        const answers = JSON.parse(
+          localStorage.getItem(`cbt_answers_${examId}_${studentId}`) || "{}"
+        );
+
+        for (const q in answers) {
+          if (!form.querySelector(`input[name="answers[${q}]"]`)) {
+            const input = document.createElement("input");
+            input.type = "hidden";
+            input.name = `answers[${q}]`;
+            input.value = answers[q];
+            form.appendChild(input);
+          }
+        }
+
+        /* Clear storage */
+        localStorage.removeItem(`cbt_answers_${examId}_${studentId}`);
+        localStorage.removeItem(`cbt_answered_${examId}_${studentId}`);
+
+        form.submit();
+      }
     }
-  </style>
+  }
+
+  updateTimer();               // immediate render
+  setInterval(updateTimer, 1000);
+});
+</script>
+
+
+
+
+<style>
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(5px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+.animate-fadeIn { animation: fadeIn 0.4s ease-in-out; }
+
+
+.scrollbar-hide::-webkit-scrollbar { display: none; }
+.scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+
+
+</style>
+
 </body>
 </html>
+
+
+
+
+
