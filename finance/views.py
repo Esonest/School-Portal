@@ -1485,9 +1485,6 @@ def pay_invoice(request, invoice_id):
 
 @login_required
 def paystack_verify(request, invoice_id):
-    """
-    Handles Paystack redirect verification and updates Invoice & Payment immediately.
-    """
     invoice = get_object_or_404(
         Invoice,
         pk=invoice_id,
@@ -1500,44 +1497,39 @@ def paystack_verify(request, invoice_id):
         messages.error(request, "No payment reference provided.")
         return redirect("finance:student_dashboard")
 
-    # 1️⃣ Find the PaystackTransaction
+    # 1️⃣ Get transaction
     try:
         transaction = PaystackTransaction.objects.get(paystack_reference=reference)
     except PaystackTransaction.DoesNotExist:
-        messages.warning(request, "Transaction not found. Webhook will handle processing.")
+        messages.warning(request, "Transaction not found. Webhook will handle it.")
         return redirect("finance:student_dashboard")
 
-    # 2️⃣ Verify payment with Paystack
-    headers = {
-        "Authorization": f"Bearer {school.paystack_secret_key}",
-        "Content-Type": "application/json",
-    }
-
+    # 2️⃣ Verify with Paystack safely
     try:
-        response = requests.get(
-            f"https://api.paystack.co/transaction/verify/{reference}",
-            headers=headers,
-            timeout=30
-        )
+        headers = {"Authorization": f"Bearer {school.paystack_secret_key}"}
+        response = requests.get(f"https://api.paystack.co/transaction/verify/{reference}", headers=headers)
         data = response.json()
     except Exception as e:
         messages.warning(request, f"Verification failed: {e}. Webhook will update the status.")
         return redirect("finance:student_dashboard")
 
-    if not data.get("status") or data["data"]["status"] != "success":
-        messages.error(request, "Payment failed or is still processing. Check back later.")
+    # 3️⃣ Check Paystack response
+    if not data.get("status") or "data" not in data or data["data"].get("status") != "success":
+        messages.error(request, "Payment not successful or still pending.")
         return redirect("finance:student_dashboard")
 
-    # 3️⃣ Payment succeeded — process transaction
-    amount_paid_naira = Decimal(data["data"]["amount"]) / 100  # kobo -> naira
+    # 4️⃣ Safely get amount
+    amount_paid = Decimal(data["data"].get("amount", 0)) / 100
+    if amount_paid <= 0:
+        messages.error(request, "Invalid payment amount received.")
+        return redirect("finance:student_dashboard")
 
+    # 5️⃣ Process transaction idempotently
     with transaction.atomic():
-        # Mark PaystackTransaction as successful
         if transaction.status != "success":
             transaction.status = "success"
             transaction.save(update_fields=["status"])
 
-        # Create Payment object (idempotent)
         payment, created = Payment.objects.get_or_create(
             reference=reference,
             defaults={
@@ -1545,7 +1537,7 @@ def paystack_verify(request, invoice_id):
                 "invoice": invoice,
                 "student": invoice.student,
                 "school_class": invoice.school_class,
-                "amount": amount_paid_naira,
+                "amount": amount_paid,
                 "payment_method": "online",
                 "session": invoice.session,
                 "term": invoice.term,
@@ -1553,10 +1545,7 @@ def paystack_verify(request, invoice_id):
         )
 
         # Recompute invoice.amount_paid
-        invoice.amount_paid = (
-            Payment.objects.filter(invoice=invoice).aggregate(total=Sum("amount"))["total"]
-            or Decimal("0")
-        )
+        invoice.amount_paid = Payment.objects.filter(invoice=invoice).aggregate(total=Sum("amount"))["total"] or 0
         invoice.save(update_fields=["amount_paid"])
 
         # Create Receipt once
@@ -1571,7 +1560,7 @@ def paystack_verify(request, invoice_id):
                 school=invoice.school
             )
 
-    messages.success(request, f"Payment of ₦{amount_paid_naira:.2f} was successful and your invoice has been updated.")
+    messages.success(request, f"Payment of ₦{amount_paid:.2f} was successful! Invoice will be updated shortly")
     return redirect("finance:student_dashboard")
 
 
