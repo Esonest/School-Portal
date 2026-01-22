@@ -37,8 +37,11 @@ TERM_CHOICES = [('1', 'Term 1'), ('2', 'Term 2'), ('3', 'Term 3')]
 
 from finance.models import Invoice, Payment, Expense, PaystackTransaction
 from results.models import Score
-
-
+from decimal import Decimal
+from django.utils import timezone
+from datetime import timedelta
+from django.db.models.functions import Coalesce
+from django.contrib.auth.decorators import login_required
 
 @login_required
 def dashboard(request):
@@ -50,7 +53,6 @@ def dashboard(request):
     current_session = request.GET.get("session")
     current_term = request.GET.get("term")
 
-    # Last 12 months
     start_date = timezone.now() - timedelta(days=365)
 
     # -----------------------------
@@ -68,17 +70,17 @@ def dashboard(request):
         invoices = invoices.filter(term=current_term)
 
     total_expected = invoices.aggregate(
-        total=Sum("total_amount")
-    )["total"] or 0
+        total=Coalesce(Sum("total_amount"), Decimal("0"))
+    )["total"]
 
     total_received = invoices.aggregate(
-        total=Sum("amount_paid")
-    )["total"] or 0
+        total=Coalesce(Sum("amount_paid"), Decimal("0"))
+    )["total"]
 
     outstanding = total_expected - total_received
 
     # -----------------------------
-    # Payments (Accounting ledger)
+    # Payments
     # -----------------------------
     recent_payments = Payment.objects.filter(
         school=school
@@ -87,7 +89,7 @@ def dashboard(request):
     ).order_by("-payment_date")[:5]
 
     # -----------------------------
-    # Paystack activity (Gateway)
+    # Paystack
     # -----------------------------
     paystack_qs = PaystackTransaction.objects.filter(
         school=school,
@@ -96,8 +98,8 @@ def dashboard(request):
     )
 
     paystack_total = paystack_qs.aggregate(
-        total=Sum("amount")
-    )["total"] or 0
+        total=Coalesce(Sum("amount"), Decimal("0"))
+    )["total"]
 
     recent_paystack = paystack_qs.select_related(
         "invoice", "invoice__student"
@@ -119,29 +121,21 @@ def dashboard(request):
 
     recent_expenses = recent_expenses.order_by("-date")[:5]
 
-    # -----------------------------
-    # Context
-    # -----------------------------
     context = {
         "school": school,
 
-        # invoices / totals
         "invoices": invoices,
         "total_expected": total_expected,
         "total_received": total_received,
         "outstanding": outstanding,
 
-        # payments
         "recent_payments": recent_payments,
 
-        # paystack
         "paystack_total": paystack_total,
         "recent_paystack": recent_paystack,
 
-        # expenses
         "recent_expenses": recent_expenses,
 
-        # filters
         "sessions": SESSION_LIST,
         "current_session": current_session,
         "current_term": current_term,
@@ -333,6 +327,7 @@ from accounts.models import SystemSetting
 
 from decimal import Decimal
 from django.db.models import Sum
+from django.db.models.functions import Coalesce
 
 @portal_required("finance")
 @login_required
@@ -358,12 +353,12 @@ def student_dashboard(request):
     ).order_by('-created_at')
 
     total_invoiced = invoices.aggregate(
-        total=Sum('total_amount')
-    )['total'] or Decimal('0')
+        total=Coalesce(Sum('total_amount'), Decimal('0'))
+    )['total']
 
     total_paid = invoices.aggregate(
-        total=Sum('amount_paid')
-    )['total'] or Decimal('0')
+        total=Coalesce(Sum('amount_paid'), Decimal('0'))
+    )['total']
 
     outstanding = total_invoiced - total_paid
 
@@ -373,7 +368,7 @@ def student_dashboard(request):
 
     context = {
         'student': student,
-        'invoices': invoices,   # use inv.outstanding in template
+        'invoices': invoices,
         'total_invoiced': total_invoiced,
         'total_paid': total_paid,
         'outstanding': outstanding,
@@ -387,6 +382,7 @@ def student_dashboard(request):
     }
 
     return render(request, 'finance/student_dashboard.html', context)
+
 
 
 

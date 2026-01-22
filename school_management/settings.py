@@ -70,6 +70,9 @@ INSTALLED_APPS = [
     "widget_tweaks",
     "cloudinary",
     "cloudinary_storage",
+
+    'ckeditor',
+    'ckeditor_uploader',
 ]
 
 MIDDLEWARE = [
