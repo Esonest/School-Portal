@@ -127,10 +127,12 @@
           <a href="{% url 'finance:invoice_detail' inv.id %}" class="text-center border border-indigo-600 text-indigo-600 py-2 rounded-md font-semibold text-sm">View</a>
           {% if inv.amount_paid < inv.total_amount %}
           <button class="pay-now-btn bg-green-600 text-white py-2 rounded-md font-semibold text-sm"
-                  data-invoice-id="{{ inv.id }}"
-                  data-outstanding="{{ inv.total_amount|floatformat:2|add:"-"|add:inv.amount_paid|floatformat:2 }}">
-            Pay Now
-          </button>
+        data-invoice-id="{{ inv.id }}"
+        data-total="{{ inv.total_amount }}"
+        data-paid="{{ inv.amount_paid }}">
+  Pay Now
+</button>
+
           {% else %}
           <button disabled class="bg-gray-200 text-gray-500 py-2 rounded-md font-semibold text-sm cursor-not-allowed">
             Fully Paid

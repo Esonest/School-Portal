@@ -1519,6 +1519,7 @@ def verify_result(request, admission_no):
     selected_session = request.GET.get("session")
 
     student = get_object_or_404(Student, admission_no=admission_no)
+    school = student.school
 
     next_term_begins = get_next_term_begins(
         school=school,
@@ -1652,7 +1653,7 @@ def verify_result(request, admission_no):
     # ---------------------------
     # Media / Common fields
     # ---------------------------
-    school = student.school
+    
     context.update({
         "principal_signature_url": getattr(school.principal_signature, "url", None) if school else None,
         "student_photo_url": student.photo.url if student.photo else None,
