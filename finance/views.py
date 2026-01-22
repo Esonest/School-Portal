@@ -1485,6 +1485,9 @@ def pay_invoice(request, invoice_id):
 
 @login_required
 def paystack_verify(request, invoice_id):
+    """
+    Handles Paystack redirect verification and updates Invoice & Payment immediately.
+    """
     invoice = get_object_or_404(
         Invoice,
         pk=invoice_id,
@@ -1497,14 +1500,14 @@ def paystack_verify(request, invoice_id):
         messages.error(request, "No payment reference provided.")
         return redirect("finance:student_dashboard")
 
-    # 1️⃣ Check if transaction already exists
+    # 1️⃣ Find the PaystackTransaction
     try:
         transaction = PaystackTransaction.objects.get(paystack_reference=reference)
     except PaystackTransaction.DoesNotExist:
-        messages.error(request, "Transaction not found. Webhook will handle processing.")
+        messages.warning(request, "Transaction not found. Webhook will handle processing.")
         return redirect("finance:student_dashboard")
 
-    # 2️⃣ Optional: verify with Paystack for immediate UX feedback
+    # 2️⃣ Verify payment with Paystack
     headers = {
         "Authorization": f"Bearer {school.paystack_secret_key}",
         "Content-Type": "application/json",
@@ -1521,15 +1524,56 @@ def paystack_verify(request, invoice_id):
         messages.warning(request, f"Verification failed: {e}. Webhook will update the status.")
         return redirect("finance:student_dashboard")
 
-    if data.get("status") and data["data"]["status"] == "success":
-        messages.success(request, "Payment was successful! Your invoice will be updated shortly.")
-    elif data.get("status") and data["data"]["status"] == "failed":
-        messages.error(request, "Payment failed. Please try again.")
-    else:
-        messages.info(request, "Payment is being processed. Check back shortly.")
+    if not data.get("status") or data["data"]["status"] != "success":
+        messages.error(request, "Payment failed or is still processing. Check back later.")
+        return redirect("finance:student_dashboard")
 
-    # 3️⃣ Always redirect; do NOT create Payment here
+    # 3️⃣ Payment succeeded — process transaction
+    amount_paid_naira = Decimal(data["data"]["amount"]) / 100  # kobo -> naira
+
+    with transaction.atomic():
+        # Mark PaystackTransaction as successful
+        if transaction.status != "success":
+            transaction.status = "success"
+            transaction.save(update_fields=["status"])
+
+        # Create Payment object (idempotent)
+        payment, created = Payment.objects.get_or_create(
+            reference=reference,
+            defaults={
+                "school": invoice.school,
+                "invoice": invoice,
+                "student": invoice.student,
+                "school_class": invoice.school_class,
+                "amount": amount_paid_naira,
+                "payment_method": "online",
+                "session": invoice.session,
+                "term": invoice.term,
+            }
+        )
+
+        # Recompute invoice.amount_paid
+        invoice.amount_paid = (
+            Payment.objects.filter(invoice=invoice).aggregate(total=Sum("amount"))["total"]
+            or Decimal("0")
+        )
+        invoice.save(update_fields=["amount_paid"])
+
+        # Create Receipt once
+        if created:
+            Receipt.objects.create(
+                student=invoice.student,
+                school_class=invoice.school_class,
+                payment=payment,
+                amount=payment.amount,
+                session=invoice.session,
+                term=invoice.term,
+                school=invoice.school
+            )
+
+    messages.success(request, f"Payment of ₦{amount_paid_naira:.2f} was successful and your invoice has been updated.")
     return redirect("finance:student_dashboard")
+
 
 
 
@@ -1553,134 +1597,6 @@ from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.db import transaction
 from django.db.models import Sum
-
-
-
-@csrf_exempt
-def paystack_webhook(request):
-    """
-    Paystack webhook handler (SAFE + IDEMPOTENT)
-
-    - Verifies signature
-    - Handles retries correctly
-    - Creates Payment once
-    - ALWAYS recomputes Invoice.amount_paid
-    - Generates Receipt once
-    """
-
-    if request.method != "POST":
-        return HttpResponse(status=405)
-
-    payload = request.body
-    signature = request.headers.get("X-Paystack-Signature")
-
-    # -----------------------------
-    # 1️⃣ Parse payload safely
-    # -----------------------------
-    try:
-        event = json.loads(payload)
-        data = event.get("data", {})
-        metadata = data.get("metadata", {})
-        school_id = metadata.get("school_id")
-    except Exception:
-        return HttpResponse(status=400)
-
-    if not school_id:
-        return HttpResponse(status=200)
-
-    # -----------------------------
-    # 2️⃣ Resolve school
-    # -----------------------------
-    try:
-        school = School.objects.get(id=school_id)
-    except School.DoesNotExist:
-        return HttpResponse(status=200)
-
-    # -----------------------------
-    # 3️⃣ Verify Paystack signature
-    # -----------------------------
-    computed_hash = hmac.new(
-        school.paystack_secret_key.encode(),
-        payload,
-        hashlib.sha512
-    ).hexdigest()
-
-    if computed_hash != signature:
-        return HttpResponse(status=400)
-
-    # -----------------------------
-    # 4️⃣ Only process success event
-    # -----------------------------
-    if event.get("event") != "charge.success":
-        return HttpResponse(status=200)
-
-    reference = data.get("reference")
-    amount = Decimal(data.get("amount", 0)) / 100  # kobo → naira
-
-    if not reference or amount <= 0:
-        return HttpResponse(status=200)
-
-    # -----------------------------
-    # 5️⃣ Atomic processing
-    # -----------------------------
-    with transaction.atomic():
-
-        # Lock Paystack transaction
-        try:
-            tx = (
-                PaystackTransaction.objects
-                .select_for_update()
-                .get(paystack_reference=reference)
-            )
-        except PaystackTransaction.DoesNotExist:
-            return HttpResponse(status=200)
-
-        invoice = tx.invoice
-
-        # Mark Paystack transaction successful (once)
-        if tx.status != "success":
-            tx.status = "success"
-            tx.save(update_fields=["status"])
-
-        # Create Payment ONCE (idempotent)
-        payment, created = Payment.objects.get_or_create(
-            reference=reference,
-            defaults={
-                "school": invoice.school,
-                "invoice": invoice,
-                "student": invoice.student,
-                "school_class": invoice.school_class,
-                "amount": amount,
-                "payment_method": "online",
-                "session": invoice.session,
-                "term": invoice.term,
-            }
-        )
-
-        # 🔥 ALWAYS recompute invoice total (DO NOT rely on signals)
-        invoice.amount_paid = (
-            Payment.objects
-            .filter(invoice=invoice)
-            .aggregate(total=Sum("amount"))["total"]
-            or Decimal("0")
-        )
-        invoice.save(update_fields=["amount_paid"])
-
-        # Create Receipt only once
-        if created:
-            Receipt.objects.create(
-                student=invoice.student,
-                school_class=invoice.school_class,
-                payment=payment,
-                amount=payment.amount,
-                session=invoice.session,
-                term=invoice.term,
-                school=invoice.school
-            )
-
-    return HttpResponse(status=200)
-
-
 
 import json
 import hmac
