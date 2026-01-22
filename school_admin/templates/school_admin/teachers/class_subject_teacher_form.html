@@ -1,40 +1,82 @@
 {% extends "accounts/base.html" %}
+{% load widget_tweaks %}
+
 {% block content %}
+<div class="min-h-screen bg-gray-100 py-12">
+  <div class="max-w-3xl mx-auto px-4">
 
-<div class="max-w-xl mx-auto p-6 bg-white shadow rounded">
-    <h1 class="text-2xl font-bold text-{{ school.theme_color }}-600">{{ title }}</h1>
+    <!-- Header -->
+    <div class="mb-10 text-center">
+      <h1 class="text-3xl font-bold text-{{ school.theme_color }}-600">
+        {{ title }}
+      </h1>
+      <p class="text-gray-500 mt-2">
+        Assign a subject and teacher to a class
+      </p>
+    </div>
 
-    <form method="post" class="space-y-4">
-        {% csrf_token %}
+    <!-- Form Card -->
+    <form method="post"
+          class="bg-white shadow-xl rounded-xl p-8 space-y-8">
+      {% csrf_token %}
 
-        {{ form.non_field_errors }}
+      <!-- Non-field errors -->
+      {% if form.non_field_errors %}
+        <div class="bg-red-100 text-red-700 p-4 rounded-lg">
+          {{ form.non_field_errors }}
+        </div>
+      {% endif %}
+
+      <!-- Fields -->
+      <div class="grid grid-cols-1 gap-6">
 
         <div>
-            <label class="block font-medium mb-1">Class</label>
-            {{ form.school_class }}
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            Class
+          </label>
+          {{ form.school_class|add_class:"w-full rounded-lg border-gray-300 shadow-sm bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 px-3 py-2" }}
+          {% if form.school_class.errors %}
+            <p class="text-red-500 text-sm mt-1">{{ form.school_class.errors }}</p>
+          {% endif %}
         </div>
 
         <div>
-            <label class="block font-medium mb-1">Subject</label>
-            {{ form.subject }}
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            Subject
+          </label>
+          {{ form.subject|add_class:"w-full rounded-lg border-gray-300 shadow-sm bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 px-3 py-2" }}
+          {% if form.subject.errors %}
+            <p class="text-red-500 text-sm mt-1">{{ form.subject.errors }}</p>
+          {% endif %}
         </div>
 
         <div>
-            <label class="block font-medium mb-1">Teacher</label>
-            {{ form.teacher }}
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            Teacher
+          </label>
+          {{ form.teacher|add_class:"w-full rounded-lg border-gray-300 shadow-sm bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 px-3 py-2" }}
+          {% if form.teacher.errors %}
+            <p class="text-red-500 text-sm mt-1">{{ form.teacher.errors }}</p>
+          {% endif %}
         </div>
 
-        <div class="flex justify-end space-x-3 pt-4">
-            <a href="{% url 'school_admin:class_subject_teacher_list' school.id %}"
-               class="px-4 py-2 border rounded">
-                Cancel
-            </a>
-            <button type="submit"
-                    class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">
-                Save
-            </button>
-        </div>
+      </div>
+
+      <!-- Actions -->
+      <div class="flex justify-between items-center pt-6 border-t">
+        <a href="{% url 'school_admin:class_subject_teacher_list' school.id %}"
+           class="text-gray-600 hover:text-gray-800 font-medium">
+          ← Cancel
+        </a>
+
+        <button type="submit"
+                class="px-6 py-2 rounded-lg bg-indigo-600 text-white font-semibold
+                       hover:bg-indigo-700 transition">
+          Save Assignment
+        </button>
+      </div>
+
     </form>
+  </div>
 </div>
-
 {% endblock %}

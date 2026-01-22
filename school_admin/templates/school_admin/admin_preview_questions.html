@@ -1,11 +1,9 @@
-{% extends 'accounts/base.html' %}
+{% extends "accounts/base.html" %}
 {% block content %}
 
 <div class="min-h-screen bg-gray-100 px-4 py-6">
 
-  <!-- ===================== -->
   <!-- HEADER -->
-  <!-- ===================== -->
   <div class="max-w-7xl mx-auto mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
     <h1 class="text-2xl sm:text-3xl font-bold text-gray-800">
       Preview Questions – {{ exam.title }}
@@ -19,9 +17,7 @@
     </a>
   </div>
 
-  <!-- ===================== -->
-  <!-- MOBILE VIEW (CARDS) -->
-  <!-- ===================== -->
+  <!-- ================= MOBILE ================= -->
   <div class="md:hidden max-w-7xl mx-auto space-y-4">
     {% for q in questions %}
       <div class="bg-white border rounded-xl shadow p-4 space-y-3">
@@ -35,18 +31,28 @@
           </span>
         </div>
 
-        <p class="font-medium text-gray-800">
-          {{ q.text }}
-        </p>
+        <!-- Question -->
+        <div class="font-medium text-gray-800 leading-relaxed">
+          {{ q.text|safe }}
+        </div>
 
-        <div class="text-sm text-gray-700 space-y-1">
-          <p><strong>A:</strong> {{ q.option_a }}</p>
-          <p><strong>B:</strong> {{ q.option_b }}</p>
+        {% if q.equation %}
+          <div class="mt-2 text-lg mathjax">
+            {{ q.equation }}
+          </div>
+        {% endif %}
+
+        <!-- Options -->
+        <div class="text-sm text-gray-700 space-y-2 mt-2">
+          <div><strong>A:</strong> {{ q.option_a|safe }}</div>
+          <div><strong>B:</strong> {{ q.option_b|safe }}</div>
+
           {% if q.option_c %}
-            <p><strong>C:</strong> {{ q.option_c }}</p>
+            <div><strong>C:</strong> {{ q.option_c|safe }}</div>
           {% endif %}
+
           {% if q.option_d %}
-            <p><strong>D:</strong> {{ q.option_d }}</p>
+            <div><strong>D:</strong> {{ q.option_d|safe }}</div>
           {% endif %}
         </div>
 
@@ -62,12 +68,8 @@
     {% endfor %}
   </div>
 
-  <!-- ===================== -->
-  <!-- DESKTOP / TABLE VIEW -->
-  <!-- ===================== -->
-  <div class="hidden md:block max-w-7xl mx-auto bg-white
-              rounded-xl shadow border overflow-hidden">
-
+  <!-- ================= DESKTOP ================= -->
+  <div class="hidden md:block max-w-7xl mx-auto bg-white rounded-xl shadow border overflow-hidden">
     <div class="overflow-x-auto">
       <table class="min-w-full text-sm text-left border-collapse">
 
@@ -88,25 +90,39 @@
               {{ forloop.counter }}
             </td>
 
+            <!-- Question -->
             <td class="px-4 py-3 text-gray-800 max-w-md">
-              {{ q.text }}
+              <div class="leading-relaxed">
+                {{ q.text|safe }}
+              </div>
+
+              {% if q.equation %}
+                <div class="mt-2 text-lg mathjax">
+                  {{ q.equation }}
+                </div>
+              {% endif %}
             </td>
 
-            <td class="px-4 py-3 text-gray-700 space-y-1">
-              <div><strong>A:</strong> {{ q.option_a }}</div>
-              <div><strong>B:</strong> {{ q.option_b }}</div>
+            <!-- Options -->
+            <td class="px-4 py-3 text-gray-700 space-y-2">
+              <div><strong>A:</strong> {{ q.option_a|safe }}</div>
+              <div><strong>B:</strong> {{ q.option_b|safe }}</div>
+
               {% if q.option_c %}
-                <div><strong>C:</strong> {{ q.option_c }}</div>
+                <div><strong>C:</strong> {{ q.option_c|safe }}</div>
               {% endif %}
+
               {% if q.option_d %}
-                <div><strong>D:</strong> {{ q.option_d }}</div>
+                <div><strong>D:</strong> {{ q.option_d|safe }}</div>
               {% endif %}
             </td>
 
+            <!-- Correct -->
             <td class="px-4 py-3 font-semibold text-green-700">
               {{ q.correct_option }}
             </td>
 
+            <!-- Marks -->
             <td class="px-4 py-3 text-center text-gray-700">
               {{ q.marks }}
             </td>

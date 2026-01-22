@@ -5,6 +5,7 @@
 <div class="p-4 md:p-6 max-w-7xl mx-auto space-y-6 relative result-container">
 
     {% if school.logo %}
+        <!-- Watermark logo -->
         <div class="absolute inset-0 flex justify-center items-center pointer-events-none z-0">
             <img src="{{ school.logo.url }}" class="h-40 md:h-52 object-contain opacity-5 print:opacity-15">
         </div>
@@ -45,67 +46,50 @@
 
     <!-- ================= MOBILE ================= -->
     <div class="md:hidden space-y-4 relative z-10">
-        {% for question in questions %}
-            {% with qid=question.id|stringformat:"s" %}
-            {% with correct_key="_correct_letter_"|add:qid %}
-            {% with shuffle_key="_shuffle_text_"|add:qid %}
-            {% with selected=answers|get_item:qid %}
-            {% with correct=answers|get_item:correct_key %}
-            {% with shuffle=answers|get_item:shuffle_key %}
+        {% for item in question_map %}
+        <div class="bg-white p-4 rounded shadow border">
+            <p class="font-semibold mb-1">Q{{ forloop.counter }}:</p>
+            <div class="math-content">{{ item.question.text|safe }}</div>
+            {% if item.question.equation %}
+                <div class="math-content mt-1">{{ item.question.equation|safe }}</div>
+            {% endif %}
 
-            <div class="bg-white p-4 rounded shadow border">
-                <p class="font-semibold">Q{{ forloop.counter }}: {{ question.text }}</p>
-
-                <p>
-                    <strong>Selected:</strong>
-                    {% if selected %}
-                        <span class="{% if selected == correct %}text-green-700{% else %}text-red-700{% endif %}">
-                            {{ selected }}.
-                            {% if shuffle %}
-                                {% if selected == "A" %}{{ shuffle.0 }}
-                                {% elif selected == "B" %}{{ shuffle.1 }}
-                                {% elif selected == "C" %}{{ shuffle.2 }}
-                                {% elif selected == "D" %}{{ shuffle.3 }}
-                                {% endif %}
-                            {% else %}
-                                {% if selected == "A" %}{{ question.option_a }}
-                                {% elif selected == "B" %}{{ question.option_b }}
-                                {% elif selected == "C" %}{{ question.option_c }}
-                                {% elif selected == "D" %}{{ question.option_d }}
-                                {% endif %}
+            <!-- SELECTED -->
+            <p>
+                <strong>Selected:</strong>
+                {% if item.selected %}
+                    <span class="{% if item.selected == item.correct %}text-green-700{% else %}text-red-700{% endif %}">
+                        {{ item.selected }}.
+                        {% for opt in item.options %}
+                            {% if opt.label == item.selected %}
+                            <span class="math-content">
+                                {% if opt.equation %}{{ opt.equation|safe }}{% else %}{{ opt.text|safe }}{% endif %}
+                            </span>
                             {% endif %}
-                        </span>
-                    {% else %}
-                        <span class="text-gray-400 italic">Not answered</span>
-                    {% endif %}
-                </p>
-
-                <p>
-                    <strong>Correct:</strong>
-                    <span class="text-green-700">
-                        {{ correct }}.
-                        {% if shuffle %}
-                            {% if correct == "A" %}{{ shuffle.0 }}
-                            {% elif correct == "B" %}{{ shuffle.1 }}
-                            {% elif correct == "C" %}{{ shuffle.2 }}
-                            {% elif correct == "D" %}{{ shuffle.3 }}
-                            {% endif %}
-                        {% else %}
-                            {% if correct == "A" %}{{ question.option_a }}
-                            {% elif correct == "B" %}{{ question.option_b }}
-                            {% elif correct == "C" %}{{ question.option_c }}
-                            {% elif correct == "D" %}{{ question.option_d }}
-                            {% endif %}
-                        {% endif %}
+                        {% endfor %}
                     </span>
-                </p>
+                {% else %}
+                    <span class="text-gray-400 italic">Not answered</span>
+                {% endif %}
+            </p>
 
-                <p><strong>Marks:</strong> {% if selected == correct %}{{ question.marks }}{% else %}0{% endif %}</p>
-            </div>
+            <!-- CORRECT -->
+            <p>
+                <strong>Correct:</strong>
+                <span class="text-green-700">
+                    {{ item.correct }}.
+                    {% for opt in item.options %}
+                        {% if opt.label == item.correct %}
+                        <span class="math-content">
+                            {% if opt.equation %}{{ opt.equation|safe }}{% else %}{{ opt.text|safe }}{% endif %}
+                        </span>
+                        {% endif %}
+                    {% endfor %}
+                </span>
+            </p>
 
-            {% endwith %}{% endwith %}{% endwith %}{% endwith %}{% endwith %}{% endwith %}
-        {% empty %}
-            <p class="text-center text-gray-500">No answers available.</p>
+            <p><strong>Marks:</strong> {% if item.selected == item.correct %}{{ item.marks }}{% else %}0{% endif %}</p>
+        </div>
         {% endfor %}
     </div>
 
@@ -122,68 +106,41 @@
                 </tr>
             </thead>
             <tbody>
-                {% for question in questions %}
-                    {% with qid=question.id|stringformat:"s" %}
-                    {% with correct_key="_correct_letter_"|add:qid %}
-                    {% with shuffle_key="_shuffle_text_"|add:qid %}
-                    {% with selected=answers|get_item:qid %}
-                    {% with correct=answers|get_item:correct_key %}
-                    {% with shuffle=answers|get_item:shuffle_key %}
-
-                    <tr class="border">
-                        <td class="border p-2">{{ forloop.counter }}</td>
-                        <td class="border p-2">{{ question.text }}</td>
-
-                        <td class="border p-2">
-                            {% if selected %}
-                                <span class="{% if selected == correct %}text-green-700{% else %}text-red-700{% endif %}">
-                                    {{ selected }}.
-                                    {% if shuffle %}
-                                        {% if selected == "A" %}{{ shuffle.0 }}
-                                        {% elif selected == "B" %}{{ shuffle.1 }}
-                                        {% elif selected == "C" %}{{ shuffle.2 }}
-                                        {% elif selected == "D" %}{{ shuffle.3 }}
-                                        {% endif %}
-                                    {% else %}
-                                        {% if selected == "A" %}{{ question.option_a }}
-                                        {% elif selected == "B" %}{{ question.option_b }}
-                                        {% elif selected == "C" %}{{ question.option_c }}
-                                        {% elif selected == "D" %}{{ question.option_d }}
-                                        {% endif %}
-                                    {% endif %}
+                {% for item in question_map %}
+                <tr>
+                    <td class="border p-2">{{ forloop.counter }}</td>
+                    <td class="border p-2">
+                        <div class="math-content">{{ item.question.text|safe }}</div>
+                        {% if item.question.equation %}
+                        <div class="math-content mt-1">{{ item.question.equation|safe }}</div>
+                        {% endif %}
+                    </td>
+                    <td class="border p-2">
+                        {% if item.selected %}
+                        <span class="{% if item.selected == item.correct %}text-green-700{% else %}text-red-700{% endif %}">
+                            {{ item.selected }}.
+                            {% for opt in item.options %}
+                                {% if opt.label == item.selected %}
+                                <span class="math-content">
+                                    {% if opt.equation %}{{ opt.equation|safe }}{% else %}{{ opt.text|safe }}{% endif %}
                                 </span>
-                            {% else %}-{% endif %}
-                        </td>
-
-                        <td class="border p-2 text-green-700">
-                            {{ correct }}.
-                            {% if shuffle %}
-                                {% if correct == "A" %}{{ shuffle.0 }}
-                                {% elif correct == "B" %}{{ shuffle.1 }}
-                                {% elif correct == "C" %}{{ shuffle.2 }}
-                                {% elif correct == "D" %}{{ shuffle.3 }}
                                 {% endif %}
-                            {% else %}
-                                {% if correct == "A" %}{{ question.option_a }}
-                                {% elif correct == "B" %}{{ question.option_b }}
-                                {% elif correct == "C" %}{{ question.option_c }}
-                                {% elif correct == "D" %}{{ question.option_d }}
-                                {% endif %}
+                            {% endfor %}
+                        </span>
+                        {% else %}-{% endif %}
+                    </td>
+                    <td class="border p-2 text-green-700">
+                        {{ item.correct }}.
+                        {% for opt in item.options %}
+                            {% if opt.label == item.correct %}
+                            <span class="math-content">
+                                {% if opt.equation %}{{ opt.equation|safe }}{% else %}{{ opt.text|safe }}{% endif %}
+                            </span>
                             {% endif %}
-                        </td>
-
-                        <td class="border p-2">
-                            {% if selected == correct %}{{ question.marks }}{% else %}0{% endif %}
-                        </td>
-                    </tr>
-
-                    {% endwith %}{% endwith %}{% endwith %}{% endwith %}{% endwith %}{% endwith %}
-                {% empty %}
-                    <tr>
-                        <td colspan="5" class="text-center py-6 text-gray-500">
-                            No answers available.
-                        </td>
-                    </tr>
+                        {% endfor %}
+                    </td>
+                    <td class="border p-2">{% if item.selected == item.correct %}{{ item.marks }}{% else %}0{% endif %}</td>
+                </tr>
                 {% endfor %}
             </tbody>
         </table>
@@ -191,9 +148,18 @@
 
     <div class="text-center mt-4 relative z-10">
         <button onclick="window.print()" class="px-4 py-2 bg-green-600 text-white rounded">
-            Print My Result
+            Print Result
         </button>
     </div>
 
 </div>
+
+<!-- MathJax trigger (renders all math) -->
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  if (window.MathJax) {
+    MathJax.typesetPromise();
+  }
+});
+</script>
 {% endblock %}

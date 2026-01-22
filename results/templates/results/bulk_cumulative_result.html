@@ -1,0 +1,375 @@
+{% load static %}
+{% load custom_filters %}
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <title>Cumulative Class Results — {{ school.name }}</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+
+  <style>
+    @page { size: A4; margin: 15mm; }
+
+    @media print {
+      body { background: #fff !important; padding: 0 !important; }
+      .no-print { display: none !important; }
+      html { font-size: 12px; }
+    }
+
+    th, td { font-size: 12px; }
+
+    .result-card {
+      max-width: 210mm;
+      margin: 0 auto 24px;
+      background: #fff;
+      border: 1px solid #000;
+      padding: 14px;
+      page-break-after: always;
+      position: relative;
+    }
+
+    .result-card:last-child {
+      page-break-after: auto;
+    }
+
+    .result-watermark::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      {% if school.logo %}
+      background-image: url('{{ school.logo.url }}');
+      {% endif %}
+      background-repeat: no-repeat;
+      background-position: center;
+      background-size: 360px;
+      opacity: 0.05;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .result-content { position: relative; z-index: 1; }
+
+    .legend-box {
+      margin-top: 6px;
+      border: 1px solid #000;
+      padding: 6px;
+      font-size: 10.5px;
+      width: 100%;
+      page-break-inside: avoid;
+    }
+
+    .legend-title {
+      font-weight: bold;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .legend-row {
+      display: flex;
+      justify-content: space-between;
+    }
+
+    .legend-stars .gold {
+      color: #b8860b;
+      font-weight: bold;
+    }
+  </style>
+</head>
+
+<body class="bg-gray-100 p-4 text-black">
+    <!-- BULK ACTION BAR -->
+<div class="no-print max-w-[210mm] mx-auto mb-4 flex justify-between items-center">
+  <h2 class="font-bold text-lg">
+    Cumulative Results — {{ school_class.name }} ({{ results.0.selected_session }})
+  </h2>
+
+  <div class="flex gap-2">
+    <!-- BULK PRINT -->
+    <button
+      onclick="window.print()"
+      class="bg-black text-white px-4 py-2 rounded"
+    >
+      🖨️ Print / Download All
+    </button>
+  </div>
+</div>
+
+
+{% for r in results %}
+<div id="student-{{ r.student.id }}" class="result-card result-watermark">
+<div class="result-content">
+
+  <!-- HEADER -->
+  <div class="text-center border-b border-black pb-2">
+    {% if school.logo %}
+      <img src="{{ school.logo.url }}" class="h-16 mx-auto mb-1"/>
+    {% endif %}
+    <h1 class="text-2xl font-bold text-{{ school.theme_color }}-600">{{ school.name }}</h1>
+    <p class="italic text-sm"><strong>{{ school.motto }}</strong></p>
+    <p class="text-xs">{{ school.address }}</p>
+  </div>
+  <!-- PER-STUDENT ACTIONS -->
+<div class="no-print flex justify-end gap-2 mb-2">
+  <!-- PRINT THIS STUDENT -->
+  <button
+    onclick="printSingle('{{ r.student.id }}')"
+    class="border px-3 py-1 text-sm rounded"
+  >
+    🖨️ Print
+  </button>
+
+  <!-- DOWNLOAD PDF -->
+  <a href=""
+     class="px-3 py-1 bg-blue-600 text-white rounded text-xs">
+    ⬇️ Download PDF
+  </a>
+</div>
+
+
+
+  <!-- STUDENT INFO -->
+  <div class="grid grid-cols-3 gap-4 mt-3 border border-black p-2 text-sm">
+    <div class="space-y-1">
+      <p><strong>Name:</strong> {{ r.student.user.get_full_name }}</p>
+      <p><strong>Admission No:</strong> {{ r.student.admission_no }}</p>
+      <p><strong>Class:</strong> {{ r.exam_class.name }}</p>
+    </div>
+
+    <div class="space-y-1">
+      <p><strong>Session:</strong> {{ r.selected_session }}</p>
+      <p><strong>Class Size:</strong> {{ r.class_size }}</p>
+    </div>
+
+    <div class="text-right">
+      {% if r.student.photo %}
+        <img src="{{ r.student.photo.url }}" class="h-20 w-20 border object-cover inline-block"/>
+      {% else %}
+        <div class="h-20 w-20 border inline-flex items-center justify-center text-xs">
+          Passport
+        </div>
+      {% endif %}
+    </div>
+  </div>
+
+  <!-- CUMULATIVE TABLE -->
+  <h2 class="font-bold mt-4 uppercase text-center border border-black py-1">
+    Cumulative Academic Performance
+  </h2>
+
+  <table class="w-full border border-black border-collapse mt-2 text-center">
+    <thead>
+      <tr class="bg-gray-200">
+        <th rowspan="2" class="border border-black p-1 text-left">Subject</th>
+        {% for term in r.terms %}
+          <th colspan="{% if r.show_ca %}4{% else %}3{% endif %}" class="border border-black p-1">
+            {{ term }} Term
+          </th>
+        {% endfor %}
+        <th rowspan="2" class="border border-black p-1">Average</th>
+        <th rowspan="2" class="border border-black p-1">Grade</th>
+        <th rowspan="2" class="border border-black p-1">Teacher</th>
+      </tr>
+
+      <tr class="bg-gray-100">
+        {% for term in r.terms %}
+          {% if r.show_ca %}
+            <th class="border border-black p-1">CA</th>
+          {% endif %}
+          <th class="border border-black p-1">Exam</th>
+          <th class="border border-black p-1">Total</th>
+          <th class="border border-black p-1">Grade</th>
+        {% endfor %}
+      </tr>
+    </thead>
+
+    <tbody>
+      {% for subject, data in r.subjects.items %}
+      <tr>
+        <td class="border border-black p-1 text-left font-medium">{{ subject }}</td>
+
+        {% for term in r.terms %}
+          {% with t=data|get_item:term %}
+            {% if r.show_ca %}
+              <td class="border border-black p-1">{{ t.ca|default:"0" }}</td>
+            {% endif %}
+            <td class="border border-black p-1">{{ t.exam }}</td>
+            <td class="border border-black p-1 font-semibold">{{ t.total }}</td>
+            <td class="border border-black p-1">{{ t.grade }}</td>
+          {% endwith %}
+        {% endfor %}
+
+        <td class="border border-black p-1 font-semibold">{{ data.Average|floatformat:2 }}</td>
+        <td class="border border-black p-1 font-semibold">{{ data.AverageGrade }}</td>
+        <td class="border border-black p-1">
+          {% with t=data|get_item:r.terms.0 %}
+            {{ t.teacher }}
+          {% endwith %}
+        </td>
+      </tr>
+
+      <tr class="bg-gray-200 font-semibold">
+  <td class="border border-black p-1 text-left">Summary</td>
+
+  {% for term in r.terms %}
+    <td class="border border-black p-1"
+        colspan="{% if r.show_ca %}4{% else %}3{% endif %}">
+    </td>
+  {% endfor %}
+
+  <td class="border border-black p-1">
+    {{ r.avg_total|floatformat:2 }}
+  </td>
+
+  <td class="border border-black p-1">
+    {{ r.overall_avg_grade }}
+  </td>
+
+  <td class="border border-black p-1 text-left text-xs">
+    <div>Total: {{ r.overall_total }}</div>
+    <div>Best: {{ r.best_subject }}</div>
+    <div>Weak: {{ r.weak_subject }}</div>
+    <div>Position: {{ r.position }} / {{ r.class_size }}</div>
+  </td>
+</tr>
+
+      {% endfor %}
+    </tbody>
+  </table>
+
+  
+
+  <!-- PSYCHOMOTOR & AFFECTIVE -->
+  <h2 class="font-bold mt-4 uppercase text-center border border-black py-1">
+    Psychomotor & Affective Domain
+  </h2>
+
+  <div class="grid grid-cols-2 gap-4 mt-2 border border-black p-3 text-xs">
+    <div>
+      <p class="font-semibold mb-2">Psychomotor</p>
+      <ul class="space-y-1">
+        {% for skill, value in r.psychomotor.items %}
+        <li class="flex justify-between">
+          <span>{{ skill|capfirst }}</span>
+          <span class="text-yellow-600">
+            {% for i in "12345"|make_list %}
+              {% if i|add:"0" <= value %}★{% else %}☆{% endif %}
+            {% endfor %}
+          </span>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+
+    <div>
+      <p class="font-semibold mb-2">Affective</p>
+      <ul class="space-y-1">
+        {% for skill, value in r.affective.items %}
+        <li class="flex justify-between">
+          <span>{{ skill|capfirst }}</span>
+          <span class="text-yellow-600">
+            {% for i in "12345"|make_list %}
+              {% if i|add:"0" <= value %}★{% else %}☆{% endif %}
+            {% endfor %}
+          </span>
+        </li>
+        {% endfor %}
+      </ul>
+    </div>
+  </div>
+
+  <!-- LEGEND -->
+  <div class="legend-box">
+    <div class="legend-title">Legend</div>
+    <div class="legend-row"><span class="legend-stars"><span class="gold">★★★★★</span></span><span>Excellent</span></div>
+    <div class="legend-row"><span class="legend-stars"><span class="gold">★★★★</span>☆</span><span>Very Good</span></div>
+    <div class="legend-row"><span class="legend-stars"><span class="gold">★★★</span>☆☆</span><span>Good</span></div>
+    <div class="legend-row"><span class="legend-stars"><span class="gold">★★</span>☆☆☆</span><span>Fair</span></div>
+    <div class="legend-row"><span class="legend-stars"><span class="gold">★</span>☆☆☆☆</span><span>Poor</span></div>
+  </div>
+
+  <!-- COMMENTS -->
+  <div class="mt-4 border border-black p-2 text-sm">
+    <p><strong>Principal’s Comment:</strong> {{ r.principal_comment }}</p>
+    <!-- PROMOTION HISTORY -->
+<div class="mt-2 text-sm">
+{% for p in r.promotion_history %}
+  <p class="text-green-600 font-bold">
+    <strong>
+      {{ p.session }}: PROMOTED FROM
+      {{ p.old_class }} TO {{ p.new_class }}
+      ({{ p.promoted_on|date:"M d, Y" }})
+    </strong>
+  </p>
+{% empty %}
+  <p>No promotion history recorded.</p>
+{% endfor %}
+</div>
+    <p class="mt-2"><strong>Teacher’s Comment:</strong> {{ r.teacher_comment }}</p>
+  </div>
+ <!-- NEXT TERM INFORMATION -->
+<div class="mt-4 border border-black p-2 text-sm">
+  <p class="text-xl font-bold text-{{ school.theme_color }}-600">
+    <strong>Next Term Begins On:</strong>
+    <span class="ml-1">
+      {{ r.next_term_begins|date:"l, jS F Y"|default:"________________" }}
+    </span>
+  </p>
+</div>
+
+  <!-- FOOTER -->
+  <div class="flex justify-between items-end mt-6 text-sm">
+    <div class="text-center">
+      {% if r.principal_signature_url %}
+        <img src="{{ r.principal_signature_url }}" class="h-12 border mx-auto"/>
+      {% else %}
+        <div class="h-12 w-32 border mx-auto"></div>
+      {% endif %}
+      <p class="mt-1 font-semibold">Head Teacher</p>
+    </div>
+
+    <div class="text-center">
+      <img src="{{ r.qr_data_uri }}" class="h-16 w-16 border mx-auto"/>
+      <p class="text-xs">Scan to verify</p>
+    </div>
+  </div>
+
+</div>
+</div>
+<script>
+function printSingle(studentId) {
+  const card = document.getElementById("student-" + studentId);
+
+  if (!card) {
+    alert("Student result not found");
+    return;
+  }
+
+  // Get all CSS from current page (Tailwind + <style>)
+  const styles = Array.from(document.querySelectorAll("link[rel=stylesheet], style"))
+    .map(el => el.outerHTML)
+    .join("\n");
+
+  const printWindow = window.open("", "", "width=900,height=650");
+  printWindow.document.write(`
+    <html>
+      <head>
+        <title>Print Student Result</title>
+        ${styles}
+      </head>
+      <body>
+        <div class="p-4 bg-white">
+          ${card.outerHTML}
+        </div>
+      </body>
+    </html>
+  `);
+  printWindow.document.close();
+  printWindow.focus();
+  printWindow.print();
+}
+</script>
+
+{% endfor %}
+
+</body>
+</html>

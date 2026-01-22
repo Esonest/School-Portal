@@ -143,12 +143,15 @@
       </select>
     </form>
 
-    <form method="get" action="">
-      <input type="hidden" name="session" value="{{ selected_session }}">
-      <button class="bg-black text-white px-4 py-2">
-        Download PDF
-      </button>
-    </form>
+    <!-- Print button -->
+<button
+    type="button"
+    class="bg-black text-white px-4 py-2 rounded shadow"
+    onclick="window.print();"
+>
+    Print
+</button>
+
   </div>
 
   <!-- CUMULATIVE PERFORMANCE -->
@@ -310,6 +313,13 @@
 
     <p class="mt-2"><strong>Teacher’s Comment:</strong> {{ teacher_comment }}</p>
   </div>
+  <!-- NEXT TERM INFORMATION -->
+<div class="mt-4 border border-black p-2 text-sm">
+  <p class="text-xl font-bold text-{{ school.theme_color }}-600">
+    <strong>Next Term Begins On:</strong>
+    <span class="ml-1">{{ next_term_begins|date:"l, jS F Y"|default:"________________" }}</span>
+  </p>
+</div>
 
   <!-- FOOTER -->
   <div class="flex justify-between items-end mt-6 text-sm">

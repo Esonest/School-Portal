@@ -62,6 +62,8 @@ import os
 from django import forms
 from .models import School
 
+from django import forms
+from .models import School
 
 class SchoolForm(forms.ModelForm):
     logo = forms.ImageField(
@@ -79,6 +81,8 @@ class SchoolForm(forms.ModelForm):
             "logo",
             "theme_color",
             "principal_signature",
+            "paystack_public_key",
+            "paystack_secret_key",
         ]
         widgets = {
             "name": forms.TextInput(attrs={"class": "form-input", "id": "school-name-input"}),
@@ -86,11 +90,11 @@ class SchoolForm(forms.ModelForm):
             "motto": forms.TextInput(attrs={"class": "form-input"}),
             "theme_color": forms.Select(attrs={"class": "form-input", "id": "theme-color-select"}),
             "principal_signature": forms.ClearableFileInput(attrs={"class": "form-input"}),
+
+            # --- Add Paystack key input fields ---
+            "paystack_public_key": forms.TextInput(attrs={"class": "form-input", "placeholder": "Paystack Public Key"}),
+            "paystack_secret_key": forms.TextInput(attrs={"class": "form-input", "placeholder": "Paystack Secret Key"}),
         }
-
-
-
-
 
 
 # -------------------------

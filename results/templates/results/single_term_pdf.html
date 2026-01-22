@@ -1,0 +1,16 @@
+{% load custom_filters %}
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8"/>
+  <style>
+    @page { size: A4; margin: 15mm; }
+    body { font-size: 12px; }
+  </style>
+</head>
+<body>
+
+{% include "results/partials/term_result_card.html" with r=result school=school %}
+
+</body>
+</html>

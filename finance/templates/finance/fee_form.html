@@ -1,90 +1,99 @@
 {% extends "accounts/base.html" %}
 {% block content %}
 
-<div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10">
+<div class="min-h-screen bg-gray-100 dark:bg-gray-950 py-12">
+  <div class="max-w-3xl mx-auto px-4">
 
-  <!-- Header -->
-  <div class="mb-8 text-center sm:text-left">
-    <h1 class="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-white">
-      {% if is_edit %}✏️ Edit Fee Template{% else %}📝 Create Fee Template{% endif %}
-    </h1>
-    <p class="text-gray-500 dark:text-gray-300 text-sm sm:text-base mt-1">
-      Define the fee structure for a class
-    </p>
-  </div>
+    <!-- ================= HEADER ================= -->
+    <div class="mb-10 text-center">
+      <h1 class="text-3xl font-bold text-indigo-600 dark:text-indigo-400">
+        {% if is_edit %}Edit Fee Template{% else %}Create Fee Template{% endif %}
+      </h1>
+      <p class="text-gray-500 dark:text-gray-400 mt-2">
+        Define the fee structure for a class
+      </p>
+    </div>
 
-  <!-- Form Card -->
-  <div class="bg-white dark:bg-gray-900 shadow-md sm:shadow-lg rounded-2xl p-5 sm:p-8 transition-all">
-    <form method="post" class="space-y-6">
-      {% csrf_token %}
+    <!-- ================= FORM CARD ================= -->
+    <div class="bg-white dark:bg-gray-900 shadow-xl rounded-xl p-8">
+      <form method="post" class="space-y-6">
+        {% csrf_token %}
 
-      <!-- Class -->
-      <div class="space-y-1">
-        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200">
-          Class
-        </label>
-        <div class="w-full">{{ form.school_class }}</div>
-        {% if form.school_class.errors %}
-          <p class="text-red-600 text-sm">{{ form.school_class.errors|striptags }}</p>
-        {% endif %}
-      </div>
-
-      <!-- Template Name -->
-      <div class="space-y-1">
-        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200">
-          Template Name
-        </label>
-        <div class="w-full">{{ form.name }}</div>
-        {% if form.name.errors %}
-          <p class="text-red-600 text-sm">{{ form.name.errors|striptags }}</p>
-        {% endif %}
-      </div>
-
-      <!-- Amount -->
-      <div class="space-y-1">
-        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200">
-          Amount
-        </label>
-        <div class="w-full">
-          <input 
-            type="text" 
-            name="amount" 
-            value="{{ form.amount.value|default_if_none:'' }}" 
-            placeholder="Enter amount" 
-            class="w-full px-3 py-2 border rounded-md dark:bg-gray-800 dark:text-white"
-          />
+        <!-- Class -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Class
+          </label>
+          {{ form.school_class }}
+          {% if form.school_class.errors %}
+            <p class="text-red-500 text-sm mt-1">
+              {{ form.school_class.errors|striptags }}
+            </p>
+          {% endif %}
         </div>
-        {% if form.amount.errors %}
-          <p class="text-red-600 text-sm">{{ form.amount.errors|striptags }}</p>
-        {% endif %}
-      </div>
 
-      <!-- Active -->
-      <div class="flex items-center gap-3 pt-2">
-        {{ form.is_active }}
-        <label class="text-sm font-medium text-gray-700 dark:text-gray-200">
-          Active?
-        </label>
-      </div>
+        <!-- Template Name -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Template Name
+          </label>
+          {{ form.name }}
+          {% if form.name.errors %}
+            <p class="text-red-500 text-sm mt-1">
+              {{ form.name.errors|striptags }}
+            </p>
+          {% endif %}
+        </div>
 
-      <!-- Buttons -->
-      <div class="flex flex-col-reverse sm:flex-row justify-end gap-3 sm:gap-4 pt-6 border-t border-gray-200 dark:border-gray-700">
-        <a href="{% url 'finance:fee_template_list' %}"
-           class="w-full sm:w-auto px-6 py-3 rounded-lg border border-gray-300
-                  hover:bg-gray-50 dark:hover:bg-gray-800
-                  text-gray-700 dark:text-gray-200 text-center font-medium transition">
-          Cancel
-        </a>
-        <button type="submit"
-                id="submitBtn"
-                class="w-full sm:w-auto px-6 py-3 rounded-lg
-                       bg-indigo-600 hover:bg-indigo-700
-                       text-white font-bold transition
-                       disabled:opacity-60 disabled:cursor-not-allowed">
-          {% if is_edit %}Update Template{% else %}Save Template{% endif %}
-        </button>
-      </div>
-    </form>
+        <!-- Amount -->
+        <div>
+          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
+            Amount
+          </label>
+          <input
+            type="text"
+            name="amount"
+            value="{{ form.amount.value|default_if_none:'' }}"
+            placeholder="Enter amount"
+            class="w-full rounded-lg border-gray-300 dark:border-gray-700
+                   shadow-sm bg-white dark:bg-gray-800
+                   text-gray-900 dark:text-gray-100
+                   focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500
+                   px-3 py-2"
+          />
+          {% if form.amount.errors %}
+            <p class="text-red-500 text-sm mt-1">
+              {{ form.amount.errors|striptags }}
+            </p>
+          {% endif %}
+        </div>
+
+        <!-- Active -->
+        <div class="flex items-center gap-3 pt-2">
+          {{ form.is_active }}
+          <label class="text-sm font-medium text-gray-700 dark:text-gray-300">
+            Active?
+          </label>
+        </div>
+
+        <!-- ================= ACTIONS ================= -->
+        <div class="flex justify-between items-center pt-6 border-t border-gray-200 dark:border-gray-700">
+          <a href="{% url 'finance:fee_template_list' %}"
+             class="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white font-medium">
+            ← Cancel
+          </a>
+
+          <button type="submit"
+                  id="submitBtn"
+                  class="px-6 py-2 rounded-lg bg-indigo-600 text-white font-semibold
+                         hover:bg-indigo-700 transition
+                         disabled:opacity-60 disabled:cursor-not-allowed">
+            {% if is_edit %}Update Template{% else %}Save Template{% endif %}
+          </button>
+        </div>
+
+      </form>
+    </div>
   </div>
 </div>
 
@@ -105,17 +114,10 @@
     if (!amountInput) return;
 
     amountInput.addEventListener("input", () => {
-      // Remove everything except digits and dot
       let raw = amountInput.value.replace(/[^\d.]/g, "");
-
-      // Split integer and decimal
       let [integer, decimal] = raw.split(".");
-      if (decimal !== undefined) decimal = decimal.slice(0, 2); // max 2 decimal digits
-
-      // Add commas to integer part
+      if (decimal !== undefined) decimal = decimal.slice(0, 2);
       integer = integer.replace(/\B(?=(\d{3})+(?!\d))/g, ",");
-
-      // Combine
       amountInput.value = decimal !== undefined ? `${integer}.${decimal}` : integer;
     });
   });

@@ -319,6 +319,13 @@
     <p><strong>Teacher’s Comment:</strong> {{ teacher_comment }}</p>
     <p class="mt-2"><strong>Principal’s Comment:</strong> {{ principal_comment }}</p>
   </div>
+<!-- NEXT TERM INFORMATION -->
+<div class="mt-4 border border-black p-2 text-sm">
+  <p class="text-xl font-bold text-{{ school.theme_color }}-600">
+    <strong>Next Term Begins On:</strong>
+    <span class="ml-1">{{ next_term_begins|date:"l, jS F Y"|default:"________________" }}</span>
+  </p>
+</div>
 
   <!-- FOOTER -->
   <div class="flex justify-between items-end mt-6 text-sm">

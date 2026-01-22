@@ -59,5 +59,10 @@ urlpatterns = [
     path("expenses/<int:pk>/edit/", views.expense_update, name="expense_update"),
     path("expenses/<int:pk>/delete/", views.expense_delete, name="expense_delete"),
 
+    path("pay_invoice/<int:invoice_id>/", views.pay_invoice, name="pay_invoice"),
+    path("paystack_verify/<int:invoice_id>/",views.paystack_verify,name="paystack_verify"),
+    path("paystack/webhook/",views.paystack_webhook,name="paystack_webhook"),
+
+
     
 ]

@@ -1,9 +1,10 @@
-
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required, user_passes_test
 from accounts.models import School, User
 from attendance.models import Attendance
 from results.models import ClassScoreSetting, ClassSubjectTeacher
+from finance.models import SchoolTermSetting
+from results.utils import SESSION_CHOICES
 # Permission checks
 def is_superadmin(user):
     return user.role == 'superadmin'
@@ -47,6 +48,12 @@ def school_admin_dashboard(request, school_id):
     # Optional: Ensure this admin belongs to this school
     if request.user.school.id != school.id:
         return HttpResponse("Unauthorized", status=403)
+    
+    # ✅ ADD THIS BLOCK HERE
+    from accounts.models import SystemSetting
+
+    system = SystemSetting.objects.first()
+    current_session = system.current_session if system else None
 
     # Aggregate counts for dashboard
     student_count = Student.objects.filter(school=school).count()
@@ -74,6 +81,7 @@ def school_admin_dashboard(request, school_id):
         'assignment_count': assignment_count,
         'attendance_count': attendance_count,
         "classes": classes,
+        'current_session': current_session,
         'class_score_settings': class_score_settings,
         "class_count": class_count,
         "class_subject_teacher_count": class_subject_teacher_count
@@ -148,17 +156,28 @@ def student_create(request, school_id):
         form = StudentCreateForm(request.POST, request.FILES, school=school)
         if form.is_valid():
             student = form.save()  # ✅ User is created automatically
-            messages.success(request, f"Student '{student.user.get_full_name()}' created successfully")
+            messages.success(
+                request,
+                f"Student '{student.user.get_full_name()}' created successfully"
+            )
             return redirect("school_admin:admin_student_list", school_id=school.id)
         else:
-            messages.error(request, f"Error creating student: {form.errors}")
+            # Generic error message (field errors still show inline in template)
+            messages.error(request, "Error creating student. Please fix the errors below.")
+
     else:
         form = StudentCreateForm(school=school)
 
-    return render(request, "school_admin/admin_student_form.html", {
-        "form": form,
-        "school": school,       
-    })
+    return render(
+        request,
+        "school_admin/admin_student_form.html",
+        {
+            "form": form,
+            "school": school,
+        }
+    )
+
+
 
 
 
@@ -198,7 +217,7 @@ def student_delete(request, school_id, student_id):
         student.delete()
         return redirect("school_admin:admin_student_list", school_id=school.id)
 
-    return render(request, "students/admin/student_confirm_delete.html", {
+    return render(request, "school_admin/admin_student_confirm_delete.html", {
         "student": student,
         "school": school
     })
@@ -676,7 +695,7 @@ def exam_preview(request, school_id, exam_id):
 
 from django.shortcuts import render, get_object_or_404
 from django.contrib.auth.decorators import login_required
-from cbt.models import CBTExam, CBTQuestion
+from cbt.models import CBTExam, CBTQuestion, Topic
 
 @login_required
 def question_list(request, school_id, exam_id):
@@ -745,7 +764,7 @@ def delete_exam(request, school_id, exam_id):
 
 @login_required
 def submission_detail(request, school_id, exam_id, submission_id):
-
+    # ✅ Get school, exam, and submission
     school = get_object_or_404(School, id=school_id)
     exam = get_object_or_404(CBTExam, id=exam_id, school=school)
     submission = get_object_or_404(
@@ -754,65 +773,66 @@ def submission_detail(request, school_id, exam_id, submission_id):
         exam=exam
     )
 
-    if not (
-        request.user.is_superadmin or
-        getattr(request.user, "school", None) == school
-    ):
+    # ✅ Permission check
+    if not (request.user.is_superadmin or getattr(request.user, "school", None) == school):
         raise PermissionDenied
 
     answers = submission.raw_answers or {}
 
-    # 🔥 QUESTION ORDER = ANSWER ORDER
-    answered_ids = [
-        int(k) for k in answers.keys()
-        if str(k).isdigit()
-    ]
-
-    questions = list(
-        exam.questions.filter(id__in=answered_ids)
-    )
-
-    # keep the answer order
+    # 🔹 Preserve answered order
+    answered_ids = [int(k) for k in answers.keys() if str(k).isdigit()]
+    questions = list(exam.questions.filter(id__in=answered_ids))
     questions.sort(key=lambda q: answered_ids.index(q.id))
 
-    # append unanswered questions
+    # 🔹 Append unanswered questions
     unanswered = exam.questions.exclude(id__in=answered_ids)
     questions.extend(unanswered)
 
-    # 🔥 REBUILD CORRECT ANSWERS AFTER SHUFFLE
-    correct_map = {}
-
+    # 🔹 Build question map with options and correct answers
+    question_map = []
     for q in questions:
-        original = {
-            "A": q.option_a,
-            "B": q.option_b,
-            "C": q.option_c,
-            "D": q.option_d,
-        }
+        qid = str(q.id)
+        selected = answers.get(qid)
+        shuffled_opts = answers.get(f"_shuffle_opts_{qid}")
 
-        orig_text = original.get(q.correct_option, "").strip().lower()
-        shuffled = answers.get(f"_shuffle_text_{q.id}", [])
+        # Determine correct answer after shuffle
+        if shuffled_opts:
+            options = []
+            correct_letter = None
+            for idx, (label, opt) in enumerate(zip(["A", "B", "C", "D"], shuffled_opts)):
+                options.append({
+                    "label": label,
+                    "text": opt.get("text"),
+                    "equation": opt.get("equation"),
+                })
+                # Compare lowercase stripped text to find correct option
+                orig_text = getattr(q, f"option_{q.correct_option.lower()}", "").strip().lower()
+                if opt.get("text", "").strip().lower() == orig_text:
+                    correct_letter = label
+        else:
+            options = [
+                {"label": "A", "text": q.option_a, "equation": None},
+                {"label": "B", "text": q.option_b, "equation": None},
+                {"label": "C", "text": q.option_c, "equation": None},
+                {"label": "D", "text": q.option_d, "equation": None},
+            ]
+            correct_letter = q.correct_option
 
-        if not shuffled:
-            correct_map[q.id] = q.correct_option
-            continue
-
-        shuffled_norm = [s.strip().lower() for s in shuffled]
-
-        try:
-            idx = shuffled_norm.index(orig_text)
-            correct_map[q.id] = chr(65 + idx)
-        except ValueError:
-            correct_map[q.id] = q.correct_option
+        question_map.append({
+            "question": q,
+            "selected": selected,
+            "correct": correct_letter,
+            "options": options,
+            "marks": getattr(q, "marks", 1),
+        })
 
     return render(request, "school_admin/submission_detail.html", {
         "school": school,
         "exam": exam,
         "submission": submission,
-        "questions": questions,
-        "answers": answers,
-        "correct_map": correct_map,
+        "question_map": question_map,
     })
+
 
 
 from django.core.exceptions import PermissionDenied
@@ -833,6 +853,13 @@ from django.core.paginator import Paginator
 @user_passes_test(is_admin)
 def question_bank_list(request):
     user = request.user
+    
+    school = None
+    subjects = []
+    classes = []
+    topics = []
+    questions = QuestionBank.objects.none()
+
 
     # Determine accessible questions
     if hasattr(user, "school_admin_profile"):
@@ -840,11 +867,14 @@ def question_bank_list(request):
         questions = QuestionBank.objects.filter(school=school).order_by('-created_at')
         subjects = Subject.objects.filter(school=school)
         classes = SchoolClass.objects.filter(school=school)
+        topics = Topic.objects.filter(school=school)
+        
     elif hasattr(user, "teacher_profile"):
         teacher = user.teacher_profile
         questions = QuestionBank.objects.filter(created_by=teacher).order_by('-created_at')
         subjects = [s.subject for s in ClassSubjectTeacher.objects.filter(teacher=teacher)]
         classes = SchoolClass.objects.filter(school=teacher.school)
+        topics = Topic.objects.filter(school=teacher.school)
     else:
         raise PermissionDenied("You do not have permission to view questions.")
 
@@ -852,6 +882,10 @@ def question_bank_list(request):
     subject_id = request.GET.get("subject")
     if subject_id:
         questions = questions.filter(subject_id=subject_id)
+
+    topic_id = request.GET.get("topic")
+    if topic_id:
+        questions = questions.filter(topic_id=topic_id)
 
     class_id = request.GET.get("class")
     if class_id:
@@ -872,11 +906,13 @@ def question_bank_list(request):
 
     return render(request, "school_admin/question_bank/list.html", {
         "questions": page_obj,
+        "topics": topics,
         "subjects": subjects,
         "classes": classes,
         "terms": ['1', '2', '3'],
         "sessions": SESSION_LIST,
         "page_obj": page_obj,
+        "school": school,
     })
 
 
@@ -918,6 +954,7 @@ def question_bank_create(request):
 
     terms = ['1', '2', '3']
     sessions = SESSION_LIST
+    topic = ""
 
     # ---------- FORMSET ----------
     QuestionFormSet = modelformset_factory(
@@ -936,10 +973,22 @@ def question_bank_create(request):
             user=request.user
         )
 
-        selected_subject = request.POST.get("subject")
+        selected_subject = request.POST.get("subject", "").strip()
         selected_class = request.POST.get("school_class")
         selected_term = request.POST.get("term")
         selected_session = request.POST.get("session")
+        topic_name = request.POST.get("topic", "").strip()
+        
+        if topic_name:
+            topic_instance, created = Topic.objects.get_or_create(
+                name=topic_name,
+                school=school,
+                subject_id=int(selected_subject)
+            )
+        else:
+            topic_instance = None
+        
+    
 
         # ---------- GLOBAL VALIDATION ----------
         if not selected_subject:
@@ -950,8 +999,27 @@ def question_bank_create(request):
                 "classes": classes,
                 "terms": terms,
                 "sessions": sessions,
+                "topic": topic_name,
+            })
+        
+        selected_subject_id = int(selected_subject)
+        
+        if not topic_name:
+            messages.error(request, "Please enter a topic for these questions.")
+            return render(request, "school_admin/question_bank/form.html", {
+                "formset": formset,
+                "subjects": subjects,
+                "classes": classes,
+                "terms": terms,
+                "sessions": sessions,
+                "topic": topic_name,
             })
 
+        topic_instance = Topic.objects.get_or_create(
+            name=topic_name,
+            school=school,
+            subject_id=selected_subject_id
+        )[0]
         # ---------- FORMSET VALIDATION ----------
         if not formset.is_valid():
             messages.error(request, "Please correct the errors in the questions below.")
@@ -961,6 +1029,8 @@ def question_bank_create(request):
                 "classes": classes,
                 "terms": terms,
                 "sessions": sessions,
+                "topic": topic_name,
+                "option_letters": ['a', 'b', 'c', 'd'],
             })
 
         # ---------- STRICT COMPLETENESS CHECK ----------
@@ -975,6 +1045,7 @@ def question_bank_create(request):
             # Detect partial rows
             has_any_value = any([
                 data.get("text"),
+                data.get("equation"),
                 data.get("option_a"),
                 data.get("option_b"),
                 data.get("option_c"),
@@ -1005,16 +1076,19 @@ def question_bank_create(request):
                 "classes": classes,
                 "terms": terms,
                 "sessions": sessions,
+                "option_letters": ['a', 'b', 'c', 'd'],
             })
 
         # ---------- SAVE ----------
         questions = formset.save(commit=False)
+        
 
         for q in questions:
             q.subject_id = int(selected_subject)
             q.school_class_id = selected_class or None
             q.term = selected_term or ""
             q.session = selected_session or ""
+            q.topic = topic_instance
             q.school = school
             q.created_by = getattr(user, "teacher_profile", None)
             q.save()
@@ -1034,6 +1108,8 @@ def question_bank_create(request):
         "classes": classes,
         "terms": terms,
         "sessions": sessions,
+        "topic": topic,
+        "option_letters": ['a', 'b', 'c', 'd'],
     })
 
 
@@ -1068,6 +1144,7 @@ def question_bank_update(request, pk):
     # Dropdown data (optional, for display only)
     subjects = Subject.objects.filter(school=school)
     classes = SchoolClass.objects.filter(school=school)
+    topics = Topic.objects.filter(school=school)
     terms = ['1', '2', '3']
     sessions = SESSION_LIST
 
@@ -1095,6 +1172,7 @@ def question_bank_update(request, pk):
         "classes": classes,
         "terms": terms,
         "sessions": sessions,
+        "topics": topics,
         "edit_mode": True,
     })
 
@@ -1182,6 +1260,8 @@ def import_questions_to_exam(request, exam_id):
     term = request.GET.get("term")
     session = request.GET.get("session")
     class_id = request.GET.get("class")
+    topic_id = request.GET.get("topic")
+
 
     if subject_id:
         questions = questions.filter(subject_id=subject_id)
@@ -1192,6 +1272,10 @@ def import_questions_to_exam(request, exam_id):
     if session:
         questions = questions.filter(exam__session=session)
 
+    
+    if topic_id:
+        questions = questions.filter(topic_id=topic_id)
+    
     if class_id:
         questions = questions.filter(school_class_id=class_id)
 
@@ -1215,6 +1299,7 @@ def import_questions_to_exam(request, exam_id):
                 CBTQuestion.objects.create(
                     exam=exam,
                     text=q.text,
+                    equation=q.equation,
                     option_a=q.option_a,
                     option_b=q.option_b,
                     option_c=q.option_c,
@@ -1230,12 +1315,14 @@ def import_questions_to_exam(request, exam_id):
             school_id=exam.school.id,
             exam_id=exam.id
         )
-
+    
+    topics = Topic.objects.filter(school=school)
     return render(request, "school_admin/question_bank/import.html", {
         "exam": exam,
         "questions": page_obj,
         "subjects": subjects,
         "classes": classes,
+        "topics": topics,
         "sessions": SESSION_LIST,
         "imported_texts": imported_texts,
         "page_obj": page_obj,
@@ -2062,7 +2149,6 @@ from django.shortcuts import get_object_or_404, redirect, render
 from .forms import TeacherForm
 
 
-
 # ------------------- CREATE TEACHER -------------------
 @login_required
 @user_passes_test(lambda u: is_schooladmin(u) or is_superadmin(u))
@@ -2071,17 +2157,24 @@ def teacher_create(request, school_id):
     school = get_object_or_404(School, id=school_id)
 
     if request.method == "POST":
-        form = TeacherForm(request.POST, request.FILES, school=school)
+        form = TeacherForm(
+            request.POST,
+            request.FILES,
+            school=school
+        )
+
         if form.is_valid():
-            teacher = form.save()  # ✅ User is created inside the form
+            teacher = form.save()
             messages.success(
                 request,
                 f"Teacher '{teacher.user.get_full_name()}' created successfully."
             )
-            return redirect("school_admin:teacher_list", school_id=school.id)
-        else:
-            messages.error(request, f"Error creating teacher: {form.errors}")
+            return redirect(
+                "school_admin:teacher_list",
+                school_id=school.id
+            )
     else:
+        # ✅ GET request — always initialize form
         form = TeacherForm(school=school)
 
     return render(
@@ -2097,6 +2190,7 @@ def teacher_create(request, school_id):
 # ------------------- EDIT TEACHER -------------------
 @login_required
 @user_passes_test(lambda u: is_schooladmin(u) or is_superadmin(u))
+@transaction.atomic
 def teacher_edit(request, school_id, teacher_id):
     school = request.user.school_admin_profile.school
     teacher = get_object_or_404(Teacher, id=teacher_id, school=school)
@@ -2106,17 +2200,27 @@ def teacher_edit(request, school_id, teacher_id):
             request.POST,
             request.FILES,
             instance=teacher,
+            is_edit=True,
             school=school
         )
+
         if form.is_valid():
             form.save()
             messages.success(
                 request,
                 f"Teacher '{teacher.user.get_full_name()}' updated successfully."
             )
-            return redirect("school_admin:teacher_list", school_id=school.id)
+            return redirect(
+                "school_admin:teacher_list",
+                school_id=school.id
+            )
     else:
-        form = TeacherForm(instance=teacher, school=school)
+        # ✅ GET request — always initialize form
+        form = TeacherForm(
+            instance=teacher,
+            is_edit=True,
+            school=school
+        )
 
     return render(
         request,
@@ -2125,6 +2229,7 @@ def teacher_edit(request, school_id, teacher_id):
             "form": form,
             "teacher": teacher,
             "school": school,
+            "is_create": False,
         },
     )
 
@@ -2310,6 +2415,7 @@ from results.models import grade_from_score_dynamic, ClassSubjectTeacher, Result
 from results.views import _generate_qr_data_uri
 from students.models import PromotionHistory
 from accounts.models import SystemSetting
+from finance.utils import get_next_term_begins
 
 @login_required
 def admin_student_results(request, student_id):
@@ -2318,6 +2424,11 @@ def admin_student_results(request, student_id):
 
     term = request.GET.get("term")
     session = request.GET.get("session")
+    next_term_begins = get_next_term_begins(
+        school=school,
+        session=session,
+        term=term
+    )
 
     if not term or not session:
         latest_score = Score.objects.filter(student=student).order_by("-session").first()
@@ -2439,6 +2550,7 @@ def admin_student_results(request, student_id):
         "student": student,
         "school": school,
         "scores": scores,
+        "next_term_begins": next_term_begins,
         "overall_total": overall_total,
         "avg": avg,
         "position": position,
@@ -2512,7 +2624,7 @@ def admin_student_cumulative(request, student_id):
     selected_session = request.GET.get("session") or (SESSION_LIST[-1] if SESSION_LIST else "")
     if selected_session not in SESSION_LIST:
         selected_session = SESSION_LIST[-1] if SESSION_LIST else selected_session
-
+    
     promotion = (
         PromotionHistory.objects
        .filter(student=student, session__lte=selected_session)
@@ -2537,6 +2649,11 @@ def admin_student_cumulative(request, student_id):
     TERM_KEYS = ["1", "2", "3"]
     TERM_LABEL = {"1": "First", "2": "Second", "3": "Third"}
     TERM_LABELS = [TERM_LABEL[k] for k in TERM_KEYS]
+
+    next_term_begins = get_next_term_begins(
+        school=school,
+        session=selected_session
+    )
 
     # --------------------- POST: SAVE CA/EXAM + COMMENTS ----------------------
     if request.method == "POST":
@@ -2694,6 +2811,7 @@ def admin_student_cumulative(request, student_id):
     context = {
         "student": student,
         "school": school,
+        "next_term_begins": next_term_begins,
         "selected_session": selected_session,
         "available_sessions": SESSION_LIST,
         "terms": TERM_LABELS,
@@ -2718,16 +2836,6 @@ def admin_student_cumulative(request, student_id):
     }
 
     return render(request, "school_admin/admin/student_cumulative_edit.html", context)
-
-
-
-
-
-
-
-
-
-
 
 
 @login_required
@@ -3032,3 +3140,66 @@ def accountant_update(request, pk):
         "acc_form": acc_form,
         "school": school
     })
+
+
+
+from django.http import JsonResponse
+from django.contrib import messages
+
+@login_required
+def school_term_settings(request):
+    school = request.user.school
+
+    # Default term_setting for display: pick latest or first
+    term_setting = SchoolTermSetting.objects.filter(school=school).order_by("-id").first()
+
+    # Handle AJAX request for dynamic next_term_begins
+    if request.GET.get("ajax") == "1":
+        session = request.GET.get("session")
+        term = request.GET.get("term")
+        ts = SchoolTermSetting.objects.filter(
+            school=school,
+            session=session,
+            term=term
+        ).first()
+        return JsonResponse({
+            "next_term_begins": ts.next_term_begins.isoformat() if ts and ts.next_term_begins else ""
+        })
+
+    # Handle form submission
+    if request.method == "POST":
+        session = request.POST.get("session")
+        term = request.POST.get("term")
+        next_term_begins = request.POST.get("next_term_begins")
+        is_active = bool(request.POST.get("is_active"))
+
+        # Update or create ensures one record per school/session/term
+        term_setting, created = SchoolTermSetting.objects.update_or_create(
+            school=school,
+            session=session,
+            term=term,
+            defaults={
+                # Preserve old date if input is empty
+                "next_term_begins": next_term_begins or None,
+                "is_active": is_active,
+            }
+        )
+
+        messages.success(
+            request,
+            f"Term settings for {term_setting.session} Term {term_setting.term} saved successfully."
+        )
+
+        # Refresh term_setting to display updated values
+        term_setting = SchoolTermSetting.objects.filter(
+            school=school,
+            session=session,
+            term=term
+        ).first()
+
+    context = {
+        "term_setting": term_setting,
+        "sessions": [(s, s) for s in SESSION_LIST],  # tuple for template unpacking
+    }
+    return render(request, "school_admin/admin/school_term_setting.html", context)
+

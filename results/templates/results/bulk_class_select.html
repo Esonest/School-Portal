@@ -1,0 +1,95 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+
+<div class="min-h-screen bg-gray-100 flex items-center justify-center p-4 sm:p-6">
+  <div class="w-full max-w-md bg-white p-6 rounded-xl shadow-lg">
+    <h2 class="text-2xl font-bold mb-6 text-gray-800">Bulk Class Results</h2>
+
+    <form method="get" id="bulkForm" class="space-y-4">
+      
+      <!-- SESSION -->
+<div>
+  <label class="block mb-2 font-semibold text-gray-700">Session</label>
+
+  <select
+    name="session"
+    class="border rounded-lg p-3 w-full focus:outline-none focus:ring-2 focus:ring-blue-400"
+    required
+  >
+    <option disabled selected>Select session</option>
+
+    {% for s in sessions %}
+      <option value="{{ s }}" {% if s == current_session %}selected{% endif %}>
+        {{ s }}
+      </option>
+    {% endfor %}
+  </select>
+</div>
+
+
+      <!-- RESULT TYPE -->
+      <div>
+        <label class="block mb-2 font-semibold text-gray-700">Result Type</label>
+        <select name="type" id="resultType" class="border rounded-lg p-3 w-full focus:outline-none focus:ring-2 focus:ring-blue-400" required>
+          <option value="term">Term Result</option>
+          <option value="cumulative">Cumulative Result</option>
+        </select>
+      </div>
+
+      <!-- TERM -->
+      <div id="termWrapper">
+        <label class="block mb-2 font-semibold text-gray-700">Term</label>
+        <select name="term" class="border rounded-lg p-3 w-full focus:outline-none focus:ring-2 focus:ring-blue-400">
+          <option value="1">First Term</option>
+          <option value="2">Second Term</option>
+          <option value="3">Third Term</option>
+        </select>
+      </div>
+
+      <!-- CLASS -->
+      <div>
+        <label class="block mb-2 font-semibold text-gray-700">Class</label>
+        <select name="class_id" class="border rounded-lg p-3 w-full focus:outline-none focus:ring-2 focus:ring-blue-400" required>
+          {% for class in classes %}
+            <option value="{{ class.id }}">{{ class.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <button type="submit"
+        class="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold p-3 rounded-lg hover:from-blue-600 hover:to-indigo-700 transition">
+        View Results
+      </button>
+    </form>
+  </div>
+</div>
+
+<script>
+const form = document.getElementById("bulkForm");
+const resultType = document.getElementById("resultType");
+const termWrapper = document.getElementById("termWrapper");
+
+resultType.addEventListener("change", () => {
+  termWrapper.style.display = resultType.value === "term" ? "block" : "none";
+});
+
+form.addEventListener("submit", function (e) {
+  e.preventDefault();
+
+  const data = new FormData(form);
+  const type = data.get("type");
+  const classId = data.get("class_id");
+
+  let url = "";
+
+  if (type === "term") {
+    url = `/results/school/{{ school.id }}/class/${classId}/bulk-results/?` + new URLSearchParams(data);
+  } else {
+    url = `/results/school/{{ school.id }}/class/${classId}/bulk-cumulative/?` + new URLSearchParams(data);
+  }
+
+  window.location.href = url;
+});
+</script>
+
+{% endblock %}

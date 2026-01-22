@@ -1,20 +1,36 @@
 {% extends "accounts/base.html" %}
 
 {% block content %}
-<h2 class="text-2xl font-bold mb-6">Delete Teacher – {{ teacher.get_full_name }}</h2>
+<div class="min-h-[60vh] flex items-center justify-center px-4">
+    <div class="w-full max-w-md bg-white shadow-lg rounded-2xl p-6 sm:p-8">
 
-<div class="bg-white shadow rounded-lg p-6">
-    <p class="mb-4">Are you sure you want to delete this teacher? This action cannot be undone.</p>
+        <h2 class="text-xl sm:text-2xl font-bold text-gray-800 mb-4 text-center">
+            Delete Teacher
+        </h2>
 
-    <form method="POST" class="flex justify-end">
-        {% csrf_token %}
-        <a href="{% url 'school_admin:teacher_list' school.id %}" 
-           class="bg-gray-400 text-white px-4 py-2 rounded-lg mr-2 hover:bg-gray-500">
-            Cancel
-        </a>
-        <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded-lg hover:bg-red-700">
-            Delete
-        </button>
-    </form>
+        <p class="text-gray-600 text-sm sm:text-base text-center mb-6">
+            Are you sure you want to delete
+            <span class="font-semibold text-gray-800">
+                {{ teacher.get_full_name }}
+            </span>?
+            <br class="hidden sm:block">
+            This action cannot be undone.
+        </p>
+
+        <form method="POST" class="flex flex-col sm:flex-row gap-3 sm:justify-end">
+            {% csrf_token %}
+
+            <a href="{% url 'school_admin:teacher_list' school.id %}"
+               class="w-full sm:w-auto text-center bg-gray-200 text-gray-800 px-4 py-2 rounded-xl font-medium hover:bg-gray-300 transition">
+                Cancel
+            </a>
+
+            <button type="submit"
+                    class="w-full sm:w-auto bg-red-600 text-white px-4 py-2 rounded-xl font-medium hover:bg-red-700 transition">
+                Delete
+            </button>
+        </form>
+
+    </div>
 </div>
 {% endblock %}

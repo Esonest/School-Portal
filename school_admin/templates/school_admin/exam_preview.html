@@ -1,69 +1,144 @@
 {% extends "accounts/base.html" %}
 
 {% block content %}
-<div class="p-6">
+<div class="max-w-7xl mx-auto px-4 py-6">
 
-    <!-- Header -->
-    <div class="mb-6">
-        <h1 class="text-2xl font-bold text-{{ school.theme_color }}-800">
-            Exam Preview – {{ exam.title }}
-        </h1>
-        <p class="text-gray-600">{{ exam.school_class }}</p>
-    </div>
+  <!-- HEADER -->
+  <div class="mb-6">
+    <h1 class="text-2xl font-bold text-{{ school.theme_color }}-600">
+      Exam Preview – {{ exam.title }}
+    </h1>
+    <p class="text-gray-600">{{ exam.school_class }}</p>
+  </div>
 
-    <!-- Questions List -->
-    <div class="bg-white p-6 rounded-lg shadow">
+  <!-- ================= MOBILE CARDS ================= -->
+  <div class="grid grid-cols-1 gap-4 md:hidden">
+    {% for q in questions %}
+      <div class="bg-white rounded-xl shadow p-4 space-y-3">
 
-        {% if questions %}
-            <ol class="space-y-6 list-decimal ml-5">
-                {% for q in questions %}
-                <li class="border-b pb-4">
+        <!-- Question -->
+        <div class="font-semibold text-gray-900">
+          {{ forloop.counter }}. {{ q.text|safe }}
+        </div>
 
-                    <!-- Question Text -->
-                    <p class="font-semibold text-gray-900 mb-3">
-                        {{ q.text }}
-                    </p>
-
-                    <!-- Options -->
-                    <div class="space-y-2">
-                        <p class="text-gray-700">
-                            A. {{ q.option_a }}
-                            {% if q.correct_option == 'A' %}
-                                <span class="text-green-700 font-bold">✔ Correct</span>
-                            {% endif %}
-                        </p>
-
-                        <p class="text-gray-700">
-                            B. {{ q.option_b }}
-                            {% if q.correct_option == 'B' %}
-                                <span class="text-green-700 font-bold">✔ Correct</span>
-                            {% endif %}
-                        </p>
-
-                        <p class="text-gray-700">
-                            C. {{ q.option_c }}
-                            {% if q.correct_option == 'C' %}
-                                <span class="text-green-700 font-bold">✔ Correct</span>
-                            {% endif %}
-                        </p>
-
-                        <p class="text-gray-700">
-                            D. {{ q.option_d }}
-                            {% if q.correct_option == 'D' %}
-                                <span class="text-green-700 font-bold">✔ Correct</span>
-                            {% endif %}
-                        </p>
-                    </div>
-
-                </li>
-                {% endfor %}
-            </ol>
-
-        {% else %}
-            <p class="text-gray-500">No questions have been added to this exam yet.</p>
+        <!-- Equation -->
+        {% if q.equation %}
+          <div class="mt-2 text-lg">
+          {{ q.equation|safe }} 
+          </div>
         {% endif %}
 
-    </div>
+        <!-- Options -->
+        <div class="text-gray-700 space-y-1 mt-2">
+          <div>
+            <strong>A:</strong> {{ q.option_a|safe }}
+            {% if q.correct_option == 'A' %}
+              <span class="text-green-700 font-bold">✔ Correct</span>
+            {% endif %}
+          </div>
+          <div>
+            <strong>B:</strong> {{ q.option_b|safe }}
+            {% if q.correct_option == 'B' %}
+              <span class="text-green-700 font-bold">✔ Correct</span>
+            {% endif %}
+          </div>
+          {% if q.option_c %}
+          <div>
+            <strong>C:</strong> {{ q.option_c|safe }}
+            {% if q.correct_option == 'C' %}
+              <span class="text-green-700 font-bold">✔ Correct</span>
+            {% endif %}
+          </div>
+          {% endif %}
+          {% if q.option_d %}
+          <div>
+            <strong>D:</strong> {{ q.option_d|safe }}
+            {% if q.correct_option == 'D' %}
+              <span class="text-green-700 font-bold">✔ Correct</span>
+            {% endif %}
+          </div>
+          {% endif %}
+        </div>
+
+      </div>
+    {% empty %}
+      <p class="text-center text-gray-500 py-6">No questions have been added to this exam yet.</p>
+    {% endfor %}
+  </div>
+
+  <!-- ================= DESKTOP TABLE ================= -->
+  <div class="hidden md:block bg-white rounded-xl shadow overflow-x-auto">
+    <table class="min-w-full text-sm text-left">
+      <thead class="bg-gray-100 text-gray-700">
+        <tr>
+          <th class="px-4 py-3">#</th>
+          <th class="px-4 py-3">Question</th>
+          <th class="px-4 py-3">Options</th>
+        </tr>
+      </thead>
+      <tbody class="divide-y">
+        {% for q in questions %}
+        <tr class="hover:bg-gray-50">
+          <td class="px-4 py-3 font-medium text-gray-600">{{ forloop.counter }}</td>
+
+          <!-- Question -->
+          <td class="px-4 py-3 text-gray-800 max-w-lg">
+            <div>{{ q.text|safe }}</div>
+            {% if q.equation %}
+              <div class="mt-2 text-lg">
+                {{ q.equation|safe }}
+              </div>
+            {% endif %}
+          </td>
+
+          <!-- Options -->
+          <td class="px-4 py-3 text-gray-700 space-y-1">
+            <div>
+              <strong>A:</strong> {{ q.option_a|safe }}
+              {% if q.correct_option == 'A' %}
+                <span class="text-green-700 font-bold">✔ Correct</span>
+              {% endif %}
+            </div>
+            <div>
+              <strong>B:</strong> {{ q.option_b|safe }}
+              {% if q.correct_option == 'B' %}
+                <span class="text-green-700 font-bold">✔ Correct</span>
+              {% endif %}
+            </div>
+            {% if q.option_c %}
+            <div>
+              <strong>C:</strong> {{ q.option_c|safe }}
+              {% if q.correct_option == 'C' %}
+                <span class="text-green-700 font-bold">✔ Correct</span>
+              {% endif %}
+            </div>
+            {% endif %}
+            {% if q.option_d %}
+            <div>
+              <strong>D:</strong> {{ q.option_d|safe }}
+              {% if q.correct_option == 'D' %}
+                <span class="text-green-700 font-bold">✔ Correct</span>
+              {% endif %}
+            </div>
+            {% endif %}
+          </td>
+        </tr>
+        {% empty %}
+        <tr>
+          <td colspan="3" class="py-10 text-center text-gray-500">
+            No questions have been added to this exam yet.
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
 
 </div>
+
+<!-- ================= MATHJAX ================= -->
+<script type="text/javascript" id="MathJax-script" async
+  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
+</script>
+
 {% endblock %}

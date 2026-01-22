@@ -52,8 +52,32 @@ urlpatterns = [
 
     path('school/<int:school_id>/class-score-settings/',views.class_score_settings, name='class_score_settings'),
 
+    # results/urls.py
+    path("school/<int:school_id>/class/<int:class_id>/results/",views.class_result_list,name="class_result_list"),
+
+    path("school/<int:school_id>/class-results/generate/",views.generate_class_results,name="generate_class_results"),
+
+    path("school/<int:school_id>/class-results/<int:class_id>/",views.view_class_results,name="view_class_results"),
+    
+    # results/urls.py
+    path("school/<int:school_id>/class-results/", views.class_results_overview, name="class_results_overview"),
+
+     
+   path("school/<int:school_id>/class/<int:class_id>/pdf/",views.download_class_results_pdf,name="download_class_results_pdf"),
 
 
+  
+    path("student/<int:student_id>/term/pdf/",views.download_student_result_pdf,name="download_student_result_pdf"),
+
+    # results/urls.py
+    path("school/<int:school_id>/bulk-results/select/", views.bulk_class_select_view,name="bulk_class_select"),
+
+    path( "school/<int:school_id>/class/<int:class_id>/bulk-results/",views.bulk_class_results_view,name="bulk_class_results"),
+
+    path("school/<int:school_id>/class/<int:class_id>/bulk-cumulative/",views.bulk_class_cumulative_results_view,name="bulk_class_cumulative_results"),
+
+    path("student/<int:student_id>/cumulative/pdf/",views.student_cumulative_result_pdf,name="student_cumulative_result_pdf"),
 ]
 
+    
     

@@ -7,7 +7,7 @@ from django.http import JsonResponse, HttpResponseForbidden
 from django.views.decorators.csrf import csrf_exempt
 from .models import CBTExam, CBTQuestion, CBTSubmission
 from students.models import Student
-from results.utils import portal_required
+from results.utils import portal_required, wrap_latex
 
 
 # --------------------------------------
@@ -164,45 +164,88 @@ def take_exam(request, exam_id, question_index):
     question_id = question_order[question_index]
     question = get_object_or_404(CBTQuestion, id=question_id)
 
-    # ------------------ SHUFFLE OPTIONS (TEXT ONLY) ------------------
-    shuffle_key = f"_shuffle_text_{question_id}"
+    # ------------------ QUESTION TEXT / EQUATION ------------------
+    question_data = {
+        "text": question.text or "",
+        "equation": question.equation or "",
+    }
+
+
+
+
+    # ------------------ QUESTION & SHUFFLE OPTIONS ------------------
+    question_id = question.id
+    shuffle_key = f"_shuffle_opts_{question_id}"
     correct_letter_key = f"_correct_letter_{question_id}"
 
-    shuffled_texts = submission.raw_answers.get(shuffle_key)
+# Get previously shuffled options (if student reloads page)
+    shuffled_opts = submission.raw_answers.get(shuffle_key)
 
-    if not shuffled_texts:
-        option_texts = [
-            question.option_a,
-            question.option_b,
-            question.option_c,
-            question.option_d,
+    if not shuffled_opts:
+        # Build structured options (text + optional equation)
+        def extract_equation(text):
+            if not text:
+                return None
+            text = text.strip()
+            if text.startswith("\\(") or text.startswith("$"):
+                return text
+            return None
+
+
+        option_pool = [
+            {
+                "text": question.option_a,
+                "equation": extract_equation(question.option_a),
+                "is_correct": question.correct_option == "A",
+            },
+            {
+                "text": question.option_b,
+                "equation": extract_equation(question.option_b),
+                "is_correct": question.correct_option == "B",
+            },
+            {
+                "text": question.option_c,
+                "equation": extract_equation(question.option_c),
+                "is_correct": question.correct_option == "C",
+            },
+            {
+                "text": question.option_d,
+                "equation": extract_equation(question.option_d),
+                "is_correct": question.correct_option == "D",
+            },
         ]
-        random.shuffle(option_texts)
-        shuffled_texts = option_texts
 
-        # ✅ SAVE SHUFFLED TEXTS
-        submission.raw_answers[shuffle_key] = shuffled_texts
 
-        # ✅ DETERMINE & SAVE CORRECT LETTER (BASED ON SHUFFLE)
-        correct_text = getattr(
-            question,
-            f"option_{question.correct_option.lower()}",
-            None
-        )
 
-        if correct_text in shuffled_texts:
-            correct_index = shuffled_texts.index(correct_text)
-            correct_letter = ["A", "B", "C", "D"][correct_index]
-            submission.raw_answers[correct_letter_key] = correct_letter
+    # Remove empty options
+        option_pool = [opt for opt in option_pool if opt["text"] and opt["text"].strip()]
+
+    # Shuffle options
+        import random
+        random.shuffle(option_pool)
+        shuffled_opts = option_pool
+
+    # Save shuffled options in submission
+        submission.raw_answers[shuffle_key] = shuffled_opts
+
+    # Determine correct letter AFTER shuffle
+        for i, opt in enumerate(shuffled_opts):
+            if opt["is_correct"]:
+                submission.raw_answers[correct_letter_key] = ["A", "B", "C", "D"][i]
+                break
 
         submission.save(update_fields=["raw_answers"])
 
+# Build final options list for template
     options = [
-        ("A", shuffled_texts[0]),
-        ("B", shuffled_texts[1]),
-        ("C", shuffled_texts[2]),
-        ("D", shuffled_texts[3]),
+        {
+            "label": label,
+            "text": opt["text"],
+            "equation": opt["equation"],  # will be None if no option equation
+        }
+        for label, opt in zip(["A", "B", "C", "D"], shuffled_opts)
     ]
+
 
     # ------------------ HANDLE ANSWER ------------------
     if request.method == "POST":
@@ -259,6 +302,7 @@ def take_exam(request, exam_id, question_index):
     return render(request, "cbt/take_exam.html", {
         "exam": exam,
         "question": question,
+        "question_data": question_data,
         "options": options,
         "question_index": question_index,
         "current_question_number": question_index + 1,
@@ -408,6 +452,13 @@ def submit_exam(request, exam_id):
 # --------------------------------------
 # 📊 Student Exam Result (Accurate with Reshuffling)
 # --------------------------------------
+from django.shortcuts import render, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from .models import CBTExam, CBTSubmission
+from students.models import Student
+from results.utils import wrap_latex
+from django.http import HttpResponseForbidden
+
 @portal_required("cbt")
 @login_required
 def student_exam_result(request, exam_id):
@@ -419,133 +470,162 @@ def student_exam_result(request, exam_id):
         return render(request, "cbt/student_result.html", {
             "error": "You are not registered as a student."
         })
-    
+
     school = getattr(student, "school", None)
-    school_logo_url = getattr(school.logo, 'url', None) if school and school.logo else None
+    school_logo_url = getattr(school.logo, "url", None) if school and school.logo else None
 
     submission = get_object_or_404(CBTSubmission, exam=exam, student=student)
     answers = submission.raw_answers or {}
 
     total_questions = exam.questions.count()
     attempted = 0
-    correct = 0
+    correct_count = 0
+    question_map = []
 
-    for question in exam.questions.all():
-        qid = str(question.id)
-        student_choice = answers.get(qid)
-        if not student_choice:
-            continue
+    for q in exam.questions.all():
+        qid = str(q.id)
 
-        attempted += 1
+        selected = answers.get(qid)
+        correct = answers.get(f"_correct_letter_{qid}")
+        shuffled_opts = answers.get(f"_shuffle_opts_{qid}")
 
-        # Retrieve reshuffled texts
-        shuffle_key = f"_shuffle_text_{question.id}"
-        shuffled_texts = answers.get(shuffle_key)
-        if not shuffled_texts:
-            shuffled_texts = [question.option_a, question.option_b, question.option_c, question.option_d]
+        # Build structured options (LIKE take_exam)
+        if shuffled_opts:
+            options = [
+                {
+                    "label": label,
+                    "text": opt.get("text"),
+                    "equation": opt.get("equation"),
+                }
+                for label, opt in zip(["A", "B", "C", "D"], shuffled_opts)
+            ]
+        else:
+            options = [
+                {"label": "A", "text": q.option_a, "equation": None},
+                {"label": "B", "text": q.option_b, "equation": None},
+                {"label": "C", "text": q.option_c, "equation": None},
+                {"label": "D", "text": q.option_d, "equation": None},
+            ]
 
-        letter_to_text = {
-            "A": shuffled_texts[0],
-            "B": shuffled_texts[1],
-            "C": shuffled_texts[2],
-            "D": shuffled_texts[3],
-        }
+        if selected:
+            attempted += 1
+            if selected == correct:
+                correct_count += 1
 
-        correct_text = getattr(question, f"option_{question.correct_option.lower()}", None)
-        correct_letter = None
-        for letter, text in letter_to_text.items():
-            if text.strip().lower() == correct_text.strip().lower():
-                correct_letter = letter
-                break
+        question_map.append({
+            "question": q,
+            "selected": selected,
+            "correct": correct,
+            "options": options,
+            "marks": q.marks,
+        })
 
-        if student_choice == correct_letter:
-            correct += 1
-
-    wrong = attempted - correct
-    percentage = round((correct / total_questions) * 100, 2) if total_questions > 0 else 0
+    wrong_count = attempted - correct_count
+    percentage = round((correct_count / total_questions) * 100, 2) if total_questions else 0
     status = "Pass" if percentage >= 50 else "Fail"
 
-    # Update record if needed
-    submission.score = correct
+    submission.score = correct_count
     submission.total_questions = total_questions
-    submission.correct_answers = correct
-    submission.wrong_answers = wrong
+    submission.correct_answers = correct_count
+    submission.wrong_answers = wrong_count
     submission.percentage = percentage
     submission.status = status
-    submission.save(update_fields=["score", "total_questions", "correct_answers", "wrong_answers", "percentage", "status"])
+    submission.save(update_fields=[
+        "score", "total_questions", "correct_answers",
+        "wrong_answers", "percentage", "status"
+    ])
 
     return render(request, "cbt/student_exam_result.html", {
         "exam": exam,
         "submission": submission,
         "student": student,
+        "school": school,
+        "school_logo_url": school_logo_url,
+        "question_map": question_map,
         "total_questions": total_questions,
         "attempted": attempted,
-        "correct": correct,
-        "wrong": wrong,
+        "correct": correct_count,
+        "wrong": wrong_count,
         "percentage": percentage,
         "status": status,
-        "school": submission.student.user.school,
-        "school_logo_url": school_logo_url,
     })
-
-
 
 
 from django.core.exceptions import PermissionDenied
 
 
+
 @login_required
 def student_submission_detail(request, submission_id):
-    # assumes user has related Student object
-    student = getattr(request.user, 'student', None)
+    # Get student
+    student = getattr(request.user, "student", None)
     if not request.user.is_student_user:
         raise PermissionDenied("Only students can view this page.")
-    
-    school = getattr(student, "school", None)
-    school_logo_url = getattr(school.logo, 'url', None) if school and school.logo else None
 
+    # Get submission
     submission = get_object_or_404(
         CBTSubmission.objects.select_related("student", "exam"),
         id=submission_id,
         student__user=request.user
     )
 
+    # Get school info
+    school = getattr(student, "school", None)
+    school_name = getattr(school, "name", "") if school else ""
+    school_motto = getattr(school, "motto", "") if school else ""
+    school_logo_url = getattr(school.logo, "url", None) if school and school.logo else None
+
+    # Answers
     answers = submission.raw_answers or {}
 
+    # Preserve answered order
     answered_ids = [int(k) for k in answers.keys() if str(k).isdigit()]
-
     questions = list(submission.exam.questions.filter(id__in=answered_ids))
-    questions.sort(key=lambda q: answered_ids.index(q.id))  # preserve answer order
+    questions.sort(key=lambda q: answered_ids.index(q.id))
 
-    # append unanswered questions
+    # Append unanswered questions
     unanswered = submission.exam.questions.exclude(id__in=answered_ids)
     questions.extend(unanswered)
 
-    # rebuild correct answers after shuffle
-    correct_map = {}
+    # Build question map
+    question_map = []
     for q in questions:
-        original = {"A": q.option_a, "B": q.option_b, "C": q.option_c, "D": q.option_d}
-        orig_text = original.get(q.correct_option, "").strip().lower()
-        shuffled = answers.get(f"_shuffle_text_{q.id}", [])
-        if not shuffled:
-            correct_map[q.id] = q.correct_option
-            continue
-        shuffled_norm = [s.strip().lower() for s in shuffled]
-        try:
-            idx = shuffled_norm.index(orig_text)
-            correct_map[q.id] = chr(65 + idx)
-        except ValueError:
-            correct_map[q.id] = q.correct_option
+        qid = str(q.id)
+        selected = answers.get(qid)
+        correct = answers.get(f"_correct_letter_{qid}")
+        shuffled_opts = answers.get(f"_shuffle_opts_{qid}")
 
-    context = {
+        if shuffled_opts:
+            options = [
+                {
+                    "label": label,
+                    "text": opt.get("text"),
+                    "equation": opt.get("equation"),
+                }
+                for label, opt in zip(["A", "B", "C", "D"], shuffled_opts)
+            ]
+        else:
+            options = [
+                {"label": "A", "text": q.option_a, "equation": None},
+                {"label": "B", "text": q.option_b, "equation": None},
+                {"label": "C", "text": q.option_c, "equation": None},
+                {"label": "D", "text": q.option_d, "equation": None},
+            ]
+
+        question_map.append({
+            "question": q,
+            "selected": selected,
+            "correct": correct,
+            "options": options,
+            "marks": getattr(q, "marks", 1),  # optional, if you track marks
+        })
+
+    return render(request, "cbt/student_submission_detail.html", {
         "submission": submission,
         "exam": submission.exam,
-        "questions": questions,
-        "answers": answers,
-        "correct_map": correct_map,
-        "school": submission.student.user.school,
+        "question_map": question_map,
+        "school": school,
+        "school_name": school_name,
+        "school_motto": school_motto,
         "school_logo_url": school_logo_url,
-
-    }
-
-    return render(request, "cbt/student_submission_detail.html", context)
+    })

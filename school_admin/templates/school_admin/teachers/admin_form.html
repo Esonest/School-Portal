@@ -2,108 +2,183 @@
 {% load widget_tweaks %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-100 py-12">
-  <div class="max-w-4xl mx-auto px-4">
+<div class="min-h-screen bg-gray-100 p-4 sm:p-6 flex justify-center">
+  <div class="w-full max-w-4xl">
+
+    <!-- Global non-field errors -->
+    {% if form.non_field_errors %}
+      <div class="mb-4 rounded-lg bg-red-50 border border-red-200 p-4 text-red-700 text-sm">
+        {{ form.non_field_errors|striptags }}
+      </div>
+    {% endif %}
 
     <!-- Header -->
-    <div class="mb-10 text-center">
-      <h1 class="text-3xl font-bold text-{{ school.theme_color }}-600">
+    <div class="mb-8 text-center">
+      <h1 class="text-3xl font-bold text-{{ school.theme_color }}-700">
         {% if is_create %}Add Teacher{% else %}Edit Teacher{% endif %}
       </h1>
-      <p class="text-gray-500 mt-2">Fill in the teacher's details below</p>
+      <p class="text-sm text-gray-600 mt-2">
+        {{ school.name }} — Teacher profile
+      </p>
     </div>
 
-    <!-- Form Card -->
     <form method="POST" enctype="multipart/form-data"
-          class="bg-white shadow-xl rounded-xl p-8 space-y-10">
+          class="bg-white rounded-xl shadow-lg border border-slate-200 p-6 sm:p-8 space-y-10">
       {% csrf_token %}
 
-      <!-- ================= USER INFO ================= -->
+      <!-- ================= ACCOUNT INFO ================= -->
       <div>
-        <h2 class="text-xl font-semibold text-gray-700 mb-6 border-b pb-2">
+        <h2 class="text-xl font-semibold text-gray-800 mb-4 border-b pb-2">
           Account Information
         </h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+          <!-- USERNAME -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Username</label>
-            {{ form.username|add_class:"w-full rounded-lg border-gray-300 shadow-sm bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 px-3 py-2" }}
+            <label class="block text-sm font-semibold text-gray-700 mb-1">Username</label>
+            {% if form.username.errors %}
+              {{ form.username|add_class:"w-full rounded-lg p-3 border-red-400 focus:outline-none focus:ring-2 focus:ring-red-400" }}
+              {% for error in form.username.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ error }}</p>
+              {% endfor %}
+            {% else %}
+              {{ form.username|add_class:"w-full rounded-lg p-3 border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-400" }}
+            {% endif %}
           </div>
 
-          {% if form.password %}
-          <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
-            {{ form.password|add_class:"w-full rounded-lg border-gray-300 shadow-sm bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 px-3 py-2" }}
-          </div>
-          {% endif %}
+          <!-- PASSWORD -->
+{% if form.password %}
+<div>
+    <label class="block text-sm font-semibold text-gray-700 mb-1">Password</label>
+    {% if form.password.errors %}
+        {{ form.password|add_class:"w-full rounded-lg p-3 border-red-400 focus:outline-none focus:ring-2 focus:ring-red-400" }}
+        {% for error in form.password.errors %}
+            <p class="mt-1 text-sm text-red-600">{{ error }}</p>
+        {% endfor %}
+    {% else %}
+        {{ form.password|add_class:"w-full rounded-lg p-3 border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-400" }}
+    {% endif %}
+    {% if is_edit %}
+        <p class="text-sm text-gray-500 mt-1">Leave blank to keep current password</p>
+    {% endif %}
+</div>
+{% endif %}
 
+
+          <!-- FIRST NAME -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">First Name</label>
-            {{ form.first_name|add_class:"w-full rounded-lg border-gray-300 shadow-sm bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 px-3 py-2" }}
+            <label class="block text-sm font-semibold text-gray-700 mb-1">First Name</label>
+            {% if form.first_name.errors %}
+              {{ form.first_name|add_class:"w-full rounded-lg p-3 border-red-400 focus:outline-none focus:ring-2 focus:ring-red-400" }}
+              {% for error in form.first_name.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ error }}</p>
+              {% endfor %}
+            {% else %}
+              {{ form.first_name|add_class:"w-full rounded-lg p-3 border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-400" }}
+            {% endif %}
           </div>
 
+          <!-- LAST NAME -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Last Name</label>
-            {{ form.last_name|add_class:"w-full rounded-lg border-gray-300 shadow-sm bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 px-3 py-2" }}
+            <label class="block text-sm font-semibold text-gray-700 mb-1">Last Name</label>
+            {% if form.last_name.errors %}
+              {{ form.last_name|add_class:"w-full rounded-lg p-3 border-red-400 focus:outline-none focus:ring-2 focus:ring-red-400" }}
+              {% for error in form.last_name.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ error }}</p>
+              {% endfor %}
+            {% else %}
+              {{ form.last_name|add_class:"w-full rounded-lg p-3 border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-400" }}
+            {% endif %}
           </div>
 
+          <!-- EMAIL -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Email</label>
-            {{ form.email|add_class:"w-full rounded-lg border-gray-300 shadow-sm bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 px-3 py-2" }}
+            <label class="block text-sm font-semibold text-gray-700 mb-1">Email</label>
+            {% if form.email.errors %}
+              {{ form.email|add_class:"w-full rounded-lg p-3 border-red-400 focus:outline-none focus:ring-2 focus:ring-red-400" }}
+              {% for error in form.email.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ error }}</p>
+              {% endfor %}
+            {% else %}
+              {{ form.email|add_class:"w-full rounded-lg p-3 border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-400" }}
+            {% endif %}
           </div>
 
+          <!-- PHONE -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Phone</label>
-            {{ form.phone|add_class:"w-full rounded-lg border-gray-300 shadow-sm bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 px-3 py-2" }}
+            <label class="block text-sm font-semibold text-gray-700 mb-1">Phone</label>
+            {% if form.phone.errors %}
+              {{ form.phone|add_class:"w-full rounded-lg p-3 border-red-400 focus:outline-none focus:ring-2 focus:ring-red-400" }}
+              {% for error in form.phone.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ error }}</p>
+              {% endfor %}
+            {% else %}
+              {{ form.phone|add_class:"w-full rounded-lg p-3 border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-400" }}
+            {% endif %}
           </div>
 
-          <div class="md:col-span-2">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Address</label>
-            {{ form.address|add_class:"w-full rounded-lg border-gray-300 shadow-sm bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 px-3 py-2" }}
+          <!-- ADDRESS -->
+          <div class="sm:col-span-2">
+            <label class="block text-sm font-semibold text-gray-700 mb-1">Address</label>
+            {% if form.address.errors %}
+              {{ form.address|add_class:"w-full rounded-lg p-3 border-red-400 focus:outline-none focus:ring-2 focus:ring-red-400" }}
+              {% for error in form.address.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ error }}</p>
+              {% endfor %}
+            {% else %}
+              {{ form.address|add_class:"w-full rounded-lg p-3 border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-400" }}
+            {% endif %}
           </div>
+
         </div>
       </div>
 
       <!-- ================= TEACHER INFO ================= -->
       <div>
-        <h2 class="text-xl font-semibold text-gray-700 mb-6 border-b pb-2">
+        <h2 class="text-xl font-semibold text-gray-800 mb-4 border-b pb-2">
           Teacher Information
         </h2>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+          <!-- STAFF ID -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">Staff ID</label>
-            {{ form.staff_id|add_class:"w-full rounded-lg border-gray-300 shadow-sm bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 px-3 py-2" }}
+            <label class="block text-sm font-semibold text-gray-700 mb-1">Staff ID</label>
+            {% if form.staff_id.errors %}
+              {{ form.staff_id|add_class:"w-full rounded-lg p-3 border-red-400 focus:outline-none focus:ring-2 focus:ring-red-400" }}
+              {% for error in form.staff_id.errors %}
+                <p class="mt-1 text-sm text-red-600">{{ error }}</p>
+              {% endfor %}
+            {% else %}
+              {{ form.staff_id|add_class:"w-full rounded-lg p-3 border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-400" }}
+            {% endif %}
           </div>
 
+          <!-- SCHOOL -->
           <div>
-            <label class="block text-sm font-medium text-gray-700 mb-1">School</label>
-            {{ form.school|add_class:"w-full rounded-lg bg-gray-200 border-gray-300 px-3 py-2 cursor-not-allowed" }}
+            <label class="block text-sm font-semibold text-gray-700 mb-1">School</label>
+            {{ form.school|add_class:"w-full rounded-lg bg-gray-100 border-gray-300 p-3 cursor-not-allowed" }}
           </div>
 
-          <div class="md:col-span-2">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Classes</label>
-            {{ form.classes|add_class:"w-full h-40 rounded-lg border-gray-300 shadow-sm bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 px-3 py-2" }}
-          </div>
-
-          <div class="md:col-span-2">
-            <label class="block text-sm font-medium text-gray-700 mb-1">Subjects</label>
-            {{ form.subjects|add_class:"w-full h-40 rounded-lg border-gray-300 shadow-sm bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 px-3 py-2" }}
-          </div>
         </div>
       </div>
 
-      <!-- ================= ACTIONS ================= -->
-      <div class="flex justify-between items-center pt-6 border-t">
+      <!-- ACTIONS -->
+      <div class="flex flex-col sm:flex-row sm:justify-between gap-4 pt-6 border-t">
         <a href="{% url 'school_admin:teacher_list' school.id %}"
-           class="text-gray-600 hover:text-gray-800 font-medium">
+           class="inline-flex items-center text-gray-600 hover:text-gray-800 font-medium">
           ← Back
         </a>
 
         <button type="submit"
-                class="px-6 py-2 rounded-lg bg-indigo-600 text-white font-semibold
-                       hover:bg-indigo-700 transition">
+                class="bg-gradient-to-r from-indigo-500 to-indigo-600
+                       hover:from-indigo-600 hover:to-indigo-700
+                       text-white font-semibold px-6 py-3 rounded-lg transition shadow">
           {% if is_create %}Create Teacher{% else %}Update Teacher{% endif %}
         </button>
       </div>
+
     </form>
   </div>
 </div>

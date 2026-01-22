@@ -140,6 +140,8 @@ urlpatterns = [
     path("import/<int:exam_id>/",views.import_questions_to_exam,name="import_questions_to_exam"),
 
 
+    path("school-admin/term-settings/",views.school_term_settings,name="school_term_settings"),
+
 
 ]
 

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <style>
+    body { font-family: Arial, sans-serif; font-size: 12px; }
+    .card {
+      border: 1px solid #ddd;
+      padding: 10px;
+      margin-bottom: 12px;
+    }
+    h2 { text-align: center; }
+  </style>
+</head>
+<body>
+
+<h2>{{ school.name }} – {{ school_class.name }}</h2>
+
+{% for r in results %}
+  <div class="card">
+    <strong>Name:</strong> {{ r.student.full_name }}<br>
+    <strong>Total:</strong> {{ r.overall_total }}<br>
+    <strong>Average:</strong> {{ r.avg|floatformat:2 }}<br>
+    <strong>Position:</strong> {{ r.position }} / {{ r.class_size }}<br>
+    <strong>Next Term Begins:</strong>
+    {{ r.next_term_begins|date:"jS F Y"|default:"________" }}
+  </div>
+{% endfor %}
+
+</body>
+</html>

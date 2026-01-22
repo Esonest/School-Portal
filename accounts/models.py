@@ -45,6 +45,9 @@ class School(models.Model):
         default="indigo",
     )
 
+    paystack_public_key = models.CharField(max_length=255, blank=True, null=True)
+    paystack_secret_key = models.CharField(max_length=255, blank=True, null=True)
+
     active = models.BooleanField(default=True)
     created_on = models.DateTimeField(default=timezone.now)
 
@@ -151,6 +154,7 @@ class Teacher(models.Model):
 from django.db import models
 from django.conf import settings
 
+
 class SchoolAdmin(models.Model):
     user = models.OneToOneField(
         settings.AUTH_USER_MODEL,
@@ -173,3 +177,7 @@ class ContactMessage(models.Model):
 
     def __str__(self):
         return f"{self.name} - {self.subject}"
+
+
+
+   

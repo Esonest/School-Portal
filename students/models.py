@@ -144,12 +144,3 @@ class PromotionHistory(models.Model):
     def __str__(self):
         return f"{self.student.full_name()} | {self.old_class} → {self.new_class} ({self.session})"
 
-
-
-
-
-
-
-
-
-

@@ -189,10 +189,6 @@
 {% endfor %}
     
       </textarea>
-      
-        
-   
-
     <!-- Teacher Comment -->
     <div>
         <h3 class="font-semibold">Teacher's Comment</h3>
@@ -204,6 +200,13 @@
 
 </div>
 
+<!-- NEXT TERM INFORMATION -->
+<div class="mt-4 border border-black p-2 text-sm">
+  <p class="text-xl font-bold text-{{ school.theme_color }}-600">
+    <strong>Next Term Begins On:</strong>
+    <span class="ml-1">{{ next_term_begins|date:"l, jS F Y"|default:"________________" }}</span>
+  </p>
+</div>
     <!-- SIGNATURE + QR -->
     <div class="mt-6 flex justify-between">
       <div>

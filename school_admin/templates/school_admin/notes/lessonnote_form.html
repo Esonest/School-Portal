@@ -1,24 +1,70 @@
 {% extends "school_admin/base.html" %}
 {% block content %}
-<div class="p-6">
-    <h1 class="text-2xl font-bold text-{{ school.theme_color }}-600">{% if note %}Edit{% else %}Add{% endif %} Lesson Note</h1>
 
-    <form method="POST" enctype="multipart/form-data" class="space-y-4">
-        {% csrf_token %}
-        {{ form.non_field_errors }}
+<div class="min-h-screen bg-gray-100 p-4 sm:p-6 flex justify-center">
 
-        {% for field in form %}
-        <div>
-            <label class="block mb-1 font-medium">{{ field.label }}</label>
-            {{ field }}
-            <p class="text-red-600 text-sm">{{ field.errors }}</p>
+  <div class="w-full max-w-3xl">
+
+    <!-- Page Header -->
+    <div class="mb-6">
+      <h1 class="text-3xl font-bold text-{{ school.theme_color }}-700">
+        {% if note %}Edit{% else %}Add{% endif %} Lesson Note
+      </h1>
+      <p class="text-sm text-gray-600 mt-1">
+        {{ school.name }} — Lesson notes management
+      </p>
+    </div>
+
+    <!-- Form Card -->
+    <form method="POST"
+          enctype="multipart/form-data"
+          class="bg-white rounded-xl shadow-lg border border-slate-200 p-6 sm:p-8 space-y-6">
+      {% csrf_token %}
+
+      <!-- Non-field Errors -->
+      {% if form.non_field_errors %}
+        <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+          {{ form.non_field_errors }}
         </div>
-        {% endfor %}
+      {% endif %}
 
-        <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
-            {% if note %}Update{% else %}Save{% endif %}
+      <!-- Fields -->
+      {% for field in form %}
+        <div>
+          <label class="block mb-1 font-semibold text-gray-700">
+            {{ field.label }}
+          </label>
+
+          {{ field }}
+
+          {% if field.errors %}
+            <p class="text-red-500 text-sm mt-1">
+              {{ field.errors|join:", " }}
+            </p>
+          {% endif %}
+        </div>
+      {% endfor %}
+
+      <!-- Actions -->
+      <div class="flex flex-col sm:flex-row gap-3 pt-4">
+        <button type="submit"
+                class="bg-gradient-to-r from-green-500 to-green-600
+                       hover:from-green-600 hover:to-green-700
+                       text-white font-semibold px-6 py-3 rounded-lg transition shadow">
+          {% if note %}Update{% else %}Save{% endif %}
         </button>
-        <a href="{% url 'school_admin:lessonnote_list' %}" class="ml-2 text-gray-600 hover:underline">Cancel</a>
+
+        <a href="{% url 'school_admin:lessonnote_list' %}"
+           class="inline-flex items-center justify-center
+                  px-6 py-3 rounded-lg border border-gray-300
+                  text-gray-700 hover:bg-gray-50 transition">
+          Cancel
+        </a>
+      </div>
+
     </form>
+
+  </div>
 </div>
+
 {% endblock %}

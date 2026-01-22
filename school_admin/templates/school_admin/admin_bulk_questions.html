@@ -38,7 +38,21 @@
                     <label class="block text-sm font-medium text-gray-700 mb-1">
                         Question Text
                     </label>
-                    {{ form.text|add_class:"w-full p-2 border border-gray-300 rounded-lg focus:outline-none focus:ring focus:ring-blue-300" }}
+                    <!-- MathLive editor -->
+<math-field
+  class="w-full border rounded-lg px-3 py-2 bg-white"
+  style="min-height: 120px;"
+  virtual-keyboard-mode="onfocus"
+  id="mathlive-{{ forloop.counter0 }}"
+>
+</math-field>
+
+<!-- Hidden Django field (stores LaTeX) -->
+<input
+  type="hidden"
+  name="{{ form.text.html_name }}"
+  id="id_{{ form.text.html_name }}"
+>
                 </div>
 
                 <!-- Options Grid -->
@@ -87,4 +101,41 @@
 
     </form>
 </div>
+<style>
+    .ck-editor__editable {
+  min-height: 160px;
+  font-size: 16px;
+  line-height: 1.6;
+}
+
+.ck.ck-toolbar {
+  background: #f9fafb;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+</style>
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+
+  document.querySelectorAll('math-field').forEach((mf) => {
+
+    const hiddenInput = mf.nextElementSibling;
+
+    // Update hidden input whenever math changes
+    mf.addEventListener('input', () => {
+      hiddenInput.value = mf.getValue('latex');
+    });
+
+    // Restore value on edit (important for validation errors)
+    if (hiddenInput.value) {
+      mf.setValue(hiddenInput.value, { format: 'latex' });
+    }
+
+  });
+
+});
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
 {% endblock %}

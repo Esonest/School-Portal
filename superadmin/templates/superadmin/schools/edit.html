@@ -15,11 +15,11 @@
 
             <!-- Logo Preview -->
             <img
-    id="logo-preview"
-    src="{% if form.instance.logo %}{{ form.instance.logo.url }}{% else %}{% static 'img/school_logos/default_logo.png' %}{% endif %}"
-    alt="Logo"
-    class="h-20 w-20 object-contain border rounded bg-white"
-/>
+                id="logo-preview"
+                src="{% if form.instance.logo %}{{ form.instance.logo.url }}{% else %}{% static 'img/school_logos/default_logo.png' %}{% endif %}"
+                alt="Logo"
+                class="h-20 w-20 sm:h-24 sm:w-24 object-contain border rounded bg-white"
+            >
 
             <!-- School Name -->
             <h2
@@ -72,9 +72,26 @@
             {{ form.principal_signature }}
         </div>
 
+        <!-- Paystack Keys -->
+        <div>
+            {{ form.paystack_public_key.label_tag }}
+            {{ form.paystack_public_key }}
+            <p class="text-xs text-gray-500 mt-1">
+                Enter the Paystack <strong>Public Key</strong> for this school. Used for frontend transactions.
+            </p>
+        </div>
+
+        <div>
+            {{ form.paystack_secret_key.label_tag }}
+            {{ form.paystack_secret_key }}
+            <p class="text-xs text-gray-500 mt-1">
+                Enter the Paystack <strong>Secret Key</strong> for this school. Used for server-side verification. Keep this private.
+            </p>
+        </div>
+
     </div>
 
-    <button type="submit" class="px-4 py-2 rounded bg-indigo-600 text-white">
+    <button type="submit" class="mt-4 px-4 py-2 rounded bg-indigo-600 text-white">
         Save School
     </button>
 </form>
@@ -92,21 +109,19 @@
     const signaturePreview = document.getElementById("signature-preview");
 
     function updatePreview() {
-        // Update school name
+        // Name
         namePreview.textContent = nameInput.value || "School Name";
 
-        // Color logic remains untouched
+        // Color
         const color = colorSelect.value || "indigo";
         namePreview.className = `text-2xl font-bold text-${color}-600`;
     }
 
-    // ✅ Live logo preview for file upload
+    // Logo preview
     logoInput.addEventListener("change", function () {
         if (this.files && this.files[0]) {
             const reader = new FileReader();
-            reader.onload = function (e) {
-                logoPreview.src = e.target.result;
-            };
+            reader.onload = e => logoPreview.src = e.target.result;
             reader.readAsDataURL(this.files[0]);
         }
     });
@@ -120,7 +135,6 @@
         }
     });
 
-    // Live name and color updates
     nameInput.addEventListener("input", updatePreview);
     colorSelect.addEventListener("change", updatePreview);
 

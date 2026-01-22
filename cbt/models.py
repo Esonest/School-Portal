@@ -4,6 +4,8 @@ from students.models import Student, SchoolClass
 from accounts.models import School, Teacher
 from results.models import Subject
 import random
+from ckeditor.fields import RichTextField
+from results.utils import normalize_latex, normalize_latex_in_html, wrap_latex
 
 
 
@@ -53,7 +55,11 @@ from django.db import models
 
 class CBTQuestion(models.Model):
     exam = models.ForeignKey(CBTExam, on_delete=models.CASCADE, related_name='questions')
-    text = models.TextField()
+    text = RichTextField(config_name='equation_only')
+    equation = models.TextField(
+        blank=True,
+        help_text="Raw LaTeX only, e.g. x^2 + 4x + 4 = 0"
+    )
 
     option_a = models.CharField(max_length=400)
     option_b = models.CharField(max_length=400)
@@ -86,14 +92,48 @@ class CBTQuestion(models.Model):
 
         random.shuffle(options)
         return options
+    
+
+    def save(self, *args, **kwargs):
+        # -------------------------------
+        # PERMANENT FIX: Store raw LaTeX only
+        # -------------------------------
+        if self.text:
+            self.text = self.text.strip()
+        if self.equation:
+            self.equation = self.equation.strip()  # <-- no \( ... \)
+        self.option_a = self.option_a.strip() if self.option_a else ""
+        self.option_b = self.option_b.strip() if self.option_b else ""
+        self.option_c = self.option_c.strip() if self.option_c else ""
+        self.option_d = self.option_d.strip() if self.option_d else ""
+
+        super().save(*args, **kwargs) 
 
     def __str__(self):
         return f"Q{self.id} - {self.exam.title}"
 
 
+class Topic(models.Model):
+    school = models.ForeignKey(
+        School,
+        on_delete=models.CASCADE,
+        related_name="topics"
+    )
+    subject = models.ForeignKey(
+        Subject,
+        on_delete=models.CASCADE,
+        related_name="topics"
+    )
+    name = models.CharField(max_length=255)
 
-# -------------------------
-# QUESTION BANK (REPOSITORY)
+    class Meta:
+        unique_together = ("school", "subject", "name")
+        ordering = ["name"]
+
+     
+
+    def __str__(self):
+        return self.name
 # -------------------------
 # QUESTION BANK (REPOSITORY)
 # -------------------------
@@ -134,7 +174,20 @@ class QuestionBank(models.Model):
         blank=True
     )
 
-    text = models.TextField()
+    topic = models.ForeignKey(
+        Topic,
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="questions"
+    )
+
+    text = RichTextField(config_name='equation_only')
+
+    equation = models.TextField(
+        blank=True,
+        help_text="Raw LaTeX only, e.g. x^2 + 4x + 4 = 0"
+    )
 
     option_a = models.CharField(max_length=400)
     option_b = models.CharField(max_length=400)
@@ -153,8 +206,25 @@ class QuestionBank(models.Model):
         db_table = "QuestionBank"
         ordering = ["-created_at"]
 
+    def save(self, *args, **kwargs):
+        # Ensure LaTeX is wrapped for MathJax
+        if self.text:
+            # Wrap any raw LaTeX with $...$ if not already wrapped
+            self.text = wrap_latex(self.text)  
+
+            # Normalize raw LaTeX fields for options
+        self.equation = normalize_latex(self.equation)
+        self.option_a = normalize_latex(self.option_a)
+        self.option_b = normalize_latex(self.option_b)
+        self.option_c = normalize_latex(self.option_c)
+        self.option_d = normalize_latex(self.option_d)
+
+        super().save(*args, **kwargs)
+  
+
     def __str__(self):
         return f"{self.subject.name} - Q{self.id}"
+
 
 
 
@@ -191,3 +261,9 @@ class CBTSubmission(models.Model):
 
     def __str__(self):
         return f"{self.student.full_name()} - {self.exam.title}"
+
+
+
+
+
+

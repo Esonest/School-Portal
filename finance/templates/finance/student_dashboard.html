@@ -1,46 +1,49 @@
 {% extends "accounts/base.html" %}
 {% load static %}
+
 {% block content %}
 <div class="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-8">
+
+  <!-- Django messages -->
+  {% if messages %}
+    <div class="space-y-2">
+      {% for message in messages %}
+        <div class="p-3 rounded-md text-sm
+          {% if message.tags == 'success' %}bg-green-100 text-green-800
+          {% elif message.tags == 'error' %}bg-red-100 text-red-800
+          {% else %}bg-gray-100 text-gray-800{% endif %}">
+          {{ message }}
+        </div>
+      {% endfor %}
+    </div>
+  {% endif %}
 
   <!-- HEADER -->
   <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-3">
     <h1 class="text-xl sm:text-2xl font-bold text-{{ student.school.theme_color }}-600">
       Student Finance Dashboard
     </h1>
-
     <span class="text-xs sm:text-sm text-gray-500">
       {{ student.school_class.name }} · {{ current_session }} · 
       {% for term_val, term_name in terms %}
-        {% if term_val|stringformat:"s" == current_term|stringformat:"s" %}
-          {{ term_name }}
-        {% endif %}
+        {% if term_val|stringformat:"s" == current_term|stringformat:"s" %}{{ term_name }}{% endif %}
       {% endfor %}
     </span>
   </div>
 
   <!-- FILTER DROPDOWNS -->
   <div class="flex flex-col sm:flex-row gap-3 sm:gap-4">
-    <select id="class-select"
-            class="w-full sm:w-auto border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+    <select id="class-select" class="w-full sm:w-auto border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
       {% for cls in classes %}
-        <option value="{{ cls.id }}" {% if cls.id == current_class_id %}selected{% endif %}>
-          {{ cls.name }}
-        </option>
+        <option value="{{ cls.id }}" {% if cls.id == current_class_id %}selected{% endif %}>{{ cls.name }}</option>
       {% endfor %}
     </select>
-
-    <select id="session-select"
-            class="w-full sm:w-auto border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+    <select id="session-select" class="w-full sm:w-auto border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
       {% for ses in sessions %}
-        <option value="{{ ses }}" {% if ses == current_session %}selected{% endif %}>
-          {{ ses }}
-        </option>
+        <option value="{{ ses }}" {% if ses == current_session %}selected{% endif %}>{{ ses }}</option>
       {% endfor %}
     </select>
-
-    <select id="term-select"
-            class="w-full sm:w-auto border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+    <select id="term-select" class="w-full sm:w-auto border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
       {% for term_val, term_name in terms %}
         <option value="{{ term_val }}" {% if term_val|stringformat:"s" == current_term|stringformat:"s" %}selected{% endif %}>
           {{ term_name }}
@@ -53,133 +56,43 @@
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
     <div class="bg-white rounded-lg shadow p-4">
       <p class="text-sm text-gray-500">Total Invoiced</p>
-      <p class="text-xl sm:text-2xl font-bold">
-        ₦{{ total_invoiced|floatformat:2 }}
-      </p>
+      <p class="text-xl sm:text-2xl font-bold">₦{{ total_invoiced|floatformat:2 }}</p>
     </div>
-
     <div class="bg-white rounded-lg shadow p-4">
       <p class="text-sm text-gray-500">Total Paid</p>
-      <p class="text-xl sm:text-2xl font-bold text-green-600">
-        ₦{{ total_paid|floatformat:2 }}
-      </p>
+      <p class="text-xl sm:text-2xl font-bold text-green-600">₦{{ total_paid|floatformat:2 }}</p>
     </div>
-
     <div class="bg-white rounded-lg shadow p-4">
       <p class="text-sm text-gray-500">Outstanding Balance</p>
-      <p class="text-xl sm:text-2xl font-bold text-red-600">
-        ₦{{ outstanding|floatformat:2 }}
-      </p>
+      <p class="text-xl sm:text-2xl font-bold text-red-600">₦{{ outstanding|floatformat:2 }}</p>
     </div>
   </div>
-
-  <!-- INVOICES -->
-  <div class="bg-white rounded-lg shadow p-4 space-y-3">
-    <h3 class="font-semibold text-base">My Invoices</h3>
-
-    <div class="overflow-x-auto">
-      <table class="min-w-full text-sm border-collapse">
-        <thead class="bg-gray-100 text-gray-600">
-          <tr>
-            <th class="p-2 text-left">Title</th>
-            <th class="p-2 text-left">Amount</th>
-            <th class="p-2 text-left">Paid</th>
-            <th class="p-2 text-left">Status</th>
-            <th class="p-2"></th>
-          </tr>
-        </thead>
-        <tbody>
-          {% for inv in invoices %}
-          <tr class="border-t hover:bg-gray-50">
-            <td class="p-2">{{ inv.title }}</td>
-            <td class="p-2">₦{{ inv.total_amount|floatformat:2 }}</td>
-            <td class="p-2">₦{{ inv.amount_paid|floatformat:2 }}</td>
-            <td class="p-2">
-              {% if inv.amount_paid >= inv.total_amount %}
-                <span class="text-green-600 font-semibold">Paid</span>
-              {% elif inv.amount_paid > 0 %}
-                <span class="text-yellow-600 font-semibold">Partial</span>
-              {% else %}
-                <span class="text-red-600 font-semibold">Unpaid</span>
-              {% endif %}
-            </td>
-            <td class="p-2 text-right">
-              <a href="{% url 'finance:invoice_detail' inv.id %}"
-                 class="text-indigo-600 font-semibold hover:underline">
-                View
-              </a>
-            </td>
-          </tr>
-          {% empty %}
-          <tr>
-            <td colspan="5" class="p-4 text-center text-gray-500">
-              No invoices found for this session/term/class
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-  </div>
-
- <div class="max-w-6xl mx-auto px-4 sm:px-6 py-6 space-y-8">
 
   <!-- OVERALL PAYMENT PROGRESS -->
   <div class="bg-white rounded-lg shadow p-4 flex flex-col sm:flex-row items-center gap-6">
-    <div class="relative w-28 h-28">
-      <div
-        class="w-full h-full rounded-full"
-        style="background:
-          conic-gradient(
-            #16a34a {% widthratio total_paid total_invoiced 100 %}%,
-            #e5e7eb 0
-          );">
+    <div class="relative w-28 h-28" id="overallProgress" data-total="{{ total_invoiced }}" data-paid="{{ total_paid }}">
+      <div class="w-full h-full rounded-full" id="overallProgressCircle"
+           style="background: conic-gradient(#16a34a {% widthratio total_paid total_invoiced 100 %}%, #e5e7eb 0);">
       </div>
       <div class="absolute inset-3 bg-white rounded-full flex items-center justify-center">
-        <span class="text-lg font-bold">
-          {% widthratio total_paid total_invoiced 100 %}%
-        </span>
+        <span class="text-lg font-bold" id="overallProgressPercent">{% widthratio total_paid total_invoiced 100 %}%</span>
       </div>
     </div>
-
     <div class="text-center sm:text-left space-y-1">
       <p class="text-sm text-gray-500">Overall Payment Progress</p>
       <p class="font-semibold text-lg">
-        ₦{{ total_paid|floatformat:2 }}
-        <span class="text-gray-500 font-normal">
-          of ₦{{ total_invoiced|floatformat:2 }}
-        </span>
+        ₦<span id="overallPaid">{{ total_paid|floatformat:2 }}</span>
+        <span class="text-gray-500 font-normal">of ₦{{ total_invoiced|floatformat:2 }}</span>
       </p>
-      <p class="text-xs text-gray-500">
-        Covers all invoices for selected class, session & term
-      </p>
+      <p class="text-xs text-gray-500">Covers all invoices for selected class, session & term</p>
     </div>
   </div>
 
-  <!-- SUMMARY CARDS -->
-  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-    <div class="bg-white p-4 rounded-lg shadow">
-      <p class="text-sm text-gray-500">Total Invoiced</p>
-      <p class="text-xl font-bold">₦{{ total_invoiced|floatformat:2 }}</p>
-    </div>
+  <!-- INVOICES MOBILE CARDS & DESKTOP TABLE -->
+  <div id="invoiceContainer" class="space-y-4">
 
-    <div class="bg-white p-4 rounded-lg shadow">
-      <p class="text-sm text-gray-500">Total Paid</p>
-      <p class="text-xl font-bold text-green-600">₦{{ total_paid|floatformat:2 }}</p>
-    </div>
-
-    <div class="bg-white p-4 rounded-lg shadow">
-      <p class="text-sm text-gray-500">Outstanding Balance</p>
-      <p class="text-xl font-bold text-red-600">₦{{ outstanding|floatformat:2 }}</p>
-    </div>
-  </div>
-
-  <!-- INVOICES -->
-  <div class="bg-white rounded-lg shadow p-4">
-    <h3 class="font-semibold mb-4">My Invoices</h3>
-
-    <!-- MOBILE: CARD VIEW -->
-    <div class="space-y-4 md:hidden">
+    <!-- MOBILE -->
+    <div class="md:hidden">
       {% for inv in invoices %}
       <div class="border rounded-lg p-4 space-y-3">
         <div class="flex justify-between items-center">
@@ -192,56 +105,46 @@
             <span class="text-red-600 text-xs font-semibold">Unpaid</span>
           {% endif %}
         </div>
-
         <div class="text-sm text-gray-600 space-y-1">
           <p><span class="font-medium">Amount:</span> ₦{{ inv.total_amount|floatformat:2 }}</p>
           <p><span class="font-medium">Paid:</span> ₦{{ inv.amount_paid|floatformat:2 }}</p>
         </div>
 
-        <!-- PROGRESS BAR -->
-        <div class="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
-          <div
-            class="h-2 rounded-full
-              {% if inv.amount_paid >= inv.total_amount %}
-                bg-green-600
-              {% elif inv.amount_paid > 0 %}
-                bg-yellow-500
-              {% else %}
-                bg-red-500
-              {% endif %}"
-            style="width: {% widthratio inv.amount_paid inv.total_amount 100 %}%;">
+        <!-- Mobile progress circle -->
+        <div class="relative w-20 h-20 mx-auto invoice-progress" 
+             data-invoice-id="{{ inv.id }}" 
+             data-total="{{ inv.total_amount }}" 
+             data-paid="{{ inv.amount_paid }}">
+          <div class="w-full h-full rounded-full"
+               style="background: conic-gradient(#16a34a {% widthratio inv.amount_paid inv.total_amount 100 %}%, #e5e7eb 0);">
+          </div>
+          <div class="absolute inset-3 bg-white rounded-full flex items-center justify-center">
+            <span class="text-sm font-bold progress-percent">{% widthratio inv.amount_paid inv.total_amount 100 %}%</span>
           </div>
         </div>
 
-        <!-- ACTION BUTTONS -->
         <div class="grid grid-cols-2 gap-3 pt-2">
-          <a href="{% url 'finance:invoice_detail' inv.id %}"
-             class="text-center border border-indigo-600 text-indigo-600 py-2 rounded-md font-semibold text-sm">
-            View
-          </a>
-
+          <a href="{% url 'finance:invoice_detail' inv.id %}" class="text-center border border-indigo-600 text-indigo-600 py-2 rounded-md font-semibold text-sm">View</a>
           {% if inv.amount_paid < inv.total_amount %}
-          <a href="{% url 'finance:invoice_detail' inv.id %}"
-             class="text-center bg-green-600 text-white py-2 rounded-md font-semibold text-sm">
+          <button class="pay-now-btn bg-green-600 text-white py-2 rounded-md font-semibold text-sm"
+                  data-invoice-id="{{ inv.id }}"
+                  data-outstanding="{{ inv.total_amount|floatformat:2|add:"-"|add:inv.amount_paid|floatformat:2 }}">
             Pay Now
-          </a>
+          </button>
           {% else %}
-          <button disabled
-                  class="bg-gray-200 text-gray-500 py-2 rounded-md font-semibold text-sm cursor-not-allowed">
+          <button disabled class="bg-gray-200 text-gray-500 py-2 rounded-md font-semibold text-sm cursor-not-allowed">
             Fully Paid
           </button>
           {% endif %}
         </div>
       </div>
       {% empty %}
-        <div class="text-center text-gray-500 text-sm py-6">
-          No invoices found
-        </div>
+        <div class="text-center text-gray-500 text-sm py-6">No invoices found</div>
       {% endfor %}
     </div>
 
-    <!-- DESKTOP: TABLE VIEW -->
-    <div class="hidden md:block overflow-x-auto">
+    <!-- DESKTOP -->
+    <div class="hidden md:block overflow-x-auto bg-white rounded-lg shadow p-4">
       <table class="w-full text-sm">
         <thead class="bg-gray-100">
           <tr>
@@ -268,10 +171,19 @@
               {% endif %}
             </td>
             <td class="p-2 text-right">
-              <a href="{% url 'finance:invoice_detail' inv.id %}"
-                 class="text-indigo-600 font-semibold hover:underline">
-                View
-              </a>
+              <a href="{% url 'finance:invoice_detail' inv.id %}" class="text-indigo-600 font-semibold hover:underline mr-2">View</a>
+              {% if inv.amount_paid < inv.total_amount %}
+              <button class="pay-now-btn bg-green-600 text-white py-1 px-3 rounded-md font-semibold text-sm hover:bg-green-700"
+                      data-invoice-id="{{ inv.id }}"
+                      data-total="{{ inv.total_amount }}"
+                      data-paid="{{ inv.amount_paid }}">
+                Pay Now
+              </button>
+              {% else %}
+              <button disabled class="bg-gray-200 text-gray-500 py-1 px-3 rounded-md font-semibold text-sm cursor-not-allowed">
+                Fully Paid
+              </button>
+              {% endif %}
             </td>
           </tr>
           {% endfor %}
@@ -280,7 +192,7 @@
     </div>
   </div>
 
-  <!-- PAYMENTS -->
+  <!-- PAYMENTS SECTION -->
   <div class="bg-white rounded-lg shadow p-4">
     <h3 class="font-semibold mb-4">My Payments</h3>
 
@@ -292,21 +204,22 @@
           <span class="font-semibold">₦{{ pay.amount|floatformat:2 }}</span>
           <span class="text-xs text-gray-500">{{ pay.payment_date }}</span>
         </div>
+        <p class="text-sm text-gray-600">Method: <span class="font-medium">{{ pay.payment_method|capfirst }}</span></p>
+        <a href="{% url 'finance:payment_receipt' pay.id %}" download
+   class="block w-full text-center bg-indigo-600 text-white py-2 rounded-md font-semibold text-sm mb-2">
+  School Receipt (PDF)
+</a>
 
-        <p class="text-sm text-gray-600">
-          Method: <span class="font-medium">{{ pay.payment_method|capfirst }}</span>
-        </p>
-
-        <a href="{% url 'finance:payment_receipt' pay.id %}"
-           download
-           class="block w-full text-center bg-indigo-600 text-white py-2 rounded-md font-semibold text-sm">
-          Download PDF Receipt
-        </a>
+{% if pay.paystack_receipt_url %}
+<a href="{{ pay.paystack_receipt_url }}"
+   target="_blank"
+   class="block w-full text-center bg-green-600 text-white py-2 rounded-md font-semibold text-sm">
+  Paystack Receipt
+</a>
+{% endif %}
       </div>
       {% empty %}
-        <div class="text-center text-gray-500 text-sm py-6">
-          No payments yet
-        </div>
+      <div class="text-center text-gray-500 text-sm py-6">No payments yet</div>
       {% endfor %}
     </div>
 
@@ -327,39 +240,172 @@
             <td class="p-2">{{ pay.payment_date }}</td>
             <td class="p-2">₦{{ pay.amount|floatformat:2 }}</td>
             <td class="p-2">{{ pay.payment_method|capfirst }}</td>
-            <td class="p-2">
-              <a href="{% url 'finance:payment_receipt' pay.id %}"
-                 download
-                 class="text-indigo-600 font-semibold hover:underline">
-                Download PDF
-              </a>
-            </td>
+            <td class="p-2 space-x-3">
+  <!-- School Receipt -->
+  <a href="{% url 'finance:payment_receipt' pay.id %}" download
+     class="text-indigo-600 font-semibold hover:underline">
+    School Receipt
+  </a>
+
+  <!-- Paystack Receipt -->
+  {% if pay.paystack_receipt_url %}
+    <a href="{{ pay.paystack_receipt_url }}"
+       target="_blank"
+       class="text-green-600 font-semibold hover:underline">
+      Paystack Receipt
+    </a>
+  {% endif %}
+</td>
+
           </tr>
           {% endfor %}
         </tbody>
       </table>
     </div>
   </div>
-
 </div>
 
+<!-- PAY NOW MODAL -->
+<div id="payModal" class="fixed inset-0 bg-black bg-opacity-40 hidden items-center justify-center z-50">
+  <div class="bg-white rounded-lg p-6 w-80 space-y-4">
+    <h3 class="font-semibold text-lg">Pay Invoice</h3>
+    <p>Outstanding: ₦<span id="modalOutstanding"></span></p>
 
-<!-- JAVASCRIPT FOR AUTO-LOAD -->
+    <form id="payForm" method="post" data-total="" data-invoice-id="">
+      {% csrf_token %}
+      <input type="number" name="amount" id="payAmount" min="1" step="0.01" required
+             class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+      <div class="flex justify-end gap-2 pt-2">
+        <button type="button" onclick="closeModal()" class="bg-gray-200 py-2 px-4 rounded-md">Cancel</button>
+        <button type="submit" class="bg-green-600 text-white py-2 px-4 rounded-md">Pay</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- JAVASCRIPT -->
 <script>
+  // FILTER DROPDOWNS
   const classSelect = document.getElementById('class-select');
   const sessionSelect = document.getElementById('session-select');
   const termSelect = document.getElementById('term-select');
 
   function reloadDashboard() {
-    const classId = classSelect.value;
-    const session = sessionSelect.value;
-    const term = termSelect.value;
-    const params = new URLSearchParams({class: classId, session: session, term: term});
+    const params = new URLSearchParams({
+      class: classSelect.value,
+      session: sessionSelect.value,
+      term: termSelect.value
+    });
     window.location.search = params.toString();
   }
 
   classSelect.addEventListener('change', reloadDashboard);
   sessionSelect.addEventListener('change', reloadDashboard);
   termSelect.addEventListener('change', reloadDashboard);
+
+  // PAY NOW MODAL
+  const payButtons = document.querySelectorAll('.pay-now-btn');
+  const payForm = document.getElementById('payForm');
+  const payAmountInput = document.getElementById('payAmount');
+  const modalOutstandingSpan = document.getElementById('modalOutstanding');
+
+  const overallProgressCircle = document.getElementById('overallProgressCircle');
+  const overallProgressPercent = document.getElementById('overallProgressPercent');
+  const overallPaid = document.getElementById('overallPaid');
+
+  let currentInvoiceProgress = null;
+  let invoiceData = {};
+
+  payButtons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const invoiceId = btn.dataset.invoiceId;
+      const total = parseFloat(btn.dataset.total);
+      const paid = parseFloat(btn.dataset.paid);
+      const outstanding = total - paid;
+
+      modalOutstandingSpan.innerText = outstanding.toFixed(2);
+      document.getElementById('payModal').classList.remove('hidden');
+
+      payForm.action = `/finance/pay_invoice/${invoiceId}/`;
+      payForm.dataset.total = total;
+      payForm.dataset.invoiceId = invoiceId;
+
+      payAmountInput.value = outstanding.toFixed(2);
+      payAmountInput.max = outstanding.toFixed(2);
+
+      // Get invoice progress circle
+      currentInvoiceProgress = document.querySelector(`.invoice-progress[data-invoice-id="${invoiceId}"]`);
+      invoiceData = { total, paid };
+    });
+  });
+
+  // Update progress as user types
+  payAmountInput.addEventListener('input', () => {
+    if (!currentInvoiceProgress) return;
+
+    let entered = parseFloat(payAmountInput.value) || 0;
+    let newPaid = invoiceData.paid + entered;
+    if (newPaid > invoiceData.total) newPaid = invoiceData.total;
+
+    const percent = (newPaid / invoiceData.total) * 100;
+
+    const circle = currentInvoiceProgress.querySelector('div:first-child');
+    const percentSpan = currentInvoiceProgress.querySelector('.progress-percent');
+
+    circle.style.background = `conic-gradient(#16a34a ${percent}%, #e5e7eb 0)`;
+    percentSpan.innerText = `${Math.round(percent)}%`;
+
+    // Update overall progress dynamically
+    const overallTotal = parseFloat(overallProgressCircle.parentElement.dataset.total);
+    const overallPaidSoFar = parseFloat(overallProgressCircle.parentElement.dataset.paid);
+    const newOverallPaid = overallPaidSoFar + entered;
+
+    const overallPercent = (newOverallPaid / overallTotal) * 100;
+    overallProgressCircle.style.background = `conic-gradient(#16a34a ${overallPercent}%, #e5e7eb 0)`;
+    overallProgressPercent.innerText = `${Math.round(overallPercent)}%`;
+    overallPaid.innerText = newOverallPaid.toFixed(2);
+  });
+
+  // PAY NOW FORM SUBMIT
+  payForm.addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const amount = parseFloat(payAmountInput.value);
+    const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+    if (!amount || amount <= 0) {
+      alert("Please enter a valid payment amount.");
+      return;
+    }
+
+    try {
+      const res = await fetch(payForm.action, {
+        method: 'POST',
+        headers: {
+          'X-CSRFToken': csrfToken,
+          'Accept': 'application/json',
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: new URLSearchParams({ amount })
+      });
+
+      const data = await res.json();
+
+      if (data.status === "success") {
+        document.getElementById('payModal').classList.add('hidden');
+        window.location.href = data.checkout_url;
+      } else {
+        alert(data.message);
+      }
+
+    } catch(err) {
+      console.error(err);
+      alert("Payment initiation failed. Check your Paystack keys and network.");
+    }
+  });
+
+  function closeModal() {
+    document.getElementById('payModal').classList.add('hidden');
+  }
 </script>
 {% endblock %}

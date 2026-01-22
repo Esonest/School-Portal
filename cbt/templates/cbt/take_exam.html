@@ -1,19 +1,7 @@
+{% extends "accounts/exam_base.html" %}
 {% load static %}
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>{{ exam.subject.name }} - Question {{ current_question_number }}</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body
-  class="bg-slate-100 min-h-screen flex justify-center px-2 sm:px-4 py-3 sm:py-6"
-  data-exam-id="{{ exam.id }}"
-  data-question-number="{{ current_question_number }}"
-  data-total-questions="{{ total_questions }}"
-  data-student-id="{{ request.user.id }}"
->
+{% block content %}
+
 
   <!-- MAIN CARD -->
   <div class="w-full max-w-3xl bg-white rounded-xl sm:rounded-2xl shadow-lg sm:shadow-xl
@@ -65,39 +53,48 @@
         </span>
       </div>
     </div>
+<!-- QUESTION -->
+{% if question_data.text %}
+  <p class="question-text text-base sm:text-lg text-gray-800 mb-3">
+    {{ question_data.text }}
+  </p>
+{% endif %}
 
-    <!-- QUESTION -->
-    <div class="mb-5 sm:mb-6">
-      <p class="text-sm sm:text-base md:text-lg font-medium text-gray-800
-                leading-relaxed">
-        {{ question.text }}
-      </p>
-    </div>
+{% if question_data.equation %}
+  <div class="question-equation text-lg sm:text-xl mt-2">
+    {{ question_data.equation }} 
+  </div>
+{% endif %}
 
-    <!-- OPTIONS -->
-    <form id="exam-form" method="post" class="space-y-4">
-      {% csrf_token %}
+<!-- OPTIONS -->
+<form id="exam-form" method="post" class="mt-6 space-y-3">
+  {% csrf_token %}
 
-      <div class="space-y-3">
-        {% for label, text in options %}
-        <label
-          class="flex gap-3 p-4 rounded-xl border border-gray-200
-                 cursor-pointer transition
-                 hover:bg-blue-50 hover:border-blue-300
-                 peer-checked:bg-blue-100 peer-checked:border-blue-400">
+  {% for opt in options %}
+    <label
+      class="option-label flex gap-3 p-3 rounded-lg border cursor-pointer
+             hover:bg-blue-50 transition">
 
-          <input type="radio"
-                 name="answer"
-                 value="{{ label }}"
-                 class="peer mt-1 h-5 w-5 text-blue-600 focus:ring-blue-500"
-                 {% if selected_answer == label %}checked{% endif %}>
+      <input type="radio"
+             name="answer"
+             value="{{ opt.label }}"
+             {% if selected_answer == opt.label %}checked{% endif %}>
 
-          <span class="text-sm sm:text-base text-gray-800">
-            <strong>{{ label }}.</strong> {{ text }}
-          </span>
-        </label>
-        {% endfor %}
-      </div>
+      <span class="option-text">
+        <strong class="mr-1">{{ opt.label }}.</strong>
+
+        {% if opt.equation %}
+           {{ opt.equation }}
+        {% else %}
+          {{ opt.text }}
+        {% endif %}
+      </span>
+    </label>
+  {% endfor %}
+
+
+
+
 
       <!-- NAVIGATION -->
       <div class="flex flex-col sm:flex-row gap-3 sm:justify-between mt-6">
@@ -131,6 +128,27 @@
         {% endif %}
       </div>
     </form>
+    
+
+    <div class="text-xl mt-4">
+  \( \sqrt{9} + \pi \)
+</div>
+
+
+<div class="text-xl mt-4">
+  $ \sqrt{9} + \pi $
+</div>
+
+
+    <pre>{{ question_equation }}</pre>
+    <pre>{{ question_equation|safe }}</pre>
+
+
+
+
+    <p class="mt-4">
+  Test: $ \sqrt{9} + \pi + \sin^{-1}(1) $
+</p>
 
     <!-- WARNING -->
     <div class="mt-6 flex gap-2 bg-yellow-50 border border-yellow-200
@@ -483,9 +501,6 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 </script>
 
-
-
-
 <style>
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(5px); }
@@ -498,10 +513,16 @@ document.addEventListener("DOMContentLoaded", () => {
 .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
 
 
+
+.question-text mjx-container {
+  margin: 0.4em 0;
+}
 </style>
 
-</body>
-</html>
+{% endblock %}
+
+
+
 
 
 

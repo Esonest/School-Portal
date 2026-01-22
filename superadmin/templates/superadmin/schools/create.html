@@ -72,6 +72,20 @@
             {{ form.principal_signature }}
         </div>
 
+        <!-- Paystack Keys -->
+        <div>
+            {{ form.paystack_public_key.label_tag }}
+            {{ form.paystack_public_key }}
+             <p class="text-xs text-gray-500 mt-1">
+                Enter the Paystack <strong>Secret Key</strong> for this school. Used for server-side verification. Keep this private.
+            </p>
+        </div>
+
+        <div>
+            {{ form.paystack_secret_key.label_tag }}
+            {{ form.paystack_secret_key }}
+        </div>
+
     </div>
 
     <button type="submit" class="mt-4 px-4 py-2 rounded bg-indigo-600 text-white">
@@ -95,12 +109,12 @@
         // Name
         namePreview.textContent = nameInput.value || "School Name";
 
-        // Color (UNCHANGED)
+        // Color
         const color = colorSelect.value || "indigo";
         namePreview.className = `text-2xl font-bold text-${color}-600`;
     }
 
-    // ✅ Live logo preview for file upload
+    // Logo preview
     logoInput.addEventListener("change", function () {
         if (this.files && this.files[0]) {
             const reader = new FileReader();

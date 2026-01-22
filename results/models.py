@@ -6,6 +6,7 @@ from accounts.models import School, Teacher
 import secrets
 
 
+
 # -------------------------
 # SUBJECT MODEL
 # -------------------------
@@ -112,6 +113,7 @@ class Score(models.Model):
 
     student = models.ForeignKey(Student, on_delete=models.CASCADE, related_name="scores")
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE, related_name='scores')
+    school_class = models.ForeignKey(SchoolClass, on_delete=models.CASCADE, null=True,blank=True)
     ca = models.FloatField(default=0)
     exam = models.FloatField(default=0)
     session = models.CharField(max_length=20)
@@ -250,6 +252,7 @@ class ResultComment(models.Model):
     school = models.ForeignKey(School, on_delete=models.CASCADE, default='', related_name='result_comments')
     term = models.CharField(max_length=5)
     session = models.CharField(max_length=20)
+    is_locked = models.BooleanField(default=False)
     principal_comment = models.TextField()
     teacher_comment = models.TextField()
     date_created = models.DateTimeField(auto_now_add=True)
@@ -289,4 +292,6 @@ class SchoolGradeComment(models.Model):
 
     def __str__(self):
         return f"{self.school.name} - {self.grade} - {self.comment_type}"
+
+
 

@@ -66,6 +66,9 @@ SESSION_LIST = [
     "2029/2030",  
 ]
 
+# Convert to choices for Django
+SESSION_CHOICES = [(s, s) for s in SESSION_LIST]
+
 
 import secrets
 from django.contrib.auth import get_user_model
@@ -201,3 +204,74 @@ def save_qr_to_student(student, token):
     img.save(buffer, format="PNG")
     file_name = f"{student.admission_no}_verification_qr.png"
     student.qr_code.save(file_name, ContentFile(buffer.getvalue()), save=True)
+
+
+
+
+import re
+
+LATEX_DETECT = re.compile(
+    r"(\\frac|\\sqrt|\\int|\\sum|\\log|\\exp|\\sin|\\cos|\\tan|\\lim|\\left|\\right|\^|_|\{|\})"
+)
+
+WRAP_MARKERS = ("\\(", "\\)", "\\[", "\\]", "$$")
+
+
+def normalize_latex(text: str) -> str:
+    """
+    Wrap raw LaTeX with \( ... \) if needed.
+    Safe against double-wrapping.
+    """
+    if not text:
+        return text
+
+    text = text.strip()
+
+    # Already wrapped
+    if any(m in text for m in WRAP_MARKERS):
+        return text
+
+    # Looks like LaTeX
+    if LATEX_DETECT.search(text):
+        return f"\\({text}\\)"
+
+    return text
+
+
+from bs4 import BeautifulSoup
+
+
+def normalize_latex_in_html(html: str) -> str:
+    """
+    Detect and wrap LaTeX expressions inside HTML safely.
+    """
+    if not html:
+        return html
+
+    soup = BeautifulSoup(html, "html.parser")
+
+    for node in soup.find_all(string=True):
+        original = node.strip()
+        if not original:
+            continue
+
+        normalized = normalize_latex(original)
+
+        if normalized != original:
+            node.replace_with(normalized)
+
+    return str(soup)
+
+
+
+def wrap_latex(text):
+    import re
+    # Match LaTeX patterns like x^2, \frac, etc., and wrap in $ if not already
+    def replacer(match):
+        s = match.group(0)
+        if s.startswith('$') and s.endswith('$'):
+            return s
+        return f"${s}$"
+    
+    # Very simple example: wrap anything with backslash or ^/_ in $
+    return re.sub(r'(\\[a-zA-Z]+|[a-zA-Z0-9]+[\^_][a-zA-Z0-9]+)', replacer, text)

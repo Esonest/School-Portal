@@ -24,9 +24,14 @@ class StudentCreateForm(forms.ModelForm):
         widget=forms.TextInput(attrs={"class": tailwind_input, "placeholder": "Username"})
     )
     password = forms.CharField(
-        required=True,
-        widget=forms.PasswordInput(attrs={"class": tailwind_input, "placeholder": "Password"})
+        required=True,  # or False for update form
+        widget=forms.PasswordInput(attrs={
+            "class": f"{tailwind_input} password-field",
+            "placeholder": "Password",
+            "id": "password_input",  # optional, useful for JS targeting
+        })
     )
+
 
     class Meta:
         model = Student
@@ -85,9 +90,14 @@ class StudentUpdateForm(forms.ModelForm):
         widget=forms.TextInput(attrs={"class": tailwind_input, "placeholder": "Username"})
     )
     password = forms.CharField(
-        required=False,
-        widget=forms.PasswordInput(attrs={"class": tailwind_input, "placeholder": "Password (leave blank to keep unchanged)"})
+        required=True,  # or False for update form
+        widget=forms.PasswordInput(attrs={
+            "class": f"{tailwind_input} password-field",
+            "placeholder": "Leave blank to remain unchanged",
+            "id": "password_input",  # optional, useful for JS targeting
+        })
     )
+
     first_name = forms.CharField(
         required=True,
         widget=forms.TextInput(attrs={"class": tailwind_input, "placeholder": "First name"})
@@ -250,6 +260,11 @@ class QuestionBankForm(forms.ModelForm):
         })
     )
 
+    # New LaTeX equation field
+    equation = forms.CharField(
+        required=False,
+        widget=forms.HiddenInput()  # will be populated by MathLive JS
+    )
     option_a = forms.CharField( required=False,widget=forms.TextInput(attrs={"class": "w-full border rounded-lg px-3 py-2"}))
     option_b = forms.CharField(required=False,widget=forms.TextInput(attrs={"class": "w-full border rounded-lg px-3 py-2"}))
     option_c = forms.CharField(required=False, widget=forms.TextInput(attrs={"class": "w-full border rounded-lg px-3 py-2"}))
@@ -263,14 +278,17 @@ class QuestionBankForm(forms.ModelForm):
 
     class Meta:
         model = QuestionBank
-        fields = ['text', 'option_a', 'option_b', 'option_c', 'option_d', 'correct_option', 'marks']
+        fields = ['text', 'equation', 'option_a', 'option_b', 'option_c', 'option_d', 'correct_option', 'marks']
 
     def has_changed(self):
         if not self.is_bound:
             return False
 
-        text_key = f"{self.prefix}-text"
-        return bool(self.data.get(text_key, "").strip())    
+        text = self.data.get(f"{self.prefix}-text", "").strip()
+        equation = self.data.get(f"{self.prefix}-equation", "").strip()
+
+        return bool(text or equation)
+    
 
 from django.forms import BaseModelFormSet
 
@@ -350,7 +368,6 @@ from django.db import transaction
 
 User = get_user_model()
 
-
 class TeacherForm(forms.ModelForm):
     username = forms.CharField()
     first_name = forms.CharField(required=False)
@@ -364,7 +381,8 @@ class TeacherForm(forms.ModelForm):
 
     password = forms.CharField(
         required=False,
-        widget=forms.PasswordInput
+        widget=forms.PasswordInput,
+        help_text="Leave blank to keep current password"
     )
 
     class Meta:
@@ -378,24 +396,15 @@ class TeacherForm(forms.ModelForm):
 
     def __init__(self, *args, **kwargs):
         self.is_edit = kwargs.pop("is_edit", False)
-        self.school = kwargs.pop("school", None)  # ✅ SINGLE SOURCE OF TRUTH
+        self.school = kwargs.pop("school", None)
         super().__init__(*args, **kwargs)
 
         if self.school:
-            # Lock school
-            self.fields["school"].queryset = (
-                self.fields["school"].queryset.filter(id=self.school.id)
-            )
+            self.fields["school"].queryset = self.fields["school"].queryset.filter(id=self.school.id)
             self.fields["school"].initial = self.school
             self.fields["school"].disabled = True
-
-            # Restrict to school data
-            self.fields["classes"].queryset = (
-                self.fields["classes"].queryset.filter(school=self.school)
-            )
-            self.fields["subjects"].queryset = (
-                self.fields["subjects"].queryset.filter(school=self.school)
-            )
+            self.fields["classes"].queryset = self.fields["classes"].queryset.filter(school=self.school)
+            self.fields["subjects"].queryset = self.fields["subjects"].queryset.filter(school=self.school)
 
         if self.is_edit and self.instance.pk:
             user = self.instance.user
@@ -405,17 +414,17 @@ class TeacherForm(forms.ModelForm):
             self.fields["email"].initial = user.email
             self.fields["phone"].initial = user.phone
             self.fields["address"].initial = user.address
-            self.fields["password"].widget = forms.HiddenInput()
+            # Password optional on edit
+            self.fields["password"].required = False
         else:
             self.fields["password"].required = True
 
-    # ---------------- SAVE LOGIC (CRITICAL PART) ----------------
     @transaction.atomic
     def save(self, commit=True):
         teacher = super().save(commit=False)
 
         if self.is_edit:
-            # -------- UPDATE USER --------
+            # Update existing user
             user = teacher.user
             user.username = self.cleaned_data["username"]
             user.first_name = self.cleaned_data["first_name"]
@@ -424,10 +433,13 @@ class TeacherForm(forms.ModelForm):
             user.phone = self.cleaned_data["phone"]
             user.address = self.cleaned_data["address"]
             user.school = self.school
+            # Only update password if a new one is provided
+            new_password = self.cleaned_data.get("password")
+            if new_password:
+                user.set_password(new_password)
             user.save()
-
         else:
-            # -------- CREATE USER --------
+            # Create new user
             user = User.objects.create_user(
                 username=self.cleaned_data["username"],
                 password=self.cleaned_data["password"],
@@ -441,7 +453,6 @@ class TeacherForm(forms.ModelForm):
             user.is_teacher = True
             user.school = self.school
             user.save()
-
             teacher.user = user
 
         teacher.school = self.school
@@ -451,6 +462,7 @@ class TeacherForm(forms.ModelForm):
             self.save_m2m()
 
         return teacher
+
 
 
 

@@ -183,7 +183,13 @@
         <textarea name="principal_comment" id="principal_comment" rows="3" class="w-full border rounded p-2">{{ principal_comment }}</textarea>
       </div>
     </div>
-
+     <!-- NEXT TERM INFORMATION -->
+<div class="mt-4 border border-black p-2 text-sm">
+  <p class="text-xl font-bold text-{{ school.theme_color }}-600">
+    <strong>Next Term Begins On:</strong>
+    <span class="ml-1">{{ next_term_begins|date:"l, jS F Y"|default:"________________" }}</span>
+  </p>
+</div>
     <!-- Submit -->
     <div class="mt-6 flex justify-end">
       <button type="submit" class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">

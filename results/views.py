@@ -5,6 +5,9 @@ import qrcode
 from io import BytesIO
 from .utils import portal_required, save_qr_to_student, generate_verification_qr
 from django.templatetags.static import static
+from finance.models import SchoolTermSetting
+from finance.utils import get_next_term_begins
+
 
 
 # Result portal for a student
@@ -239,6 +242,7 @@ def bulk_score_entry(request, school_id):
                         session=selected_session,
                         term=selected_term,
                         school=school,
+                        school_class=selected_class, 
                         defaults={'ca': 0, 'exam': 0}
                     )
 
@@ -302,6 +306,7 @@ def bulk_score_entry(request, school_id):
                     session=selected_session,
                     term=selected_term,
                     school=school,
+                    school_class=selected_class,
                     defaults={'ca': ca_val, 'exam': exam_val}
                 )
                 if not created:
@@ -1515,6 +1520,12 @@ def verify_result(request, admission_no):
 
     student = get_object_or_404(Student, admission_no=admission_no)
 
+    next_term_begins = get_next_term_begins(
+        school=school,
+        session=selected_session,
+        term=selected_term
+    )
+
     # ---------------------------
     # Determine session (fallback)
     # ---------------------------
@@ -1524,7 +1535,6 @@ def verify_result(request, admission_no):
             or getattr(student.school, "current_session", None)
             or "2024/2025"
         )
-    
 
     promotion = (
         PromotionHistory.objects
@@ -1650,14 +1660,6 @@ def verify_result(request, admission_no):
     })
 
     return render(request, "results/verify_result.html", context)
-
-
-
-
-
-   
-
-
 
 
 
@@ -1790,8 +1792,22 @@ def teacher_portal(request):
         score_qs = Score.objects.filter(**score_filters).select_related('subject')
 
     # PSYCHOMOTOR / AFFECTIVE
-    psy_qs = Psychomotor.objects.filter(student_id__in=student_ids)
-    aff_qs = Affective.objects.filter(student_id__in=student_ids)
+    psy_qs = Psychomotor.objects.filter(
+        student_id__in=student_ids,
+        session=session,
+        term=term
+    )
+
+    aff_qs = Affective.objects.filter(
+        student_id__in=student_ids,
+        session=session,
+        term=term
+    )
+    if not session or not term:
+        psy_qs = Psychomotor.objects.none()
+        aff_qs = Affective.objects.none()
+
+    
 
     psy_map = {p.student_id: p for p in psy_qs}
     aff_map = {a.student_id: a for a in aff_qs}
@@ -2330,7 +2346,7 @@ def student_portal(request):
 
     selected_session = request.GET.get("session")
 
-    # Default to student's own session if nothing selected
+    # Default to student's own session if nothing selected 
     if not selected_session:
         selected_session = student.session
 
@@ -2640,7 +2656,7 @@ from django.utils import timezone
 from .models import (
     Score, Psychomotor, Affective, ResultComment, ResultVerification, ClassSubjectTeacher
 )
-from .utils import SESSION_LIST, interpret_grade  # import SESSION_LIST
+from .utils import SESSION_LIST, interpret_grade
 
 def build_student_result_context(student, term, session, exam_class):
     """
@@ -2650,40 +2666,51 @@ def build_student_result_context(student, term, session, exam_class):
     if session not in SESSION_LIST:
         raise ValueError(f"Invalid session supplied: {session}")
     
-
-    promotion = (
-        PromotionHistory.objects
-       .filter(student=student, session__lte=session)
-       .order_by('-promoted_on')
-       .first()
+    # get the class student was in during this session
+    exam_class_id = (
+        Score.objects
+        .filter(student=student, term=term, session=session)
+        .values_list('school_class', flat=True)
+        .first()
     )
-    base_class_size = Student.objects.filter(school_class=exam_class).count()
-    exam_class = promotion.old_class if promotion else student.school_class
+    
+    if exam_class_id:
+        exam_class = SchoolClass.objects.filter(id=exam_class_id).first()
+    else:
+        exam_class = student.school_class
 
-    was_promoted_from_exam_class = PromotionHistory.objects.filter(
-        student=student,
-        old_class=exam_class,
-        session=session
-    ).exists()
-
-    class_size_at_session = (
-        base_class_size + 1 if was_promoted_from_exam_class else base_class_size
+    base_class_size = (
+        Score.objects
+        .filter(session=session, school_class=exam_class)
+        .values('student')
+        .distinct()
+        .count()
     )
+    
+    class_size_at_session = base_class_size
+
+
+
 
     scores_qs = Score.objects.filter(
         student=student,
         term=term,
-        session=session
+        session=session,
+        school_class=exam_class
     ).select_related("subject", "school")
 
     school = student.school
+
+    next_term_begins = get_next_term_begins(
+        school=school,
+        session=session,
+        term=term
+    )
+
+
     scores = []
     overall_total = 0
 
-    cst_qs = ClassSubjectTeacher.objects.filter(
-        school_class=student.school_class,
-        subject__in=[s.subject for s in scores_qs]
-    ).select_related("teacher__user")
     cst_map = {
         cst.subject_id: cst
         for cst in ClassSubjectTeacher.objects.filter(
@@ -2706,7 +2733,7 @@ def build_student_result_context(student, term, session, exam_class):
             subject_id=sub_id,
             term=term,
             session=session,
-            student__school_class=student.school_class
+            school_class=exam_class
         )
         total_scores = [(cs.ca or 0) + (cs.exam or 0) for cs in class_scores]
         class_avg_map[sub_id] = sum(total_scores) / len(total_scores) if total_scores else 0
@@ -2746,12 +2773,12 @@ def build_student_result_context(student, term, session, exam_class):
     class_qs = Score.objects.filter(
         term=term,
         session=session,
-        student__school_class=student.school_class
+        school_class=exam_class
     ).values("student").annotate(total=Sum(F("ca") + F("exam")))
 
     ranking = sorted(class_qs, key=lambda x: x["total"] or 0, reverse=True)
     position = next((i for i, r in enumerate(ranking, start=1) if r["student"] == student.id), None)
-    class_size = len(ranking)
+
 
     psychomotor = Psychomotor.objects.filter(
         student=student, term=term, session=session
@@ -2765,26 +2792,42 @@ def build_student_result_context(student, term, session, exam_class):
         student=student, term=term, session=session
     ).first()
 
-    if not result_comment:
-        final_grade = grade_from_score(avg)
+    final_grade = grade_from_score_dynamic(avg, school)
+
+    if not result_comment or not result_comment.is_locked:
         principal_comment = get_random_comment(
-            student.school, student, final_grade, term, session, "principal"
-        )
-        teacher_comment = get_random_comment(
-            student.school, student, final_grade, term, session, "teacher"
+            school=school,
+            student=student,
+            grade=final_grade,
+            term=term,
+            session=session,
+            comment_type="principal",
         )
 
-        result_comment = ResultComment.objects.create(
+        teacher_comment = get_random_comment(
+            school=school,
             student=student,
-            school=student.school,
-            session=session,
+            grade=final_grade,
             term=term,
-            principal_comment=principal_comment,
-            teacher_comment=teacher_comment
+            session=session,
+            comment_type="teacher",
+        )
+
+        ResultComment.objects.update_or_create(
+            student=student,
+            term=term,
+            session=session,
+            defaults={
+                "school": school,
+                "principal_comment": principal_comment,
+                "teacher_comment": teacher_comment,
+                "is_locked": False,
+            }
         )
     else:
         principal_comment = result_comment.principal_comment
         teacher_comment = result_comment.teacher_comment
+
 
     # Safely get a verification object
 
@@ -2829,14 +2872,23 @@ def build_student_result_context(student, term, session, exam_class):
         "student": student,
         "school": school,
         "scores": scores,
+        "next_term_begins": next_term_begins,
         "overall_total": overall_total,
         "avg": avg,
         "position": position,
         "class_size": class_size_at_session,
         "best_subject": best_subject,
         "least_subject": least_subject,
-        "psychomotor": psychomotor,
-        "affective": affective,
+        "psychomotor": (
+            {f: getattr(psychomotor, f, 0) for f in
+            ["neatness", "agility", "handwriting", "sports", "creativity"]}
+            if psychomotor else None
+        ),
+        "affective": (
+            {f: getattr(affective, f, 0) for f in
+            ["punctuality", "cooperation", "behavior", "attentiveness", "perseverance"]}
+            if affective else None
+        ),
         "principal_comment": principal_comment,
         "teacher_comment": teacher_comment,
         "qr_data_uri": qr_data_uri,
@@ -2852,40 +2904,57 @@ def build_student_result_context(student, term, session, exam_class):
 
 
 
-
 @login_required
 def student_view_result(request, result_id):
     user = request.user
-    student = getattr(user, "student_profile", None)
-    if not student:
-        raise Http404("Student profile not found.")
 
+    # 🔹 Fetch the score and the associated student
+    rep = get_object_or_404(Score.objects.select_related("student"), id=result_id)
+    student = rep.student
+
+    # 🔹 Role-based access
+    if user.is_student_user:
+        # Students can only view their own result
+        if student.id != getattr(user, "student_profile", None).id:
+            raise Http404("Not allowed.")
+    elif user.is_schooladmin or user.is_superadmin:
+        # School admins and superadmins can view any result
+        pass
+    else:
+        # Other roles (teacher, accountant, etc.) are blocked
+        return render(request, "results/student_result_error.html", {
+            "message": "You are not allowed to view this result."
+        })
+
+    # 🔹 Block access if result is restricted
     if getattr(student, "is_result_blocked", False):
         return render(request, "results/result_blocked.html", {
             "student": student,
             "reason": student.block_reason or "Your result access has been restricted."
         })
-    
-    rep = get_object_or_404(Score.objects.select_related("student"), id=result_id)
-    if rep.student_id != student.id:
-        raise Http404("Not allowed.")
 
+    # 🔹 Determine session & term
     selected_session = request.GET.get("session") or rep.session
     if selected_session not in SESSION_LIST:
         selected_session = rep.session
     selected_term = rep.term    
-    
+
+    # 🔹 Determine class via promotion history
     promotion = (
         PromotionHistory.objects
-       .filter(student=student, session__lte=selected_session)
-       .order_by('-promoted_on')
-       .first()
+        .filter(student=student, session__lte=selected_session)
+        .order_by('-promoted_on')
+        .first()
     )
-
     exam_class = promotion.old_class if promotion else student.school_class
 
-
-    context = build_student_result_context(student, term=selected_term,session=selected_session, exam_class=exam_class)
+    # 🔹 Build result context
+    context = build_student_result_context(
+        student,
+        term=selected_term,
+        session=selected_session,
+        exam_class=exam_class
+    )
     context.update({
         "term": selected_term,
         "session": selected_session,
@@ -2893,6 +2962,7 @@ def student_view_result(request, result_id):
     })
 
     return render(request, "results/student_result.html", context)
+
 
 
 
@@ -3013,11 +3083,19 @@ from students.models import PromotionHistory
 
 
 def build_cumulative_result_context(student, session=None):
+# ---------- USE SESSION_LIST ----------
+    school = student.school
+    if not session:
+        raise ValueError("Session is required")
 
-    # ---------- USE SESSION_LIST ----------
+    session = str(session).strip()   # 🔑 IMPORTANT
+
     if session not in SESSION_LIST:
-        session = SESSION_LIST[-1]
+        raise ValueError(f"Invalid session: {session}")
+
     current_session = session
+    
+    print("USING SESSION:", repr(current_session))
 
 
     terms = ["First", "Second", "Third"]
@@ -3044,33 +3122,67 @@ def build_cumulative_result_context(student, session=None):
     }
 
 
-    promotion = (
-        PromotionHistory.objects
-       .filter(student=student, session__lte=current_session)
-       .order_by('-promoted_on')
-       .first()
-    )
+    promotion_history = student.promotion_records.filter(
+        session=current_session
+    ).order_by('-promoted_on')
 
-    exam_class = promotion.old_class if promotion else student.school_class
-
-    base_class_size = Student.objects.filter(school_class=exam_class).count()
-
-    was_promoted_from_exam_class = PromotionHistory.objects.filter(
+    has_any_scores = Score.objects.filter(
         student=student,
-        old_class=exam_class,
         session=current_session
     ).exists()
 
-    class_size_at_session = (
-        base_class_size + 1 if was_promoted_from_exam_class else base_class_size
-    )
-
-    promotion_history = student.promotion_records.order_by('-promoted_on')
+    if not has_any_scores:
+        # Return EMPTY cumulative result
+        return {
+            "student": student,
+            "school": student.school,
+            "subjects": {},
+            "terms": terms,
+            "overall_total": 0,
+            "avg_total": 0,
+            "overall_avg_grade": "",
+            "best_subject": None,
+            "weak_subject": None,
+            "position": None,
+            "class_size": 0,
+            "principal_comment": "",
+            "teacher_comment": "",
+            "qr_data_uri": None,
+            "principal_signature_url": None,
+            "student_photo_url": student.photo.url if student.photo else None,
+            "school_logo_url": student.school.logo.url if student.school.logo else None,
+            "date_issued": timezone.localdate(),
+            "selected_session": current_session,
+            "show_ca": False,
+            "promotion_history": promotion_history,
+            "exam_class": student.school_class,
+            "is_cumulative": True,
+        }
 
     # ---------- COLLECT TERM RESULTS ----------
+    last_term_context = None
+    exam_class = None
+    class_size_at_session = 0
+    position = None
+
     for term in terms:
         term_code = TERM_MAP[term]
-        term_context = build_student_result_context(student, term_code,session,exam_class)
+
+        term_context = build_student_result_context( 
+            student,
+            term_code,
+            current_session,
+            None   # let the function resolve class by session
+        )
+
+        # ✅ THIS IS WHERE IT GOES
+        if term_context.get("scores"):
+            last_term_context = term_context
+            exam_class = term_context["exam_class"]
+            class_size_at_session = term_context["class_size"]
+            position = term_context["position"]
+
+  
 
         for s in term_context.get("scores", []):
             subj_name = s["subject"]
@@ -3088,25 +3200,28 @@ def build_cumulative_result_context(student, session=None):
         overall_total += sum(s["total"] for s in term_context.get("scores", []))
         total_subject_count += len(term_context.get("scores", []))
 
+
         if term_context.get("psychomotor"):
             pm = term_context["psychomotor"]
             psychomotor = {
-                "neatness": pm.neatness,
-                "agility": pm.agility,
-                "creativity": pm.creativity,
-                "sports": pm.sports,
-                "handwriting": pm.handwriting,
+                "neatness": pm.get("neatness", 0),
+                "agility": pm.get("agility", 0),
+                "creativity": pm.get("creativity", 0),
+                "sports": pm.get("sports", 0),
+                "handwriting": pm.get("handwriting", 0),
             }
+
 
         if term_context.get("affective"):
             af = term_context["affective"]
             affective = {
-                "punctuality": af.punctuality,
-                "cooperation": af.cooperation,
-                "behavior": af.behavior,
-                "attentiveness": af.attentiveness,
-                "perseverance": af.perseverance,
+                "punctuality": af.get("punctuality", 0),
+                "cooperation": af.get("cooperation", 0),
+                "behavior": af.get("behavior", 0),
+                "attentiveness": af.get("attentiveness", 0),
+                "perseverance": af.get("perseverance", 0),
             }
+
 
         collected_comments[term_code]["principal"] = term_context.get("principal_comment") or ""
         collected_comments[term_code]["teacher"] = term_context.get("teacher_comment") or ""
@@ -3121,33 +3236,63 @@ def build_cumulative_result_context(student, session=None):
     avg_total = overall_total / total_subject_count if total_subject_count else 0
     overall_avg_grade = grade_from_score_dynamic(avg_total, student.school)
 
+    result_comment = ResultComment.objects.filter(
+        student=student, term='CUMU', session=current_session
+    ).first()
+
+    final_grade = grade_from_score_dynamic(avg_total, school)
+
+    if not result_comment or not result_comment.is_locked:
+        principal_comment = get_random_comment(
+            school=school,
+            student=student,
+            grade=final_grade,
+            term='CUMU',
+            session=current_session,
+            comment_type='principal'
+        )
+        teacher_comment = get_random_comment(
+            school=school,
+            student=student,
+            grade=final_grade,
+            term='CUMU',
+            session=current_session,
+            comment_type='teacher'
+        )
+
+        ResultComment.objects.update_or_create(
+            student=student,
+            term='CUMU',
+            session=current_session,
+            defaults={
+                'school': school,
+                'principal_comment': principal_comment,
+                'teacher_comment': teacher_comment,
+                'is_locked': False
+            }
+        )
+    else:
+        principal_comment = result_comment.principal_comment
+        teacher_comment = result_comment.teacher_comment
+
+
+
     # ---------- BEST / WEAK SUBJECT ----------
     subject_averages = {k: v["Average"] for k, v in subject_map.items() if v["Average"] > 0}
     best_subject = max(subject_averages, key=subject_averages.get) if subject_averages else None
     weak_subject = min(subject_averages, key=subject_averages.get) if subject_averages else None
 
-    # ---------- CLASS POSITION ----------
-    class_totals = (
-        Score.objects
-        .filter(student__school_class=student.school_class, session=session)
-        .values("student")
-        .annotate(total=Sum(F("ca") + F("exam")))
+    
+
+
+    
+    next_term_begins = get_next_term_begins(
+        school=school,
+        session=session
     )
 
-    ranking = sorted(class_totals, key=lambda x: x["total"] or 0, reverse=True)
-    position = next((i for i, r in enumerate(ranking, 1) if r["student"] == student.id), None)
-    class_size = len(ranking)
-
     # ---------- COMMENTS ----------
-    def pick_comment(field):
-        return (
-            collected_comments["3"][field]
-            or collected_comments["2"][field]
-            or collected_comments["1"][field]
-        )
-
-    principal_comment = pick_comment("principal")
-    teacher_comment = pick_comment("teacher")
+    
 
     # ---------- QR VERIFICATION ----------
     # Safely get a verification object
@@ -3187,6 +3332,7 @@ def build_cumulative_result_context(student, session=None):
         "school": school,
         "subjects": dict(subject_map),
         "terms": terms,
+        "next_term_begins": next_term_begins,
         "psychomotor": psychomotor,
         "affective": affective,
         "overall_total": overall_total,
@@ -3216,11 +3362,22 @@ def build_cumulative_result_context(student, session=None):
 
 
 @login_required
-def student_cumulative_result(request):
+def student_cumulative_result(request, student_id=None):
     user = request.user
-    student = getattr(user, "student_profile", None)
-    if not student:
-        raise Http404("Student profile not found.")
+
+    # ---------- DETERMINE STUDENT BASED ON ROLE ----------
+    if student_id:
+        # Admins can specify student_id to view any student's cumulative result
+        if not (user.is_schooladmin or user.is_superadmin):
+            return render(request, "results/student_result_error.html", {
+                "message": "You are not allowed to view this result."
+            })
+        student = get_object_or_404(Student, id=student_id)
+    else:
+        # For students, get their own profile
+        student = getattr(user, "student_profile", None)
+        if not student:
+            raise Http404("Student profile not found.")
 
     # ---------- BACKEND BLOCK ENFORCEMENT ----------
     if getattr(student, "is_result_blocked", False):
@@ -3228,7 +3385,6 @@ def student_cumulative_result(request):
             "student": student,
             "reason": student.block_reason or "Your cumulative result access has been restricted."
         })
-    # -----------------------------------------------
 
     # ---------- SESSION HANDLING ----------
     system = SystemSetting.objects.first()
@@ -3246,6 +3402,7 @@ def student_cumulative_result(request):
     })
 
     return render(request, "results/student_cumulative_result.html", context)
+
 
 
 
@@ -3326,3 +3483,576 @@ def student_cumulative_result_download(request):
     response = HttpResponse(pdf_file.read(), content_type="application/pdf")
     response["Content-Disposition"] = f'attachment; filename="{filename}"'
     return response
+
+from django.urls import reverse
+from django.shortcuts import get_object_or_404, redirect, render
+
+@login_required
+def generate_class_results(request, school_id):
+    school = get_object_or_404(School, id=school_id)
+    classes = SchoolClass.objects.filter(school=school)
+
+    if request.method == "POST":
+        class_id = request.POST["class_id"]
+        term = request.POST["term"]
+        session = request.POST["session"]
+        result_type = request.POST.get("type", "term")  # term | cumulative
+
+        # 🔹 Build base URL for view_class_results
+        url = reverse(
+            "results:view_class_results",
+            kwargs={"school_id": school.id, "class_id": class_id}
+        )
+
+        # 🔹 Append query parameters (safe for strings like '2025/2026')
+        from urllib.parse import urlencode
+
+        query_params = urlencode({
+            "term": term,
+            "session": session,
+            "type": result_type
+        })
+
+        return redirect(f"{url}?{query_params}")
+
+    return render(request, "results/generate_class_results.html", {
+        "school": school,
+        "classes": classes,
+        "sessions": SESSION_LIST,
+    })
+
+@login_required
+def view_class_results(request, school_id, class_id):
+    school = get_object_or_404(School, id=school_id)
+    school_class = get_object_or_404(SchoolClass, id=class_id, school=school)
+
+    # 🔹 Get query params
+    term = request.GET.get("term")
+    session = request.GET.get("session")
+    result_type = request.GET.get("type", "term")
+
+    # 🔹 Validate params
+    if not session or session not in SESSION_LIST:
+        raise Http404("Invalid session")
+
+    if result_type not in ("term", "cumulative"):
+        raise Http404("Invalid result type")
+
+    if result_type == "term" and (not term or term not in ("1", "2", "3")):
+        raise Http404("Invalid term")
+
+    students = Student.objects.filter(
+        school=school,
+        school_class=school_class
+    )
+
+    results = []
+
+    for student in students:
+        try:
+            if result_type == "cumulative":
+                context = build_cumulative_result_context(student, session)
+            else:
+                context = build_student_result_context(
+                    student=student,
+                    term=term,
+                    session=session,
+                    exam_class=school_class
+                )
+        except Exception:
+            # 🔹 Skip student if profile not found
+            continue
+
+        results.append(context)
+
+    if not results:
+        raise Http404("No student results found for this class/session/term.")
+
+    return render(request, "results/class_results.html", {
+        "school": school,
+        "school_class": school_class,
+        "results": results,
+        "term": term,
+        "session": session,
+        "result_type": result_type,
+    })
+
+
+@login_required
+def download_class_results_pdf(request, school_id, class_id):
+    school = get_object_or_404(School, id=school_id)
+    school_class = get_object_or_404(SchoolClass, id=class_id, school=school)
+
+    term = request.GET.get("term")
+    session = request.GET.get("session")
+    result_type = request.GET.get("type", "term")
+
+    students = Student.objects.filter(
+        school=school,
+        school_class=school_class
+    ).select_related("user")
+
+    results = []
+
+    for student in students:
+        if result_type == "cumulative":
+            ctx = build_cumulative_result_context(student, session)
+        else:
+            ctx = build_student_result_context(student, term, session, school_class)
+
+        results.append(ctx)
+
+    # sort + position (important for PDF too)
+    results.sort(key=lambda x: x.get("overall_total", 0), reverse=True)
+    for i, r in enumerate(results, 1):
+        r["position"] = i
+        r["class_size"] = len(results)
+
+    template = (
+        "results/bulk_cumulative_pdf.html"
+        if result_type == "cumulative"
+        else "results/bulk_term_pdf.html"
+    )
+
+    return render_to_pdf(
+        template,
+        {
+            "school": school,
+            "school_class": school_class,
+            "results": results,
+            "term": term,
+            "session": session,
+        }
+    )
+
+@login_required
+def download_student_result_pdf(request, student_id):
+    student = get_object_or_404(Student, id=student_id)
+    school = student.school
+
+    term = request.GET.get("term")
+    session = request.GET.get("session")
+
+    # determine exam class correctly
+    promotion = (
+        PromotionHistory.objects
+        .filter(student=student, session__lte=session)
+        .order_by("-promoted_on")
+        .first()
+    )
+    exam_class = promotion.old_class if promotion else student.school_class
+
+    ctx = build_student_result_context(student, term, session, exam_class)
+
+    return render_to_pdf(
+        "results/single_term_pdf.html",
+        {
+            "school": school,
+            "result": ctx,
+            "term": term,
+            "session": session,
+        }
+    )
+
+
+from results.utils import SESSION_LIST
+@login_required
+def class_result_list(request, school_id, class_id):
+    school = request.user.school
+
+    if school.id != school_id:
+        raise Http404("Unauthorized access")
+
+    school_class = get_object_or_404(
+        SchoolClass,
+        id=class_id,
+        school=school
+    )
+
+    # ============================
+    # REQUIRED QUERY PARAMS
+    # ============================
+    session = request.GET.get("session")
+    term = request.GET.get("term")
+    result_type = request.GET.get("type", "term")  # term | cumulative
+
+    # 🔒 STRICT VALIDATION
+    if not session or session not in SESSION_LIST:
+        raise Http404("Invalid session")
+
+    if result_type not in ("term", "cumulative"):
+        raise Http404("Invalid result type")
+
+    if result_type == "term":
+        if not term or term not in ("1", "2", "3"):
+            raise Http404("Invalid term")
+
+    # ============================
+    # STUDENTS
+    # ============================
+    students = Student.objects.filter(
+        school=school,
+        school_class=school_class
+    ).select_related("user")
+
+    results = []
+
+    # ============================
+    # TERM RESULT
+    # ============================
+    if result_type == "term":
+        for student in students:
+            ctx = build_student_result_context(
+                student=student,
+                term=term,
+                session=session,
+                exam_class=school_class
+            )
+            results.append(ctx)
+
+    # ============================
+    # CUMULATIVE RESULT
+    # ============================
+    else:
+        TERM_ORDER = ["1", "2", "3"]
+
+        for student in students:
+            cumulative_total = 0
+            cumulative_scores = []
+            next_term_begins = None
+
+            for t in TERM_ORDER:
+                ctx = build_student_result_context(
+                    student=student,
+                    term=t,
+                    session=session,
+                    exam_class=school_class
+                )
+
+                cumulative_total += ctx.get("overall_total", 0)
+                cumulative_scores.extend(ctx.get("scores", []))
+
+                if not next_term_begins and ctx.get("next_term_begins"):
+                    next_term_begins = ctx["next_term_begins"]
+
+            avg = (
+                cumulative_total / len(cumulative_scores)
+                if cumulative_scores else 0
+            )
+
+            results.append({
+                "student": student,
+                "overall_total": cumulative_total,
+                "avg": avg,
+                "scores": cumulative_scores,
+                "next_term_begins": next_term_begins,
+            })
+
+    # ============================
+    # SORT & POSITION
+    # ============================
+    results.sort(key=lambda x: x["overall_total"], reverse=True)
+
+    for index, r in enumerate(results, start=1):
+        r["position"] = index
+        r["class_size"] = len(results)
+
+    # ============================
+    # CONTEXT
+    # ============================
+    context = {
+        "school": school,
+        "school_class": school_class,
+        "results": results,
+        "session": session,
+        "term": term,
+        "SESSION_LIST": SESSION_LIST,
+        "result_type": result_type,
+
+    }
+
+    return render(
+        request,
+        "results/class_results.html",
+        context
+    )
+
+
+
+
+
+
+
+@login_required
+def class_results_overview(request, school_id):
+    school = request.user.school
+    if school.id != school_id:
+        raise Http404("Unauthorized")
+
+    # 🔹 Pull from query params (same as result page)
+    session = request.GET.get("session")
+    term = request.GET.get("term")
+    result_type = request.GET.get("type", "term")  # term | cumulative
+
+    # 🔹 Do NOT enforce here (overview only)
+    classes = SchoolClass.objects.filter(
+        school=school
+    ).order_by("name")
+
+    context = {
+        "school": school,
+        "classes": classes,
+        "SESSION_LIST": SESSION_LIST,
+        "selected_session": session,
+        "selected_term": term,
+        "result_type": result_type,
+    }
+    return render(
+        request,
+        "results/class_results_overview.html",
+        context
+    )
+
+@login_required
+def bulk_class_results_view(request, school_id, class_id):
+    user = request.user
+    school = get_object_or_404(School, id=school_id)
+    selected_class = get_object_or_404(SchoolClass, id=class_id, school=school)
+
+    if not (user.is_superadmin or (user.is_schooladmin and user.school == school)):
+        raise Http404("Not allowed")
+
+    session = request.GET.get("session")
+    term = request.GET.get("term")
+
+    if not session or not term:
+        raise Http404("Session or term missing")
+
+    students = Student.objects.filter(
+        school=school,
+        school_class=selected_class
+    ).select_related("user")
+
+    results = []
+
+    for student in students:
+        promotion = (
+            PromotionHistory.objects
+            .filter(student=student, session__lte=session)
+            .order_by("-promoted_on")
+            .first()
+        )
+
+        exam_class = promotion.old_class if promotion else student.school_class
+
+        ctx = build_student_result_context(student, term, session, exam_class)
+
+        # ONLY metadata — DO NOT OVERRIDE HISTORY
+        ctx["term"] = term
+        ctx["session"] = session
+
+        results.append(ctx)
+
+    # 🔑 POSITION MUST BE PER CLASS, NOT GLOBAL
+    results.sort(key=lambda x: x.get("overall_total", 0), reverse=True)
+
+    for i, r in enumerate(results, 1):
+        r["position"] = i
+        # ❌ DO NOT TOUCH r["class_size"]
+
+    return render(request, "results/bulk_result.html", {
+        "school": school,
+        "results": results,
+        "result_type": "term",
+    })
+
+
+
+
+
+
+from django.shortcuts import get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.http import Http404
+
+@login_required
+def download_student_result_pdf(request, student_id):
+    """
+    Generates PDF of a single student's result.
+    Accessible by:
+      - The student themselves
+      - School admins (schooladmin) of the same school
+      - Superadmins
+    """
+
+    user = request.user
+    student = get_object_or_404(Student, id=student_id)
+
+    # ---------------- Permission Check ----------------
+    if user.is_student_user and student.user != user:
+        raise Http404("Not allowed to view this result.")
+
+    if user.is_schooladmin and user.school != student.school:
+        raise Http404("Not allowed to view this result.")
+
+    if not (user.is_student_user or user.is_schooladmin or user.is_superadmin):
+        raise Http404("Not allowed to view this result.")
+
+    # ---------------- Get Query Params ----------------
+    session = request.GET.get("session")
+    term = request.GET.get("term")
+    result_type = request.GET.get("type", "term")  # term | cumulative
+
+    # ---------------- Build Context ----------------
+    if result_type == "cumulative":
+        context = build_cumulative_result_context(student, session)
+    else:
+        if not term:
+            raise Http404("Term not specified.")
+
+        # Determine the class for the term
+        promotion = (
+            PromotionHistory.objects
+            .filter(student=student, session__lte=session)
+            .order_by("-promoted_on")
+            .first()
+        )
+        exam_class = promotion.old_class if promotion else student.school_class
+
+        context = build_student_result_context(
+            student=student,
+            term=term,
+            session=session,
+            exam_class=exam_class
+        )
+
+    context.update({
+        "term": term,
+        "session": session,
+    })
+
+    # ---------------- Generate PDF ----------------
+    return render_to_pdf(
+        "results/class_results_pdf.html",
+        context
+    )
+
+
+@login_required
+def bulk_class_select_view(request, school_id):
+    school = get_object_or_404(School, id=school_id)
+
+    if not request.user.is_schooladmin or request.user.school != school:
+        raise Http404("Unauthorized")
+
+    classes = school.classes.all()
+
+    system = SystemSetting.objects.first()
+    current_session = system.current_session if system else None
+
+    # ✅ USE SESSION_LIST DIRECTLY
+    sessions = SESSION_LIST
+
+    context = {
+        "school": school,
+        "classes": classes,
+        "sessions": sessions,        # ✅ FULL SESSION LIST
+        "current_session": current_session,
+    }
+
+    return render(request, "results/bulk_class_select.html", context)
+
+
+
+
+
+@login_required
+def bulk_class_cumulative_results_view(request, school_id, class_id):
+    school = get_object_or_404(School, id=school_id)
+    selected_class = get_object_or_404(SchoolClass, id=class_id, school=school)
+
+    session = request.GET.get("session")
+    if not session:
+        raise Http404("Session required")
+
+    students = Student.objects.filter(school=school).select_related("user")
+    system = SystemSetting.objects.first()
+    current_session = system.current_session if system else None
+
+    results = []
+
+    for student in students:
+        # 🔹 Find class the student was in during this session
+        # First, check if there is a promotion in this session
+        promotion = PromotionHistory.objects.filter(student=student, session=session).first()
+
+        if promotion:
+            # Student was promoted this session, so historical class = old_class
+            exam_class = promotion.old_class
+        else:
+            # No promotion in this session
+            if session == current_session:  # current session
+                exam_class = student.school_class
+            else:
+                # Previous session without promotion → get last promotion before this session
+                last_promotion = (
+                    PromotionHistory.objects
+                    .filter(student=student, session__lt=session)
+                    .order_by('-session')
+                    .first()
+                )
+                exam_class = last_promotion.new_class if last_promotion else student.school_class
+
+        # 🚫 Skip if not the selected class
+        if exam_class.id != selected_class.id:
+            continue
+
+    # Build cumulative result context as before
+        ctx = build_cumulative_result_context(student, session)
+
+    # Ensure exam_class in context matches historical/current class
+        ctx["exam_class"] = exam_class
+
+        results.append(ctx)
+
+
+    # SORT BY PERFORMANCE
+    results.sort(key=lambda x: x.get("overall_total", 0), reverse=True)
+
+    # ASSIGN POSITIONS (PER CLASS)
+    for i, r in enumerate(results, 1):
+        r["position"] = i
+        # ❌ DO NOT override class_size
+
+    return render(request, "results/bulk_cumulative_result.html", {
+        "school": school,
+        "results": results,
+        "session": session,
+        "result_type": "cumulative",
+    })
+
+
+
+
+
+@login_required
+def student_cumulative_result_pdf(request, student_id):
+    student = get_object_or_404(Student, id=student_id)
+    school = student.school
+
+    session = request.GET.get("session")
+    if not session:
+        raise Http404("Session required")
+
+    ctx = build_cumulative_result_context(student, session)
+
+    return render(
+        request,
+        "results/bulk_cumulative_result.html",
+        {
+            "school": school,
+            "results": [ctx],  # MUST be list
+            "session": session,
+            "result_type": "cumulative",
+        }
+    )

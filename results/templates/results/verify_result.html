@@ -218,6 +218,14 @@
       <p class="italic">{{ teacher_comment }}</p>
     </div>
 
+    <!-- NEXT TERM INFORMATION -->
+<div class="mt-4 border border-black p-2 text-sm">
+  <p class="text-xl font-bold text-{{ school.theme_color }}-600">
+    <strong>Next Term Begins On:</strong>
+    <span class="ml-1">{{ next_term_begins|date:"l, jS F Y"|default:"________________" }}</span>
+  </p>
+</div>
+
     <!-- Signature & QR -->
     <div class="mt-6 flex justify-between items-center">
       <div class="flex items-center space-x-4">

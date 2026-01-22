@@ -1,83 +1,93 @@
 {% extends "accounts/base.html" %}
 {% block content %}
 
-<div class="p-6">
+<div class="p-6 max-w-7xl mx-auto">
 
-    <!-- Header -->
-    <div class="flex items-center justify-between mb-6">
-        <div>
-            <h1 class="text-2xl font-bold text-{{ school.theme_color }}-800">
-                Questions – {{ exam.title }}
-            </h1>
-            <p class="text-gray-600">{{ exam.school_class }}</p>
-        </div>
-
-        <div class="space-x-3">
-            <a href="{% url 'school_admin:exam_preview' school_id exam.id %}"
-               class="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
-               Preview Exam
-            </a>
-
-            <a href="{% url 'school_admin:bulk_question_admin' school_id exam.id %}"
-               class="px-4 py-2 bg-green-600 text-white rounded hover:bg-green-700">
-               + Bulk Add (50)
-            </a>
-        </div>
+  <!-- Header -->
+  <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
+    <div>
+      <h1 class="text-2xl font-bold text-{{ school.theme_color }}-800">
+        Questions – {{ exam.title }}
+      </h1>
+      <p class="text-gray-600">{{ exam.school_class }}</p>
     </div>
 
-    <!-- Question Table -->
-    <div class="bg-white shadow rounded-lg overflow-hidden">
+    <div class="flex gap-3">
+      <a href="{% url 'school_admin:exam_preview' school_id exam.id %}"
+         class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+        Preview Exam
+      </a>
 
-        {% if questions %}
-            <table class="min-w-full table-auto">
-                <thead class="bg-gray-100 text-left text-gray-700 text-sm">
-                    <tr>
-                        <th class="p-3">#</th>
-                        <th class="p-3">Question</th>
-                        <th class="p-3">Correct</th>
-                        <th class="p-3 text-center">Actions</th>
-                    </tr>
-                </thead>
-
-                <tbody class="text-gray-800 text-sm">
-                    {% for q in questions %}
-                    <tr class="border-b">
-                        <td class="p-3 font-semibold">{{ forloop.counter }}</td>
-
-                        <td class="p-3 w-3/5">
-                            {{ q.text|truncatechars:120 }}
-                        </td>
-
-                        <td class="p-3 font-bold text-green-700">
-                            {{ q.correct_option }}
-                        </td>
-
-                        <td class="p-3 text-center space-x-3">
-
-                            <!-- EDIT BUTTON -->
-                            <a href="{% url 'school_admin:question_edit' school_id exam.id q.id %}"
-                               class="text-blue-600 hover:underline">
-                                Edit
-                            </a>
-
-                            <!-- DELETE BUTTON -->
-                            <a href="{% url 'school_admin:question_delete' school_id exam.id q.id %}"
-                               class="text-red-600 hover:underline"
-                               onclick="return confirm('Delete this question?');">
-                                Delete
-                            </a>
-
-                        </td>
-                    </tr>
-                    {% endfor %}
-                </tbody>
-            </table>
-
-        {% else %}
-            <p class="p-6 text-gray-500">No questions added yet.</p>
-        {% endif %}
-
+      <a href="{% url 'school_admin:bulk_question_admin' school_id exam.id %}"
+         class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+        + Bulk Add (50)
+      </a>
     </div>
+  </div>
+
+  <!-- Questions Table -->
+  <div class="bg-white shadow rounded-xl overflow-x-auto">
+
+    {% if questions %}
+      <table class="min-w-full text-sm">
+        <thead class="bg-gray-100 text-gray-700">
+          <tr>
+            <th class="p-3 text-left w-12">#</th>
+            <th class="p-3 text-left">Question</th>
+            <th class="p-3 text-center w-24">Correct</th>
+            <th class="p-3 text-center w-32">Actions</th>
+          </tr>
+        </thead>
+
+        <tbody class="divide-y">
+          {% for q in questions %}
+            <tr class="hover:bg-gray-50">
+              <td class="p-3 font-semibold">
+                {{ forloop.counter }}
+              </td>
+
+              <td class="p-3 max-w-2xl">
+                <!-- Question text -->
+                <div class="text-gray-800">
+                  {{ q.text|safe|truncatechars:120 }}
+                </div>
+
+                <!-- Equation (if any) -->
+                {% if q.equation %}
+                  <div class="mt-2 text-lg mathjax text-gray-900">
+                    {{ q.equation }} 
+                  </div>
+                {% endif %}
+              </td>
+
+              <td class="p-3 text-center font-bold text-green-700">
+                {{ q.correct_option }}
+              </td>
+
+              <td class="p-3 text-center space-x-3">
+                <a href="{% url 'school_admin:question_edit' school_id exam.id q.id %}"
+                   class="text-blue-600 hover:underline">
+                  Edit
+                </a>
+
+                <a href="{% url 'school_admin:question_delete' school_id exam.id q.id %}"
+                   class="text-red-600 hover:underline"
+                   onclick="return confirm('Delete this question?');">
+                  Delete
+                </a>
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+    {% else %}
+      <div class="p-6 text-center text-gray-500">
+        No questions added yet.
+      </div>
+    {% endif %}
+
+  </div>
 </div>
 
 {% endblock %}

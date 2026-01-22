@@ -13,6 +13,22 @@
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
 
     {% block extra_head %}{% endblock %}
+    {{ form.media }}
+
+
+<!-- MathJax (for rendering) -->
+<script>
+window.MathJax = {
+  tex: {
+    inlineMath: [['$', '$'], ['\\(', '\\)']],
+    displayMath: [['$$', '$$']]
+  }
+};
+</script>
+
+<script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+
+
 </head>
 
 <body class="bg-gray-100 text-gray-800 flex flex-col min-h-screen">
@@ -142,6 +158,10 @@
         document.getElementById("mobile-menu").classList.toggle("hidden");
       });
     </script>
+    <script type="module">
+      import "https://unpkg.com/mathlive?module";
+    </script>
+    
 
 </body>
 </html>

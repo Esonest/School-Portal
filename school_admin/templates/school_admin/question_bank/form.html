@@ -2,79 +2,115 @@
 {% load widget_tweaks %}
 
 {% block content %}
-
 <div class="max-w-6xl mx-auto px-4 py-6">
-
   <h1 class="text-2xl font-bold text-{{ school.theme_color }}-600">Add Questions to Question Bank</h1>
 
-    <form method="post" class="space-y-6 bg-white rounded-xl shadow p-6">
-  {% csrf_token %}
+  <form method="post" class="space-y-6 bg-white rounded-xl shadow p-6">
+    {% csrf_token %}
 
-  <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-    <div>
-      <label>Subject</label>
-      <select name="subject" class="w-full border rounded-lg px-3 py-2">
-        <option value="">Select Subject</option>
-        {% for subj in subjects %}
-          <option value="{{ subj.id }}">{{ subj.name }}</option>
-        {% endfor %}
-      </select>
-    </div>
+    <!-- Filters -->
+    <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
+      <div>
+        <label>Subject</label>
+        <select name="subject" class="w-full border rounded-lg px-3 py-2">
+          <option value="">Select Subject</option>
+          {% for subj in subjects %}
+            <option value="{{ subj.id }}">{{ subj.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
 
-    <div>
-      <label>Class</label>
-      <select name="school_class" class="w-full border rounded-lg px-3 py-2">
-        <option value="">Select Class</option>
-        {% for cls in classes %}
-          <option value="{{ cls.id }}">{{ cls.name }}</option>
-        {% endfor %}
-      </select>
-    </div>
+      <div>
+        <label>Class</label>
+        <select name="school_class" class="w-full border rounded-lg px-3 py-2">
+          <option value="">Select Class</option>
+          {% for cls in classes %}
+            <option value="{{ cls.id }}">{{ cls.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
 
-    <div>
-      <label>Term</label>
-      <select name="term" class="w-full border rounded-lg px-3 py-2">
-        {% for t in terms %}
-          <option value="{{ t }}">Term {{ t }}</option>
-        {% endfor %}
-      </select>
-    </div>
+      <div>
+        <label>Term</label>
+        <select name="term" class="w-full border rounded-lg px-3 py-2">
+          {% for t in terms %}
+            <option value="{{ t }}">Term {{ t }}</option>
+          {% endfor %}
+        </select>
+      </div>
 
-    <div>
-      <label>Session</label>
-      <select name="session" class="w-full border rounded-lg px-3 py-2">
-        {% for s in sessions %}
-          <option value="{{ s }}">{{ s }}</option>
-        {% endfor %}
-      </select>
+      <div>
+        <label>Session</label>
+        <select name="session" class="w-full border rounded-lg px-3 py-2">
+          {% for s in sessions %}
+            <option value="{{ s }}">{{ s }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label>Topic</label>
+        <input type="text" name="topic" value="{{ topic|default:'' }}"
+               placeholder="e.g. Algebraic Expressions"
+               class="w-full border rounded-lg px-3 py-2" required>
+      </div>
     </div>
-  </div>
 
     {{ formset.management_form }}
 
+    <!-- Questions -->
     <div id="questions-container">
       {% for form in formset %}
-        <div class="question-form border-b py-4 relative">
+        <div class="question-form border-b py-4 relative space-y-3">
           <h2 class="font-semibold mb-2">Question {{ forloop.counter }}</h2>
 
           {% if form.DELETE %}
-            <label class="absolute top-2 right-2 text-sm text-red-600">
-              {{ form.DELETE }} Delete
-            </label>
+          <label class="absolute top-2 right-2 text-sm text-red-600">
+            {{ form.DELETE }} Delete
+          </label>
           {% endif %}
 
-          <div class="mt-3">
-            <label class="block text-sm font-medium mb-1">Question</label>
-            {{ form.text|add_class:"w-full min-h-[140px] text-base rounded-lg border border-gray-300 px-3 py-2" }}
+          <!-- Question Text -->
+          <div>
+            <label class="block text-sm font-medium mb-1">Question Text</label>
+            <textarea name="{{ form.text.html_name }}"
+                      class="w-full border rounded-lg px-3 py-2"
+                      rows="4"
+                      placeholder="Type the question here...">{{ form.text.value|default_if_none:"" }}</textarea>
           </div>
 
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-3">
-            <div>{{ form.option_a.label_tag }}{{ form.option_a }}</div>
-            <div>{{ form.option_b.label_tag }}{{ form.option_b }}</div>
-            <div>{{ form.option_c.label_tag }}{{ form.option_c }}</div>
-            <div>{{ form.option_d.label_tag }}{{ form.option_d }}</div>
+          <!-- Equation -->
+          <div>
+            <label class="block text-sm font-medium mb-1">Equation (optional)</label>
+            <math-field class="equation-field w-full border rounded-lg px-3 py-2 bg-white" style="min-height: 80px;"></math-field>
+            <input type="hidden" name="{{ form.equation.html_name }}" class="mathlive-hidden" value="{{ form.equation.value|default_if_none:'' }}">
           </div>
 
+          <!-- Options with MathLive -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
+            <div>
+              {{ form.option_a.label_tag }}
+              <math-field class="equation-field w-full border rounded-lg px-3 py-2 bg-white" style="min-height: 60px;"></math-field>
+              <input type="hidden" name="{{ form.option_a.html_name }}" class="mathlive-hidden" value="{{ form.option_a.value|default_if_none:'' }}">
+            </div>
+            <div>
+              {{ form.option_b.label_tag }}
+              <math-field class="equation-field w-full border rounded-lg px-3 py-2 bg-white" style="min-height: 60px;"></math-field>
+              <input type="hidden" name="{{ form.option_b.html_name }}" class="mathlive-hidden" value="{{ form.option_b.value|default_if_none:'' }}">
+            </div>
+            <div>
+              {{ form.option_c.label_tag }}
+              <math-field class="equation-field w-full border rounded-lg px-3 py-2 bg-white" style="min-height: 60px;"></math-field>
+              <input type="hidden" name="{{ form.option_c.html_name }}" class="mathlive-hidden" value="{{ form.option_c.value|default_if_none:'' }}">
+            </div>
+            <div>
+              {{ form.option_d.label_tag }}
+              <math-field class="equation-field w-full border rounded-lg px-3 py-2 bg-white" style="min-height: 60px;"></math-field>
+              <input type="hidden" name="{{ form.option_d.html_name }}" class="mathlive-hidden" value="{{ form.option_d.value|default_if_none:'' }}">
+            </div>
+          </div>
+
+          <!-- Correct Option / Marks -->
           <div class="grid grid-cols-2 gap-4 mt-3">
             <div>{{ form.correct_option.label_tag }}{{ form.correct_option }}</div>
             <div>{{ form.marks.label_tag }}{{ form.marks }}</div>
@@ -83,53 +119,105 @@
       {% endfor %}
     </div>
 
+    <!-- Add Question Button -->
     <div class="flex gap-3 mt-4">
       <button type="button" id="add-question" class="px-4 py-2 rounded-lg bg-green-600 text-white hover:bg-green-700">
         Add Another Question
       </button>
     </div>
 
+    <!-- Form Actions -->
     <div class="flex justify-end gap-3 pt-4">
-      <a href="{% url 'school_admin:question_bank_list' %}" class="px-4 py-2 rounded-lg border">
-        Cancel
-      </a>
-      <button type="submit" class="px-6 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700">
-        Save All Questions
-      </button>
+      <a href="{% url 'school_admin:question_bank_list' %}" class="px-4 py-2 rounded-lg border">Cancel</a>
+      <button type="submit" class="px-6 py-2 rounded-lg bg-indigo-600 text-white hover:bg-indigo-700">Save All Questions</button>
     </div>
   </form>
 </div>
 
+<!-- MathLive -->
+<script type="module">
+  import 'https://unpkg.com/mathlive?module';
+</script>
+
+<!-- JS: handle MathLive hidden input syncing -->
 <script>
-document.addEventListener('DOMContentLoaded', function() {
-  const container = document.getElementById('questions-container');
-  const addButton = document.getElementById('add-question');
-  let totalForms = parseInt(document.getElementById('id_form-TOTAL_FORMS').value);
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.question-form').forEach(block => {
+    // Main equation
+    const eq = block.querySelector('math-field.equation-field');
+    const hiddenEq = block.querySelector('input[name="{{ form.equation.html_name }}"], input.mathlive-hidden');
+    if (eq && hiddenEq) {
+      eq.addEventListener('input', () => hiddenEq.value = eq.getValue('latex'));
+      if (hiddenEq.value) eq.setValue(hiddenEq.value, { format: 'latex' });
+    }
 
-  addButton.addEventListener('click', () => {
-    if (totalForms >= 20) return;
-
-    const emptyForm = container.querySelector('.question-form').cloneNode(true);
-
-    // Clear all fields
-    emptyForm.querySelectorAll('input, textarea, select').forEach(el => {
-      if (el.type === 'checkbox' || el.type === 'radio') {
-        el.checked = false;
-      } else {
-        el.value = '';
+    // Options
+    ['option_a','option_b','option_c','option_d'].forEach(opt => {
+      const hiddenInput = block.querySelector(`input[name$="${opt}"]`);
+      const mf = hiddenInput?.previousElementSibling;
+      if (mf && hiddenInput) {
+        mf.addEventListener('input', () => hiddenInput.value = mf.getValue('latex'));
+        if (hiddenInput.value) mf.setValue(hiddenInput.value, { format: 'latex' });
       }
     });
+  });
 
-    // Update form indices
-    emptyForm.innerHTML = emptyForm.innerHTML.replace(/form-(\d+)-/g, `form-${totalForms}-`);
+  // Add new question
+  const addButton = document.getElementById('add-question');
+  const container = document.getElementById('questions-container');
+  const totalFormsInput = document.getElementById('id_form-TOTAL_FORMS');
 
-    container.appendChild(emptyForm);
+  addButton.addEventListener('click', () => {
+    let totalForms = parseInt(totalFormsInput.value);
+    if (totalForms >= 20) return;
 
-    totalForms++;
-    document.getElementById('id_form-TOTAL_FORMS').value = totalForms;
+    const firstForm = container.querySelector('.question-form');
+    const newForm = firstForm.cloneNode(true);
+
+    // Update indices
+    newForm.innerHTML = newForm.innerHTML.replace(/form-(\d+)-/g, `form-${totalForms}-`);
+
+    // Clear fields
+    newForm.querySelectorAll('input, textarea, select').forEach(el => {
+      if (el.type === 'checkbox' || el.type === 'radio') el.checked = false;
+      else el.value = '';
+    });
+
+    // Clear MathLive
+    newForm.querySelectorAll('math-field').forEach(mf => mf.setValue(''));
+
+    container.appendChild(newForm);
+    totalFormsInput.value = totalForms + 1;
+
+    // Reinitialize MathLive for new form
+    document.querySelectorAll('.question-form').forEach(block => {
+      const eq = block.querySelector('math-field.equation-field');
+      const hiddenEq = block.querySelector('input.mathlive-hidden');
+      if (eq && hiddenEq) {
+        eq.addEventListener('input', () => hiddenEq.value = eq.getValue('latex'));
+        if (hiddenEq.value) eq.setValue(hiddenEq.value, { format: 'latex' });
+      }
+
+      ['option_a','option_b','option_c','option_d'].forEach(opt => {
+        const hiddenInput = block.querySelector(`input[name$="${opt}"]`);
+        const mf = hiddenInput?.previousElementSibling;
+        if (mf && hiddenInput) {
+          mf.addEventListener('input', () => hiddenInput.value = mf.getValue('latex'));
+          if (hiddenInput.value) mf.setValue(hiddenInput.value, { format: 'latex' });
+        }
+      });
+    });
   });
 });
-
 </script>
+
+<style>
+math-field {
+  pointer-events: auto !important;
+  user-select: text !important;
+  cursor: text;
+  display: block;
+}
+</style>
 
 {% endblock %}

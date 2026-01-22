@@ -1,0 +1,73 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+
+<div class="min-h-screen bg-gray-100 p-4 sm:p-6">
+
+    <div class="max-w-6xl mx-auto space-y-6">
+
+        <!-- HEADER -->
+        <h1 class="text-2xl sm:text-3xl font-bold text-gray-800">
+            Class Results Overview
+        </h1>
+
+        <!-- FILTER BAR -->
+        <form method="get" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 bg-white p-4 rounded-xl shadow-lg">
+            <select name="session" required class="border rounded-lg p-3 w-full focus:outline-none focus:ring-2 focus:ring-blue-400">
+                <option value="">Select Session</option>
+                {% for s in SESSION_LIST %}
+                    <option value="{{ s }}" {% if selected_session == s %}selected{% endif %}>
+                        {{ s }}
+                    </option>
+                {% endfor %}
+            </select>
+
+            <select name="term" class="border rounded-lg p-3 w-full focus:outline-none focus:ring-2 focus:ring-blue-400">
+                <option value="">Select Term</option>
+                <option value="1" {% if selected_term == "1" %}selected{% endif %}>Term 1</option>
+                <option value="2" {% if selected_term == "2" %}selected{% endif %}>Term 2</option>
+                <option value="3" {% if selected_term == "3" %}selected{% endif %}>Term 3</option>
+            </select>
+
+            <select name="type" class="border rounded-lg p-3 w-full focus:outline-none focus:ring-2 focus:ring-blue-400">
+                <option value="term" {% if result_type == "term" %}selected{% endif %}>Term Result</option>
+                <option value="cumulative" {% if result_type == "cumulative" %}selected{% endif %}>Cumulative Result</option>
+            </select>
+
+            <button type="submit" class="w-full bg-gradient-to-r from-blue-500 to-indigo-600 text-white font-semibold p-3 rounded-lg hover:from-blue-600 hover:to-indigo-700 transition">
+                Load
+            </button>
+        </form>
+
+        <!-- CLASS CARDS -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6">
+
+            {% for c in classes %}
+            <div class="bg-white p-5 rounded-xl shadow-lg flex flex-col justify-between hover:shadow-xl transition">
+
+                <h2 class="text-lg sm:text-xl font-semibold text-gray-800">
+                    {{ c.name }}
+                </h2>
+
+                {% if selected_session %}
+                <a
+                    href="{% url 'results:class_result_list' school.id c.id %}?session={{ selected_session }}&term={{ selected_term }}&type={{ result_type }}"
+                    class="mt-4 text-center bg-green-500 text-white font-semibold px-4 py-2 rounded-lg hover:bg-green-600 transition"
+                >
+                    View Results
+                </a>
+                {% else %}
+                <p class="mt-4 text-sm text-gray-500">
+                    Select session to continue
+                </p>
+                {% endif %}
+
+            </div>
+            {% endfor %}
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

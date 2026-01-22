@@ -25,7 +25,7 @@ SECRET_KEY = os.environ.get("SECRET_KEY", "dev-secret-key")
 DEBUG = os.environ.get("DEBUG", "True") == "True"
 DEFAULT_FILE_STORAGE = 'cloudinary_storage.storage.MediaCloudinaryStorage'
 
-
+CKEDITOR_UPLOAD_PATH = "uploads/"
 SITE_URL = "https://techcenter-p2au.onrender.com"
 
 
@@ -70,6 +70,9 @@ INSTALLED_APPS = [
     "widget_tweaks",
     "cloudinary",
     "cloudinary_storage",
+
+    'ckeditor',
+    'ckeditor_uploader',
 ]
 
 MIDDLEWARE = [
@@ -98,6 +101,30 @@ STORAGES = {
     "staticfiles": {
         "BACKEND": "django.contrib.staticfiles.storage.StaticFilesStorage",
     },
+}
+
+
+
+
+
+CKEDITOR_CONFIGS = {
+    'equation_only': {
+        'toolbar': [
+            ['Mathjax'],   # ✅ Equation button only
+        ],
+        'height': 160,
+        'width': '100%',
+        'extraPlugins': ','.join([
+            'mathjax',
+        ]),
+        'mathJaxLib': 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js',
+        'removeButtons': (
+            'Bold,Italic,Underline,Strike,Subscript,Superscript,'
+            'Image,Table,Link,Unlink,Anchor,Styles,Format,Font,FontSize,'
+            'TextColor,BGColor,Smiley,SpecialChar'
+        ),
+        'allowedContent': True,   # ✅ allow pasted equations
+    }
 }
 
 

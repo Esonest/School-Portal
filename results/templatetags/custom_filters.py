@@ -1,7 +1,7 @@
 from django import template
 from django.apps import apps
 from results.models import ClassSubjectTeacher
-from ..utils import interpret_grade as utils_interpret_grade
+from ..utils import interpret_grade as utils_interpret_grade, normalize_latex_in_html
 
 
 register = template.Library()
@@ -299,3 +299,60 @@ def dict_get(d, key):
 @register.filter
 def get_item(dictionary, key):
     return dictionary.get(str(key))
+
+
+@register.filter
+def dict_get(d, key):
+    return d.get(key, "")
+
+
+
+@register.filter
+def get_item(dictionary, key):
+    if dictionary:
+        return dictionary.get(key)
+    return None
+
+
+
+@register.filter
+def get_field(form, field_name):
+    """Get a form field by name dynamically."""
+    return form[field_name]
+
+@register.filter
+def attr(obj, attribute):
+    """Get an attribute of an object dynamically."""
+    return getattr(obj, attribute)
+
+
+
+
+()
+
+@register.filter
+def render_latex(value):
+    """
+    Normalize LaTeX and prepare for MathJax rendering
+    """
+    return normalize_latex_in_html(value)
+
+
+
+
+@register.filter
+def index(lst, i):
+    try:
+        i = int(i)
+        return lst[i]
+    except (IndexError, ValueError, TypeError):
+        return ""
+
+
+
+
+@register.filter
+def letter_to_index(letter):
+    """Convert 'A', 'B', 'C', 'D' to 0,1,2,3 for template indexing"""
+    mapping = {'A': 0, 'B': 1, 'C': 2, 'D': 3}
+    return mapping.get(letter, 0)

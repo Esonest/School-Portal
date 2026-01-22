@@ -29,7 +29,7 @@ class SchoolAccountant(models.Model):
 from django.db import models
 from django.conf import settings
 from accounts.models import School
-from results.utils import SESSION_LIST
+from results.utils import SESSION_LIST, SESSION_CHOICES
 from results.models import Score
 from students.models import SchoolClass
 
@@ -114,6 +114,43 @@ class Invoice(models.Model):
 
     def __str__(self):
         return f"{self.student} - {self.title} ({self.session} T{self.term})"
+    
+
+
+class PaystackTransaction(models.Model):
+    school = models.ForeignKey(
+        School,
+        on_delete=models.CASCADE,
+        related_name="paystack_transactions",
+        null=True,
+    )
+    invoice = models.ForeignKey(
+        "Invoice",
+        on_delete=models.CASCADE,
+        related_name="transactions"
+    )
+    paystack_reference = models.CharField(max_length=255, unique=True)
+    amount = models.DecimalField(max_digits=20, decimal_places=2)
+    status = models.CharField(
+        max_length=50,
+        choices=[
+            ('pending', 'Pending'),
+            ('success', 'Success'),
+            ('failed', 'Failed')
+        ],
+        default='pending'
+    )
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=["status"]),  # faster admin filtering
+        ]
+
+    def __str__(self):
+        return f"{self.invoice} - ₦{self.amount} [{self.status}]"
+
+
 
 
 class Payment(models.Model):
@@ -124,17 +161,43 @@ class Payment(models.Model):
         ("online", "Online"),
     )
 
-    school = models.ForeignKey(School, on_delete=models.CASCADE)
+    school = models.ForeignKey(
+        School,
+        on_delete=models.CASCADE,
+        related_name="payments",
+        db_index=True
+    )
+
     invoice = models.ForeignKey(
         Invoice,
         on_delete=models.CASCADE,
-        related_name="payments"
+        related_name="payments",
+        db_index=True
     )
 
-    amount = models.DecimalField(max_digits=20, decimal_places=2)
-    payment_method = models.CharField(max_length=20, choices=PAYMENT_METHODS)
-    payment_date = models.DateField(auto_now_add=True)
+    amount = models.DecimalField(
+        max_digits=20,
+        decimal_places=2
+    )
 
+    payment_method = models.CharField(
+        max_length=20,
+        choices=PAYMENT_METHODS
+    )
+
+    # Required for Paystack / Moniepoint / idempotency
+    reference = models.CharField(
+        max_length=100,
+        unique=True,
+        help_text="Gateway reference or internal transaction ID"
+    )
+
+    payment_date = models.DateTimeField(
+        default=timezone.now,
+        db_index=True
+    )
+
+    # Manual payments only (null for Paystack)
     recorded_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -143,22 +206,49 @@ class Payment(models.Model):
         related_name="recorded_payments"
     )
 
+    # 🔹 Optional audit metadata
+    metadata = models.JSONField(
+        null=True,
+        blank=True,
+        help_text="Raw gateway metadata (Paystack, Moniepoint, etc.)"
+    )
+
     class Meta:
         ordering = ["-payment_date"]
+        indexes = [
+            models.Index(fields=["reference"]),
+            models.Index(fields=["school", "payment_method"]),
+            models.Index(fields=["invoice", "payment_date"]),
+        ]
 
-    def save(self, *args, **kwargs):
-        super().save(*args, **kwargs)
+    @property
+    def paystack_receipt_url(self):
+        """
+        Returns Paystack receipt URL if this payment was made online
+        and a successful Paystack transaction exists.
+        """
+        if self.payment_method != "online":
+            return None
 
-        # Sync invoice paid amount automatically
-        total_paid = self.invoice.payments.aggregate(
-            total=models.Sum("amount")
-        )["total"] or 0
+        tx = (
+            self.invoice.transactions
+            .filter(status="success")
+            .order_by("-created_at")
+            .first()
+        )
 
-        self.invoice.amount_paid = total_paid
-        self.invoice.save(update_fields=["amount_paid"])
+        if tx and tx.paystack_reference:
+            return f"https://dashboard.paystack.com/receipts/{tx.paystack_reference}"
+
+        return None
 
     def __str__(self):
-        return f"{self.invoice.student} paid ₦{self.amount} ({self.payment_method})"
+        return (
+            f"{self.invoice.student} paid ₦{self.amount} "
+            f"via {self.payment_method}"
+        )
+
+
 
 
 
@@ -206,3 +296,48 @@ class FeeTemplate(models.Model):
 
     def __str__(self):
         return f"{self.name} - {self.school_class}"
+
+
+
+class SchoolTermSetting(models.Model):
+    TERM_CHOICES = [('1', 'Term 1'), ('2', 'Term 2'), ('3', 'Term 3')]
+
+    school = models.ForeignKey(
+        School,
+        on_delete=models.CASCADE,
+        related_name="term_settings"
+    )
+
+    session = models.CharField(
+        max_length=30,
+        choices=SESSION_CHOICES
+    )
+
+    term = models.CharField(
+        max_length=1,
+        choices=TERM_CHOICES
+    )
+
+    next_term_begins = models.DateField(null=True, blank=True)
+
+    is_active = models.BooleanField(default=False)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('school', 'session', 'term')
+        ordering = ['-created_at']
+
+    
+    def save(self, *args, **kwargs):
+        if self.is_active:
+            SchoolTermSetting.objects.filter(
+                school=self.school,
+                is_active=True
+            ).exclude(pk=self.pk).update(is_active=False)
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        return f"{self.school.name} - {self.session} Term {self.term}" 
+
+

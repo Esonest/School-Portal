@@ -68,7 +68,7 @@
         </thead>
         <tbody>
           {% for row in rows %}
-          <input type="hidden" name="student_id_{{ row.student.id }}" value="{{ row.student.id }}">
+          <input type="hidden" name="student_ids" value="{{ row.student.id }}">
           <tr class="border-b">
             <td class="p-2 sm:p-3">{{ row.student.user.get_full_name }}</td>
             <td class="p-2 sm:p-3">{{ row.student.school_class }}</td>
