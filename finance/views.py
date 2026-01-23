@@ -1481,6 +1481,7 @@ def pay_invoice(request, invoice_id):
 
 
 
+from django.db import transaction
 
 
 @login_required
@@ -1499,7 +1500,7 @@ def paystack_verify(request, invoice_id):
 
     # 1️⃣ Get transaction
     try:
-        transaction = PaystackTransaction.objects.get(paystack_reference=reference)
+        ps_transaction = PaystackTransaction.objects.get(paystack_reference=reference)
     except PaystackTransaction.DoesNotExist:
         messages.warning(request, "Transaction not found. Webhook will handle it.")
         return redirect("finance:student_dashboard")
@@ -1526,9 +1527,9 @@ def paystack_verify(request, invoice_id):
 
     # 5️⃣ Process transaction idempotently
     with transaction.atomic():
-        if transaction.status != "success":
-            transaction.status = "success"
-            transaction.save(update_fields=["status"])
+        if ps_transaction.status != "success":
+            ps_transaction.status = "success"
+            ps_transaction.save(update_fields=["status"])
 
         payment, created = Payment.objects.get_or_create(
             reference=reference,
