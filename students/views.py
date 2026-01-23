@@ -142,18 +142,62 @@ def cbt_list(request):
 # ------------------------
 # Student Profile
 # ------------------------
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+
 @login_required
 @student_required
 def profile_view(request):
-    student = getattr(request.user, 'student_profile', None) or getattr(request.user, 'student', None)
-    if request.method == 'POST':
-        form = StudentProfileForm(request.POST, instance=student)
-        if form.is_valid():
-            form.save()
-            return redirect('students:profile')
+    student = getattr(request.user, 'student_profile', None)
+
+    if request.method == "POST":
+        form = StudentProfileForm(request.POST, request.FILES, instance=student)
+        try:
+            if form.is_valid():
+                profile = form.save(commit=False)
+
+                # Handle Clear/Remove photo
+                if request.POST.get("clear_photo") == "1":
+                    if profile.photo:
+                        profile.photo.delete(save=False)
+                    profile.photo = None
+
+                if not student:
+                    profile.user = request.user
+
+                profile.save()
+
+                # AJAX response
+                photo_url = profile.photo.url if profile.photo else ""
+                data = {
+                    "success": True,
+                    "dob": profile.dob.strftime('%Y-%m-%d') if profile.dob else "",
+                    "gender": profile.get_gender_display() if profile.gender else "",
+                    "photo_url": photo_url,
+                }
+
+                if request.headers.get("x-requested-with") == "XMLHttpRequest" or request.META.get("HTTP_X_REQUESTED_WITH") == "XMLHttpRequest":
+                    return JsonResponse(data)
+
+                return render(request, 'students/profile.html', {"student": profile, "form": form})
+
+            else:
+                errors = form.errors.get_json_data()
+                if request.headers.get("x-requested-with") == "XMLHttpRequest" or request.META.get("HTTP_X_REQUESTED_WITH") == "XMLHttpRequest":
+                    return JsonResponse({"success": False, "errors": errors}, status=400)
+
+        except Exception as e:
+            if request.headers.get("x-requested-with") == "XMLHttpRequest" or request.META.get("HTTP_X_REQUESTED_WITH") == "XMLHttpRequest":
+                return JsonResponse({"success": False, "errors": {"__all__": [str(e)]}}, status=500)
+            else:
+                raise
+
     else:
         form = StudentProfileForm(instance=student)
-    return render(request, 'students/profile.html', {'student': student, 'form': form})
+
+    return render(request, 'students/profile.html', {"student": student, "form": form})
+
 
 
 @student_required

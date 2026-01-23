@@ -1483,9 +1483,17 @@ def pay_invoice(request, invoice_id):
 
 from django.db import transaction
 
-
 @login_required
 def paystack_verify(request, invoice_id):
+    """
+    Paystack redirect verification (READ-ONLY)
+
+    - Confirms transaction status with Paystack
+    - Does NOT create Payment
+    - Does NOT update Invoice
+    - Webhook is the single source of truth
+    """
+
     invoice = get_object_or_404(
         Invoice,
         pk=invoice_id,
@@ -1498,71 +1506,66 @@ def paystack_verify(request, invoice_id):
         messages.error(request, "No payment reference provided.")
         return redirect("finance:student_dashboard")
 
-    # 1️⃣ Get transaction
+    # 1️⃣ Ensure transaction exists
     try:
-        ps_transaction = PaystackTransaction.objects.get(paystack_reference=reference)
+        ps_transaction = PaystackTransaction.objects.get(
+            paystack_reference=reference,
+            invoice=invoice
+        )
     except PaystackTransaction.DoesNotExist:
-        messages.warning(request, "Transaction not found. Webhook will handle it.")
+        messages.warning(
+            request,
+            "Payment is being processed. Your dashboard will update shortly."
+        )
         return redirect("finance:student_dashboard")
 
-    # 2️⃣ Verify with Paystack safely
+    # 2️⃣ Verify with Paystack
     try:
-        headers = {"Authorization": f"Bearer {school.paystack_secret_key}"}
-        response = requests.get(f"https://api.paystack.co/transaction/verify/{reference}", headers=headers)
+        response = requests.get(
+            f"https://api.paystack.co/transaction/verify/{reference}",
+            headers={
+                "Authorization": f"Bearer {school.paystack_secret_key}"
+            },
+            timeout=30
+        )
         data = response.json()
-    except Exception as e:
-        messages.warning(request, f"Verification failed: {e}. Webhook will update the status.")
+    except Exception:
+        messages.warning(
+            request,
+            "Payment verification is pending. Your dashboard will update shortly."
+        )
         return redirect("finance:student_dashboard")
 
-    # 3️⃣ Check Paystack response
-    if not data.get("status") or "data" not in data or data["data"].get("status") != "success":
-        messages.error(request, "Payment not successful or still pending.")
+    # 3️⃣ Validate Paystack response
+    if (
+        not data.get("status")
+        or "data" not in data
+        or data["data"].get("status") != "success"
+    ):
+        messages.warning(
+            request,
+            "Payment is still pending or unsuccessful."
+        )
         return redirect("finance:student_dashboard")
 
-    # 4️⃣ Safely get amount
+    # 4️⃣ Optional amount sanity check (no DB write)
     amount_paid = Decimal(data["data"].get("amount", 0)) / 100
     if amount_paid <= 0:
-        messages.error(request, "Invalid payment amount received.")
+        messages.warning(
+            request,
+            "Payment received but amount is invalid. Please contact support."
+        )
         return redirect("finance:student_dashboard")
 
-    # 5️⃣ Process transaction idempotently
-    with transaction.atomic():
-        if ps_transaction.status != "success":
-            ps_transaction.status = "success"
-            ps_transaction.save(update_fields=["status"])
+    # 5️⃣ Success message ONLY
+    messages.success(
+        request,
+        f"Payment of ₦{amount_paid:,.2f} was successful. "
+        "Your dashboard will update shortly."
+    )
 
-        payment, created = Payment.objects.get_or_create(
-            reference=reference,
-            defaults={
-                "school": invoice.school,
-                "invoice": invoice,
-                "student": invoice.student,
-                "school_class": invoice.school_class,
-                "amount": amount_paid,
-                "payment_method": "online",
-                "session": invoice.session,
-                "term": invoice.term,
-            }
-        )
-
-        # Recompute invoice.amount_paid
-        invoice.amount_paid = Payment.objects.filter(invoice=invoice).aggregate(total=Sum("amount"))["total"] or 0
-        invoice.save(update_fields=["amount_paid"])
-
-        # Create Receipt once
-        if created:
-            Receipt.objects.create(
-                student=invoice.student,
-                school_class=invoice.school_class,
-                payment=payment,
-                amount=payment.amount,
-                session=invoice.session,
-                term=invoice.term,
-                school=invoice.school
-            )
-
-    messages.success(request, f"Payment of ₦{amount_paid:.2f} was successful! Invoice will be updated shortly")
     return redirect("finance:student_dashboard")
+
 
 
 
@@ -1707,6 +1710,7 @@ def paystack_webhook(request):
                 "school_class": invoice.school_class,
                 "amount": amount,
                 "payment_method": "online",
+                "status": "approved",
                 "session": invoice.session,
                 "term": invoice.term,
             }

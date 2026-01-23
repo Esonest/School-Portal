@@ -1,24 +1,144 @@
 {% extends 'accounts/base.html' %}
+
 {% block content %}
 <div class="max-w-3xl mx-auto p-6">
-  <h1 class="text-2xl font-bold">My Profile</h1>
-  <form method="post" class="mt-4">{% csrf_token %}
-    <div class="grid grid-cols-1 gap-4">
-      {{ form.as_p }}
-      <button class="px-4 py-2 bg-indigo-600 text-white rounded">Save</button>
-    </div>
-  </form>
-</div>
-<button id="openProfile" class="btn">Edit Profile</button>
-<div id="profileModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-  <div class="bg-white p-6 rounded">
-    <button id="closeProfile">Close</button>
-    <!-- render profile form here or via AJAX -->
-    <form id="profileForm" method="post">{% csrf_token %}{{ form.as_p }}<button type="submit">Save</button></form>
+  <h1 class="text-2xl font-bold mb-4">My Profile</h1>
+
+  <div class="bg-white shadow rounded p-4" id="studentProfileDisplay">
+    {% if student.photo %}
+      <img src="{{ student.photo.url }}" class="w-32 h-32 rounded-full mb-2" id="profilePhoto">
+    {% else %}
+      <img src="https://via.placeholder.com/150" class="w-32 h-32 rounded-full mb-2" id="profilePhoto">
+    {% endif %}
+
+    <p><strong>Date of Birth:</strong> <span id="profileDob">{{ student.dob|default:"Not set" }}</span></p>
+    <p><strong>Gender:</strong> <span id="profileGender">{{ student.get_gender_display|default:"Not set" }}</span></p>
+
+    <button id="openProfile" type="button" class="mt-4 px-4 py-2 bg-indigo-600 text-white rounded">
+      Edit Profile
+    </button>
   </div>
 </div>
+
+<div id="profileModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-40">
+  <div class="bg-white p-6 rounded w-full max-w-lg relative z-50">
+    <div class="flex justify-between items-center mb-4">
+      <h2 class="text-xl font-bold">Edit Profile</h2>
+      <button id="closeProfile" type="button" class="text-red-600 font-bold">✕</button>
+    </div>
+
+    <form id="profileForm" method="post" enctype="multipart/form-data">
+      {% csrf_token %}
+      {{ form.as_p }}
+
+      <div class="mb-2 flex items-center space-x-4">
+        {% if student.photo %}
+          <img id="previewPhoto" src="{{ student.photo.url }}" class="w-32 h-32 rounded-full">
+        {% else %}
+          <img id="previewPhoto" src="https://via.placeholder.com/150" class="w-32 h-32 rounded-full">
+        {% endif %}
+        <button type="button" id="clearPhoto" class="px-2 py-1 bg-red-500 text-white rounded">Clear</button>
+      </div>
+
+      <div class="flex justify-end mt-4">
+        <button type="submit" class="px-4 py-2 bg-indigo-600 text-white rounded">Save</button>
+      </div>
+
+      <input type="hidden" name="clear_photo" id="clearPhotoInput" value="0">
+    </form>
+
+    <div id="formErrors" class="text-red-600 mt-2"></div>
+  </div>
+</div>
+
 <script>
-document.getElementById('openProfile').addEventListener('click', ()=>{ document.getElementById('profileModal').classList.remove('hidden'); });
-document.getElementById('closeProfile').addEventListener('click', ()=>{ document.getElementById('profileModal').classList.add('hidden'); });
+const openBtn = document.getElementById('openProfile');
+const closeBtn = document.getElementById('closeProfile');
+const modal = document.getElementById('profileModal');
+const profileForm = document.getElementById('profileForm');
+const previewPhoto = document.getElementById('previewPhoto');
+const photoInput = profileForm.querySelector('input[name="photo"]');
+const clearPhotoBtn = document.getElementById('clearPhoto');
+const clearPhotoInput = document.getElementById('clearPhotoInput');
+const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+// Open/close modal
+openBtn.addEventListener('click', () => modal.classList.remove('hidden'));
+closeBtn.addEventListener('click', () => {
+  modal.classList.add('hidden');
+  resetPhotoPreview();
+});
+
+// Live photo preview
+photoInput.addEventListener('change', (e) => {
+  const file = e.target.files[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = (ev) => {
+      previewPhoto.src = ev.target.result;
+      clearPhotoInput.value = "0"; // reset clear flag
+    };
+    reader.readAsDataURL(file);
+  }
+});
+
+// Clear / Remove photo
+clearPhotoBtn.addEventListener('click', () => {
+  previewPhoto.src = "https://via.placeholder.com/150";
+  photoInput.value = "";
+  clearPhotoInput.value = "1"; // mark photo to delete on server
+});
+
+// Reset preview if modal closes without saving
+function resetPhotoPreview() {
+  {% if student.photo %}
+    previewPhoto.src = "{{ student.photo.url }}";
+  {% else %}
+    previewPhoto.src = "https://via.placeholder.com/150";
+  {% endif %}
+  photoInput.value = "";
+  clearPhotoInput.value = "0";
+}
+
+// AJAX submission
+profileForm.addEventListener('submit', async (e) => {
+  e.preventDefault();
+
+  const formData = new FormData(profileForm);
+
+  try {
+    const response = await fetch("", {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": csrfToken,
+        "X-Requested-With": "XMLHttpRequest" // <- important
+      },
+      body: formData
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+      document.getElementById('profileDob').textContent = data.dob || "Not set";
+      document.getElementById('profileGender').textContent = data.gender || "Not set";
+
+      // Update main profile photo (placeholder if cleared)
+      const mainPhoto = document.getElementById('profilePhoto');
+      mainPhoto.src = data.photo_url ? data.photo_url : "https://via.placeholder.com/150";
+
+      modal.classList.add('hidden');
+      document.getElementById('formErrors').innerHTML = "";
+    } else {
+      let errorHtml = "";
+      for (const [field, errors] of Object.entries(data.errors)) {
+        errorHtml += `<p>${field}: ${errors.map(e => e.message).join(", ")}</p>`;
+      }
+      document.getElementById('formErrors').innerHTML = errorHtml;
+    }
+  } catch (err) {
+    console.error("AJAX error:", err);
+    document.getElementById('formErrors').textContent = "An error occurred. Please try again.";
+  }
+});
 </script>
 {% endblock %}
