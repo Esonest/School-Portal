@@ -153,6 +153,10 @@ class PaystackTransaction(models.Model):
 
 
 
+from django.db import models
+from django.conf import settings
+from django.utils import timezone
+
 class Payment(models.Model):
     PAYMENT_METHODS = (
         ("cash", "Cash"),
@@ -161,6 +165,9 @@ class Payment(models.Model):
         ("online", "Online"),
     )
 
+    # -----------------------------
+    # Core Relationships
+    # -----------------------------
     school = models.ForeignKey(
         School,
         on_delete=models.CASCADE,
@@ -175,6 +182,46 @@ class Payment(models.Model):
         db_index=True
     )
 
+    student = models.ForeignKey(
+        Student,  
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="payments"
+    )
+
+    school_class = models.ForeignKey(
+        SchoolClass,  # adjust import path
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name="payments"
+    )
+
+    term = models.CharField(
+        max_length=50,
+        null=True,
+        blank=True,
+        help_text="Academic term for this payment"
+    )
+
+    session = models.CharField(
+        max_length=50,
+        null=True,
+        blank=True,
+        help_text="Academic session for this payment"
+        
+    )
+
+    status = models.CharField(
+        max_length=20,
+        default="approved",
+        help_text="Status of the payment"
+    )
+
+    # -----------------------------
+    # Payment Details
+    # -----------------------------
     amount = models.DecimalField(
         max_digits=20,
         decimal_places=2
@@ -185,7 +232,6 @@ class Payment(models.Model):
         choices=PAYMENT_METHODS
     )
 
-    # Required for Paystack / Moniepoint / idempotency
     reference = models.CharField(
         max_length=100,
         unique=True,
@@ -197,7 +243,6 @@ class Payment(models.Model):
         db_index=True
     )
 
-    # Manual payments only (null for Paystack)
     recorded_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
@@ -206,21 +251,27 @@ class Payment(models.Model):
         related_name="recorded_payments"
     )
 
-    # 🔹 Optional audit metadata
     metadata = models.JSONField(
         null=True,
         blank=True,
         help_text="Raw gateway metadata (Paystack, Moniepoint, etc.)"
     )
 
+    # -----------------------------
+    # Meta & Indexes
+    # -----------------------------
     class Meta:
         ordering = ["-payment_date"]
         indexes = [
             models.Index(fields=["reference"]),
             models.Index(fields=["school", "payment_method"]),
             models.Index(fields=["invoice", "payment_date"]),
+            models.Index(fields=["student", "term", "session"]),
         ]
 
+    # -----------------------------
+    # Properties
+    # -----------------------------
     @property
     def paystack_receipt_url(self):
         """
@@ -244,9 +295,10 @@ class Payment(models.Model):
 
     def __str__(self):
         return (
-            f"{self.invoice.student} paid ₦{self.amount} "
-            f"via {self.payment_method}"
+            f"{self.student} paid ₦{self.amount} "
+            f"for {self.term}/{self.session} via {self.payment_method}"
         )
+
 
 
 

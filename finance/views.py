@@ -1201,8 +1201,23 @@ from django.contrib.auth.decorators import login_required
 from finance.models import Invoice, PaystackTransaction, Payment
 from accounts.models import School
 
+from decimal import Decimal
+import requests
+
+from django.shortcuts import get_object_or_404
+from django.urls import reverse
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+
+from finance.models import Invoice, PaystackTransaction
+
+
 @login_required
 def pay_invoice(request, invoice_id):
+    """
+    Initialize a Paystack payment for an invoice.
+    Metadata includes student, class, term, session for the webhook.
+    """
     invoice = get_object_or_404(
         Invoice,
         pk=invoice_id,
@@ -1222,41 +1237,50 @@ def pay_invoice(request, invoice_id):
             status=400
         )
 
-    # 1️⃣ Validate amount
+    # -----------------------------
+    # Validate amount
+    # -----------------------------
     try:
         amount = Decimal(request.POST.get("amount"))
-    except:
+    except Exception:
         return JsonResponse(
             {"status": "error", "message": "Invalid amount format."},
             status=400
         )
 
     outstanding = invoice.total_amount - invoice.amount_paid
-
     if amount <= 0 or amount > outstanding:
         return JsonResponse(
             {"status": "error", "message": f"Amount must be > 0 and ≤ outstanding ₦{outstanding:.2f}"},
             status=400
         )
 
-    # 2️⃣ Convert to kobo
+    # -----------------------------
+    # Convert to kobo
+    # -----------------------------
     amount_kobo = int(amount * 100)
 
-    # 3️⃣ Ensure email exists
+    # -----------------------------
+    # Ensure email exists
+    # -----------------------------
     email = invoice.student.user.email or "techcenter652@gmail.com"
 
-    # 4️⃣ Build callback URL
+    # -----------------------------
+    # Build callback URL (optional, used only for redirection)
+    # -----------------------------
     callback_url = request.build_absolute_uri(
         reverse("finance:paystack_verify", args=[invoice.id])
     )
 
-    # 5️⃣ Create pending PaystackTransaction
+    # -----------------------------
+    # Create pending PaystackTransaction
+    # -----------------------------
     try:
         transaction = PaystackTransaction.objects.create(
             school=school,
             invoice=invoice,
             amount=amount,
-            paystack_reference="",  # updated after initialization
+            paystack_reference="",
             status="pending"
         )
     except Exception as e:
@@ -1265,7 +1289,9 @@ def pay_invoice(request, invoice_id):
             status=500
         )
 
-    # 6️⃣ Prepare Paystack request
+    # -----------------------------
+    # Prepare Paystack request
+    # -----------------------------
     headers = {
         "Authorization": f"Bearer {school.paystack_secret_key}",
         "Content-Type": "application/json",
@@ -1277,15 +1303,20 @@ def pay_invoice(request, invoice_id):
         "callback_url": callback_url,
         "metadata": {
             "invoice_id": invoice.id,
-            "student_id": invoice.student.id,
-            "school_id": school.id,
             "transaction_id": transaction.id,
+            "school_id": school.id,
+            "student_id": invoice.student.id,
+            "school_class_id": invoice.school_class.id,
+            "term": invoice.term,
+            "session": invoice.session,
             "payment_type": "invoice",
             "partial_payment": True,
         }
     }
 
-    # 7️⃣ Call Paystack API
+    # -----------------------------
+    # Call Paystack API
+    # -----------------------------
     try:
         response = requests.post(
             "https://api.paystack.co/transaction/initialize",
@@ -1296,184 +1327,34 @@ def pay_invoice(request, invoice_id):
         data = response.json()
     except requests.exceptions.Timeout:
         transaction.delete()
-        return JsonResponse(
-            {"status": "error", "message": "Paystack request timed out."},
-            status=504
-        )
+        return JsonResponse({"status": "error", "message": "Paystack request timed out."}, status=504)
     except requests.exceptions.ConnectionError:
         transaction.delete()
-        return JsonResponse(
-            {"status": "error", "message": "Network connection error."},
-            status=502
-        )
+        return JsonResponse({"status": "error", "message": "Network connection error."}, status=502)
     except Exception as e:
         transaction.delete()
-        return JsonResponse(
-            {"status": "error", "message": f"Unexpected error: {e}"},
-            status=500
-        )
+        return JsonResponse({"status": "error", "message": f"Unexpected error: {e}"}, status=500)
 
-    # 8️⃣ Handle Paystack response
+    # -----------------------------
+    # Handle Paystack response
+    # -----------------------------
     if not data.get("status"):
         transaction.delete()
         message = data.get("message") or "Paystack initialization failed."
-        return JsonResponse(
-            {"status": "error", "message": f"Paystack error: {message}"},
-            status=400
-        )
+        return JsonResponse({"status": "error", "message": f"Paystack error: {message}"}, status=400)
 
-    # 9️⃣ Update transaction with actual Paystack reference
+    # -----------------------------
+    # Update transaction with actual Paystack reference
+    # -----------------------------
     try:
         transaction.paystack_reference = data["data"]["reference"]
         transaction.save(update_fields=["paystack_reference"])
     except Exception as e:
-        return JsonResponse(
-            {"status": "error", "message": f"Failed to update transaction reference: {e}"},
-            status=500
-        )
+        return JsonResponse({"status": "error", "message": f"Failed to update transaction reference: {e}"}, status=500)
 
-    # 10️⃣ Return checkout URL
-    return JsonResponse({
-        "status": "success",
-        "checkout_url": data["data"]["authorization_url"]
-    })
-
-
-
-
-
-@login_required
-def pay_invoice(request, invoice_id):
-    invoice = get_object_or_404(
-        Invoice,
-        pk=invoice_id,
-        school=request.user.school
-    )
-    school = invoice.school
-
-    if not school.paystack_secret_key:
-        return JsonResponse(
-            {"status": "error", "message": "Paystack secret key not configured for this school."},
-            status=400
-        )
-
-    if request.method != "POST":
-        return JsonResponse(
-            {"status": "error", "message": "Invalid request method."},
-            status=400
-        )
-
-    # 1️⃣ Validate amount
-    try:
-        amount = Decimal(request.POST.get("amount"))
-    except:
-        return JsonResponse(
-            {"status": "error", "message": "Invalid amount format."},
-            status=400
-        )
-
-    outstanding = invoice.total_amount - invoice.amount_paid
-
-    if amount <= 0 or amount > outstanding:
-        return JsonResponse(
-            {"status": "error", "message": f"Amount must be > 0 and ≤ outstanding ₦{outstanding:.2f}"},
-            status=400
-        )
-
-    # 2️⃣ Convert to kobo
-    amount_kobo = int(amount * 100)
-
-    # 3️⃣ Ensure email exists
-    email = invoice.student.user.email or "techcenter652@gmail.com"
-
-    # 4️⃣ Build callback URL
-    callback_url = request.build_absolute_uri(
-        reverse("finance:paystack_verify", args=[invoice.id])
-    )
-
-    # 5️⃣ Create pending PaystackTransaction
-    try:
-        transaction = PaystackTransaction.objects.create(
-            school=school,
-            invoice=invoice,
-            amount=amount,
-            paystack_reference="",  # updated after initialization
-            status="pending"
-        )
-    except Exception as e:
-        return JsonResponse(
-            {"status": "error", "message": f"Failed to create transaction record: {e}"},
-            status=500
-        )
-
-    # 6️⃣ Prepare Paystack request
-    headers = {
-        "Authorization": f"Bearer {school.paystack_secret_key}",
-        "Content-Type": "application/json",
-    }
-
-    payload = {
-        "email": email,
-        "amount": amount_kobo,
-        "callback_url": callback_url,
-        "metadata": {
-            "invoice_id": invoice.id,
-            "student_id": invoice.student.id,
-            "school_id": school.id,
-            "transaction_id": transaction.id,
-            "payment_type": "invoice",
-            "partial_payment": True,
-        }
-    }
-
-    # 7️⃣ Call Paystack API
-    try:
-        response = requests.post(
-            "https://api.paystack.co/transaction/initialize",
-            json=payload,
-            headers=headers,
-            timeout=30
-        )
-        data = response.json()
-    except requests.exceptions.Timeout:
-        transaction.delete()
-        return JsonResponse(
-            {"status": "error", "message": "Paystack request timed out."},
-            status=504
-        )
-    except requests.exceptions.ConnectionError:
-        transaction.delete()
-        return JsonResponse(
-            {"status": "error", "message": "Network connection error."},
-            status=502
-        )
-    except Exception as e:
-        transaction.delete()
-        return JsonResponse(
-            {"status": "error", "message": f"Unexpected error: {e}"},
-            status=500
-        )
-
-    # 8️⃣ Handle Paystack response
-    if not data.get("status"):
-        transaction.delete()
-        message = data.get("message") or "Paystack initialization failed."
-        return JsonResponse(
-            {"status": "error", "message": f"Paystack error: {message}"},
-            status=400
-        )
-
-    # 9️⃣ Update transaction with actual Paystack reference
-    try:
-        transaction.paystack_reference = data["data"]["reference"]
-        transaction.save(update_fields=["paystack_reference"])
-    except Exception as e:
-        return JsonResponse(
-            {"status": "error", "message": f"Failed to update transaction reference: {e}"},
-            status=500
-        )
-
-    # 10️⃣ Return checkout URL
+    # -----------------------------
+    # Return checkout URL
+    # -----------------------------
     return JsonResponse({
         "status": "success",
         "checkout_url": data["data"]["authorization_url"]
@@ -1482,6 +1363,8 @@ def pay_invoice(request, invoice_id):
 
 
 from django.db import transaction
+
+
 
 @login_required
 def paystack_verify(request, invoice_id):
@@ -1493,7 +1376,6 @@ def paystack_verify(request, invoice_id):
     - Does NOT update Invoice
     - Webhook is the single source of truth
     """
-
     invoice = get_object_or_404(
         Invoice,
         pk=invoice_id,
@@ -1506,26 +1388,28 @@ def paystack_verify(request, invoice_id):
         messages.error(request, "No payment reference provided.")
         return redirect("finance:student_dashboard")
 
-    # 1️⃣ Ensure transaction exists
-    try:
-        ps_transaction = PaystackTransaction.objects.get(
-            paystack_reference=reference,
-            invoice=invoice
-        )
-    except PaystackTransaction.DoesNotExist:
+    # -----------------------------
+    # Ensure transaction exists
+    # -----------------------------
+    ps_transaction = PaystackTransaction.objects.filter(
+        paystack_reference=reference,
+        invoice=invoice
+    ).first()
+
+    if not ps_transaction:
         messages.warning(
             request,
             "Payment is being processed. Your dashboard will update shortly."
         )
         return redirect("finance:student_dashboard")
 
-    # 2️⃣ Verify with Paystack
+    # -----------------------------
+    # Verify with Paystack
+    # -----------------------------
     try:
         response = requests.get(
             f"https://api.paystack.co/transaction/verify/{reference}",
-            headers={
-                "Authorization": f"Bearer {school.paystack_secret_key}"
-            },
+            headers={"Authorization": f"Bearer {school.paystack_secret_key}"},
             timeout=30
         )
         data = response.json()
@@ -1536,19 +1420,20 @@ def paystack_verify(request, invoice_id):
         )
         return redirect("finance:student_dashboard")
 
-    # 3️⃣ Validate Paystack response
-    if (
-        not data.get("status")
-        or "data" not in data
-        or data["data"].get("status") != "success"
-    ):
+    # -----------------------------
+    # Check response status
+    # -----------------------------
+    status = data.get("data", {}).get("status")
+    if not data.get("status") or status != "success":
         messages.warning(
             request,
             "Payment is still pending or unsuccessful."
         )
         return redirect("finance:student_dashboard")
 
-    # 4️⃣ Optional amount sanity check (no DB write)
+    # -----------------------------
+    # Optional amount sanity check
+    # -----------------------------
     amount_paid = Decimal(data["data"].get("amount", 0)) / 100
     if amount_paid <= 0:
         messages.warning(
@@ -1557,7 +1442,9 @@ def paystack_verify(request, invoice_id):
         )
         return redirect("finance:student_dashboard")
 
-    # 5️⃣ Success message ONLY
+    # -----------------------------
+    # Success message only
+    # -----------------------------
     messages.success(
         request,
         f"Payment of ₦{amount_paid:,.2f} was successful. "
@@ -1570,26 +1457,6 @@ def paystack_verify(request, invoice_id):
 
 
 
-import json
-import hmac
-import hashlib
-from decimal import Decimal
-from django.http import HttpResponse, HttpResponseForbidden
-from django.views.decorators.csrf import csrf_exempt
-from django.db import transaction
-
-
-# finance/views.py
-
-import json
-import hmac
-import hashlib
-from decimal import Decimal
-
-from django.http import HttpResponse
-from django.views.decorators.csrf import csrf_exempt
-from django.db import transaction
-from django.db.models import Sum
 
 import json
 import hmac
@@ -1611,6 +1478,29 @@ from django.http import HttpResponse
 from django.views.decorators.csrf import csrf_exempt
 from django.db import transaction
 from django.db.models import Sum
+
+import json
+import hmac
+import hashlib
+from decimal import Decimal
+from django.http import HttpResponse, HttpResponseForbidden
+from django.views.decorators.csrf import csrf_exempt
+from django.db import transaction
+
+
+# finance/views.py
+
+import json
+import hmac
+import hashlib
+from decimal import Decimal
+
+from django.http import HttpResponse
+from django.views.decorators.csrf import csrf_exempt
+from django.db import transaction
+from django.db.models import Sum
+
+
 
 
 
@@ -1618,14 +1508,13 @@ from django.db.models import Sum
 def paystack_webhook(request):
     """
     Paystack webhook handler (SAFE + IDEMPOTENT)
-
-    - Verifies signature
-    - Handles retries correctly
-    - Creates Payment once
-    - ALWAYS recomputes Invoice.amount_paid
-    - Generates Receipt once
+    
+    1️⃣ Verifies signature
+    2️⃣ Handles retries correctly
+    3️⃣ Creates Payment once
+    4️⃣ Updates Invoice.amount_paid
+    5️⃣ Creates Receipt once
     """
-    print("🔥 WEBHOOK HIT 🔥")
 
     if request.method != "POST":
         return HttpResponse(status=405)
@@ -1634,7 +1523,7 @@ def paystack_webhook(request):
     signature = request.headers.get("X-Paystack-Signature")
 
     # -----------------------------
-    # 1️⃣ Parse payload safely
+    # Parse payload safely
     # -----------------------------
     try:
         event = json.loads(payload)
@@ -1648,7 +1537,7 @@ def paystack_webhook(request):
         return HttpResponse(status=200)
 
     # -----------------------------
-    # 2️⃣ Resolve school
+    # Resolve school
     # -----------------------------
     try:
         school = School.objects.get(id=school_id)
@@ -1656,7 +1545,7 @@ def paystack_webhook(request):
         return HttpResponse(status=200)
 
     # -----------------------------
-    # 3️⃣ Verify Paystack signature
+    # Verify Paystack signature
     # -----------------------------
     computed_hash = hmac.new(
         school.paystack_secret_key.encode(),
@@ -1668,7 +1557,7 @@ def paystack_webhook(request):
         return HttpResponse(status=400)
 
     # -----------------------------
-    # 4️⃣ Only process success event
+    # Only process successful charge
     # -----------------------------
     if event.get("event") != "charge.success":
         return HttpResponse(status=200)
@@ -1680,28 +1569,28 @@ def paystack_webhook(request):
         return HttpResponse(status=200)
 
     # -----------------------------
-    # 5️⃣ Atomic processing
+    # Atomic processing
     # -----------------------------
     with transaction.atomic():
 
-        # Lock Paystack transaction
+        # Lock PaystackTransaction (if exists)
         try:
-            tx = (
-                PaystackTransaction.objects
-                .select_for_update()
-                .get(paystack_reference=reference)
+            tx = PaystackTransaction.objects.select_for_update().get(
+                paystack_reference=reference
             )
         except PaystackTransaction.DoesNotExist:
             return HttpResponse(status=200)
 
         invoice = tx.invoice
 
-        # Mark Paystack transaction successful (once)
+        # Mark PaystackTransaction successful
         if tx.status != "success":
             tx.status = "success"
             tx.save(update_fields=["status"])
 
-        # Create Payment ONCE (idempotent)
+        # -----------------------------
+        # Create Payment (idempotent)
+        # -----------------------------
         payment, created = Payment.objects.get_or_create(
             reference=reference,
             defaults={
@@ -1709,24 +1598,26 @@ def paystack_webhook(request):
                 "invoice": invoice,
                 "student": invoice.student,
                 "school_class": invoice.school_class,
+                "term": invoice.term,
+                "session": invoice.session,
+                "status": "approved",
                 "amount": amount,
                 "payment_method": "online",
-                "status": "approved",
-                "session": invoice.session,
-                "term": invoice.term,
+                "metadata": data
             }
         )
 
-        # 🔥 ALWAYS recompute invoice total (DO NOT rely on signals)
+        # -----------------------------
+        # Recompute invoice total
+        # -----------------------------
         invoice.amount_paid = (
-            Payment.objects
-            .filter(invoice=invoice)
-            .aggregate(total=Sum("amount"))["total"]
-            or Decimal("0")
+            Payment.objects.filter(invoice=invoice).aggregate(total=Sum("amount"))["total"] or 0
         )
         invoice.save(update_fields=["amount_paid"])
 
+        # -----------------------------
         # Create Receipt only once
+        # -----------------------------
         if created:
             Receipt.objects.create(
                 student=invoice.student,
@@ -1738,4 +1629,8 @@ def paystack_webhook(request):
                 school=invoice.school
             )
 
+    # -----------------------------
+    # Return 200 OK to Paystack
+    # -----------------------------
     return HttpResponse(status=200)
+
