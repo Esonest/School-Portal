@@ -1625,6 +1625,7 @@ def paystack_webhook(request):
     - ALWAYS recomputes Invoice.amount_paid
     - Generates Receipt once
     """
+    print("🔥 WEBHOOK HIT 🔥")
 
     if request.method != "POST":
         return HttpResponse(status=405)
