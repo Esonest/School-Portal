@@ -211,14 +211,6 @@
    class="block w-full text-center bg-indigo-600 text-white py-2 rounded-md font-semibold text-sm mb-2">
   School Receipt (PDF)
 </a>
-
-{% if pay.paystack_receipt_url %}
-<a href="{{ pay.paystack_receipt_url }}"
-   target="_blank"
-   class="block w-full text-center bg-green-600 text-white py-2 rounded-md font-semibold text-sm">
-  Paystack Receipt
-</a>
-{% endif %}
       </div>
       {% empty %}
       <div class="text-center text-gray-500 text-sm py-6">No payments yet</div>
@@ -248,15 +240,6 @@
      class="text-indigo-600 font-semibold hover:underline">
     School Receipt
   </a>
-
-  <!-- Paystack Receipt -->
-  {% if pay.paystack_receipt_url %}
-    <a href="{{ pay.paystack_receipt_url }}"
-       target="_blank"
-       class="text-green-600 font-semibold hover:underline">
-      Paystack Receipt
-    </a>
-  {% endif %}
 </td>
 
           </tr>

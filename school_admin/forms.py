@@ -23,15 +23,18 @@ class StudentCreateForm(forms.ModelForm):
         required=False,  # optional, will auto-generate if empty
         widget=forms.TextInput(attrs={"class": tailwind_input, "placeholder": "Username"})
     )
+    email = forms.EmailField(
+        required=True,
+        widget=forms.EmailInput(attrs={"class": tailwind_input, "placeholder": "Email"})
+    )
     password = forms.CharField(
-        required=True,  # or False for update form
+        required=True,
         widget=forms.PasswordInput(attrs={
             "class": f"{tailwind_input} password-field",
             "placeholder": "Password",
-            "id": "password_input",  # optional, useful for JS targeting
+            "id": "password_input",
         })
     )
-
 
     class Meta:
         model = Student
@@ -57,7 +60,6 @@ class StudentCreateForm(forms.ModelForm):
             self.fields["school_class"].queryset = self.fields["school_class"].queryset.filter(school=self.school)
 
     def save(self, commit=True):
-        # Create the user first
         data = self.cleaned_data
         username = data.get("username") or generate_unique_username(data.get("first_name"))
 
@@ -65,13 +67,13 @@ class StudentCreateForm(forms.ModelForm):
             username=username,
             first_name=data["first_name"],
             last_name=data["last_name"],
+            email=data["email"],  # email saved here
             password=data["password"],
             role="student",
             is_student=True,
             school=self.school
         )
 
-        # Create the student profile
         student = super().save(commit=False)
         student.user = user
         student.school = self.school
@@ -83,21 +85,24 @@ class StudentCreateForm(forms.ModelForm):
         return student
 
 
+
 class StudentUpdateForm(forms.ModelForm):
-    # Add user fields
     username = forms.CharField(
         required=True,
         widget=forms.TextInput(attrs={"class": tailwind_input, "placeholder": "Username"})
     )
+    email = forms.EmailField(
+        required=True,
+        widget=forms.EmailInput(attrs={"class": tailwind_input, "placeholder": "Email"})
+    )
     password = forms.CharField(
-        required=True,  # or False for update form
+        required=False,  # leave blank to keep existing password
         widget=forms.PasswordInput(attrs={
             "class": f"{tailwind_input} password-field",
             "placeholder": "Leave blank to remain unchanged",
-            "id": "password_input",  # optional, useful for JS targeting
+            "id": "password_input",
         })
     )
-
     first_name = forms.CharField(
         required=True,
         widget=forms.TextInput(attrs={"class": tailwind_input, "placeholder": "First name"})
@@ -111,6 +116,7 @@ class StudentUpdateForm(forms.ModelForm):
         model = Student
         fields = [
             "username",
+            "email",
             "password",
             "first_name",
             "last_name",
@@ -129,16 +135,15 @@ class StudentUpdateForm(forms.ModelForm):
         }
 
     def __init__(self, *args, **kwargs):
-        self.school = kwargs.pop("school", None)  # Pass school from view
+        self.school = kwargs.pop("school", None)
         super().__init__(*args, **kwargs)
 
         if self.school:
-            # Filter classes to the specific school
             self.fields["school_class"].queryset = self.fields["school_class"].queryset.filter(school=self.school)
 
-        # Populate initial values for linked user
         if self.instance and self.instance.user:
             self.fields["username"].initial = self.instance.user.username
+            self.fields["email"].initial = self.instance.user.email
             self.fields["first_name"].initial = self.instance.user.first_name
             self.fields["last_name"].initial = self.instance.user.last_name
 
@@ -146,8 +151,8 @@ class StudentUpdateForm(forms.ModelForm):
         student = super().save(commit=False)
         user = student.user
 
-        # Update user fields
         user.username = self.cleaned_data["username"]
+        user.email = self.cleaned_data["email"]  # update email
         user.first_name = self.cleaned_data["first_name"]
         user.last_name = self.cleaned_data["last_name"]
 
