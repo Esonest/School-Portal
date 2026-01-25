@@ -145,6 +145,7 @@ class Student(models.Model):
         null=True,
         blank=True
     )
+    va_verified_at = models.DateTimeField(null=True, blank=True)
 
     # -----------------------------
     # Access Control

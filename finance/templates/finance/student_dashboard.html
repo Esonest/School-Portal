@@ -70,7 +70,8 @@
 
   <!-- PAY VIA BANK TRANSFER (VIRTUAL ACCOUNT) -->
 {% if student.virtual_account_number %}
-<div class="bg-white rounded-lg shadow p-4 border border-green-100">
+<div class="bg-white border border-green-100 rounded-lg shadow p-4">
+  <!-- Header -->
   <div class="flex items-center justify-between">
     <h3 class="font-semibold text-green-700">Pay via Bank Transfer</h3>
     <span class="text-xs text-green-600 bg-green-50 px-2 py-1 rounded-full">
@@ -78,6 +79,7 @@
     </span>
   </div>
 
+  <!-- Account Details -->
   <div class="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
     <div>
       <p class="text-gray-500">Bank</p>
@@ -85,9 +87,7 @@
     </div>
     <div>
       <p class="text-gray-500">Account Number</p>
-      <p class="font-mono font-semibold text-lg">
-        {{ student.virtual_account_number }}
-      </p>
+      <p class="font-mono font-semibold text-lg">{{ student.virtual_account_number }}</p>
     </div>
     <div>
       <p class="text-gray-500">Account Name</p>
@@ -95,9 +95,9 @@
     </div>
   </div>
 
+  <!-- Info Text -->
   <p class="mt-3 text-xs text-gray-500">
-    Transfer to this account from any Nigerian bank.
-    Payment will reflect automatically on your dashboard.
+    Transfer to this account from any Nigerian bank. Payment will reflect automatically on your dashboard.
   </p>
 </div>
 {% else %}

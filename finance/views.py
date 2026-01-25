@@ -330,29 +330,82 @@ from accounts.models import SystemSetting
 from decimal import Decimal
 from django.db.models import Sum
 from django.db.models.functions import Coalesce
+from datetime import timedelta
+from django.utils import timezone
 
-@portal_required("finance")
+
+
+# -----------------------------
+# Helper to verify virtual account (once per day)
+# -----------------------------
+def verify_virtual_account(student):
+    """
+    Check if the student's virtual account exists on Paystack.
+    Only checks if last verification was more than 24h ago.
+    If VA deleted on Paystack → remove from DB.
+    """
+    now = timezone.now()
+
+    # Only check if no previous check or last check > 24h
+    if hasattr(student, 'va_verified_at') and student.va_verified_at and now - student.va_verified_at < timedelta(hours=24):
+        return student.virtual_account_number is not None
+
+    if not student.virtual_account_number:
+        student.va_verified_at = now
+        student.save(update_fields=['va_verified_at'])
+        return False
+
+    headers = {"Authorization": f"Bearer {student.school.paystack_secret_key}"}
+    url = f"https://api.paystack.co/dedicated_account/{student.virtual_account_number}"
+
+    try:
+        resp = requests.get(url, headers=headers, timeout=10)
+        data = resp.json()
+    except Exception:
+        # API failed → keep VA for now
+        student.va_verified_at = now
+        student.save(update_fields=['va_verified_at'])
+        return True
+
+    if resp.status_code != 200 or not data.get("status"):
+        # VA deleted → remove from DB
+        student.virtual_account_number = None
+        student.virtual_account_name = None
+        student.virtual_bank_name = None
+        student.va_verified_at = now
+        student.save(update_fields=[
+            "virtual_account_number",
+            "virtual_account_name",
+            "virtual_bank_name",
+            "va_verified_at"
+        ])
+        return False
+
+    # VA exists → update last verified timestamp
+    student.va_verified_at = now
+    student.save(update_fields=['va_verified_at'])
+    return True
+
+
+# -----------------------------
+# Student Dashboard
+# -----------------------------
 @login_required
+@portal_required("finance")
 def student_dashboard(request):
     if not hasattr(request.user, 'student_profile'):
         return redirect('accounts:login')
 
     student = request.user.student_profile
 
-    # 🔐 Ensure virtual account exists (safe, idempotent)
-    try:
-        create_virtual_account(student)
-    except Exception:
-        # Do NOT break dashboard if Paystack is temporarily down
-        pass
+    # 1️⃣ Verify virtual account (optimized)
+    verify_virtual_account(student)
 
     current_session = request.GET.get('session', SESSION_LIST[0])
     current_term = request.GET.get('term', '1')
     current_class_id = request.GET.get('class', student.school_class.id)
 
-    classes = SchoolClass.objects.filter(
-        school=student.school
-    ).order_by('name')
+    classes = SchoolClass.objects.filter(school=student.school).order_by('name')
 
     invoices = Invoice.objects.filter(
         student=student,
@@ -362,18 +415,16 @@ def student_dashboard(request):
     ).order_by('-created_at')
 
     total_invoiced = invoices.aggregate(
-        total=Coalesce(Sum('total_amount'), Decimal('0'))
-    )['total']
+        total=Sum('total_amount') or Decimal('0')
+    )['total'] or Decimal('0')
 
     total_paid = invoices.aggregate(
-        total=Coalesce(Sum('amount_paid'), Decimal('0'))
-    )['total']
+        total=Sum('amount_paid') or Decimal('0')
+    )['total'] or Decimal('0')
 
     outstanding = total_invoiced - total_paid
 
-    payments = Payment.objects.filter(
-        invoice__in=invoices
-    ).order_by('-payment_date')[:10]
+    payments = Payment.objects.filter(invoice__in=invoices).order_by('-payment_date')[:10]
 
     context = {
         'student': student,
@@ -388,12 +439,10 @@ def student_dashboard(request):
         'current_term': current_term,
         'classes': classes,
         'current_class_id': int(current_class_id),
-
-        # Optional explicit flag for template
-        'has_virtual_account': student.has_virtual_account(),
     }
 
     return render(request, 'finance/student_dashboard.html', context)
+
 
 
 
