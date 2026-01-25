@@ -144,3 +144,121 @@ def payment_saved(sender, instance, **kwargs):
 @receiver(post_delete, sender=Payment)
 def payment_deleted(sender, instance, **kwargs):
     update_invoice_amount_paid(instance.invoice)
+
+
+# finance/utils.py
+import requests
+from django.core.exceptions import ValidationError
+
+PAYSTACK_BASE_URL = "https://api.paystack.co"
+
+
+def create_paystack_customer(student):
+    """
+    Creates a Paystack customer for a student (once).
+    Returns customer_code.
+    """
+
+    # Prevent duplicate creation
+    if student.paystack_customer_code:
+        return student.paystack_customer_code
+
+    if not student.user.email:
+        raise ValidationError("Student must have an email to create Paystack customer")
+
+    headers = {
+        "Authorization": f"Bearer {student.school.paystack_secret_key}",
+        "Content-Type": "application/json",
+    }
+
+    payload = {
+        "email": student.user.email,
+        "first_name": student.user.first_name or student.user.username,
+        "last_name": student.user.last_name or student.admission_no,
+        "metadata": {
+            "admission_no": student.admission_no,
+            "student_id": student.id,
+            "school_id": student.school_id,
+        },
+    }
+
+    response = requests.post(
+        f"{PAYSTACK_BASE_URL}/customer",
+        json=payload,
+        headers=headers,
+        timeout=30,
+    )
+
+    data = response.json()
+
+    if not response.ok or not data.get("status"):
+        raise Exception(
+            f"Paystack customer creation failed: {data.get('message')}"
+        )
+
+    student.paystack_customer_code = data["data"]["customer_code"]
+    student.save(update_fields=["paystack_customer_code"])
+
+    return student.paystack_customer_code
+
+
+# finance/utils.py
+import requests
+
+PAYSTACK_BASE_URL = "https://api.paystack.co"
+
+
+def create_virtual_account(student):
+    """
+    Ensures student has a Paystack dedicated virtual account.
+    Safe to call multiple times.
+    """
+
+    # Already exists → do nothing
+    if student.virtual_account_number:
+        return student
+
+    # Ensure customer exists
+    if not student.paystack_customer_code:
+        from finance.utils import create_paystack_customer
+        create_paystack_customer(student)
+
+    headers = {
+        "Authorization": f"Bearer {student.school.paystack_secret_key}",
+        "Content-Type": "application/json",
+    }
+
+    payload = {
+        "customer": student.paystack_customer_code,
+        "preferred_bank": "wema-bank",
+    }
+
+    response = requests.post(
+        f"{PAYSTACK_BASE_URL}/dedicated_account",
+        json=payload,
+        headers=headers,
+        timeout=30,
+    )
+
+    data = response.json()
+
+    if not response.ok or not data.get("status"):
+        raise Exception(
+            f"Paystack virtual account creation failed: {data.get('message')}"
+        )
+
+    account = data["data"]
+
+    student.virtual_account_number = account["account_number"]
+    student.virtual_account_name = account["account_name"]
+    student.virtual_bank_name = account["bank"]["name"]
+    student.virtual_bank_slug = account["bank"]["slug"]
+
+    student.save(update_fields=[
+        "virtual_account_number",
+        "virtual_account_name",
+        "virtual_bank_name",
+        "virtual_bank_slug",
+    ])
+
+    return student

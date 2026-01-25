@@ -16,6 +16,8 @@ from .models import Invoice, Receipt
 from .forms import FeeTemplate, FeeTemplateForm
 from collections import defaultdict
 from django.db.models import Q
+from finance.utils import create_virtual_account
+
 
 
 
@@ -337,6 +339,13 @@ def student_dashboard(request):
 
     student = request.user.student_profile
 
+    # 🔐 Ensure virtual account exists (safe, idempotent)
+    try:
+        create_virtual_account(student)
+    except Exception:
+        # Do NOT break dashboard if Paystack is temporarily down
+        pass
+
     current_session = request.GET.get('session', SESSION_LIST[0])
     current_term = request.GET.get('term', '1')
     current_class_id = request.GET.get('class', student.school_class.id)
@@ -379,9 +388,13 @@ def student_dashboard(request):
         'current_term': current_term,
         'classes': classes,
         'current_class_id': int(current_class_id),
+
+        # Optional explicit flag for template
+        'has_virtual_account': student.has_virtual_account(),
     }
 
     return render(request, 'finance/student_dashboard.html', context)
+
 
 
 
@@ -1507,13 +1520,13 @@ from django.db.models import Sum
 @csrf_exempt
 def paystack_webhook(request):
     """
-    Paystack webhook handler (SAFE + IDEMPOTENT)
-    
-    1️⃣ Verifies signature
-    2️⃣ Handles retries correctly
-    3️⃣ Creates Payment once
-    4️⃣ Updates Invoice.amount_paid
-    5️⃣ Creates Receipt once
+    Paystack webhook handler (ONLINE + VIRTUAL ACCOUNT)
+
+    ✔ Signature verification
+    ✔ Idempotent
+    ✔ Atomic
+    ✔ Online & bank transfer support
+    ✔ Auto invoice resolution
     """
 
     if request.method != "POST":
@@ -1557,7 +1570,7 @@ def paystack_webhook(request):
         return HttpResponse(status=400)
 
     # -----------------------------
-    # Only process successful charge
+    # Only handle successful charges
     # -----------------------------
     if event.get("event") != "charge.success":
         return HttpResponse(status=200)
@@ -1569,24 +1582,65 @@ def paystack_webhook(request):
         return HttpResponse(status=200)
 
     # -----------------------------
+    # Detect payment channel
+    # -----------------------------
+    channel = data.get("authorization", {}).get("channel")
+    is_virtual_account = channel == "bank_transfer"
+
+    customer_code = data.get("customer", {}).get("customer_code")
+
+    # -----------------------------
     # Atomic processing
     # -----------------------------
     with transaction.atomic():
 
-        # Lock PaystackTransaction (if exists)
-        try:
-            tx = PaystackTransaction.objects.select_for_update().get(
-                paystack_reference=reference
+        student = None
+        invoice = None
+
+        # =============================
+        # ONLINE PAYMENT FLOW
+        # =============================
+        if not is_virtual_account:
+            try:
+                tx = PaystackTransaction.objects.select_for_update().get(
+                    paystack_reference=reference
+                )
+            except PaystackTransaction.DoesNotExist:
+                return HttpResponse(status=200)
+
+            invoice = tx.invoice
+
+            if tx.status != "success":
+                tx.status = "success"
+                tx.save(update_fields=["status"])
+
+        # =============================
+        # VIRTUAL ACCOUNT FLOW
+        # =============================
+        else:
+            if not customer_code:
+                return HttpResponse(status=200)
+
+            student = Student.objects.select_for_update().filter(
+                paystack_customer_code=customer_code
+            ).first()
+
+            if not student:
+                return HttpResponse(status=200)
+
+            invoice = (
+                Invoice.objects
+                .select_for_update()
+                .filter(
+                    student=student,
+                    amount_paid__lt=models.F("total_amount")
+                )
+                .order_by("created_at")
+                .first()
             )
-        except PaystackTransaction.DoesNotExist:
-            return HttpResponse(status=200)
 
-        invoice = tx.invoice
-
-        # Mark PaystackTransaction successful
-        if tx.status != "success":
-            tx.status = "success"
-            tx.save(update_fields=["status"])
+            if not invoice:
+                return HttpResponse(status=200)
 
         # -----------------------------
         # Create Payment (idempotent)
@@ -1602,21 +1656,23 @@ def paystack_webhook(request):
                 "session": invoice.session,
                 "status": "approved",
                 "amount": amount,
-                "payment_method": "online",
-                "metadata": data
+                "payment_method": "bank_transfer" if is_virtual_account else "online",
+                "metadata": data,
             }
         )
 
         # -----------------------------
-        # Recompute invoice total
+        # Recompute invoice totals
         # -----------------------------
         invoice.amount_paid = (
-            Payment.objects.filter(invoice=invoice).aggregate(total=Sum("amount"))["total"] or 0
+            Payment.objects
+            .filter(invoice=invoice)
+            .aggregate(total=Sum("amount"))["total"] or 0
         )
         invoice.save(update_fields=["amount_paid"])
 
         # -----------------------------
-        # Create Receipt only once
+        # Create Receipt once
         # -----------------------------
         if created:
             Receipt.objects.create(
@@ -1626,11 +1682,7 @@ def paystack_webhook(request):
                 amount=payment.amount,
                 session=invoice.session,
                 term=invoice.term,
-                school=invoice.school
+                school=invoice.school,
             )
 
-    # -----------------------------
-    # Return 200 OK to Paystack
-    # -----------------------------
     return HttpResponse(status=200)
-
