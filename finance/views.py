@@ -1589,7 +1589,6 @@ from django.db.models import Sum
 
 
 
-
 @csrf_exempt
 def paystack_webhook(request):
     """
@@ -1609,7 +1608,7 @@ def paystack_webhook(request):
     signature = request.headers.get("X-Paystack-Signature")
 
     # -----------------------------
-    # Parse payload safely
+    # Parse payload
     # -----------------------------
     try:
         event = json.loads(payload)
@@ -1631,7 +1630,7 @@ def paystack_webhook(request):
         return HttpResponse(status=200)
 
     # -----------------------------
-    # Verify Paystack signature
+    # Verify signature
     # -----------------------------
     computed_hash = hmac.new(
         school.paystack_secret_key.encode(),
@@ -1643,35 +1642,26 @@ def paystack_webhook(request):
         return HttpResponse(status=400)
 
     # -----------------------------
-    # Only handle successful charges
+    # Accept ONLINE + VA events
     # -----------------------------
-    if event.get("event") != "charge.success":
+    if event.get("event") not in ["charge.success", "transfer.success"]:
         return HttpResponse(status=200)
 
     reference = data.get("reference")
     amount = Decimal(data.get("amount", 0)) / 100  # kobo → naira
+    channel = data.get("channel")  # IMPORTANT
+    is_virtual_account = channel == "bank_transfer"
 
     if not reference or amount <= 0:
         return HttpResponse(status=200)
 
-    # -----------------------------
-    # Detect payment channel
-    # -----------------------------
-    channel = data.get("authorization", {}).get("channel")
-    is_virtual_account = channel == "bank_transfer"
-
-    customer_code = data.get("customer", {}).get("customer_code")
-
-    # -----------------------------
-    # Atomic processing
-    # -----------------------------
     with transaction.atomic():
 
         student = None
         invoice = None
 
         # =============================
-        # ONLINE PAYMENT FLOW
+        # ONLINE PAYMENT
         # =============================
         if not is_virtual_account:
             try:
@@ -1682,21 +1672,31 @@ def paystack_webhook(request):
                 return HttpResponse(status=200)
 
             invoice = tx.invoice
+            student = invoice.student
 
             if tx.status != "success":
                 tx.status = "success"
                 tx.save(update_fields=["status"])
 
         # =============================
-        # VIRTUAL ACCOUNT FLOW
+        # VIRTUAL ACCOUNT PAYMENT
         # =============================
         else:
-            if not customer_code:
-                return HttpResponse(status=200)
+            auth = data.get("authorization", {})
+            va_number = auth.get("account_number")
+            customer_code = data.get("customer", {}).get("customer_code")
 
-            student = Student.objects.select_for_update().filter(
-                paystack_customer_code=customer_code
-            ).first()
+            if va_number:
+                student = Student.objects.select_for_update().filter(
+                    virtual_account_number=va_number,
+                    school=school
+                ).first()
+
+            if not student and customer_code:
+                student = Student.objects.select_for_update().filter(
+                    paystack_customer_code=customer_code,
+                    school=school
+                ).first()
 
             if not student:
                 return HttpResponse(status=200)
@@ -1706,6 +1706,7 @@ def paystack_webhook(request):
                 .select_for_update()
                 .filter(
                     student=student,
+                    school=school,
                     amount_paid__lt=models.F("total_amount")
                 )
                 .order_by("created_at")
@@ -1721,9 +1722,9 @@ def paystack_webhook(request):
         payment, created = Payment.objects.get_or_create(
             reference=reference,
             defaults={
-                "school": invoice.school,
+                "school": school,
                 "invoice": invoice,
-                "student": invoice.student,
+                "student": student,
                 "school_class": invoice.school_class,
                 "term": invoice.term,
                 "session": invoice.session,
@@ -1735,7 +1736,7 @@ def paystack_webhook(request):
         )
 
         # -----------------------------
-        # Recompute invoice totals
+        # Update invoice totals
         # -----------------------------
         invoice.amount_paid = (
             Payment.objects
@@ -1745,17 +1746,17 @@ def paystack_webhook(request):
         invoice.save(update_fields=["amount_paid"])
 
         # -----------------------------
-        # Create Receipt once
+        # Receipt (once)
         # -----------------------------
         if created:
             Receipt.objects.create(
-                student=invoice.student,
+                student=student,
                 school_class=invoice.school_class,
                 payment=payment,
                 amount=payment.amount,
                 session=invoice.session,
                 term=invoice.term,
-                school=invoice.school,
+                school=school,
             )
 
     return HttpResponse(status=200)
