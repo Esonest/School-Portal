@@ -1586,6 +1586,15 @@ from django.views.decorators.csrf import csrf_exempt
 from django.db import transaction
 from django.db.models import Sum
 
+# finance/views.py
+import json
+import hmac
+import hashlib
+from decimal import Decimal
+from django.db.models import F, Sum  # ✅ Import F here for virtual account logic
+
+
+
 @csrf_exempt
 def paystack_webhook(request):
     """
@@ -1704,7 +1713,7 @@ def paystack_webhook(request):
                 .select_for_update()
                 .filter(
                     student=student,
-                    amount_paid__lt=F("total_amount")
+                    amount_paid__lt=F("total_amount")  # ✅ F used correctly now
                 )
                 .order_by("created_at")
                 .first()
