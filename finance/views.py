@@ -333,42 +333,28 @@ from django.db.models.functions import Coalesce
 from datetime import timedelta
 from django.utils import timezone
 
+import requests
+from django.utils import timezone
 
 
-# -----------------------------
-# Helper to verify virtual account (once per day)
-# -----------------------------
 def verify_virtual_account(student):
     """
-    Check if the student's virtual account exists on Paystack.
-    Only checks if last verification was more than 24h ago.
-    If VA deleted on Paystack → remove from DB.
+    Always reflect LIVE Paystack virtual account state.
+
+    - VA created → shows immediately
+    - VA deleted → cleared immediately
+    - No caching / no 24h delay
     """
+
     now = timezone.now()
 
-    # Only check if no previous check or last check > 24h
-    if hasattr(student, 'va_verified_at') and student.va_verified_at and now - student.va_verified_at < timedelta(hours=24):
-        return student.virtual_account_number is not None
+    headers = {
+        "Authorization": f"Bearer {student.school.paystack_secret_key}",
+        "Content-Type": "application/json",
+    }
 
-    if not student.virtual_account_number:
-        student.va_verified_at = now
-        student.save(update_fields=['va_verified_at'])
-        return False
-
-    headers = {"Authorization": f"Bearer {student.school.paystack_secret_key}"}
-    url = f"https://api.paystack.co/dedicated_account/{student.virtual_account_number}"
-
-    try:
-        resp = requests.get(url, headers=headers, timeout=10)
-        data = resp.json()
-    except Exception:
-        # API failed → keep VA for now
-        student.va_verified_at = now
-        student.save(update_fields=['va_verified_at'])
-        return True
-
-    if resp.status_code != 200 or not data.get("status"):
-        # VA deleted → remove from DB
+    # If student has no customer yet, VA cannot exist
+    if not student.paystack_customer_code:
         student.virtual_account_number = None
         student.virtual_account_name = None
         student.virtual_bank_name = None
@@ -381,10 +367,50 @@ def verify_virtual_account(student):
         ])
         return False
 
-    # VA exists → update last verified timestamp
+    # 🔥 Fetch ALL dedicated accounts for this customer
+    url = "https://api.paystack.co/dedicated_account"
+    params = {"customer": student.paystack_customer_code}
+
+    try:
+        resp = requests.get(url, headers=headers, params=params, timeout=15)
+        data = resp.json()
+    except Exception:
+        # Network error → don't wipe existing VA
+        student.va_verified_at = now
+        student.save(update_fields=["va_verified_at"])
+        return bool(student.virtual_account_number)
+
+    # Paystack error or no VA found
+    if resp.status_code != 200 or not data.get("status") or not data.get("data"):
+        student.virtual_account_number = None
+        student.virtual_account_name = None
+        student.virtual_bank_name = None
+        student.va_verified_at = now
+        student.save(update_fields=[
+            "virtual_account_number",
+            "virtual_account_name",
+            "virtual_bank_name",
+            "va_verified_at"
+        ])
+        return False
+
+    # ✅ VA exists → always take latest
+    va = data["data"][0]
+
+    student.virtual_account_number = va.get("account_number")
+    student.virtual_account_name = va.get("account_name")
+    student.virtual_bank_name = va.get("bank", {}).get("name")
     student.va_verified_at = now
-    student.save(update_fields=['va_verified_at'])
+
+    student.save(update_fields=[
+        "virtual_account_number",
+        "virtual_account_name",
+        "virtual_bank_name",
+        "va_verified_at"
+    ])
+
     return True
+
 
 
 # -----------------------------
