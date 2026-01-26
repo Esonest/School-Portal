@@ -1598,7 +1598,7 @@ def paystack_webhook(request):
     ✔ Idempotent
     ✔ Atomic
     ✔ Online & bank transfer support
-    ✔ Auto invoice resolution
+    ✔ VA payments apply to CURRENT session & term invoice
     """
 
     if request.method != "POST":
@@ -1608,7 +1608,7 @@ def paystack_webhook(request):
     signature = request.headers.get("X-Paystack-Signature")
 
     # -----------------------------
-    # Parse payload
+    # Parse payload safely
     # -----------------------------
     try:
         event = json.loads(payload)
@@ -1630,7 +1630,7 @@ def paystack_webhook(request):
         return HttpResponse(status=200)
 
     # -----------------------------
-    # Verify signature
+    # Verify Paystack signature
     # -----------------------------
     computed_hash = hmac.new(
         school.paystack_secret_key.encode(),
@@ -1642,26 +1642,28 @@ def paystack_webhook(request):
         return HttpResponse(status=400)
 
     # -----------------------------
-    # Accept ONLINE + VA events
+    # Only process successful charge
     # -----------------------------
-    if event.get("event") not in ["charge.success", "transfer.success"]:
+    if event.get("event") != "charge.success":
         return HttpResponse(status=200)
 
     reference = data.get("reference")
     amount = Decimal(data.get("amount", 0)) / 100  # kobo → naira
-    channel = data.get("channel")  # IMPORTANT
-    is_virtual_account = channel == "bank_transfer"
 
     if not reference or amount <= 0:
         return HttpResponse(status=200)
 
+    # -----------------------------
+    # Detect channel
+    # -----------------------------
+    channel = data.get("authorization", {}).get("channel")
+    is_virtual_account = channel == "bank_transfer"
+    customer_code = data.get("customer", {}).get("customer_code")
+
     with transaction.atomic():
 
-        student = None
-        invoice = None
-
         # =============================
-        # ONLINE PAYMENT
+        # ONLINE PAYMENT (INVOICE KNOWN)
         # =============================
         if not is_virtual_account:
             try:
@@ -1672,7 +1674,6 @@ def paystack_webhook(request):
                 return HttpResponse(status=200)
 
             invoice = tx.invoice
-            student = invoice.student
 
             if tx.status != "success":
                 tx.status = "success"
@@ -1682,32 +1683,26 @@ def paystack_webhook(request):
         # VIRTUAL ACCOUNT PAYMENT
         # =============================
         else:
-            auth = data.get("authorization", {})
-            va_number = auth.get("account_number")
-            customer_code = data.get("customer", {}).get("customer_code")
+            if not customer_code:
+                return HttpResponse(status=200)
 
-            if va_number:
-                student = Student.objects.select_for_update().filter(
-                    virtual_account_number=va_number,
-                    school=school
-                ).first()
-
-            if not student and customer_code:
-                student = Student.objects.select_for_update().filter(
-                    paystack_customer_code=customer_code,
-                    school=school
-                ).first()
+            student = Student.objects.select_for_update().filter(
+                paystack_customer_code=customer_code
+            ).first()
 
             if not student:
                 return HttpResponse(status=200)
 
+            # 🔥 CRITICAL FIX:
+            # Apply VA payments ONLY to current session + term
             invoice = (
                 Invoice.objects
                 .select_for_update()
                 .filter(
                     student=student,
-                    school=school,
-                    amount_paid__lt=models.F("total_amount")
+                    session=student.current_session,
+                    term=student.current_term,
+                    amount_paid__lt=models.F("total_amount"),
                 )
                 .order_by("created_at")
                 .first()
@@ -1722,9 +1717,9 @@ def paystack_webhook(request):
         payment, created = Payment.objects.get_or_create(
             reference=reference,
             defaults={
-                "school": school,
+                "school": invoice.school,
                 "invoice": invoice,
-                "student": student,
+                "student": invoice.student,
                 "school_class": invoice.school_class,
                 "term": invoice.term,
                 "session": invoice.session,
@@ -1736,27 +1731,27 @@ def paystack_webhook(request):
         )
 
         # -----------------------------
-        # Update invoice totals
+        # Recompute invoice totals
         # -----------------------------
         invoice.amount_paid = (
             Payment.objects
             .filter(invoice=invoice)
-            .aggregate(total=Sum("amount"))["total"] or 0
+            .aggregate(total=Sum("amount"))["total"] or Decimal("0.00")
         )
         invoice.save(update_fields=["amount_paid"])
 
         # -----------------------------
-        # Receipt (once)
+        # Create Receipt once
         # -----------------------------
         if created:
             Receipt.objects.create(
-                student=student,
+                student=invoice.student,
                 school_class=invoice.school_class,
                 payment=payment,
                 amount=payment.amount,
                 session=invoice.session,
                 term=invoice.term,
-                school=school,
+                school=invoice.school,
             )
 
     return HttpResponse(status=200)
