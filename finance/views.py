@@ -1587,8 +1587,7 @@ from django.db import transaction
 from django.db.models import Sum
 
 
-
-
+  
 @csrf_exempt
 def paystack_webhook(request):
     """
@@ -1598,7 +1597,7 @@ def paystack_webhook(request):
     ✔ Idempotent
     ✔ Atomic
     ✔ Online & bank transfer support
-    ✔ VA payments apply to CURRENT session & term invoice
+    ✔ Auto invoice resolution
     """
 
     if request.method != "POST":
@@ -1642,7 +1641,7 @@ def paystack_webhook(request):
         return HttpResponse(status=400)
 
     # -----------------------------
-    # Only process successful charge
+    # Only handle successful charges
     # -----------------------------
     if event.get("event") != "charge.success":
         return HttpResponse(status=200)
@@ -1654,16 +1653,23 @@ def paystack_webhook(request):
         return HttpResponse(status=200)
 
     # -----------------------------
-    # Detect channel
+    # Detect payment channel
     # -----------------------------
     channel = data.get("authorization", {}).get("channel")
     is_virtual_account = channel == "bank_transfer"
+
     customer_code = data.get("customer", {}).get("customer_code")
 
+    # -----------------------------
+    # Atomic processing
+    # -----------------------------
     with transaction.atomic():
 
+        student = None
+        invoice = None
+
         # =============================
-        # ONLINE PAYMENT (INVOICE KNOWN)
+        # ONLINE PAYMENT FLOW
         # =============================
         if not is_virtual_account:
             try:
@@ -1680,7 +1686,7 @@ def paystack_webhook(request):
                 tx.save(update_fields=["status"])
 
         # =============================
-        # VIRTUAL ACCOUNT PAYMENT
+        # VIRTUAL ACCOUNT FLOW
         # =============================
         else:
             if not customer_code:
@@ -1693,16 +1699,12 @@ def paystack_webhook(request):
             if not student:
                 return HttpResponse(status=200)
 
-            # 🔥 CRITICAL FIX:
-            # Apply VA payments ONLY to current session + term
             invoice = (
                 Invoice.objects
                 .select_for_update()
                 .filter(
                     student=student,
-                    session=student.current_session,
-                    term=student.current_term,
-                    amount_paid__lt=models.F("total_amount"),
+                    amount_paid__lt=models.F("total_amount")
                 )
                 .order_by("created_at")
                 .first()
@@ -1736,7 +1738,7 @@ def paystack_webhook(request):
         invoice.amount_paid = (
             Payment.objects
             .filter(invoice=invoice)
-            .aggregate(total=Sum("amount"))["total"] or Decimal("0.00")
+            .aggregate(total=Sum("amount"))["total"] or 0
         )
         invoice.save(update_fields=["amount_paid"])
 
