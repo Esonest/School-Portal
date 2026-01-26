@@ -316,7 +316,6 @@ from decimal import Decimal
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db import models
-from django.http import JsonResponse
 from django.http import HttpResponse
 
 
