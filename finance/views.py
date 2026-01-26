@@ -332,9 +332,8 @@ from django.db.models import Sum
 from django.db.models.functions import Coalesce
 from datetime import timedelta
 from django.utils import timezone
-
 import requests
-from django.utils import timezone
+
 
 
 def verify_virtual_account(student):
