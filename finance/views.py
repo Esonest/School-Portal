@@ -1603,6 +1603,12 @@ def paystack_webhook(request):
     ✔ Online + Virtual account support
     ✔ Safe retries
     """
+    from django.http import JsonResponse
+    import json
+
+    print("🔥 PAYSTACK WEBHOOK HIT 🔥")
+    print(json.loads(request.body))
+
 
     if request.method != "POST":
         return HttpResponse(status=405)
