@@ -1603,12 +1603,6 @@ def paystack_webhook(request):
     ✔ Online + Virtual account support
     ✔ Safe retries
     """
-    from django.http import JsonResponse
-    import json
-
-    print("🔥 PAYSTACK WEBHOOK HIT 🔥")
-    print(json.loads(request.body))
-
 
     if request.method != "POST":
         return HttpResponse(status=405)
@@ -1621,7 +1615,7 @@ def paystack_webhook(request):
     # --------------------------------------------------
     try:
         event = json.loads(payload)
-        data = event.get("data", {})
+        data = event.get("data") or {}
     except Exception:
         return HttpResponse(status=400)
 
@@ -1636,25 +1630,33 @@ def paystack_webhook(request):
     if event_type not in ALLOWED_EVENTS:
         return HttpResponse(status=200)
 
-    reference = data.get("reference")
+    # --------------------------------------------------
+    # Reference & amount
+    # --------------------------------------------------
+    reference = (
+        data.get("reference")
+        or str(data.get("id"))
+    )
+
     amount = Decimal(data.get("amount", 0)) / 100  # Kobo → Naira
 
     if not reference or amount <= 0:
         return HttpResponse(status=200)
 
     # --------------------------------------------------
-    # Extract account number (virtual account)
+    # Extract virtual account number (SAFE)
     # --------------------------------------------------
     account_number = (
-        data.get("source", {}).get("account_number")
-        or data.get("authorization", {}).get("account_number")
-        or data.get("recipient", {}).get("details", {}).get("account_number")
+        (data.get("metadata") or {}).get("receiver_account_number")
+        or (data.get("authorization") or {}).get("receiver_bank_account_number")
     )
 
     # --------------------------------------------------
-    # Resolve school (metadata OR virtual account)
+    # Resolve school
     # --------------------------------------------------
     school = None
+    student = None
+
     metadata = data.get("metadata") or {}
     school_id = metadata.get("school_id")
 
@@ -1681,7 +1683,7 @@ def paystack_webhook(request):
         return HttpResponse(status=200)
 
     # --------------------------------------------------
-    # Verify Paystack signature (per school)
+    # Verify Paystack signature
     # --------------------------------------------------
     computed_signature = hmac.new(
         school.paystack_secret_key.encode(),
@@ -1696,8 +1698,7 @@ def paystack_webhook(request):
     # Detect payment type
     # --------------------------------------------------
     is_virtual_account = (
-        data.get("channel") == "bank"
-        or data.get("authorization", {}).get("authorization_type") == "bank_transfer"
+        data.get("channel") == "dedicated_nuban"
         or event_type in {"transfer.success", "deposit.success"}
     )
 
@@ -1731,12 +1732,13 @@ def paystack_webhook(request):
         # VIRTUAL ACCOUNT PAYMENT
         # ===============================
         else:
-            student = (
-                Student.objects
-                .select_for_update()
-                .filter(virtual_account_number=account_number)
-                .first()
-            )
+            if not student:
+                student = (
+                    Student.objects
+                    .select_for_update()
+                    .filter(virtual_account_number=account_number)
+                    .first()
+                )
 
             if not student:
                 return HttpResponse(status=200)
@@ -1801,3 +1803,4 @@ def paystack_webhook(request):
             )
 
     return HttpResponse(status=200)
+
