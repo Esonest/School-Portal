@@ -45,21 +45,21 @@ from datetime import timedelta
 from django.db.models.functions import Coalesce
 from django.contrib.auth.decorators import login_required
 
+
 @login_required
 def dashboard(request):
     school = request.user.school
+    start_date = timezone.now() - timedelta(days=365)
 
-    # -----------------------------
+    # -------------------------------------------------
     # Filters
-    # -----------------------------
+    # -------------------------------------------------
     current_session = request.GET.get("session")
     current_term = request.GET.get("term")
 
-    start_date = timezone.now() - timedelta(days=365)
-
-    # -----------------------------
+    # -------------------------------------------------
     # Invoices
-    # -----------------------------
+    # -------------------------------------------------
     invoices = Invoice.objects.filter(
         school=school,
         created_at__gte=start_date
@@ -71,73 +71,104 @@ def dashboard(request):
     if current_term:
         invoices = invoices.filter(term=current_term)
 
-    total_expected = invoices.aggregate(
-        total=Coalesce(Sum("total_amount"), Decimal("0"))
-    )["total"]
-
-    total_received = invoices.aggregate(
-        total=Coalesce(Sum("amount_paid"), Decimal("0"))
-    )["total"]
-
-    outstanding = total_expected - total_received
-
-    # -----------------------------
-    # Payments
-    # -----------------------------
-    recent_payments = Payment.objects.filter(
-        school=school
-    ).select_related(
-        "invoice", "invoice__student"
-    ).order_by("-payment_date")[:5]
-
-    # -----------------------------
-    # Paystack
-    # -----------------------------
-    paystack_qs = PaystackTransaction.objects.filter(
-        school=school,
-        status="success",
-        created_at__gte=start_date
+    invoice_totals = invoices.aggregate(
+        total_expected=Coalesce(Sum("total_amount"), Decimal("0")),
+        total_received=Coalesce(Sum("amount_paid"), Decimal("0")),
     )
 
-    paystack_total = paystack_qs.aggregate(
+    total_expected = invoice_totals["total_expected"]
+    total_received = invoice_totals["total_received"]
+    outstanding = total_expected - total_received
+
+    # -------------------------------------------------
+    # PAYMENTS (single source of truth)
+    # -------------------------------------------------
+    payments_base = (
+        Payment.objects
+        .filter(
+            school=school,
+            status="approved",
+            payment_date__gte=start_date
+        )
+        .select_related("invoice", "invoice__student")
+    )
+
+    # -------------------------------------------------
+    # Manual / Offline Payments
+    # -------------------------------------------------
+    recent_payments = (
+        payments_base
+        .exclude(payment_method__in=["online", "bank_transfer"])
+        .order_by("-payment_date")[:5]
+    )
+
+    # -------------------------------------------------
+    # Paystack Payments
+    # -------------------------------------------------
+    paystack_online_qs = payments_base.filter(payment_method="online")
+    paystack_bank_qs = payments_base.filter(payment_method="bank_transfer")
+
+    paystack_online_total = paystack_online_qs.aggregate(
         total=Coalesce(Sum("amount"), Decimal("0"))
     )["total"]
 
-    recent_paystack = paystack_qs.select_related(
-        "invoice", "invoice__student"
-    ).order_by("-created_at")[:5]
+    paystack_bank_total = paystack_bank_qs.aggregate(
+        total=Coalesce(Sum("amount"), Decimal("0"))
+    )["total"]
 
-    # -----------------------------
+    paystack_total = paystack_online_total + paystack_bank_total
+
+    recent_paystack_online = paystack_online_qs.order_by("-payment_date")[:5]
+    recent_paystack_bank = paystack_bank_qs.order_by("-payment_date")[:5]
+
+    recent_paystack = (
+        payments_base
+        .filter(payment_method__in=["online", "bank_transfer"])
+        .order_by("-payment_date")[:5]
+    )
+
+
+    # -------------------------------------------------
     # Expenses
-    # -----------------------------
-    recent_expenses = Expense.objects.filter(
+    # -------------------------------------------------
+    expenses = Expense.objects.filter(
         school=school,
         date__gte=start_date
     )
 
     if current_session:
-        recent_expenses = recent_expenses.filter(session=current_session)
+        expenses = expenses.filter(session=current_session)
 
     if current_term:
-        recent_expenses = recent_expenses.filter(term=current_term)
+        expenses = expenses.filter(term=current_term)
 
-    recent_expenses = recent_expenses.order_by("-date")[:5]
+    recent_expenses = expenses.order_by("-date")[:5]
 
+    # -------------------------------------------------
+    # Context
+    # -------------------------------------------------
     context = {
         "school": school,
 
-        "invoices": invoices,
+        # Invoice summary
         "total_expected": total_expected,
         "total_received": total_received,
         "outstanding": outstanding,
 
+        # Manual payments
         "recent_payments": recent_payments,
 
+        # Paystack
         "paystack_total": paystack_total,
+        "paystack_online_total": paystack_online_total,
+        "paystack_bank_total": paystack_bank_total,
+        "recent_paystack_online": recent_paystack_online,
+        "recent_paystack_bank": recent_paystack_bank,
         "recent_paystack": recent_paystack,
-
+        # Expenses
         "recent_expenses": recent_expenses,
 
+        # Filters
         "sessions": SESSION_LIST,
         "current_session": current_session,
         "current_term": current_term,
@@ -145,6 +176,63 @@ def dashboard(request):
     }
 
     return render(request, "finance/dashboard.html", context)
+
+
+
+
+
+from django.core.paginator import Paginator
+from django.template.loader import render_to_string
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+
+@login_required
+def payments_modal(request):
+    school = request.user.school
+    page_number = int(request.GET.get("page", 1))
+    method = request.GET.get("method")  # 'manual', 'online', 'bank_transfer'
+
+    # -----------------------------
+    # Base queryset: approved payments in the last year
+    # -----------------------------
+    start_date = timezone.now() - timedelta(days=365)
+    payments_qs = Payment.objects.filter(
+        school=school,
+        status="approved",
+        payment_date__gte=start_date
+    ).select_related("invoice", "invoice__student").order_by("-payment_date")
+
+    # -----------------------------
+    # Filter by payment method if provided
+    # -----------------------------
+    if method in ["manual", "online", "bank_transfer"]:
+        payments_qs = payments_qs.filter(payment_method=method)
+
+    # -----------------------------
+    # Pagination
+    # -----------------------------
+    paginator = Paginator(payments_qs, 20)  # 20 payments per page
+    page_obj = paginator.get_page(page_number)
+
+    # -----------------------------
+    # Render HTML for modal list
+    # -----------------------------
+    html = render_to_string(
+        "finance/payment_modal_list.html",
+        {"page_obj": page_obj},
+        request=request
+    )
+
+    # -----------------------------
+    # Return JSON
+    # -----------------------------
+    return JsonResponse({
+        "html": html,
+        "has_next": page_obj.has_next(),
+        "has_prev": page_obj.has_previous(),
+        "page": page_obj.number,
+        "num_pages": page_obj.paginator.num_pages,
+    })
 
 
 
@@ -216,6 +304,11 @@ from django.db.models.functions import TruncMonth
 
 
 
+from datetime import timedelta
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from django.db.models.functions import TruncMonth
+
 @login_required
 def finance_summary_json(request):
     school = request.user.school
@@ -223,6 +316,7 @@ def finance_summary_json(request):
     current_session = request.GET.get("session")
     current_term = request.GET.get("term")
 
+    # Always work with datetime first
     today = timezone.now()
     start_date = today - timedelta(days=365)
 
@@ -240,20 +334,25 @@ def finance_summary_json(request):
     if current_term:
         payments = payments.filter(invoice__term=current_term)
 
-    income = (
+    income_qs = (
         payments
         .annotate(month=TruncMonth("payment_date"))
         .values("month")
         .annotate(total=Sum("amount"))
-        .order_by("month")
     )
+
+    # Normalize income months to DATE
+    income_map = {
+        row["month"].date(): row["total"]
+        for row in income_qs
+    }
 
     # =====================
     # EXPENSES
     # =====================
     expenses = Expense.objects.filter(
         school=school,
-        date__gte=start_date
+        date__gte=start_date.date()
     )
 
     if current_session:
@@ -262,43 +361,39 @@ def finance_summary_json(request):
     if current_term:
         expenses = expenses.filter(term=current_term)
 
-    expense = (
+    expense_qs = (
         expenses
         .annotate(month=TruncMonth("date"))
         .values("month")
         .annotate(total=Sum("amount"))
-        .order_by("month")
     )
 
+    # Normalize expense months to DATE
+    expense_map = {
+        (
+            row["month"].date()
+            if hasattr(row["month"], "date")
+            else row["month"]
+        ): row["total"]
+        for row in expense_qs
+    }
+
     # =====================
-    # MERGE MONTHS
+    # MERGE MONTHS SAFELY
     # =====================
     months = sorted(
-        {i["month"] for i in income} | {e["month"] for e in expense}
+        set(income_map.keys()) | set(expense_map.keys())
     )
 
-    labels = []
-    income_data = []
-    expense_data = []
-
-    for m in months:
-        labels.append(m.strftime("%b %Y"))
-
-        income_data.append(
-            next((i["total"] for i in income if i["month"] == m), 0)
-        )
-
-        expense_data.append(
-            next((e["total"] for e in expense if e["month"] == m), 0)
-        )
+    labels = [m.strftime("%b %Y") for m in months]
+    income_data = [income_map.get(m, 0) for m in months]
+    expense_data = [expense_map.get(m, 0) for m in months]
 
     return JsonResponse({
         "labels": labels,
         "income": income_data,
         "expense": expense_data,
     })
-
-
 
 
 

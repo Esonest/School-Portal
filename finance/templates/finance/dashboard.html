@@ -1,19 +1,22 @@
 {% extends "accounts/base.html" %}
 {% block content %}
 
-<div class="max-w-7xl mx-auto px-6 py-8 space-y-6">
+<div class="max-w-7xl mx-auto px-6 py-8 space-y-8">
 
   <!-- Header -->
-  <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-6">
-    <h1 class="text-3xl font-bold text-gray-800 flex items-center gap-2">💰 Finance Dashboard</h1>
-    <div class="text-lg font-semibold text-{{ school.theme_color }}-600">{{ school.name }}</div>
+  <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+    <h1 class="text-3xl font-bold text-gray-800 flex items-center gap-2">
+      💰 Finance Dashboard
+    </h1>
+    <div class="text-lg font-semibold text-{{ school.theme_color }}-600">
+      {{ school.name }}
+    </div>
   </div>
 
   <!-- Filters -->
-  <form method="get" class="bg-white dark:bg-gray-900 rounded-2xl shadow p-6 mb-6">
+  <form method="get" class="bg-white dark:bg-gray-900 rounded-2xl shadow p-6">
     <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
 
-      <!-- Session -->
       <div>
         <label class="text-sm font-semibold text-gray-700 dark:text-gray-300">Session</label>
         <select name="session" class="w-full mt-1 border rounded-lg px-3 py-2 dark:bg-gray-800 dark:text-gray-100">
@@ -24,7 +27,6 @@
         </select>
       </div>
 
-      <!-- Term -->
       <div>
         <label class="text-sm font-semibold text-gray-700 dark:text-gray-300">Term</label>
         <select name="term" class="w-full mt-1 border rounded-lg px-3 py-2 dark:bg-gray-800 dark:text-gray-100">
@@ -35,9 +37,9 @@
         </select>
       </div>
 
-      <!-- Submit -->
-      <div class="flex items-end col-span-1 md:col-span-2">
-        <button type="submit" class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg font-semibold">
+      <div class="flex items-end md:col-span-2">
+        <button type="submit"
+          class="w-full bg-indigo-600 hover:bg-indigo-700 text-white py-2 rounded-lg font-semibold">
           Apply Filter
         </button>
       </div>
@@ -46,126 +48,152 @@
   </form>
 
   <!-- Actions -->
-  <div class="flex flex-wrap gap-3 mb-8">
+  <div class="flex flex-wrap gap-3">
     <a href="{% url 'finance:bulk_invoice_create' %}?{% if current_session %}session={{ current_session }}{% endif %}{% if current_term %}&term={{ current_term }}{% endif %}"
-       class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-lg font-semibold transition">
+       class="bg-indigo-600 hover:bg-indigo-700 text-white px-5 py-2 rounded-lg font-semibold">
        ➕ Bulk Generate Invoices
     </a>
 
     <a href="{% url 'finance:invoice_list' %}"
-       class="bg-gray-200 hover:bg-gray-300 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-800 dark:text-gray-100 px-5 py-2 rounded-lg font-semibold transition">
+       class="bg-gray-200 hover:bg-gray-300 dark:bg-gray-800 dark:hover:bg-gray-700 px-5 py-2 rounded-lg font-semibold">
        📄 View Invoices
     </a>
 
     <a href="{% url 'finance:expense_list' %}"
-       class="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg font-semibold transition">
+       class="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-lg font-semibold">
        💸 Expenses
     </a>
   </div>
 
   <!-- Summary Cards -->
-  <div class="grid grid-cols-1 md:grid-cols-5 gap-6 mb-10">
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-6">
+
     <div class="bg-blue-600 text-white rounded-2xl p-6 shadow">
       <p class="text-sm opacity-90">Total Invoiced</p>
       <p class="text-2xl font-bold mt-2">₦{{ total_expected|floatformat:2 }}</p>
     </div>
+
     <div class="bg-green-600 text-white rounded-2xl p-6 shadow">
       <p class="text-sm opacity-90">Total Paid</p>
       <p class="text-2xl font-bold mt-2">₦{{ total_received|floatformat:2 }}</p>
     </div>
 
     <div class="bg-emerald-600 text-white rounded-2xl p-6 shadow">
-  <p class="text-sm opacity-90">Paystack Income</p>
-  <p class="text-2xl font-bold mt-2">
-    ₦{{ paystack_total|floatformat:2 }}
-  </p>
-</div>
+      <p class="text-sm opacity-90">Paystack Income</p>
+      <p class="text-2xl font-bold mt-2">₦{{ paystack_total|floatformat:2 }}</p>
+    </div>
+
+    <div class="bg-teal-600 text-white rounded-2xl p-6 shadow">
+      <p class="text-sm opacity-90">Paystack Bank Transfer</p>
+      <p class="text-2xl font-bold mt-2">₦{{ paystack_bank_total|floatformat:2 }}</p>
+    </div>
+
+    <div class="bg-indigo-600 text-white rounded-2xl p-6 shadow">
+      <p class="text-sm opacity-90">Paystack Online</p>
+      <p class="text-2xl font-bold mt-2">₦{{ paystack_online_total|floatformat:2 }}</p>
+    </div>
 
     <div class="bg-red-600 text-white rounded-2xl p-6 shadow">
       <p class="text-sm opacity-90">Outstanding</p>
       <p class="text-2xl font-bold mt-2">₦{{ outstanding|floatformat:2 }}</p>
     </div>
-    <div class="bg-yellow-500 text-white rounded-2xl p-6 shadow">
-      <p class="text-sm opacity-90">Invoices (12 Months)</p>
-      <p class="text-2xl font-bold mt-2">{{ invoice_count }}</p>
-    </div>
+
   </div>
 
-  <!-- Recent Payments & Expenses -->
-  <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+  <!-- Section Header -->
+  <div class="flex justify-end">
+    <button onclick="openPaymentsModal()"
+      class="text-sm text-indigo-600 hover:underline font-semibold">
+      View all payments →
+    </button>
+  </div>
 
-    <!-- Payments -->
+  <!-- Lists -->
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+
+    <!-- Recent Payments -->
     <div class="bg-white dark:bg-gray-900 rounded-2xl shadow p-6">
-      <h3 class="font-semibold text-lg mb-4 text-gray-700 dark:text-gray-200">💳 Recent Payments</h3>
+      <h3 class="font-semibold text-lg mb-4">💳 Recent Payments</h3>
       <ul class="space-y-3">
         {% for p in recent_payments %}
           <li class="flex justify-between border-b pb-2">
             <div>
               <p class="font-medium">{{ p.invoice.student }}</p>
-              <p class="text-sm text-gray-500 dark:text-gray-400">{{ p.invoice.title }}</p>
+              <p class="text-sm text-gray-500">{{ p.invoice.title }}</p>
             </div>
             <div class="text-right">
               <p class="font-semibold text-green-600">₦{{ p.amount|floatformat:2 }}</p>
-              <p class="text-xs text-gray-500 dark:text-gray-400">{{ p.payment_date }}</p>
+              <p class="text-xs text-gray-500">{{ p.payment_date }}</p>
             </div>
           </li>
         {% empty %}
-          <li class="text-gray-500 dark:text-gray-400">No payments recorded.</li>
+          <li class="text-gray-500">No payments recorded.</li>
         {% endfor %}
       </ul>
     </div>
-     <div class="bg-white dark:bg-gray-900 rounded-2xl shadow p-6">
-  <h3 class="font-semibold text-lg mb-4 text-gray-700 dark:text-gray-200">
-    🧾 Paystack Transactions
-  </h3>
 
-  <ul class="space-y-3">
-    {% for tx in recent_paystack %}
-      <li class="flex justify-between border-b pb-2">
-        <div>
-          <p class="font-medium">
-            {{ tx.invoice.student }}
-          </p>
-          <p class="text-xs text-gray-500">
-            Ref: {{ tx.paystack_reference }}
-          </p>
-        </div>
-
-        <div class="text-right">
-          <p class="font-semibold text-green-600">
-            ₦{{ tx.amount|floatformat:2 }}
-          </p>
-          <p class="text-xs text-gray-500">
-            {{ tx.created_at|date:"M d, Y" }}
-          </p>
-        </div>
-      </li>
-    {% empty %}
-      <li class="text-gray-500">No Paystack transactions.</li>
-    {% endfor %}
-  </ul>
-</div>
-
+    <!-- Paystack -->
+    <div class="bg-white dark:bg-gray-900 rounded-2xl shadow p-6">
+      <h3 class="font-semibold text-lg mb-4">🧾 Paystack Transactions</h3>
+      <ul class="space-y-3">
+        {% for tx in recent_paystack %}
+          <li class="flex justify-between border-b pb-2">
+            <div>
+              <p class="font-medium">{{ tx.invoice.student }}</p>
+               <p class="text-sm text-gray-500">{{ tx.invoice.title }}</p>
+              <p class="text-xs text-gray-500">Ref: {{ tx.reference }}</p>
+            </div>
+            <div class="text-right">
+              <p class="font-semibold text-green-600">₦{{ tx.amount|floatformat:2 }}</p>
+              <p class="text-xs text-gray-500">{{ tx.payment_date|date:"M d, Y" }}</p>
+            </div>
+          </li>
+        {% empty %}
+          <li class="text-gray-500">No Paystack transactions.</li>
+        {% endfor %}
+      </ul>
+    </div>
 
     <!-- Expenses -->
     <div class="bg-white dark:bg-gray-900 rounded-2xl shadow p-6">
-      <h3 class="font-semibold text-lg mb-4 text-gray-700 dark:text-gray-200">📉 Recent Expenses</h3>
+      <h3 class="font-semibold text-lg mb-4">📉 Recent Expenses</h3>
       <ul class="space-y-3">
         {% for e in recent_expenses %}
           <li class="flex justify-between border-b pb-2">
             <div>{{ e.title }}</div>
             <div class="text-right">
               <p class="font-semibold text-red-600">₦{{ e.amount|floatformat:2 }}</p>
-              <p class="text-xs text-gray-500 dark:text-gray-400">{{ e.expense_date }}</p>
+              <p class="text-xs text-gray-500">{{ e.expense_date }}</p>
             </div>
           </li>
         {% empty %}
-          <li class="text-gray-500 dark:text-gray-400">No expenses recorded.</li>
+          <li class="text-gray-500">No expenses recorded.</li>
         {% endfor %}
       </ul>
     </div>
 
   </div>
+
+</div>
+
+
+  <!-- Payments Modal -->
+<div id="paymentsModal" class="fixed inset-0 bg-black/40 hidden z-50">
+  <div class="bg-white dark:bg-gray-900 rounded-2xl max-w-3xl mx-auto mt-20 p-6 shadow-lg relative">
+
+    <button onclick="closePaymentsModal()"
+      class="absolute top-3 right-4 text-xl font-bold text-gray-500">
+      ×
+    </button>
+
+    <h2 class="text-xl font-bold mb-4">All Payments</h2>
+
+    <div id="paymentsModalContent">
+      <div class="text-center text-gray-500 py-10">Loading…</div>
+    </div>
+
+  </div>
+</div>
 
   <!-- Chart -->
   <div class="mt-10 bg-white dark:bg-gray-900 rounded-2xl shadow p-6">
@@ -174,6 +202,25 @@
   </div>
 
 </div>
+
+<script>
+function openPaymentsModal() {
+  document.getElementById("paymentsModal").classList.remove("hidden");
+  loadPayments(1);
+}
+
+function closePaymentsModal() {
+  document.getElementById("paymentsModal").classList.add("hidden");
+}
+
+function loadPayments(page) {
+  fetch("{% url 'finance:payments_modal' %}?page=" + page)
+    .then(res => res.json())
+    .then(data => {
+      document.getElementById("paymentsModalContent").innerHTML = data.html;
+    });
+}
+</script>
 
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

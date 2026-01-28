@@ -1,0 +1,103 @@
+<!-- Payment Method Tabs -->
+<div class="flex space-x-4 mb-3 text-sm">
+  <button onclick="selectTab('manual')" id="tab-manual" class="px-2 py-1 rounded bg-indigo-100 text-indigo-700">Manual</button>
+  <button onclick="selectTab('online')" id="tab-online" class="px-2 py-1 rounded bg-gray-100 text-gray-700">Online</button>
+  <button onclick="selectTab('bank_transfer')" id="tab-bank_transfer" class="px-2 py-1 rounded bg-gray-100 text-gray-700">Bank Transfer</button>
+</div>
+
+<!-- Payments List -->
+<ul class="space-y-3" id="payments-list">
+  {% for p in page_obj %}
+    <li class="flex justify-between border-b pb-2">
+      <div>
+        <p class="font-medium">{{ p.invoice.student }}</p>
+        <p class="text-sm text-gray-500">{{ p.invoice.title }}</p>
+        <p class="text-xs text-gray-400">Ref: {{ p.reference }}</p>
+      </div>
+      <div class="text-right">
+        <p class="font-semibold text-green-600">₦{{ p.amount|floatformat:2 }}</p>
+        <p class="text-xs text-gray-500">{{ p.payment_date|date:"M d, Y H:i" }}</p>
+      </div>
+    </li>
+  {% empty %}
+    <li class="text-gray-500">No payments recorded.</li>
+  {% endfor %}
+</ul>
+
+<!-- Pagination -->
+<div class="mt-2 flex justify-between text-sm" id="payments-pagination">
+  {% if page_obj.has_previous %}
+    <button onclick="loadPayments({{ page_obj.previous_page_number }})" class="text-indigo-600 hover:underline">← Prev</button>
+  {% else %}
+    <span class="text-gray-400">← Prev</span>
+  {% endif %}
+
+  <span>Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+
+  {% if page_obj.has_next %}
+    <button onclick="loadPayments({{ page_obj.next_page_number }})" class="text-indigo-600 hover:underline">Next →</button>
+  {% else %}
+    <span class="text-gray-400">Next →</span>
+  {% endif %}
+</div>
+
+<script>
+  let currentMethod = 'manual'; // default tab
+
+  // Select tab
+  function selectTab(method) {
+    currentMethod = method;
+    
+    // Update tab styling
+    document.querySelectorAll('[id^="tab-"]').forEach(tab => {
+      tab.classList.remove('bg-indigo-100', 'text-indigo-700');
+      tab.classList.add('bg-gray-100', 'text-gray-700');
+    });
+
+    const activeTab = document.getElementById(`tab-${method}`);
+    if(activeTab){
+      activeTab.classList.remove('bg-gray-100', 'text-gray-700');
+      activeTab.classList.add('bg-indigo-100', 'text-indigo-700');
+    }
+
+    // Load first page of this tab
+    loadPayments(1);
+  }
+
+  // Load payments via AJAX
+  function loadPayments(page=1) {
+    const paymentsList = document.getElementById('payments-list');
+    const pagination = document.getElementById('payments-pagination');
+
+    paymentsList.innerHTML = `<li class="text-gray-500">Loading...</li>`;
+
+    fetch(`/finance/payments/modal/?page=${page}&method=${currentMethod}`)
+      .then(res => res.json())
+      .then(data => {
+        paymentsList.innerHTML = data.html;
+
+        // Build pagination
+        let paginationHtml = '';
+        paginationHtml += data.has_prev 
+          ? `<button onclick="loadPayments(${data.page - 1})" class="text-indigo-600 hover:underline">← Prev</button>` 
+          : `<span class="text-gray-400">← Prev</span>`;
+
+        paginationHtml += ` <span>Page ${data.page} of ${data.num_pages}</span> `;
+
+        paginationHtml += data.has_next 
+          ? `<button onclick="loadPayments(${data.page + 1})" class="text-indigo-600 hover:underline">Next →</button>` 
+          : `<span class="text-gray-400">Next →</span>`;
+
+        pagination.innerHTML = paginationHtml;
+      })
+      .catch(err => {
+        paymentsList.innerHTML = `<li class="text-red-500">Error loading payments.</li>`;
+        console.error("Payments load error:", err);
+      });
+  }
+
+  // Initial load
+  document.addEventListener('DOMContentLoaded', () => {
+    selectTab(currentMethod);
+  });
+</script>
