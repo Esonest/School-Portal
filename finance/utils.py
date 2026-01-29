@@ -254,7 +254,7 @@ def create_virtual_account(student):
 
     payload = {
         "customer": student.paystack_customer_code,
-        "preferred_bank": "wema-bank",
+        "preferred_bank": "titan-paystack",
     }
 
     response = requests.post(
@@ -286,4 +286,5 @@ def create_virtual_account(student):
     ])
 
     return student
+
 

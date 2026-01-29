@@ -68,9 +68,9 @@
     </div>
   </div>
 
- <!-- PAY VIA BANK TRANSFER (VIRTUAL ACCOUNT) -->
-{% if student.virtual_account_number %}
-<div class="bg-white border border-green-100 rounded-lg shadow p-4">
+ {% if student.virtual_accounts.exists %}
+<div class="bg-white border border-green-100 rounded-lg shadow p-4 space-y-4">
+
   <!-- Header -->
   <div class="flex items-center justify-between">
     <h3 class="font-semibold text-green-700">Pay via Bank Transfer</h3>
@@ -79,57 +79,55 @@
     </span>
   </div>
 
+  <!-- Virtual Account Selector -->
+  <div>
+    <label for="va-select" class="block text-sm font-medium text-gray-700 mb-1">
+      Select Virtual Account:
+    </label>
+    <select id="va-select" class="border rounded px-2 py-1 w-full sm:w-1/2">
+      {% for va in student.virtual_accounts.all %}
+      <option value="{{ va.id }}" {% if va.is_primary %}selected{% endif %}>
+        {{ va.bank_name }} - {{ va.account_number }} ({{ va.account_name }})
+      </option>
+      {% endfor %}
+    </select>
+  </div>
+
   <!-- Account Details -->
-  <div class="mt-3 grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
-    <div>
-      <p class="text-gray-500">Bank</p>
-      <p class="font-semibold">{{ student.virtual_bank_name }}</p>
-    </div>
-    <div>
-      <p class="text-gray-500">Account Number</p>
-      <div class="flex items-center space-x-2 relative">
-        <p id="va-account-number" class="font-mono font-semibold text-lg">{{ student.virtual_account_number }}</p>
-        
-        <!-- Copy Button with Tooltip -->
-        <button 
-          id="copy-btn"
-          class="relative px-2 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200 focus:outline-none"
-          onclick="copyAccountNumber()"
-        >
-          <!-- Clipboard icon (Unicode) -->
+  <div id="va-details" class="mt-4 space-y-2">
+    {% for va in student.virtual_accounts.all %}
+    <div class="va-info p-2 border rounded" data-va-id="{{ va.id }}" {% if not va.is_primary %}style="display:none"{% endif %}>
+      <p><strong>Bank:</strong> {{ va.bank_name }}</p>
+      <p>
+        <strong>Account Number:</strong> {{ va.account_number }}
+        <button class="px-2 py-1 bg-green-100 text-green-700 rounded hover:bg-green-200"
+                onclick="copyText('{{ va.account_number }}', this)">
           📋
-          <!-- Tooltip -->
-          <span id="copy-tooltip" class="absolute -top-6 left-1/2 -translate-x-1/2 bg-gray-800 text-white text-xs px-2 py-1 rounded opacity-0 transition-opacity duration-200 pointer-events-none">
-            Copied!
-          </span>
         </button>
-      </div>
+      </p>
+      <p><strong>Account Name:</strong> {{ va.account_name }}</p>
+      <p><strong>Status:</strong> {% if va.is_primary %}Primary{% else %}Secondary{% endif %}</p>
     </div>
-    <div>
-      <p class="text-gray-500">Account Name</p>
-      <p class="font-semibold">{{ student.virtual_account_name }}</p>
-    </div>
+    {% endfor %}
   </div>
 
   <!-- Info Text -->
-  <p class="mt-3 text-xs text-gray-500">
-    Transfer to this account from any Nigerian bank. Payment will reflect automatically on your dashboard.
+  <p class="text-xs text-gray-500 mt-2">
+    Transfer to any of your virtual accounts from any Nigerian bank. Payment will reflect automatically on your dashboard.
   </p>
 
   <!-- Important Notice -->
-  <p class="mt-2 text-xs text-red-600 font-medium">
-    Note: Payments via your virtual account may take a few minutes to appear. Please refresh your dashboard after some time.
+  <p class="text-xs text-red-600 font-medium mt-2">
+    Note: Payments via virtual accounts may take a few minutes to appear. Please refresh your dashboard after some time.
   </p>
 </div>
-
-
-
 {% else %}
-<!-- Fallback if virtual account is not available -->
+<!-- Fallback if virtual accounts are not available -->
 <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-sm text-yellow-700">
   Bank transfer is temporarily unavailable. Please use online payment.
 </div>
 {% endif %}
+
 
   <!-- OVERALL PAYMENT PROGRESS -->
   <div class="bg-white rounded-lg shadow p-4 flex flex-col sm:flex-row items-center gap-6">
@@ -457,26 +455,44 @@
   }
 </script>
 
-<!-- Copy to clipboard script -->
 <script>
-function copyAccountNumber() {
-    const accountNumber = document.getElementById("va-account-number").innerText;
-    const tooltip = document.getElementById("copy-tooltip");
+document.addEventListener("DOMContentLoaded", function() {
+  const vaSelect = document.getElementById("va-select");
+  const vaDetails = document.querySelectorAll(".va-info");
 
-    navigator.clipboard.writeText(accountNumber).then(() => {
-        // Show tooltip
-        tooltip.classList.remove("opacity-0");
-        tooltip.classList.add("opacity-100");
+  vaSelect.addEventListener("change", function() {
+    const selectedId = this.value;
 
-        // Hide after 1.5 seconds
-        setTimeout(() => {
-            tooltip.classList.remove("opacity-100");
-            tooltip.classList.add("opacity-0");
-        }, 1500);
-    }).catch(() => {
-        alert("Failed to copy account number. Please copy manually.");
+    vaDetails.forEach(div => {
+      if(div.dataset.vaId === selectedId) {
+        div.style.display = "block";
+      } else {
+        div.style.display = "none";
+      }
     });
+
+    // Optional: mark selected VA as primary via AJAX
+    fetch(`/finance/virtual-account/${selectedId}/primary/`, {
+      method: "POST",
+      headers: {
+        "X-CSRFToken": "{{ csrf_token }}"
+      },
+    });
+  });
+});
+
+// Copy button logic
+function copyText(text, btn) {
+  navigator.clipboard.writeText(text).then(() => {
+    const tip = document.createElement("span");
+    tip.innerText = "Copied!";
+    tip.className = "ml-2 text-xs text-green-600 font-medium";
+    btn.parentNode.appendChild(tip);
+
+    setTimeout(() => tip.remove(), 1200);
+  });
 }
 </script>
+
 
 {% endblock %}

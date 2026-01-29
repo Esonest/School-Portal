@@ -122,33 +122,6 @@ class Student(models.Model):
         help_text="Paystack customer code"
     )
 
-    virtual_account_number = models.CharField(
-        max_length=20,
-        unique=True,      # ✅ REQUIRED
-        db_index=True,    # ✅ FAST LOOKUP
-        null=True,
-        blank=True
-    )
-
-
-    virtual_account_name = models.CharField(
-        max_length=255,
-        null=True,
-        blank=True
-    )
-
-    virtual_bank_name = models.CharField(
-        max_length=100,
-        null=True,
-        blank=True
-    )
-
-    virtual_bank_slug = models.CharField(
-        max_length=50,
-        null=True,
-        blank=True
-    )
-    va_verified_at = models.DateTimeField(null=True, blank=True)
 
     # -----------------------------
     # Access Control
@@ -173,12 +146,58 @@ class Student(models.Model):
     def full_name(self):
         return self.user.get_full_name() or self.user.username
 
-    def has_virtual_account(self):
-        return bool(self.virtual_account_number)
+    def has_virtual_accounts(self):
+        return self.virtual_accounts.exists()
+    
+    def primary_virtual_account(self):
+        return self.virtual_accounts.filter(is_primary=True).first()
 
     def __str__(self):
         return f"{self.full_name()} ({self.admission_no})"
 
+
+# finance/models.py or students/models.py
+
+class VirtualAccount(models.Model):
+    student = models.ForeignKey(
+        "Student",
+        on_delete=models.CASCADE,
+        related_name="virtual_accounts"
+    )
+
+    account_number = models.CharField(
+        max_length=20,
+        unique=True,
+        db_index=True
+    )
+
+    account_name = models.CharField(
+        max_length=255
+    )
+
+    bank_name = models.CharField(
+        max_length=100
+    )
+
+    bank_slug = models.CharField(
+        max_length=50,
+        db_index=True
+    )
+
+    is_primary = models.BooleanField(
+        default=False,
+        help_text="Preferred account to show first on dashboard"
+    )
+
+    verified_at = models.DateTimeField(null=True, blank=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-is_primary", "-created_at"]
+
+    def __str__(self):
+        return f"{self.bank_name} - {self.account_number}"
 
 
 # cumulative result per student per session

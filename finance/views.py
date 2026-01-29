@@ -427,82 +427,102 @@ from django.db.models.functions import Coalesce
 from datetime import timedelta
 from django.utils import timezone
 import requests
+from students.models import VirtualAccount
 
+PAYSTACK_BASE_URL = "https://api.paystack.co"
 
 
 def verify_virtual_account(student):
     """
     Always reflect LIVE Paystack virtual account state.
 
-    - VA created → shows immediately
-    - VA deleted → cleared immediately
-    - No caching / no 24h delay
+    ✔ Supports MULTIPLE virtual accounts
+    ✔ Titan preferred as primary
+    ✔ No Student VA fields touched
+    ✔ Safe to call repeatedly
     """
 
     now = timezone.now()
+
+    # No customer → no VA possible
+    if not student.paystack_customer_code:
+        return False
 
     headers = {
         "Authorization": f"Bearer {student.school.paystack_secret_key}",
         "Content-Type": "application/json",
     }
 
-    # If student has no customer yet, VA cannot exist
-    if not student.paystack_customer_code:
-        student.virtual_account_number = None
-        student.virtual_account_name = None
-        student.virtual_bank_name = None
-        student.va_verified_at = now
-        student.save(update_fields=[
-            "virtual_account_number",
-            "virtual_account_name",
-            "virtual_bank_name",
-            "va_verified_at"
-        ])
-        return False
-
-    # 🔥 Fetch ALL dedicated accounts for this customer
-    url = "https://api.paystack.co/dedicated_account"
-    params = {"customer": student.paystack_customer_code}
-
     try:
-        resp = requests.get(url, headers=headers, params=params, timeout=15)
+        resp = requests.get(
+            f"{PAYSTACK_BASE_URL}/dedicated_account",
+            headers=headers,
+            params={"customer": student.paystack_customer_code},
+            timeout=15,
+        )
         data = resp.json()
     except Exception:
-        # Network error → don't wipe existing VA
-        student.va_verified_at = now
-        student.save(update_fields=["va_verified_at"])
-        return bool(student.virtual_account_number)
+        # Network error → keep existing accounts
+        return student.virtual_accounts.exists()
 
-    # Paystack error or no VA found
-    if resp.status_code != 200 or not data.get("status") or not data.get("data"):
-        student.virtual_account_number = None
-        student.virtual_account_name = None
-        student.virtual_bank_name = None
-        student.va_verified_at = now
-        student.save(update_fields=[
-            "virtual_account_number",
-            "virtual_account_name",
-            "virtual_bank_name",
-            "va_verified_at"
-        ])
+    if not resp.ok or not data.get("status"):
+        return student.virtual_accounts.exists()
+
+    paystack_accounts = data.get("data") or []
+
+    if not paystack_accounts:
+        # Paystack has zero accounts → soft clear locally
+        student.virtual_accounts.all().delete()
         return False
 
-    # ✅ VA exists → always take latest
-    va = data["data"][0]
+    seen_account_numbers = set()
 
-    student.virtual_account_number = va.get("account_number")
-    student.virtual_account_name = va.get("account_name")
-    student.virtual_bank_name = va.get("bank", {}).get("name")
-    student.va_verified_at = now
+    for va in paystack_accounts:
+        account_number = va.get("account_number")
+        if not account_number:
+            continue
 
-    student.save(update_fields=[
-        "virtual_account_number",
-        "virtual_account_name",
-        "virtual_bank_name",
-        "va_verified_at"
-    ])
+        bank = va.get("bank", {}) or {}
+        bank_slug = bank.get("slug")
+        bank_name = bank.get("name")
+
+        seen_account_numbers.add(account_number)
+
+        obj, created = VirtualAccount.objects.update_or_create(
+            student=student,
+            account_number=account_number,
+            defaults={
+                "account_name": va.get("account_name", ""),
+                "bank_name": bank_name,
+                "bank_slug": bank_slug,
+                "verified_at": now,
+            },
+        )
+
+        # Prefer Paystack Titan as primary
+        if bank_slug in ("paystack-titan", "titan-paystack"):
+            VirtualAccount.objects.filter(student=student).exclude(
+                id=obj.id
+            ).update(is_primary=False)
+
+            if not obj.is_primary:
+                obj.is_primary = True
+                obj.save(update_fields=["is_primary"])
+
+    # Remove stale local accounts not in Paystack anymore
+    student.virtual_accounts.exclude(
+        account_number__in=seen_account_numbers
+    ).delete()
+
+    # Ensure ONE primary exists
+    if not student.virtual_accounts.filter(is_primary=True).exists():
+        first = student.virtual_accounts.first()
+        if first:
+            first.is_primary = True
+            first.save(update_fields=["is_primary"])
 
     return True
+
 
 
 
