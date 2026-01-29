@@ -146,25 +146,14 @@ def payment_deleted(sender, instance, **kwargs):
     update_invoice_amount_paid(instance.invoice)
 
 
-# finance/utils.py
-import requests
-from django.core.exceptions import ValidationError
-
-PAYSTACK_BASE_URL = "https://api.paystack.co"
-
-
-def create_paystack_customer(student):
+def update_paystack_customer_phone(student):
     """
-    Creates a Paystack customer for a student (once).
-    Returns customer_code.
+    Ensures Paystack customer has phone number.
+    Fixes old customers.
     """
 
-    # Prevent duplicate creation
-    if student.paystack_customer_code:
-        return student.paystack_customer_code
-
-    if not student.user.email:
-        raise ValidationError("Student must have an email to create Paystack customer")
+    if not student.paystack_customer_code:
+        return
 
     headers = {
         "Authorization": f"Bearer {student.school.paystack_secret_key}",
@@ -172,13 +161,51 @@ def create_paystack_customer(student):
     }
 
     payload = {
-        "email": student.user.email,
-        "first_name": student.user.first_name or student.user.username,
+        "phone": DEFAULT_PHONE,
+        "email": DEFAULT_EMAIL,
+    }
+
+    requests.put(
+        f"{PAYSTACK_BASE_URL}/customer/{student.paystack_customer_code}",
+        json=payload,
+        headers=headers,
+        timeout=30,
+    )
+
+
+
+# finance/utils.py
+import requests
+
+PAYSTACK_BASE_URL = "https://api.paystack.co"
+
+DEFAULT_EMAIL = "techcenter652@gmail.com"
+DEFAULT_PHONE = "07085734441"
+
+
+def create_paystack_customer(student):
+    """
+    Creates a Paystack customer for a student (once).
+    Always uses default email and phone.
+    """
+
+    if student.paystack_customer_code:
+        return student.paystack_customer_code
+
+    headers = {
+        "Authorization": f"Bearer {student.school.paystack_secret_key}",
+        "Content-Type": "application/json",
+    }
+
+    payload = {
+        "email": DEFAULT_EMAIL,
+        "first_name": student.user.first_name or student.admission_no,
         "last_name": student.user.last_name or student.admission_no,
+        "phone": DEFAULT_PHONE,
         "metadata": {
-            "admission_no": student.admission_no,
             "student_id": student.id,
             "school_id": student.school_id,
+            "admission_no": student.admission_no,
         },
     }
 
@@ -202,6 +229,7 @@ def create_paystack_customer(student):
     return student.paystack_customer_code
 
 
+
 # finance/utils.py
 import requests
 
@@ -209,19 +237,15 @@ PAYSTACK_BASE_URL = "https://api.paystack.co"
 
 
 def create_virtual_account(student):
-    """
-    Ensures student has a Paystack dedicated virtual account.
-    Safe to call multiple times.
-    """
 
-    # Already exists → do nothing
     if student.virtual_account_number:
         return student
 
-    # Ensure customer exists
     if not student.paystack_customer_code:
-        from finance.utils import create_paystack_customer
         create_paystack_customer(student)
+    else:
+        # 🔥 FIX OLD CUSTOMERS
+        update_paystack_customer_phone(student)
 
     headers = {
         "Authorization": f"Bearer {student.school.paystack_secret_key}",
@@ -262,3 +286,4 @@ def create_virtual_account(student):
     ])
 
     return student
+
