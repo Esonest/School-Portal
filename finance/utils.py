@@ -208,9 +208,17 @@ PAYSTACK_BASE_URL = "https://api.paystack.co"
 DEFAULT_EMAIL = "techcenter652@gmail.com"
 DEFAULT_PHONE = "07085734441"
 
+# Add/remove banks here
+PREFERRED_BANKS = [
+    "titan-paystack",
+    "wema-bank",
+    "providus-bank",
+    "gtbank",
+]
+
 
 # -------------------------------------------------
-# Ensure customer phone (fixes old Paystack users)
+# Ensure Paystack customer phone exists
 # -------------------------------------------------
 def ensure_customer_phone(student):
     if not student.paystack_customer_code:
@@ -235,7 +243,7 @@ def ensure_customer_phone(student):
 
 
 # -------------------------------------------------
-# Fetch ALL virtual accounts (pagination-safe)
+# Fetch ALL Paystack VAs (pagination-safe)
 # -------------------------------------------------
 def fetch_all_paystack_virtual_accounts(student):
     headers = {
@@ -243,7 +251,7 @@ def fetch_all_paystack_virtual_accounts(student):
         "Content-Type": "application/json",
     }
 
-    all_accounts = []
+    accounts = []
     page = 1
 
     while True:
@@ -262,8 +270,7 @@ def fetch_all_paystack_virtual_accounts(student):
         if not data.get("status"):
             break
 
-        batch = data.get("data", [])
-        all_accounts.extend(batch)
+        accounts.extend(data.get("data", []))
 
         meta = data.get("meta", {})
         if page >= meta.get("pageCount", 1):
@@ -271,17 +278,40 @@ def fetch_all_paystack_virtual_accounts(student):
 
         page += 1
 
-    return all_accounts
+    return accounts
 
 
 # -------------------------------------------------
-# MAIN ENTRY POINT
+# Create VA for a specific bank (if missing)
+# -------------------------------------------------
+def create_virtual_account_for_bank(student, bank_slug):
+    headers = {
+        "Authorization": f"Bearer {student.school.paystack_secret_key}",
+        "Content-Type": "application/json",
+    }
+
+    payload = {
+        "customer": student.paystack_customer_code,
+        "preferred_bank": bank_slug,
+    }
+
+    r = requests.post(
+        f"{PAYSTACK_BASE_URL}/dedicated_account",
+        json=payload,
+        headers=headers,
+        timeout=30,
+    )
+    return r.json()
+
+
+# -------------------------------------------------
+# MAIN ENTRY
 # -------------------------------------------------
 def ensure_virtual_accounts(student):
     """
     ✔ Ensures Paystack customer
     ✔ Fixes missing phone numbers
-    ✔ Creates VA if none exists
+    ✔ Creates MULTI-BANK VAs
     ✔ Syncs ALL VAs locally
     ✔ Never crashes dashboard
     """
@@ -316,30 +346,21 @@ def ensure_virtual_accounts(student):
             student.paystack_customer_code = data["data"]["customer_code"]
             student.save(update_fields=["paystack_customer_code"])
 
-        # 2️⃣ ALWAYS ENSURE PHONE
+        # 2️⃣ FIX OLD CUSTOMERS
         ensure_customer_phone(student)
 
-        # 3️⃣ FETCH ALL ACCOUNTS
+        # 3️⃣ FETCH EXISTING VAs
         accounts = fetch_all_paystack_virtual_accounts(student)
+        existing_bank_slugs = {
+            (a.get("bank") or {}).get("slug") for a in accounts
+        }
 
-        # 4️⃣ CREATE ONE IF NONE EXISTS
-        if not accounts:
-            r = requests.post(
-                f"{PAYSTACK_BASE_URL}/dedicated_account",
-                json={
-                    "customer": student.paystack_customer_code,
-                    "preferred_bank": "titan-paystack",
-                },
-                headers=headers,
-                timeout=30,
-            )
-            data = r.json()
-
-            if not data.get("status"):
-                print("[PAYSTACK] Create VA failed:", data.get("message"))
-                return
-
-            accounts = [data["data"]]
+        # 4️⃣ CREATE MISSING BANK ACCOUNTS
+        for bank_slug in PREFERRED_BANKS:
+            if bank_slug not in existing_bank_slugs:
+                r = create_virtual_account_for_bank(student, bank_slug)
+                if r.get("status"):
+                    accounts.append(r["data"])
 
         # 5️⃣ DETERMINE PRIMARY
         primary_account_number = next(
