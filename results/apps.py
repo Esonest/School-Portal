@@ -11,3 +11,6 @@ class ResultsConfig(AppConfig):
 
     def ready(self):
         import results.utils    
+
+
+

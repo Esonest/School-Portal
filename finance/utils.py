@@ -146,34 +146,6 @@ def payment_deleted(sender, instance, **kwargs):
     update_invoice_amount_paid(instance.invoice)
 
 
-def update_paystack_customer_phone(student):
-    """
-    Ensures Paystack customer has phone number.
-    Fixes old customers.
-    """
-
-    if not student.paystack_customer_code:
-        return
-
-    headers = {
-        "Authorization": f"Bearer {student.school.paystack_secret_key}",
-        "Content-Type": "application/json",
-    }
-
-    payload = {
-        "phone": DEFAULT_PHONE,
-        "email": DEFAULT_EMAIL,
-    }
-
-    requests.put(
-        f"{PAYSTACK_BASE_URL}/customer/{student.paystack_customer_code}",
-        json=payload,
-        headers=headers,
-        timeout=30,
-    )
-
-
-
 # finance/utils.py
 import requests
 
@@ -228,24 +200,21 @@ def create_paystack_customer(student):
 
     return student.paystack_customer_code
 
-
-
-# finance/utils.py
 import requests
+from django.utils import timezone
+from students.models import VirtualAccount
 
 PAYSTACK_BASE_URL = "https://api.paystack.co"
+DEFAULT_EMAIL = "techcenter652@gmail.com"
+DEFAULT_PHONE = "07085734441"
 
 
-def create_virtual_account(student):
-
-    if student.virtual_account_number:
-        return student
-
+# -------------------------------------------------
+# Ensure customer phone (fixes old Paystack users)
+# -------------------------------------------------
+def ensure_customer_phone(student):
     if not student.paystack_customer_code:
-        create_paystack_customer(student)
-    else:
-        # 🔥 FIX OLD CUSTOMERS
-        update_paystack_customer_phone(student)
+        return
 
     headers = {
         "Authorization": f"Bearer {student.school.paystack_secret_key}",
@@ -253,38 +222,154 @@ def create_virtual_account(student):
     }
 
     payload = {
-        "customer": student.paystack_customer_code,
-        "preferred_bank": "titan-paystack",
+        "phone": DEFAULT_PHONE,
+        "email": student.user.email or DEFAULT_EMAIL,
     }
 
-    response = requests.post(
-        f"{PAYSTACK_BASE_URL}/dedicated_account",
+    requests.put(
+        f"{PAYSTACK_BASE_URL}/customer/{student.paystack_customer_code}",
         json=payload,
         headers=headers,
         timeout=30,
     )
 
-    data = response.json()
 
-    if not response.ok or not data.get("status"):
-        raise Exception(
-            f"Paystack virtual account creation failed: {data.get('message')}"
+# -------------------------------------------------
+# Fetch ALL virtual accounts (pagination-safe)
+# -------------------------------------------------
+def fetch_all_paystack_virtual_accounts(student):
+    headers = {
+        "Authorization": f"Bearer {student.school.paystack_secret_key}",
+        "Content-Type": "application/json",
+    }
+
+    all_accounts = []
+    page = 1
+
+    while True:
+        r = requests.get(
+            f"{PAYSTACK_BASE_URL}/dedicated_account",
+            headers=headers,
+            params={
+                "customer": student.paystack_customer_code,
+                "page": page,
+                "perPage": 50,
+            },
+            timeout=30,
+        )
+        data = r.json()
+
+        if not data.get("status"):
+            break
+
+        batch = data.get("data", [])
+        all_accounts.extend(batch)
+
+        meta = data.get("meta", {})
+        if page >= meta.get("pageCount", 1):
+            break
+
+        page += 1
+
+    return all_accounts
+
+
+# -------------------------------------------------
+# MAIN ENTRY POINT
+# -------------------------------------------------
+def ensure_virtual_accounts(student):
+    """
+    ✔ Ensures Paystack customer
+    ✔ Fixes missing phone numbers
+    ✔ Creates VA if none exists
+    ✔ Syncs ALL VAs locally
+    ✔ Never crashes dashboard
+    """
+
+    headers = {
+        "Authorization": f"Bearer {student.school.paystack_secret_key}",
+        "Content-Type": "application/json",
+    }
+
+    try:
+        # 1️⃣ ENSURE CUSTOMER
+        if not student.paystack_customer_code:
+            payload = {
+                "email": student.user.email or DEFAULT_EMAIL,
+                "phone": DEFAULT_PHONE,
+                "first_name": student.user.first_name or student.admission_no,
+                "last_name": student.user.last_name or student.admission_no,
+            }
+
+            r = requests.post(
+                f"{PAYSTACK_BASE_URL}/customer",
+                json=payload,
+                headers=headers,
+                timeout=30,
+            )
+            data = r.json()
+
+            if not data.get("status"):
+                print("[PAYSTACK] Customer create failed:", data.get("message"))
+                return
+
+            student.paystack_customer_code = data["data"]["customer_code"]
+            student.save(update_fields=["paystack_customer_code"])
+
+        # 2️⃣ ALWAYS ENSURE PHONE
+        ensure_customer_phone(student)
+
+        # 3️⃣ FETCH ALL ACCOUNTS
+        accounts = fetch_all_paystack_virtual_accounts(student)
+
+        # 4️⃣ CREATE ONE IF NONE EXISTS
+        if not accounts:
+            r = requests.post(
+                f"{PAYSTACK_BASE_URL}/dedicated_account",
+                json={
+                    "customer": student.paystack_customer_code,
+                    "preferred_bank": "titan-paystack",
+                },
+                headers=headers,
+                timeout=30,
+            )
+            data = r.json()
+
+            if not data.get("status"):
+                print("[PAYSTACK] Create VA failed:", data.get("message"))
+                return
+
+            accounts = [data["data"]]
+
+        # 5️⃣ DETERMINE PRIMARY
+        primary_account_number = next(
+            (a["account_number"] for a in accounts if a.get("is_primary")),
+            None,
         )
 
-    account = data["data"]
+        # 6️⃣ SYNC LOCALLY
+        for va in accounts:
+            bank = va.get("bank") or {}
 
-    student.virtual_account_number = account["account_number"]
-    student.virtual_account_name = account["account_name"]
-    student.virtual_bank_name = account["bank"]["name"]
-    student.virtual_bank_slug = account["bank"]["slug"]
+            VirtualAccount.objects.update_or_create(
+                account_number=va["account_number"],
+                defaults={
+                    "student": student,
+                    "account_name": va.get("account_name"),
+                    "bank_name": bank.get("name"),
+                    "bank_slug": bank.get("slug"),
+                    "is_primary": va["account_number"] == primary_account_number,
+                    "verified_at": timezone.now(),
+                },
+            )
 
-    student.save(update_fields=[
-        "virtual_account_number",
-        "virtual_account_name",
-        "virtual_bank_name",
-        "virtual_bank_slug",
-    ])
+        # 7️⃣ ENFORCE SINGLE PRIMARY LOCALLY
+        if primary_account_number:
+            VirtualAccount.objects.filter(
+                student=student
+            ).exclude(
+                account_number=primary_account_number
+            ).update(is_primary=False)
 
-    return student
-
-
+    except Exception as e:
+        print(f"[VA ERROR] Student {student.id}: {e}")

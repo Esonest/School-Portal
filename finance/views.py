@@ -16,7 +16,7 @@ from .models import Invoice, Receipt
 from .forms import FeeTemplate, FeeTemplateForm
 from collections import defaultdict
 from django.db.models import Q
-from finance.utils import create_virtual_account
+
 
 
 
@@ -428,6 +428,7 @@ from datetime import timedelta
 from django.utils import timezone
 import requests
 from students.models import VirtualAccount
+from .utils import ensure_virtual_accounts
 
 PAYSTACK_BASE_URL = "https://api.paystack.co"
 
@@ -536,7 +537,8 @@ def student_dashboard(request):
         return redirect('accounts:login')
 
     student = request.user.student_profile
-
+    
+    ensure_virtual_accounts(student)
     # 1️⃣ Verify virtual account (optimized)
     verify_virtual_account(student)
 
