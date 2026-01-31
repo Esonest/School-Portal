@@ -1,3 +1,34 @@
+<div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3 text-sm">
+  <select id="filter-class" class="border rounded px-2 py-1">
+    <option value="">All Classes</option>
+    {% for c in classes %}
+      <option value="{{ c.id }}">{{ c.name }}</option>
+    {% endfor %}
+  </select>
+
+  <select id="filter-term" class="border rounded px-2 py-1">
+    <option value="">All Terms</option>
+    {% for t in terms %}
+      <option value="{{ t.id }}">{{ t.name }}</option>
+    {% endfor %}
+  </select>
+
+  <select id="filter-session" class="border rounded px-2 py-1">
+    <option value="">All Sessions</option>
+    {% for s in sessions %}
+      <option value="{{ s.id }}">{{ s.name }}</option>
+    {% endfor %}
+  </select>
+
+  <input
+    id="filter-search"
+    type="text"
+    placeholder="Search name / adm no"
+    class="border rounded px-2 py-1"
+  />
+</div>
+
+
 <!-- Payment Method Tabs -->
 <div class="flex space-x-4 mb-3 text-sm">
   <button onclick="selectTab('manual')" id="tab-manual" class="px-2 py-1 rounded bg-indigo-100 text-indigo-700">Manual</button>
@@ -42,61 +73,69 @@
 </div>
 
 <script>
-  let currentMethod = 'manual'; // default tab
+  let currentMethod = 'manual';
 
-  // Select tab
   function selectTab(method) {
     currentMethod = method;
-    
-    // Update tab styling
+
     document.querySelectorAll('[id^="tab-"]').forEach(tab => {
       tab.classList.remove('bg-indigo-100', 'text-indigo-700');
       tab.classList.add('bg-gray-100', 'text-gray-700');
     });
 
     const activeTab = document.getElementById(`tab-${method}`);
-    if(activeTab){
+    if (activeTab) {
       activeTab.classList.remove('bg-gray-100', 'text-gray-700');
       activeTab.classList.add('bg-indigo-100', 'text-indigo-700');
     }
 
-    // Load first page of this tab
     loadPayments(1);
   }
 
-  // Load payments via AJAX
-  function loadPayments(page=1) {
+  function loadPayments(page = 1) {
+    const cls = document.getElementById('filter-class').value;
+    const term = document.getElementById('filter-term').value;
+    const session = document.getElementById('filter-session').value;
+    const search = document.getElementById('filter-search').value;
+
     const paymentsList = document.getElementById('payments-list');
     const pagination = document.getElementById('payments-pagination');
 
     paymentsList.innerHTML = `<li class="text-gray-500">Loading...</li>`;
 
-    fetch(`/finance/payments/modal/?page=${page}&method=${currentMethod}`)
+    const params = new URLSearchParams({
+      page,
+      method: currentMethod,
+      class: cls,
+      term: term,
+      session: session,
+      search: search
+    });
+
+    fetch(`/finance/payments/modal/?${params.toString()}`)
       .then(res => res.json())
       .then(data => {
         paymentsList.innerHTML = data.html;
 
-        // Build pagination
         let paginationHtml = '';
-        paginationHtml += data.has_prev 
-          ? `<button onclick="loadPayments(${data.page - 1})" class="text-indigo-600 hover:underline">← Prev</button>` 
+        paginationHtml += data.has_prev
+          ? `<button onclick="loadPayments(${data.page - 1})" class="text-indigo-600 hover:underline">← Prev</button>`
           : `<span class="text-gray-400">← Prev</span>`;
 
         paginationHtml += ` <span>Page ${data.page} of ${data.num_pages}</span> `;
 
-        paginationHtml += data.has_next 
-          ? `<button onclick="loadPayments(${data.page + 1})" class="text-indigo-600 hover:underline">Next →</button>` 
+        paginationHtml += data.has_next
+          ? `<button onclick="loadPayments(${data.page + 1})" class="text-indigo-600 hover:underline">Next →</button>`
           : `<span class="text-gray-400">Next →</span>`;
 
         pagination.innerHTML = paginationHtml;
       })
       .catch(err => {
         paymentsList.innerHTML = `<li class="text-red-500">Error loading payments.</li>`;
-        console.error("Payments load error:", err);
+        console.error(err);
       });
   }
 
-  // Initial load
   document.addEventListener('DOMContentLoaded', () => {
     selectTab(currentMethod);
   });

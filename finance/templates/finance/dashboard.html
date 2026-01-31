@@ -176,24 +176,68 @@
 
 </div>
 
+<!-- Payments Modal -->
+<div id="paymentsModal" class="fixed inset-0 bg-black/40 hidden z-50 flex justify-center items-start overflow-y-auto">
+  <div class="bg-white dark:bg-gray-900 rounded-2xl w-full max-w-3xl mt-20 p-6 shadow-lg relative">
 
-  <!-- Payments Modal -->
-<div id="paymentsModal" class="fixed inset-0 bg-black/40 hidden z-50">
-  <div class="bg-white dark:bg-gray-900 rounded-2xl max-w-3xl mx-auto mt-20 p-6 shadow-lg relative">
-
+    <!-- Close button -->
     <button onclick="closePaymentsModal()"
-      class="absolute top-3 right-4 text-xl font-bold text-gray-500">
-      ×
-    </button>
+      class="absolute top-3 right-4 text-xl font-bold text-gray-500">×</button>
 
     <h2 class="text-xl font-bold mb-4">All Payments</h2>
 
-    <div id="paymentsModalContent">
-      <div class="text-center text-gray-500 py-10">Loading…</div>
+    <!-- 🔹 FILTER BAR -->
+    <div class="grid grid-cols-2 md:grid-cols-4 gap-2 mb-3 text-sm">
+      <!-- Class -->
+      <select id="filter-class" class="border rounded px-2 py-1">
+        <option value="">All Classes</option>
+        {% for c in classes %}
+          <option value="{{ c.id }}">{{ c.name }}</option>
+        {% endfor %}
+      </select>
+
+      <!-- Term -->
+      <select id="filter-term" class="border rounded px-2 py-1">
+        <option value="">All Terms</option>
+        {% for code, name in term_choices %}
+          <option value="{{ code }}">{{ name }}</option>
+        {% endfor %}
+      </select>
+
+      <!-- Session -->
+      <select id="filter-session" class="border rounded px-2 py-1">
+        <option value="">All Sessions</option>
+        {% for sess in sessions %}
+          <option value="{{ sess }}">{{ sess }}</option>
+        {% endfor %}
+      </select>
+
+      <!-- Search -->
+      <input id="filter-search" type="text" placeholder="Student / Adm No" class="border rounded px-2 py-1"/>
     </div>
 
+    <!-- 🔹 PAYMENT METHOD TABS -->
+    <div class="flex space-x-4 mb-3 text-sm">
+      <button onclick="selectTab('manual')" id="tab-manual"
+              class="px-2 py-1 rounded bg-indigo-100 text-indigo-700">Manual</button>
+      <button onclick="selectTab('online')" id="tab-online"
+              class="px-2 py-1 rounded bg-gray-100 text-gray-700">Online</button>
+      <button onclick="selectTab('bank_transfer')" id="tab-bank_transfer"
+              class="px-2 py-1 rounded bg-gray-100 text-gray-700">Bank Transfer</button>
+    </div>
+
+    <!-- 🔹 PAYMENT LIST (Scrollable) -->
+    <div class="max-h-[60vh] overflow-y-auto">
+      <ul id="payments-list" class="space-y-3 min-h-[200px]">
+        <li class="text-center text-gray-500 py-6">Loading…</li>
+      </ul>
+    </div>
+
+    <!-- 🔹 PAGINATION -->
+    <div id="payments-pagination" class="mt-3 flex justify-between text-sm"></div>
   </div>
 </div>
+
 
   <!-- Chart -->
   <div class="mt-10 bg-white dark:bg-gray-900 rounded-2xl shadow p-6">
@@ -203,24 +247,99 @@
 
 </div>
 
+<!-- 🔹 JS for Filters + Tabs + Pagination -->
 <script>
+let currentMethod = 'manual';
+
+function getFilters() {
+  return {
+    class: document.getElementById('filter-class').value,
+    term: document.getElementById('filter-term').value,
+    session: document.getElementById('filter-session').value,
+    search: document.getElementById('filter-search').value,
+  };
+}
+
+function loadPayments(page=1) {
+  const paymentsList = document.getElementById('payments-list');
+  const pagination = document.getElementById('payments-pagination');
+
+  paymentsList.innerHTML = `<li class="text-gray-500 text-center py-6">Loading…</li>`;
+
+  const filters = getFilters();
+  const params = new URLSearchParams({
+    page: page,
+    method: currentMethod,
+    class: filters.class,
+    term: filters.term,
+    session: filters.session,
+    search: filters.search
+  });
+
+  fetch(`/finance/payments/modal/?${params.toString()}`)
+    .then(res => res.json())
+    .then(data => {
+      // Render payments as mobile-friendly cards
+      paymentsList.innerHTML = data.html;
+
+      // Pagination
+      let paginationHtml = '';
+      paginationHtml += data.has_prev
+        ? `<button onclick="loadPayments(${data.page - 1})" class="text-indigo-600 hover:underline">← Prev</button>`
+        : `<span class="text-gray-400">← Prev</span>`;
+
+      paginationHtml += ` <span>Page ${data.page} of ${data.num_pages}</span> `;
+
+      paginationHtml += data.has_next
+        ? `<button onclick="loadPayments(${data.page + 1})" class="text-indigo-600 hover:underline">Next →</button>`
+        : `<span class="text-gray-400">Next →</span>`;
+
+      pagination.innerHTML = paginationHtml;
+    })
+    .catch(err => {
+      paymentsList.innerHTML = `<li class="text-red-500 text-center py-6">Error loading payments.</li>`;
+      console.error("Payments load error:", err);
+    });
+}
+
+function selectTab(method) {
+  currentMethod = method;
+
+  // Update tab styles
+  document.querySelectorAll('[id^="tab-"]').forEach(tab => {
+    tab.classList.remove('bg-indigo-100', 'text-indigo-700');
+    tab.classList.add('bg-gray-100', 'text-gray-700');
+  });
+  const activeTab = document.getElementById(`tab-${method}`);
+  if(activeTab){
+    activeTab.classList.remove('bg-gray-100', 'text-gray-700');
+    activeTab.classList.add('bg-indigo-100', 'text-indigo-700');
+  }
+
+  loadPayments(1);
+}
+
+// Reload when filters change
+['filter-class', 'filter-term', 'filter-session', 'filter-search'].forEach(id => {
+  const el = document.getElementById(id);
+  if(el){
+    el.addEventListener('change', () => loadPayments(1));
+    if(el.tagName === 'INPUT'){
+      el.addEventListener('keyup', (e) => { if(e.key === 'Enter') loadPayments(1); });
+    }
+  }
+});
+
+// Open/close modal
 function openPaymentsModal() {
   document.getElementById("paymentsModal").classList.remove("hidden");
   loadPayments(1);
 }
-
 function closePaymentsModal() {
   document.getElementById("paymentsModal").classList.add("hidden");
 }
-
-function loadPayments(page) {
-  fetch("{% url 'finance:payments_modal' %}?page=" + page)
-    .then(res => res.json())
-    .then(data => {
-      document.getElementById("paymentsModalContent").innerHTML = data.html;
-    });
-}
 </script>
+
 
 <!-- Chart.js -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

@@ -56,6 +56,7 @@ def dashboard(request):
     # -------------------------------------------------
     current_session = request.GET.get("session")
     current_term = request.GET.get("term")
+    classes = SchoolClass.objects.filter(school=school).order_by("name")
 
     # -------------------------------------------------
     # Invoices
@@ -173,6 +174,7 @@ def dashboard(request):
         "current_session": current_session,
         "current_term": current_term,
         "term_choices": Score.TERM_CHOICES,
+        "classes": classes,
     }
 
     return render(request, "finance/dashboard.html", context)
@@ -180,52 +182,116 @@ def dashboard(request):
 
 
 
-
-from django.core.paginator import Paginator
-from django.template.loader import render_to_string
-from django.http import JsonResponse
 from django.contrib.auth.decorators import login_required
+from django.core.paginator import Paginator
+from django.http import JsonResponse
+from django.template.loader import render_to_string
+from django.utils import timezone
+from datetime import timedelta
+from django.db.models import Q
+
 
 @login_required
 def payments_modal(request):
     school = request.user.school
-    page_number = int(request.GET.get("page", 1))
-    method = request.GET.get("method")  # 'manual', 'online', 'bank_transfer'
-
-    # -----------------------------
-    # Base queryset: approved payments in the last year
-    # -----------------------------
     start_date = timezone.now() - timedelta(days=365)
-    payments_qs = Payment.objects.filter(
-        school=school,
-        status="approved",
-        payment_date__gte=start_date
-    ).select_related("invoice", "invoice__student").order_by("-payment_date")
+
+    page_number = int(request.GET.get("page", 1))
+    method = request.GET.get("method")  # manual | online | bank_transfer
 
     # -----------------------------
-    # Filter by payment method if provided
+    # Filters (same pattern as dashboard)
+    # -----------------------------
+    class_id = request.GET.get("class")
+    current_term = request.GET.get("term")
+    current_session = request.GET.get("session")
+    search = request.GET.get("search")
+
+    # -----------------------------
+    # Base queryset (SINGLE SOURCE OF TRUTH)
+    # -----------------------------
+    payments_qs = (
+        Payment.objects
+        .filter(
+            school=school,
+            status="approved",
+            payment_date__gte=start_date
+        )
+        .select_related(
+            "invoice",
+            "invoice__student"
+        )
+        .order_by("-payment_date")
+    )
+
+    # -----------------------------
+    # Payment method filter
     # -----------------------------
     if method in ["manual", "online", "bank_transfer"]:
         payments_qs = payments_qs.filter(payment_method=method)
 
     # -----------------------------
+    # Class filter (via student)
+    # -----------------------------
+    if class_id:
+        payments_qs = payments_qs.filter(
+            invoice__student__school_class_id=class_id
+        )
+
+    # -----------------------------
+    # Term filter (NON-FK)
+    # -----------------------------
+    if current_term:
+        payments_qs = payments_qs.filter(
+            invoice__term=current_term
+        )
+
+    # -----------------------------
+    # Session filter (NON-FK)
+    # -----------------------------
+    if current_session:
+        payments_qs = payments_qs.filter(
+            invoice__session=current_session
+        )
+
+    # -----------------------------
+    # Student search
+    # -----------------------------
+    if search:
+        payments_qs = payments_qs.filter(
+            Q(invoice__student__first_name__icontains=search) |
+            Q(invoice__student__last_name__icontains=search) |
+            Q(invoice__student__admission_no__icontains=search)
+        )
+
+    # -----------------------------
     # Pagination
     # -----------------------------
-    paginator = Paginator(payments_qs, 20)  # 20 payments per page
+    paginator = Paginator(payments_qs, 20)
     page_obj = paginator.get_page(page_number)
 
     # -----------------------------
-    # Render HTML for modal list
+    # Classes for dropdown ✅ (THIS WAS MISSING)
+    # -----------------------------
+    classes = SchoolClass.objects.filter(
+        school=school
+    ).order_by("name")
+
+    # -----------------------------
+    # Render rows
     # -----------------------------
     html = render_to_string(
-        "finance/payment_modal_list.html",
-        {"page_obj": page_obj},
+        "partials/payment_rows.html",
+        {
+            "page_obj": page_obj,
+            "classes": classes,              # 👈 now available
+            "current_class": class_id,
+            "current_term": current_term,
+            "current_session": current_session,
+        },
         request=request
     )
 
-    # -----------------------------
-    # Return JSON
-    # -----------------------------
     return JsonResponse({
         "html": html,
         "has_next": page_obj.has_next(),
@@ -233,6 +299,7 @@ def payments_modal(request):
         "page": page_obj.number,
         "num_pages": page_obj.paginator.num_pages,
     })
+
 
 
 
