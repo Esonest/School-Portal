@@ -1800,12 +1800,12 @@ from django.db.models import F, Sum  # ✅ Import F here for virtual account log
 @csrf_exempt
 def paystack_webhook(request):
     """
-    PAYSTACK WEBHOOK HANDLER
+    PAYSTACK WEBHOOK HANDLER (MULTI-BANK VA SAFE)
 
     ✔ Per-school signature verification
     ✔ Idempotent
     ✔ Atomic
-    ✔ Online + Virtual account support
+    ✔ Online + ALL Virtual Accounts support
     ✔ Safe retries
     """
 
@@ -1838,57 +1838,57 @@ def paystack_webhook(request):
     # --------------------------------------------------
     # Reference & amount
     # --------------------------------------------------
-    reference = (
-        data.get("reference")
-        or str(data.get("id"))
-    )
-
+    reference = data.get("reference") or str(data.get("id"))
     amount = Decimal(data.get("amount", 0)) / 100  # Kobo → Naira
 
     if not reference or amount <= 0:
         return HttpResponse(status=200)
 
     # --------------------------------------------------
-    # Extract virtual account number (SAFE)
+    # Detect VA payment
     # --------------------------------------------------
-    account_number = (
-        (data.get("metadata") or {}).get("receiver_account_number")
-        or (data.get("authorization") or {}).get("receiver_bank_account_number")
+    is_virtual_account = (
+        data.get("channel") == "dedicated_nuban"
+        or event_type in {"transfer.success", "deposit.success"}
     )
 
     # --------------------------------------------------
-    # Resolve school
+    # Extract VA account number (SAFE)
+    # --------------------------------------------------
+    account_number = (
+        (data.get("dedicated_account") or {}).get("account_number")
+        or (data.get("metadata") or {}).get("receiver_account_number")
+    )
+
+    # --------------------------------------------------
+    # Resolve school (metadata → VA → fail)
     # --------------------------------------------------
     school = None
     student = None
+    va = None
 
     metadata = data.get("metadata") or {}
     school_id = metadata.get("school_id")
 
     if school_id:
-        try:
-            school = School.objects.get(id=school_id)
-        except School.DoesNotExist:
-            return HttpResponse(status=200)
+        school = School.objects.filter(id=school_id).first()
 
     if not school and account_number:
-        student = (
-            Student.objects
-            .filter(virtual_account_number=account_number)
-            .select_related("school")
+        va = (
+            VirtualAccount.objects
+            .select_related("student", "student__school")
+            .filter(account_number=account_number)
             .first()
         )
-
-        if not student:
-            return HttpResponse(status=200)
-
-        school = student.school
+        if va:
+            student = va.student
+            school = student.school
 
     if not school:
         return HttpResponse(status=200)
 
     # --------------------------------------------------
-    # Verify Paystack signature
+    # Verify Paystack signature (PER SCHOOL)
     # --------------------------------------------------
     computed_signature = hmac.new(
         school.paystack_secret_key.encode(),
@@ -1898,14 +1898,6 @@ def paystack_webhook(request):
 
     if computed_signature != signature:
         return HttpResponse(status=400)
-
-    # --------------------------------------------------
-    # Detect payment type
-    # --------------------------------------------------
-    is_virtual_account = (
-        data.get("channel") == "dedicated_nuban"
-        or event_type in {"transfer.success", "deposit.success"}
-    )
 
     # --------------------------------------------------
     # Process payment
@@ -1933,21 +1925,16 @@ def paystack_webhook(request):
                 tx.status = "success"
                 tx.save(update_fields=["status"])
 
+            student = invoice.student
+
         # ===============================
         # VIRTUAL ACCOUNT PAYMENT
         # ===============================
         else:
             if not student:
-                student = (
-                    Student.objects
-                    .select_for_update()
-                    .filter(virtual_account_number=account_number)
-                    .first()
-                )
-
-            if not student:
                 return HttpResponse(status=200)
 
+            # Get earliest unpaid invoice
             invoice = (
                 Invoice.objects
                 .select_for_update()
@@ -1959,53 +1946,58 @@ def paystack_webhook(request):
                 .first()
             )
 
-            if not invoice:
-                return HttpResponse(status=200)
+            # VA payment without invoice is STILL valid
+            # We allow payment creation without invoice
+            # (Dashboard will still reflect it)
 
         # --------------------------------------------------
-        # Create payment (idempotent)
+        # Create payment (IDEMPOTENT)
         # --------------------------------------------------
         payment, created = Payment.objects.get_or_create(
             reference=reference,
             defaults={
-                "school": invoice.school,
+                "school": school,
                 "invoice": invoice,
-                "student": invoice.student,
-                "school_class": invoice.school_class,
-                "term": invoice.term,
-                "session": invoice.session,
+                "student": student,
+                "school_class": invoice.school_class if invoice else None,
+                "term": invoice.term if invoice else None,
+                "session": invoice.session if invoice else None,
                 "amount": amount,
                 "status": "approved",
                 "payment_method": (
                     "bank_transfer" if is_virtual_account else "online"
                 ),
-                "metadata": data,
+                "metadata": {
+                    **data,
+                    "va_account_number": account_number,
+                    "va_bank": va.bank_name if va else None,
+                },
             }
         )
 
         # --------------------------------------------------
-        # Update invoice totals
+        # Update invoice totals (ONLY IF INVOICE EXISTS)
         # --------------------------------------------------
-        invoice.amount_paid = (
-            Payment.objects
-            .filter(invoice=invoice)
-            .aggregate(total=Sum("amount"))["total"] or 0
-        )
-        invoice.save(update_fields=["amount_paid"])
+        if invoice:
+            invoice.amount_paid = (
+                Payment.objects
+                .filter(invoice=invoice)
+                .aggregate(total=Sum("amount"))["total"] or Decimal("0")
+            )
+            invoice.save(update_fields=["amount_paid"])
 
         # --------------------------------------------------
-        # Create receipt once
+        # Create receipt ONCE
         # --------------------------------------------------
-        if created:
+        if created and invoice:
             Receipt.objects.create(
-                student=invoice.student,
+                student=student,
                 payment=payment,
                 amount=payment.amount,
                 school_class=invoice.school_class,
                 session=invoice.session,
                 term=invoice.term,
-                school=invoice.school,
+                school=school,
             )
 
     return HttpResponse(status=200)
-
