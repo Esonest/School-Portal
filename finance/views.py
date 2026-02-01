@@ -45,30 +45,33 @@ from datetime import timedelta
 from django.db.models.functions import Coalesce
 from django.contrib.auth.decorators import login_required
 
+from django.db.models import Sum, Q
+from django.db.models.functions import Coalesce
+from decimal import Decimal
+from datetime import timedelta
+from django.utils import timezone
 
 @login_required
 def dashboard(request):
     school = request.user.school
     start_date = timezone.now() - timedelta(days=365)
 
-    # -------------------------------------------------
+    # -----------------------------
     # Filters
-    # -------------------------------------------------
+    # -----------------------------
     current_session = request.GET.get("session")
     current_term = request.GET.get("term")
     classes = SchoolClass.objects.filter(school=school).order_by("name")
 
-    # -------------------------------------------------
+    # -----------------------------
     # Invoices
-    # -------------------------------------------------
+    # -----------------------------
     invoices = Invoice.objects.filter(
         school=school,
         created_at__gte=start_date
     )
-
     if current_session:
         invoices = invoices.filter(session=current_session)
-
     if current_term:
         invoices = invoices.filter(term=current_term)
 
@@ -76,36 +79,35 @@ def dashboard(request):
         total_expected=Coalesce(Sum("total_amount"), Decimal("0")),
         total_received=Coalesce(Sum("amount_paid"), Decimal("0")),
     )
-
     total_expected = invoice_totals["total_expected"]
     total_received = invoice_totals["total_received"]
     outstanding = total_expected - total_received
 
-    # -------------------------------------------------
-    # PAYMENTS (single source of truth)
-    # -------------------------------------------------
-    payments_base = (
-        Payment.objects
-        .filter(
-            school=school,
-            status="approved",
-            payment_date__gte=start_date
-        )
-        .select_related("invoice", "invoice__student")
-    )
+    # -----------------------------
+    # Payments (include all student VA payments)
+    # -----------------------------
+    student_ids_with_va = VirtualAccount.objects.filter(
+        student__school=school
+    ).values_list("student_id", flat=True)
 
-    # -------------------------------------------------
+    payments_base = Payment.objects.filter(
+        school=school,
+        status="approved",
+        payment_date__gte=start_date
+    ).filter(
+        Q(invoice__isnull=False) | Q(student_id__in=student_ids_with_va)
+    ).select_related("invoice", "invoice__student", "student")
+
+    # -----------------------------
     # Manual / Offline Payments
-    # -------------------------------------------------
-    recent_payments = (
-        payments_base
-        .exclude(payment_method__in=["online", "bank_transfer"])
-        .order_by("-payment_date")[:5]
-    )
+    # -----------------------------
+    recent_payments = payments_base.exclude(
+        payment_method__in=["online", "bank_transfer"]
+    ).order_by("-payment_date")[:5]
 
-    # -------------------------------------------------
+    # -----------------------------
     # Paystack Payments
-    # -------------------------------------------------
+    # -----------------------------
     paystack_online_qs = payments_base.filter(payment_method="online")
     paystack_bank_qs = payments_base.filter(payment_method="bank_transfer")
 
@@ -121,33 +123,26 @@ def dashboard(request):
 
     recent_paystack_online = paystack_online_qs.order_by("-payment_date")[:5]
     recent_paystack_bank = paystack_bank_qs.order_by("-payment_date")[:5]
+    recent_paystack = payments_base.filter(
+        payment_method__in=["online", "bank_transfer"]
+    ).order_by("-payment_date")[:5]
 
-    recent_paystack = (
-        payments_base
-        .filter(payment_method__in=["online", "bank_transfer"])
-        .order_by("-payment_date")[:5]
-    )
-
-
-    # -------------------------------------------------
+    # -----------------------------
     # Expenses
-    # -------------------------------------------------
+    # -----------------------------
     expenses = Expense.objects.filter(
         school=school,
         date__gte=start_date
     )
-
     if current_session:
         expenses = expenses.filter(session=current_session)
-
     if current_term:
         expenses = expenses.filter(term=current_term)
-
     recent_expenses = expenses.order_by("-date")[:5]
 
-    # -------------------------------------------------
+    # -----------------------------
     # Context
-    # -------------------------------------------------
+    # -----------------------------
     context = {
         "school": school,
 
@@ -166,6 +161,7 @@ def dashboard(request):
         "recent_paystack_online": recent_paystack_online,
         "recent_paystack_bank": recent_paystack_bank,
         "recent_paystack": recent_paystack,
+
         # Expenses
         "recent_expenses": recent_expenses,
 
@@ -178,6 +174,8 @@ def dashboard(request):
     }
 
     return render(request, "finance/dashboard.html", context)
+
+
 
 
 
@@ -597,6 +595,12 @@ def verify_virtual_account(student):
 # -----------------------------
 # Student Dashboard
 # -----------------------------
+from django.db.models import Sum, Q
+from decimal import Decimal
+
+from django.db.models import Sum, Q
+from decimal import Decimal
+
 @login_required
 @portal_required("finance")
 def student_dashboard(request):
@@ -604,17 +608,21 @@ def student_dashboard(request):
         return redirect('accounts:login')
 
     student = request.user.student_profile
-    
-    ensure_virtual_accounts(student)
-    # 1️⃣ Verify virtual account (optimized)
-    verify_virtual_account(student)
 
+    # Ensure all VAs exist for this student
+    ensure_virtual_accounts(student)
+    verify_virtual_account(student)  # optional, keep your verification logic
+
+    # Current filters
     current_session = request.GET.get('session', SESSION_LIST[0])
     current_term = request.GET.get('term', '1')
     current_class_id = request.GET.get('class', student.school_class.id)
 
     classes = SchoolClass.objects.filter(school=student.school).order_by('name')
 
+    # -----------------------------
+    # Invoices
+    # -----------------------------
     invoices = Invoice.objects.filter(
         student=student,
         session=current_session,
@@ -623,17 +631,29 @@ def student_dashboard(request):
     ).order_by('-created_at')
 
     total_invoiced = invoices.aggregate(
-        total=Sum('total_amount') or Decimal('0')
+        total=Sum('total_amount')
     )['total'] or Decimal('0')
 
     total_paid = invoices.aggregate(
-        total=Sum('amount_paid') or Decimal('0')
+        total=Sum('amount_paid')
     )['total'] or Decimal('0')
 
     outstanding = total_invoiced - total_paid
 
-    payments = Payment.objects.filter(invoice__in=invoices).order_by('-payment_date')[:10]
+    # -----------------------------
+    # Payments
+    # Include payments via invoice or student VAs
+    # -----------------------------
+    payments_base = Payment.objects.filter(
+        Q(invoice__in=invoices) | Q(student=student),
+        status='approved'
+    ).select_related('invoice', 'invoice__student', 'student').order_by('-payment_date')
 
+    payments = payments_base[:10]
+
+    # -----------------------------
+    # Context
+    # -----------------------------
     context = {
         'student': student,
         'invoices': invoices,
@@ -650,6 +670,7 @@ def student_dashboard(request):
     }
 
     return render(request, 'finance/student_dashboard.html', context)
+
 
 
 
