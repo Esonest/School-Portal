@@ -673,25 +673,34 @@ def student_dashboard(request):
 
 
 
-
-
-
-
-
-
-
-
-from django.db.models import Prefetch
 from django.contrib.auth.decorators import login_required
+from django.db.models import Prefetch, Q
+from django.shortcuts import render
+
 
 @login_required
 def invoice_list(request):
     school = request.user.school
 
+    # -----------------------------
+    # GET filters
+    # -----------------------------
+    search = request.GET.get("search", "").strip()
+    current_class = request.GET.get("class")
+    current_session = request.GET.get("session")
+    current_term = request.GET.get("term")
+
+    # -----------------------------
+    # Base queryset
+    # -----------------------------
     invoices = (
         Invoice.objects
         .filter(school=school)
-        .select_related("student", "school_class")
+        .select_related(
+            "student",
+            "student__user",
+            "school_class"
+        )
         .prefetch_related(
             Prefetch(
                 "transactions",
@@ -702,11 +711,54 @@ def invoice_list(request):
         .order_by("-created_at")
     )
 
-    return render(
-        request,
-        "finance/invoice_list.html",
-        {"invoices": invoices}
-    )
+    # -----------------------------
+    # Name / Admission filtering
+    # -----------------------------
+    if search:
+        invoices = invoices.filter(
+            Q(student__user__first_name__icontains=search) |
+            Q(student__user__last_name__icontains=search) |
+            Q(student__user__username__icontains=search) |
+            Q(student__admission_no__icontains=search)
+        ).distinct()
+
+    # -----------------------------
+    # Class filter
+    # -----------------------------
+    if current_class:
+        invoices = invoices.filter(school_class_id=current_class)
+
+    # -----------------------------
+    # Session filter
+    # -----------------------------
+    if current_session:
+        invoices = invoices.filter(session=current_session)
+
+    # -----------------------------
+    # Term filter
+    # -----------------------------
+    if current_term:
+        invoices = invoices.filter(term=current_term)
+
+    # -----------------------------
+    # Context
+    # -----------------------------
+    context = {
+        "invoices": invoices,
+        "search": search,
+        "current_class": current_class,
+        "current_session": current_session,
+        "current_term": current_term,
+        "classes": SchoolClass.objects.filter(school=school).order_by("name"),
+        "sessions": SESSION_LIST,
+        # ⚡ Fix: use TERM_CHOICES from Score model (or Student)
+        "term_choices": Score.TERM_CHOICES,
+    }
+
+    return render(request, "finance/invoice_list.html", context)
+
+
+
 
 
 
@@ -2001,3 +2053,7 @@ def paystack_webhook(request):
             )
 
     return HttpResponse(status=200)
+
+
+
+

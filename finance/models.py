@@ -393,3 +393,5 @@ class SchoolTermSetting(models.Model):
         return f"{self.school.name} - {self.session} Term {self.term}" 
 
 
+
+
