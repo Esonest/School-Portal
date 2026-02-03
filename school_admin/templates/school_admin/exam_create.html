@@ -21,38 +21,25 @@
           class="bg-white rounded-xl shadow-lg border border-slate-200 p-6 sm:p-8 space-y-6">
       {% csrf_token %}
 
-      <!-- MAIN FIELDS -->
-      {% for field in form %}
-        {% if field.name != "start_time" and field.name != "end_time" and field.name != "duration_minutes" %}
-          <div>
-            <label class="block text-gray-700 font-semibold mb-2">
-              {{ field.label }}
-              {% if field.field.required %}
-                <span class="text-red-500">*</span>
-              {% endif %}
-            </label>
-
-            {% if field.field.widget.input_type == "text" or field.field.widget.input_type == "textarea" %}
-              <!-- MathLive input -->
-              <math-field
-                class="equation-field w-full border rounded-lg px-3 py-2 bg-white"
-                style="min-height:80px;"></math-field>
-
-              <!-- Hidden real field -->
-              <input type="hidden"
-                     name="{{ field.html_name }}"
-                     class="mathlive-hidden"
-                     value="{{ field.value|default_if_none:'' }}">
-            {% else %}
-              {{ field|add_class:"w-full border rounded-lg px-3 py-2" }}
-            {% endif %}
-
-            {% for error in field.errors %}
-              <p class="text-red-500 text-sm mt-1">{{ error }}</p>
-            {% endfor %}
-          </div>
+     <!-- MAIN FIELDS -->
+{% for field in form %}
+  {% if field.name != "start_time" and field.name != "end_time" and field.name != "duration_minutes" %}
+    <div>
+      <label class="block text-gray-700 font-semibold mb-2">
+        {{ field.label }}
+        {% if field.field.required %}
+          <span class="text-red-500">*</span>
         {% endif %}
+      </label>
+
+      {{ field|add_class:"w-full border rounded-lg px-3 py-2" }}
+
+      {% for error in field.errors %}
+        <p class="text-red-500 text-sm mt-1">{{ error }}</p>
       {% endfor %}
+    </div>
+  {% endif %}
+{% endfor %}
 
       <!-- TIME & DURATION -->
       <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">

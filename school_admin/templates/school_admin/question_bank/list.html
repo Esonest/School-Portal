@@ -1,6 +1,12 @@
 {% extends "accounts/base.html" %}
 {% block content %}
+<style>
+  .mathjax {
+  max-width: 100%;
+  overflow-x: auto;
+}
 
+</style>
 <div class="max-w-7xl mx-auto px-4 py-6">
 
   <!-- Header -->
@@ -56,44 +62,48 @@
       Search
     </button>
   </form>
+<!-- ================= MOBILE ================= -->
+<div class="grid grid-cols-1 gap-4 sm:hidden">
+  {% for q in questions %}
+    <div class="bg-white rounded-xl shadow p-4 space-y-3
+                w-full max-w-full
+                overflow-hidden break-words">
 
-  <!-- ================= MOBILE ================= -->
-  <div class="grid grid-cols-1 gap-4 sm:hidden">
-    {% for q in questions %}
-      <div class="bg-white rounded-xl shadow p-4 space-y-3">
+      <!-- QUESTION TEXT -->
+      <div class="text-gray-800 font-medium
+                  whitespace-pre-wrap
+                  break-words overflow-wrap-anywhere">
 
-        <div class="text-gray-800 font-medium">
-          {{ q.text|safe }}
+        {{ q.text|safe }}
 
-          {% if q.equation %}
-            <div class="mt-2 text-lg mathjax">
-              $$ {{ q.equation }} $$
-            </div>
-          {% else %}
-            <div class="mt-2 text-gray-400 text-sm italic">
-              No equation provided
-            </div>
-          {% endif %}
-        </div>
-
-        <div class="flex justify-between text-sm text-gray-600">
-          <span><strong>Subject:</strong> {{ q.subject.name }}</span>
-          <span><strong>Marks:</strong> {{ q.marks }}</span>
-        </div>
-
-        <div class="flex justify-end gap-4 pt-2 text-sm">
-          <a href="{% url 'school_admin:question_bank_update' q.id %}"
-             class="text-indigo-600 hover:underline">Edit</a>
-          <a href="{% url 'school_admin:question_bank_delete' q.id %}"
-             class="text-red-600 hover:underline">Delete</a>
-        </div>
+        {% if q.equation %}
+          <div class="mt-3 text-base mathjax
+                      max-w-full overflow-x-auto">
+            {{ q.equation }}
+          </div>
+        {% endif %}
       </div>
-    {% empty %}
-      <div class="text-center text-gray-500 py-6">
-        No questions found.
+
+      <!-- META -->
+      <div class="flex justify-between text-sm text-gray-600 flex-wrap gap-2">
+        <span><strong>Subject:</strong> {{ q.subject.name }}</span>
+        <span><strong>Marks:</strong> {{ q.marks }}</span>
       </div>
-    {% endfor %}
-  </div>
+
+      <!-- ACTIONS -->
+      <div class="flex justify-end gap-4 pt-2 text-sm">
+        <a href="{% url 'school_admin:question_bank_update' q.id %}"
+           class="text-indigo-600 hover:underline">Edit</a>
+        <a href="{% url 'school_admin:question_bank_delete' q.id %}"
+           class="text-red-600 hover:underline">Delete</a>
+      </div>
+    </div>
+  {% empty %}
+    <div class="text-center text-gray-500 py-6">
+      No questions found.
+    </div>
+  {% endfor %}
+</div>
 
   <!-- ================= DESKTOP ================= -->
   <div class="hidden sm:block overflow-x-auto bg-white rounded-xl shadow">
