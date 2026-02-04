@@ -371,9 +371,16 @@ from django import forms
 from django.contrib.auth import get_user_model
 from django.db import transaction
 
+from django import forms
+from django.contrib.auth import get_user_model
+from django.db import transaction
+from accounts.models import School
+
 User = get_user_model()
 
+
 class TeacherForm(forms.ModelForm):
+    # --- User fields ---
     username = forms.CharField()
     first_name = forms.CharField(required=False)
     last_name = forms.CharField(required=False)
@@ -383,7 +390,6 @@ class TeacherForm(forms.ModelForm):
         required=False,
         widget=forms.Textarea(attrs={"rows": 2})
     )
-
     password = forms.CharField(
         required=False,
         widget=forms.PasswordInput,
@@ -404,22 +410,30 @@ class TeacherForm(forms.ModelForm):
         self.school = kwargs.pop("school", None)
         super().__init__(*args, **kwargs)
 
+        # ---- School scoping ----
         if self.school:
-            self.fields["school"].queryset = self.fields["school"].queryset.filter(id=self.school.id)
+            self.fields["school"].queryset = School.objects.filter(id=self.school.id)
             self.fields["school"].initial = self.school
             self.fields["school"].disabled = True
-            self.fields["classes"].queryset = self.fields["classes"].queryset.filter(school=self.school)
-            self.fields["subjects"].queryset = self.fields["subjects"].queryset.filter(school=self.school)
 
+            self.fields["classes"].queryset = SchoolClass.objects.filter(
+                school=self.school
+            )
+            self.fields["subjects"].queryset = Subject.objects.filter(
+                school=self.school
+            )
+
+        # ---- Populate user data on edit ----
         if self.is_edit and self.instance.pk:
             user = self.instance.user
+
             self.fields["username"].initial = user.username
             self.fields["first_name"].initial = user.first_name
             self.fields["last_name"].initial = user.last_name
             self.fields["email"].initial = user.email
-            self.fields["phone"].initial = user.phone
-            self.fields["address"].initial = user.address
-            # Password optional on edit
+            self.fields["phone"].initial = getattr(user, "phone", "")
+            self.fields["address"].initial = getattr(user, "address", "")
+
             self.fields["password"].required = False
         else:
             self.fields["password"].required = True
@@ -429,42 +443,45 @@ class TeacherForm(forms.ModelForm):
         teacher = super().save(commit=False)
 
         if self.is_edit:
-            # Update existing user
+            # ---- Update existing user ----
             user = teacher.user
             user.username = self.cleaned_data["username"]
-            user.first_name = self.cleaned_data["first_name"]
-            user.last_name = self.cleaned_data["last_name"]
-            user.email = self.cleaned_data["email"]
-            user.phone = self.cleaned_data["phone"]
-            user.address = self.cleaned_data["address"]
+            user.first_name = self.cleaned_data.get("first_name", "")
+            user.last_name = self.cleaned_data.get("last_name", "")
+            user.email = self.cleaned_data.get("email", "")
+            user.phone = self.cleaned_data.get("phone", "")
+            user.address = self.cleaned_data.get("address", "")
             user.school = self.school
-            # Only update password if a new one is provided
+
             new_password = self.cleaned_data.get("password")
             if new_password:
                 user.set_password(new_password)
+
             user.save()
+
         else:
-            # Create new user
+            # ---- Create new user ----
             user = User.objects.create_user(
                 username=self.cleaned_data["username"],
                 password=self.cleaned_data["password"],
-                first_name=self.cleaned_data["first_name"],
-                last_name=self.cleaned_data["last_name"],
-                email=self.cleaned_data["email"],
+                first_name=self.cleaned_data.get("first_name", ""),
+                last_name=self.cleaned_data.get("last_name", ""),
+                email=self.cleaned_data.get("email", ""),
             )
-            user.phone = self.cleaned_data["phone"]
-            user.address = self.cleaned_data["address"]
+            user.phone = self.cleaned_data.get("phone", "")
+            user.address = self.cleaned_data.get("address", "")
             user.role = "teacher"
             user.is_teacher = True
             user.school = self.school
             user.save()
+
             teacher.user = user
 
         teacher.school = self.school
 
         if commit:
             teacher.save()
-            self.save_m2m()
+            self.save_m2m()  # <-- saves classes & subjects (source of truth)
 
         return teacher
 

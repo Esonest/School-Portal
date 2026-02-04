@@ -37,98 +37,67 @@
           <!-- USERNAME -->
           <div>
             <label class="block text-sm font-semibold text-gray-700 mb-1">Username</label>
-            {% if form.username.errors %}
-              {{ form.username|add_class:"w-full rounded-lg p-3 border-red-400 focus:outline-none focus:ring-2 focus:ring-red-400" }}
-              {% for error in form.username.errors %}
-                <p class="mt-1 text-sm text-red-600">{{ error }}</p>
-              {% endfor %}
-            {% else %}
-              {{ form.username|add_class:"w-full rounded-lg p-3 border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-400" }}
-            {% endif %}
+            {{ form.username|add_class:"w-full rounded-lg p-3 border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-400" }}
+            {% for error in form.username.errors %}
+              <p class="mt-1 text-sm text-red-600">{{ error }}</p>
+            {% endfor %}
           </div>
 
           <!-- PASSWORD -->
-{% if form.password %}
-<div>
-    <label class="block text-sm font-semibold text-gray-700 mb-1">Password</label>
-    {% if form.password.errors %}
-        {{ form.password|add_class:"w-full rounded-lg p-3 border-red-400 focus:outline-none focus:ring-2 focus:ring-red-400" }}
-        {% for error in form.password.errors %}
-            <p class="mt-1 text-sm text-red-600">{{ error }}</p>
-        {% endfor %}
-    {% else %}
-        {{ form.password|add_class:"w-full rounded-lg p-3 border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-400" }}
-    {% endif %}
-    {% if is_edit %}
-        <p class="text-sm text-gray-500 mt-1">Leave blank to keep current password</p>
-    {% endif %}
-</div>
-{% endif %}
-
+          <div>
+            <label class="block text-sm font-semibold text-gray-700 mb-1">Password</label>
+            {{ form.password|add_class:"w-full rounded-lg p-3 border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-400" }}
+            {% if is_edit %}
+              <p class="text-sm text-gray-500 mt-1">Leave blank to keep current password</p>
+            {% endif %}
+            {% for error in form.password.errors %}
+              <p class="mt-1 text-sm text-red-600">{{ error }}</p>
+            {% endfor %}
+          </div>
 
           <!-- FIRST NAME -->
           <div>
             <label class="block text-sm font-semibold text-gray-700 mb-1">First Name</label>
-            {% if form.first_name.errors %}
-              {{ form.first_name|add_class:"w-full rounded-lg p-3 border-red-400 focus:outline-none focus:ring-2 focus:ring-red-400" }}
-              {% for error in form.first_name.errors %}
-                <p class="mt-1 text-sm text-red-600">{{ error }}</p>
-              {% endfor %}
-            {% else %}
-              {{ form.first_name|add_class:"w-full rounded-lg p-3 border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-400" }}
-            {% endif %}
+            {{ form.first_name|add_class:"w-full rounded-lg p-3 border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-400" }}
+            {% for error in form.first_name.errors %}
+              <p class="mt-1 text-sm text-red-600">{{ error }}</p>
+            {% endfor %}
           </div>
 
           <!-- LAST NAME -->
           <div>
             <label class="block text-sm font-semibold text-gray-700 mb-1">Last Name</label>
-            {% if form.last_name.errors %}
-              {{ form.last_name|add_class:"w-full rounded-lg p-3 border-red-400 focus:outline-none focus:ring-2 focus:ring-red-400" }}
-              {% for error in form.last_name.errors %}
-                <p class="mt-1 text-sm text-red-600">{{ error }}</p>
-              {% endfor %}
-            {% else %}
-              {{ form.last_name|add_class:"w-full rounded-lg p-3 border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-400" }}
-            {% endif %}
+            {{ form.last_name|add_class:"w-full rounded-lg p-3 border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-400" }}
+            {% for error in form.last_name.errors %}
+              <p class="mt-1 text-sm text-red-600">{{ error }}</p>
+            {% endfor %}
           </div>
 
           <!-- EMAIL -->
           <div>
             <label class="block text-sm font-semibold text-gray-700 mb-1">Email</label>
-            {% if form.email.errors %}
-              {{ form.email|add_class:"w-full rounded-lg p-3 border-red-400 focus:outline-none focus:ring-2 focus:ring-red-400" }}
-              {% for error in form.email.errors %}
-                <p class="mt-1 text-sm text-red-600">{{ error }}</p>
-              {% endfor %}
-            {% else %}
-              {{ form.email|add_class:"w-full rounded-lg p-3 border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-400" }}
-            {% endif %}
+            {{ form.email|add_class:"w-full rounded-lg p-3 border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-400" }}
+            {% for error in form.email.errors %}
+              <p class="mt-1 text-sm text-red-600">{{ error }}</p>
+            {% endfor %}
           </div>
 
           <!-- PHONE -->
           <div>
             <label class="block text-sm font-semibold text-gray-700 mb-1">Phone</label>
-            {% if form.phone.errors %}
-              {{ form.phone|add_class:"w-full rounded-lg p-3 border-red-400 focus:outline-none focus:ring-2 focus:ring-red-400" }}
-              {% for error in form.phone.errors %}
-                <p class="mt-1 text-sm text-red-600">{{ error }}</p>
-              {% endfor %}
-            {% else %}
-              {{ form.phone|add_class:"w-full rounded-lg p-3 border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-400" }}
-            {% endif %}
+            {{ form.phone|add_class:"w-full rounded-lg p-3 border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-400" }}
+            {% for error in form.phone.errors %}
+              <p class="mt-1 text-sm text-red-600">{{ error }}</p>
+            {% endfor %}
           </div>
 
           <!-- ADDRESS -->
           <div class="sm:col-span-2">
             <label class="block text-sm font-semibold text-gray-700 mb-1">Address</label>
-            {% if form.address.errors %}
-              {{ form.address|add_class:"w-full rounded-lg p-3 border-red-400 focus:outline-none focus:ring-2 focus:ring-red-400" }}
-              {% for error in form.address.errors %}
-                <p class="mt-1 text-sm text-red-600">{{ error }}</p>
-              {% endfor %}
-            {% else %}
-              {{ form.address|add_class:"w-full rounded-lg p-3 border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-400" }}
-            {% endif %}
+            {{ form.address|add_class:"w-full rounded-lg p-3 border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-400" }}
+            {% for error in form.address.errors %}
+              <p class="mt-1 text-sm text-red-600">{{ error }}</p>
+            {% endfor %}
           </div>
 
         </div>
@@ -145,20 +114,34 @@
           <!-- STAFF ID -->
           <div>
             <label class="block text-sm font-semibold text-gray-700 mb-1">Staff ID</label>
-            {% if form.staff_id.errors %}
-              {{ form.staff_id|add_class:"w-full rounded-lg p-3 border-red-400 focus:outline-none focus:ring-2 focus:ring-red-400" }}
-              {% for error in form.staff_id.errors %}
-                <p class="mt-1 text-sm text-red-600">{{ error }}</p>
-              {% endfor %}
-            {% else %}
-              {{ form.staff_id|add_class:"w-full rounded-lg p-3 border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-400" }}
-            {% endif %}
+            {{ form.staff_id|add_class:"w-full rounded-lg p-3 border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-400" }}
+            {% for error in form.staff_id.errors %}
+              <p class="mt-1 text-sm text-red-600">{{ error }}</p>
+            {% endfor %}
           </div>
 
           <!-- SCHOOL -->
           <div>
             <label class="block text-sm font-semibold text-gray-700 mb-1">School</label>
             {{ form.school|add_class:"w-full rounded-lg bg-gray-100 border-gray-300 p-3 cursor-not-allowed" }}
+          </div>
+
+          <!-- CLASSES (Multi-select) -->
+          <div class="sm:col-span-2">
+            <label class="block text-sm font-semibold text-gray-700 mb-1">Classes</label>
+            {{ form.classes|add_class:"w-full rounded-lg p-3 border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-400" }}
+            {% for error in form.classes.errors %}
+              <p class="mt-1 text-sm text-red-600">{{ error }}</p>
+            {% endfor %}
+          </div>
+
+          <!-- SUBJECTS (Multi-select) -->
+          <div class="sm:col-span-2">
+            <label class="block text-sm font-semibold text-gray-700 mb-1">Subjects</label>
+            {{ form.subjects|add_class:"w-full rounded-lg p-3 border-gray-300 focus:outline-none focus:ring-2 focus:ring-indigo-400" }}
+            {% for error in form.subjects.errors %}
+              <p class="mt-1 text-sm text-red-600">{{ error }}</p>
+            {% endfor %}
           </div>
 
         </div>

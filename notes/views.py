@@ -136,7 +136,6 @@ def download_note_file(request, pk):
 # ------------------------
 # Notes dashboard
 # ------------------------
-
 @login_required
 def dashboard(request):
     user = request.user
@@ -144,15 +143,39 @@ def dashboard(request):
     student = getattr(user, 'student_profile', None) or getattr(user, 'student', None)
 
     if teacher_profile:
-        notes = LessonNote.objects.filter(teacher=teacher_profile).order_by('-publish_date')
-        pending = LessonNoteSubmission.objects.filter(note__teacher=teacher_profile, status='submitted').order_by('submitted_on')[:20]
-        context = {'is_teacher': True, 'notes': notes, 'pending': pending}
+        # Only notes for teacher's school & subjects/classes
+        notes = LessonNote.objects.filter(
+            teacher=teacher_profile
+        ).order_by('-publish_date')
+
+        pending = LessonNoteSubmission.objects.filter(
+            note__teacher=teacher_profile,
+            status='submitted'
+        ).order_by('submitted_on')[:20]
+
+        context = {
+            'is_teacher': True,
+            'notes': notes,
+            'pending': pending
+        }
+
     elif student:
-        notes = LessonNote.objects.filter(classes=student.school_class).order_by('-publish_date')
+        notes = LessonNote.objects.filter(
+            classes=student.school_class
+        ).order_by('-publish_date')
+
         submissions = LessonNoteSubmission.objects.filter(student=student).select_related('note')
         subs_map = {s.note_id: s for s in submissions}
-        context = {'is_teacher': False, 'notes': notes, 'submissions': submissions, 'subs_map': subs_map}
+
+        context = {
+            'is_teacher': False,
+            'notes': notes,
+            'submissions': submissions,
+            'subs_map': subs_map
+        }
+
     else:
         raise Http404("Profile required")
 
     return render(request, 'notes/dashboard.html', context)
+

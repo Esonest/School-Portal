@@ -90,34 +90,45 @@ def dashboard(request):
 # ------------------------
 # Create or edit assignment (teacher)
 # ------------------------
-
 @login_required
 @teacher_required
 def create_assignment(request, pk=None):
-    user = request.user
-    teacher_profile = getattr(user, 'teacher_profile', None)
+    teacher_profile = getattr(request.user, 'teacher_profile', None)
     if not teacher_profile:
         raise Http404("No teacher profile found.")
 
-    assignment = get_object_or_404(Assignment, pk=pk, teacher=teacher_profile) if pk else None
+    assignment = None
+    if pk:
+        assignment = get_object_or_404(Assignment, pk=pk, teacher=teacher_profile)
 
-    if request.method == 'POST':
-        form = AssignmentForm(request.POST, request.FILES, instance=assignment)
+    if request.method == "POST":
+        form = AssignmentForm(
+            request.POST,
+            request.FILES,
+            instance=assignment,
+            teacher=teacher_profile,  # pass teacher to form
+            school=teacher_profile.school
+        )
         if form.is_valid():
             obj = form.save(commit=False)
-            obj.teacher = teacher_profile         # Must be Teacher instance
-            obj.school = teacher_profile.school   # Must be School instance
+            obj.teacher = teacher_profile
+            obj.school = teacher_profile.school
             obj.save()
             form.save_m2m()
             messages.success(request, "Assignment saved successfully.")
             return redirect('assignments:dashboard')
     else:
-        form = AssignmentForm(instance=assignment)
+        form = AssignmentForm(
+            instance=assignment,
+            teacher=teacher_profile,
+            school=teacher_profile.school
+        )
 
     return render(request, 'assignments/create.html', {
         'form': form,
         'assignment': assignment
     })
+
 
 # ------------------------
 # Assignment detail & submissions
