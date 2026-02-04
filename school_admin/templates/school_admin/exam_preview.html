@@ -1,6 +1,13 @@
 {% extends "accounts/base.html" %}
 
 {% block content %}
+<style>
+  .math-content mjx-container {
+  max-width: 100%;
+  margin: 0 !important;
+}
+
+</style>
 <div class="max-w-7xl mx-auto px-4 py-6">
 
   <!-- HEADER -->
@@ -11,60 +18,82 @@
     <p class="text-gray-600">{{ exam.school_class }}</p>
   </div>
 
-  <!-- ================= MOBILE CARDS ================= -->
-  <div class="grid grid-cols-1 gap-4 md:hidden">
-    {% for q in questions %}
-      <div class="bg-white rounded-xl shadow p-4 space-y-3">
+ <!-- ================= MOBILE CARDS ================= -->
+<div class="grid grid-cols-1 gap-4 md:hidden">
+  {% for q in questions %}
+    <div class="bg-white rounded-xl shadow p-4 space-y-3
+                w-full max-w-full overflow-hidden break-words">
 
-        <!-- Question -->
-        <div class="font-semibold text-gray-900">
-          {{ forloop.counter }}. {{ q.text|safe }}
+      <!-- Question -->
+      <div class="font-semibold text-gray-900
+                  whitespace-pre-wrap break-words overflow-wrap-anywhere">
+        {{ forloop.counter }}. {{ q.text|safe }}
+      </div>
+
+      <!-- Equation -->
+      {% if q.equation %}
+        <div class="math-content mt-2
+                    max-w-full overflow-x-auto leading-snug">
+          {{ q.equation|safe }}
+        </div>
+      {% endif %}
+
+      <!-- Options -->
+      <div class="text-gray-700 space-y-2 mt-2">
+
+        <div class="break-words overflow-wrap-anywhere">
+          <strong>A:</strong>
+          <span class="math-content max-w-full overflow-x-auto">
+            {{ q.option_a|safe }}
+          </span>
+          {% if q.correct_option == 'A' %}
+            <span class="text-green-700 font-bold ml-1">✔ Correct</span>
+          {% endif %}
         </div>
 
-        <!-- Equation -->
-        {% if q.equation %}
-          <div class="mt-2 text-lg">
-          {{ q.equation|safe }} 
-          </div>
+        <div class="break-words overflow-wrap-anywhere">
+          <strong>B:</strong>
+          <span class="math-content max-w-full overflow-x-auto">
+            {{ q.option_b|safe }}
+          </span>
+          {% if q.correct_option == 'B' %}
+            <span class="text-green-700 font-bold ml-1">✔ Correct</span>
+          {% endif %}
+        </div>
+
+        {% if q.option_c %}
+        <div class="break-words overflow-wrap-anywhere">
+          <strong>C:</strong>
+          <span class="math-content max-w-full overflow-x-auto">
+            {{ q.option_c|safe }}
+          </span>
+          {% if q.correct_option == 'C' %}
+            <span class="text-green-700 font-bold ml-1">✔ Correct</span>
+          {% endif %}
+        </div>
         {% endif %}
 
-        <!-- Options -->
-        <div class="text-gray-700 space-y-1 mt-2">
-          <div>
-            <strong>A:</strong> {{ q.option_a|safe }}
-            {% if q.correct_option == 'A' %}
-              <span class="text-green-700 font-bold">✔ Correct</span>
-            {% endif %}
-          </div>
-          <div>
-            <strong>B:</strong> {{ q.option_b|safe }}
-            {% if q.correct_option == 'B' %}
-              <span class="text-green-700 font-bold">✔ Correct</span>
-            {% endif %}
-          </div>
-          {% if q.option_c %}
-          <div>
-            <strong>C:</strong> {{ q.option_c|safe }}
-            {% if q.correct_option == 'C' %}
-              <span class="text-green-700 font-bold">✔ Correct</span>
-            {% endif %}
-          </div>
-          {% endif %}
-          {% if q.option_d %}
-          <div>
-            <strong>D:</strong> {{ q.option_d|safe }}
-            {% if q.correct_option == 'D' %}
-              <span class="text-green-700 font-bold">✔ Correct</span>
-            {% endif %}
-          </div>
+        {% if q.option_d %}
+        <div class="break-words overflow-wrap-anywhere">
+          <strong>D:</strong>
+          <span class="math-content max-w-full overflow-x-auto">
+            {{ q.option_d|safe }}
+          </span>
+          {% if q.correct_option == 'D' %}
+            <span class="text-green-700 font-bold ml-1">✔ Correct</span>
           {% endif %}
         </div>
+        {% endif %}
 
       </div>
-    {% empty %}
-      <p class="text-center text-gray-500 py-6">No questions have been added to this exam yet.</p>
-    {% endfor %}
-  </div>
+    </div>
+  {% empty %}
+    <p class="text-center text-gray-500 py-6">
+      No questions have been added to this exam yet.
+    </p>
+  {% endfor %}
+</div>
+
 
   <!-- ================= DESKTOP TABLE ================= -->
   <div class="hidden md:block bg-white rounded-xl shadow overflow-x-auto">
