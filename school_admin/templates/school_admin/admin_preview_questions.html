@@ -1,5 +1,12 @@
 {% extends "accounts/base.html" %}
 {% block content %}
+<style>
+  .mathjax mjx-container {
+  margin: 0 !important;
+  max-width: 100%;
+}
+
+</style>
 
 <div class="min-h-screen bg-gray-100 px-4 py-6">
 
@@ -17,56 +24,87 @@
     </a>
   </div>
 
-  <!-- ================= MOBILE ================= -->
-  <div class="md:hidden max-w-7xl mx-auto space-y-4">
-    {% for q in questions %}
-      <div class="bg-white border rounded-xl shadow p-4 space-y-3">
+ <!-- ================= MOBILE ================= -->
+<div class="md:hidden max-w-7xl mx-auto space-y-4">
+  {% for q in questions %}
+    <div class="bg-white border rounded-xl shadow p-4 space-y-2
+                w-full max-w-full overflow-hidden break-words">
 
-        <div class="flex justify-between items-center">
-          <span class="text-sm font-semibold text-gray-500">
-            Question {{ forloop.counter }}
-          </span>
-          <span class="px-2 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">
-            {{ q.marks }} Marks
+      <!-- HEADER -->
+      <div class="flex justify-between items-center flex-wrap gap-2">
+        <span class="text-sm font-semibold text-gray-500">
+          Question {{ forloop.counter }}
+        </span>
+        <span class="px-2 py-1 rounded-full text-xs font-semibold
+                     bg-green-100 text-green-700">
+          {{ q.marks }} Marks
+        </span>
+      </div>
+
+      <!-- QUESTION TEXT -->
+      <div class="font-medium text-gray-800 leading-relaxed
+                  whitespace-pre-wrap
+                  break-words overflow-wrap-anywhere">
+        {{ q.text|safe }}
+      </div>
+
+      <!-- QUESTION EQUATION -->
+      {% if q.equation %}
+        <div class="mt-1 text-base mathjax
+                    max-w-full overflow-x-auto leading-snug">
+          {{ q.equation }}
+        </div>
+      {% endif %}
+
+      <!-- OPTIONS -->
+      <div class="text-sm text-gray-700 space-y-1 mt-1
+                  break-words overflow-wrap-anywhere">
+
+        <div>
+          <strong>A:</strong>
+          <span class="whitespace-pre-wrap break-words">
+            {{ q.option_a|safe }}
           </span>
         </div>
 
-        <!-- Question -->
-        <div class="font-medium text-gray-800 leading-relaxed">
-          {{ q.text|safe }}
+        <div>
+          <strong>B:</strong>
+          <span class="whitespace-pre-wrap break-words">
+            {{ q.option_b|safe }}
+          </span>
         </div>
 
-        {% if q.equation %}
-          <div class="mt-2 text-lg mathjax">
-            {{ q.equation }}
+        {% if q.option_c %}
+          <div>
+            <strong>C:</strong>
+            <span class="whitespace-pre-wrap break-words">
+              {{ q.option_c|safe }}
+            </span>
           </div>
         {% endif %}
 
-        <!-- Options -->
-        <div class="text-sm text-gray-700 space-y-2 mt-2">
-          <div><strong>A:</strong> {{ q.option_a|safe }}</div>
-          <div><strong>B:</strong> {{ q.option_b|safe }}</div>
-
-          {% if q.option_c %}
-            <div><strong>C:</strong> {{ q.option_c|safe }}</div>
-          {% endif %}
-
-          {% if q.option_d %}
-            <div><strong>D:</strong> {{ q.option_d|safe }}</div>
-          {% endif %}
-        </div>
-
-        <div class="text-sm font-semibold text-green-700">
-          Correct Answer: {{ q.correct_option }}
-        </div>
-
+        {% if q.option_d %}
+          <div>
+            <strong>D:</strong>
+            <span class="whitespace-pre-wrap break-words">
+              {{ q.option_d|safe }}
+            </span>
+          </div>
+        {% endif %}
       </div>
-    {% empty %}
-      <p class="text-center text-gray-500 py-10">
-        No questions added yet.
-      </p>
-    {% endfor %}
-  </div>
+
+      <!-- CORRECT ANSWER -->
+      <div class="text-sm font-semibold text-green-700 mt-1">
+        Correct Answer: {{ q.correct_option }}
+      </div>
+
+    </div>
+  {% empty %}
+    <p class="text-center text-gray-500 py-10">
+      No questions added yet.
+    </p>
+  {% endfor %}
+</div>
 
   <!-- ================= DESKTOP ================= -->
   <div class="hidden md:block max-w-7xl mx-auto bg-white rounded-xl shadow border overflow-hidden">

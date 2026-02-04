@@ -6,6 +6,11 @@
   overflow-x: auto;
 }
 
+.mathjax mjx-container {
+  margin: 0 !important;
+}
+
+
 </style>
 <div class="max-w-7xl mx-auto px-4 py-6">
 
@@ -65,7 +70,7 @@
 <!-- ================= MOBILE ================= -->
 <div class="grid grid-cols-1 gap-4 sm:hidden">
   {% for q in questions %}
-    <div class="bg-white rounded-xl shadow p-4 space-y-3
+    <div class="bg-white rounded-xl shadow p-4 space-y-2
                 w-full max-w-full
                 overflow-hidden break-words">
 
@@ -77,21 +82,22 @@
         {{ q.text|safe }}
 
         {% if q.equation %}
-          <div class="mt-3 text-base mathjax
-                      max-w-full overflow-x-auto">
+          <div class="mt-1 text-base mathjax
+                      max-w-full overflow-x-auto leading-snug">
             {{ q.equation }}
           </div>
         {% endif %}
       </div>
 
       <!-- META -->
-      <div class="flex justify-between text-sm text-gray-600 flex-wrap gap-2">
+      <div class="flex justify-between text-sm text-gray-600
+                  flex-wrap gap-2">
         <span><strong>Subject:</strong> {{ q.subject.name }}</span>
         <span><strong>Marks:</strong> {{ q.marks }}</span>
       </div>
 
       <!-- ACTIONS -->
-      <div class="flex justify-end gap-4 pt-2 text-sm">
+      <div class="flex justify-end gap-4 pt-1 text-sm">
         <a href="{% url 'school_admin:question_bank_update' q.id %}"
            class="text-indigo-600 hover:underline">Edit</a>
         <a href="{% url 'school_admin:question_bank_delete' q.id %}"
@@ -104,6 +110,7 @@
     </div>
   {% endfor %}
 </div>
+
 
   <!-- ================= DESKTOP ================= -->
   <div class="hidden sm:block overflow-x-auto bg-white rounded-xl shadow">

@@ -1,7 +1,18 @@
 {% extends "accounts/base.html" %}
 {% load custom_filters %}
-
 {% block content %}
+
+<style>
+    .math-content mjx-container {
+  margin: 0 !important;
+}
+
+ .mathjax {
+  max-width: 100%;
+  overflow-x: auto;
+  font-size: 0.95rem;
+}
+</style>
 <div class="p-4 md:p-6 max-w-7xl mx-auto space-y-6 relative result-container">
  
     {% if school.logo %}
@@ -43,55 +54,82 @@
     </div>
 
     <h2 class="text-lg md:text-xl font-semibold relative z-10">Answers</h2>
+<!-- ================= MOBILE ================= -->
+<div class="md:hidden space-y-4 relative z-10">
+  {% for item in question_map %}
+    <div class="bg-white p-4 rounded shadow border
+                w-full max-w-full overflow-hidden break-words">
 
-    <!-- ================= MOBILE ================= -->
-    <div class="md:hidden space-y-4 relative z-10">
-        {% for item in question_map %}
-        <div class="bg-white p-4 rounded shadow border">
-            <p class="font-semibold mb-1">Q{{ forloop.counter }}:</p>
-            <div class="math-content">{{ item.question.text|safe }}</div>
-            {% if item.question.equation %}
-            <div class="math-content mt-1">{{ item.question.equation|safe }}</div>
-            {% endif %}
+      <p class="font-semibold mb-1">Q{{ forloop.counter }}:</p>
 
-            <!-- SELECTED -->
-            <p>
-                <strong>Selected:</strong>
-                {% if item.selected %}
-                <span class="{% if item.selected == item.correct %}text-green-700{% else %}text-red-700{% endif %}">
-                    {{ item.selected }}.
-                    {% for opt in item.options %}
-                        {% if opt.label == item.selected %}
-                        <span class="math-content">
-                            {% if opt.equation %}{{ opt.equation|safe }}{% else %}{{ opt.text|safe }}{% endif %}
-                        </span>
-                        {% endif %}
-                    {% endfor %}
-                </span>
-                {% else %}
-                <span class="text-gray-400 italic">Not answered</span>
-                {% endif %}
-            </p>
+      <!-- QUESTION TEXT -->
+      <div class="math-content
+                  whitespace-pre-wrap
+                  break-words overflow-wrap-anywhere">
+        {{ item.question.text|safe }}
+      </div>
 
-            <!-- CORRECT -->
-            <p>
-                <strong>Correct:</strong>
-                <span class="text-green-700">
-                    {{ item.correct }}.
-                    {% for opt in item.options %}
-                        {% if opt.label == item.correct %}
-                        <span class="math-content">
-                            {% if opt.equation %}{{ opt.equation|safe }}{% else %}{{ opt.text|safe }}{% endif %}
-                        </span>
-                        {% endif %}
-                    {% endfor %}
-                </span>
-            </p>
-
-            <p><strong>Marks:</strong> {% if item.selected == item.correct %}{{ item.marks }}{% else %}0{% endif %}</p>
+      <!-- QUESTION EQUATION -->
+      {% if item.question.equation %}
+        <div class="math-content mt-1
+                    max-w-full overflow-x-auto leading-snug">
+          {{ item.question.equation|safe }}
         </div>
-        {% endfor %}
+      {% endif %}
+
+      <!-- SELECTED -->
+      <p class="mt-2">
+        <strong>Selected:</strong>
+        {% if item.selected %}
+          <span class="{% if item.selected == item.correct %}text-green-700{% else %}text-red-700{% endif %}">
+            {{ item.selected }}.
+            {% for opt in item.options %}
+              {% if opt.label == item.selected %}
+                <span class="math-content
+                             max-w-full overflow-x-auto leading-snug">
+                  {% if opt.equation %}
+                    {{ opt.equation|safe }}
+                  {% else %}
+                    {{ opt.text|safe }}
+                  {% endif %}
+                </span>
+              {% endif %}
+            {% endfor %}
+          </span>
+        {% else %}
+          <span class="text-gray-400 italic">Not answered</span>
+        {% endif %}
+      </p>
+
+      <!-- CORRECT -->
+      <p class="mt-1">
+        <strong>Correct:</strong>
+        <span class="text-green-700">
+          {{ item.correct }}.
+          {% for opt in item.options %}
+            {% if opt.label == item.correct %}
+              <span class="math-content
+                           max-w-full overflow-x-auto leading-snug">
+                {% if opt.equation %}
+                  {{ opt.equation|safe }}
+                {% else %}
+                  {{ opt.text|safe }}
+                {% endif %}
+              </span>
+            {% endif %}
+          {% endfor %}
+        </span>
+      </p>
+
+      <!-- MARKS -->
+      <p class="mt-1">
+        <strong>Marks:</strong>
+        {% if item.selected == item.correct %}{{ item.marks }}{% else %}0{% endif %}
+      </p>
+
     </div>
+  {% endfor %}
+</div>
 
     <!-- ================= DESKTOP ================= -->
     <div class="hidden md:block overflow-x-auto relative z-10">
