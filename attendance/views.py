@@ -135,7 +135,7 @@ def attendance_report(request):
     report_data = []
 
     for cls in classes:
-        total_students = cls.student_set.count()
+        total_students = cls.students.count()
 
         present_count = Attendance.objects.filter(
             student__school_class=cls,
@@ -173,7 +173,7 @@ def class_attendance_detail(request, class_id):
     if cls not in teacher.classes.all():
         raise Http404("You are not assigned to this class")
 
-    students = cls.student_set.all()
+    students = cls.students.all()
 
     student_attendance = []
     for student in students:

@@ -23,28 +23,49 @@ def teacher_notes_list(request):
 
 # ------------------------
 # Teacher: upload/edit note
-# ------------------------
-
 @login_required
 def teacher_upload_note(request, pk=None):
     teacher_profile = getattr(request.user, 'teacher_profile', None)
     if not teacher_profile:
         raise Http404("No teacher profile found.")
 
-    note = get_object_or_404(LessonNote, pk=pk, teacher=teacher_profile) if pk else None
+    note = None
+    if pk:
+        note = get_object_or_404(
+            LessonNote,
+            pk=pk,
+            teacher=teacher_profile
+        )
 
     if request.method == 'POST':
-        form = LessonNoteForm(request.POST, request.FILES, instance=note)
+        form = LessonNoteForm(
+            request.POST,
+            request.FILES,
+            instance=note,
+            teacher=teacher_profile   
+        )
         if form.is_valid():
             lesson_note = form.save(commit=False)
             lesson_note.teacher = teacher_profile
+            lesson_note.school = teacher_profile.school
             lesson_note.save()
             form.save_m2m()
             return redirect('notes:dashboard')
     else:
-        form = LessonNoteForm(instance=note)
+        form = LessonNoteForm(
+            instance=note,
+            teacher=teacher_profile   # ✅ AND THIS
+        )
 
-    return render(request, 'notes/teacher_upload.html', {'form': form, 'note': note})
+    return render(
+        request,
+        'notes/teacher_upload.html',
+        {
+            'form': form,
+            'note': note
+        }
+    )
+
 
 
 # ------------------------
