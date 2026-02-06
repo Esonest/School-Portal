@@ -1,25 +1,19 @@
 {% extends "accounts/exam_base.html" %}
 {% load static %}
 {% block content %}
-<style>
-  html, body {
-  height: 100%;
-  overscroll-behavior: none;
-}
-
-</style>
 
 
   <!-- MAIN CARD -->
-<div class="h-screen w-full bg-gray-100 flex justify-center overflow-hidden">
-  <div class="w-full max-w-3xl h-full bg-white
-              flex flex-col rounded-xl
-              shadow-md sm:shadow-xl animate-fadeIn overflow-hidden">
+<div class="bg-gray-100 px-2 sm:px-0 py-2">
+  <div class="w-full max-w-3xl mx-auto bg-white rounded-xl
+              shadow-md sm:shadow-xl
+              p-3 sm:p-6 md:p-8 animate-fadeIn">
 
 
 
     <!-- HEADER -->
-<div class="shrink-0 p-3 sm:p-4 border-b">
+<div class="flex justify-between items-start sm:items-center
+            border-b pb-3 mb-3 gap-3">
 
       <div class="space-y-1">
         <h1 class="text-sm sm:text-lg font-semibold text-gray-800">
@@ -66,8 +60,6 @@
         </span>
       </div>
     </div>
-
-    <div class="flex-1 overflow-y-auto px-1 sm:px-2 pb-6">
 <!-- QUESTION -->
 {% if question_data.text %}
   <p class="question-text text-sm sm:text-lg text-gray-900 leading-snug mb-1">
@@ -108,10 +100,13 @@
       </span>
     </label>
   {% endfor %}
-</form>
+
+
+
+
 
       <!-- NAVIGATION -->
-      <div class="shrink-0 border-t p-3 sm:p-4 bg-white">
+      <div class="flex gap-3 mt-4">
 
         {% if question_index > 0 %}
         <a href="{% url 'cbt:take_exam' exam_id=exam.id question_index=question_index|add:'-1' %}"
@@ -126,12 +121,11 @@
 
         {% if current_question_number < total_questions %}
         <button type="submit"
-          form="exam-form"
-          class="w-full sm:w-auto
-                 bg-blue-700 hover:bg-blue-800 text-white
-                 py-2.5 px-6 rounded-lg font-semibold shadow">
-    Next
-  </button>
+                class="w-full sm:w-auto
+                       bg-blue-700 hover:bg-blue-800 text-white
+                       py-2.5 px-6 rounded-lg font-semibold shadow">
+          Next
+        </button>
         {% else %}
         <button type="button"
                 onclick="openSubmitModal()"
@@ -142,7 +136,7 @@
         </button>
         {% endif %}
       </div>
-    
+    </form>
     
 
     <!-- WARNING -->
