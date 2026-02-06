@@ -77,11 +77,10 @@ def dashboard(request):
 
     invoice_totals = invoices.aggregate(
         total_expected=Coalesce(Sum("total_amount"), Decimal("0")),
-        total_received=Coalesce(Sum("amount_paid"), Decimal("0")),
+        
     )
     total_expected = invoice_totals["total_expected"]
-    total_received = invoice_totals["total_received"]
-    outstanding = total_expected - total_received
+    
 
     # -----------------------------
     # Payments (include all student VA payments)
@@ -121,6 +120,19 @@ def dashboard(request):
 
     paystack_total = paystack_online_total + paystack_bank_total
 
+    manual_total = payments_base.exclude(
+        payment_method__in=["online", "bank_transfer"]
+    ).aggregate(
+        total=Coalesce(Sum("amount"), Decimal("0"))
+    )["total"]
+
+    
+    total_paid = payments_base.aggregate(
+        total=Coalesce(Sum("amount"), Decimal("0"))
+    )["total"]
+
+    outstanding = total_expected - total_paid
+
     recent_paystack_online = paystack_online_qs.order_by("-payment_date")[:5]
     recent_paystack_bank = paystack_bank_qs.order_by("-payment_date")[:5]
     recent_paystack = payments_base.filter(
@@ -148,8 +160,11 @@ def dashboard(request):
 
         # Invoice summary
         "total_expected": total_expected,
-        "total_received": total_received,
         "outstanding": outstanding,
+
+        # Paid
+        "total_paid": total_paid,
+        "manual_total": manual_total,
 
         # Manual payments
         "recent_payments": recent_payments,
@@ -225,8 +240,13 @@ def payments_modal(request):
     # -----------------------------
     # Payment method filter
     # -----------------------------
-    if method in ["manual", "online", "bank_transfer"]:
+    if method == "manual":
+        payments_qs = payments_qs.exclude(
+            payment_method__in=["online", "bank_transfer"]
+        )
+    elif method in ["online", "bank_transfer"]:
         payments_qs = payments_qs.filter(payment_method=method)
+
 
     # -----------------------------
     # Class filter (via student)
