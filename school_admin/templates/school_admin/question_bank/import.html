@@ -198,6 +198,59 @@
     </div>
 
   </form>
+
+{% if page_obj.paginator.count %}
+<p class="text-sm text-gray-500 text-center mt-2">
+  Showing {{ page_obj.start_index }}–{{ page_obj.end_index }}
+  of {{ page_obj.paginator.count }} questions
+</p>
+{% endif %}
+
+{% if page_obj.has_other_pages %}
+<div class="flex justify-center items-center gap-2 mt-8 flex-wrap">
+
+  {# PREVIOUS #}
+  {% if page_obj.has_previous %}
+    <a href="?{% for k,v in request.GET.items %}{% if k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}page={{ page_obj.previous_page_number }}"
+       class="px-3 py-2 rounded-lg border text-sm hover:bg-gray-100">
+      ← Previous
+    </a>
+  {% else %}
+    <span class="px-3 py-2 rounded-lg border text-sm text-gray-400">
+      ← Previous
+    </span>
+  {% endif %}
+
+  {# PAGE NUMBERS #}
+  {% for num in page_obj.paginator.page_range %}
+    {% if num == page_obj.number %}
+      <span class="px-3 py-2 rounded-lg bg-indigo-600 text-white text-sm">
+        {{ num }}
+      </span>
+    {% elif num >= page_obj.number|add:'-2' and num <= page_obj.number|add:'2' %}
+      <a href="?{% for k,v in request.GET.items %}{% if k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}page={{ num }}"
+         class="px-3 py-2 rounded-lg border text-sm hover:bg-gray-100">
+        {{ num }}
+      </a>
+    {% endif %}
+  {% endfor %}
+
+  {# NEXT #}
+  {% if page_obj.has_next %}
+    <a href="?{% for k,v in request.GET.items %}{% if k != 'page' %}{{ k }}={{ v }}&{% endif %}{% endfor %}page={{ page_obj.next_page_number }}"
+       class="px-3 py-2 rounded-lg border text-sm hover:bg-gray-100">
+      Next →
+    </a>
+  {% else %}
+    <span class="px-3 py-2 rounded-lg border text-sm text-gray-400">
+      Next →
+    </span>
+  {% endif %}
+
+</div>
+{% endif %}
+
+  
 </div>
 
 <!-- SELECT ALL -->

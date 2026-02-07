@@ -1267,10 +1267,10 @@ def import_questions_to_exam(request, exam_id):
         questions = questions.filter(subject_id=subject_id)
 
     if term:
-        questions = questions.filter(exam__term=term)
+        questions = questions.filter(term=term)
 
     if session:
-        questions = questions.filter(exam__session=session)
+        questions = questions.filter(session=session)
 
     
     if topic_id:
