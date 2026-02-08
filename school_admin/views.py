@@ -968,9 +968,9 @@ def question_bank_create(request):
 
     if request.method == "POST":
         formset = QuestionFormSet(
-            request.POST,
-            queryset=QuestionBank.objects.none(),
-            user=request.user
+        request.POST,
+        queryset=QuestionBank.objects.none(),
+        user=request.user
         )
 
         selected_subject = request.POST.get("subject", "").strip()
@@ -978,19 +978,8 @@ def question_bank_create(request):
         selected_term = request.POST.get("term")
         selected_session = request.POST.get("session")
         topic_name = request.POST.get("topic", "").strip()
-        
-        if topic_name:
-            topic_instance, created = Topic.objects.get_or_create(
-                name=topic_name,
-                school=school,
-                subject_id=int(selected_subject)
-            )
-        else:
-            topic_instance = None
-        
-    
 
-        # ---------- GLOBAL VALIDATION ----------
+    # ---------- GLOBAL VALIDATION ----------
         if not selected_subject:
             messages.error(request, "Please select a subject before saving.")
             return render(request, "school_admin/question_bank/form.html", {
@@ -1001,9 +990,7 @@ def question_bank_create(request):
                 "sessions": sessions,
                 "topic": topic_name,
             })
-        
-        selected_subject_id = int(selected_subject)
-        
+
         if not topic_name:
             messages.error(request, "Please enter a topic for these questions.")
             return render(request, "school_admin/question_bank/form.html", {
@@ -1015,12 +1002,16 @@ def question_bank_create(request):
                 "topic": topic_name,
             })
 
-        topic_instance = Topic.objects.get_or_create(
+    # SAFE CAST (validation already passed)
+        selected_subject_id = int(selected_subject)
+
+        topic_instance, _ = Topic.objects.get_or_create(
             name=topic_name,
             school=school,
             subject_id=selected_subject_id
-        )[0]
-        # ---------- FORMSET VALIDATION ----------
+        )
+
+    # ---------- FORMSET VALIDATION ----------
         if not formset.is_valid():
             messages.error(request, "Please correct the errors in the questions below.")
             return render(request, "school_admin/question_bank/form.html", {
@@ -1033,7 +1024,7 @@ def question_bank_create(request):
                 "option_letters": ['a', 'b', 'c', 'd'],
             })
 
-        # ---------- STRICT COMPLETENESS CHECK ----------
+    # ---------- STRICT COMPLETENESS CHECK ----------
         incomplete_forms = []
 
         for i, form in enumerate(formset.forms, start=1):
@@ -1042,7 +1033,6 @@ def question_bank_create(request):
 
             data = form.cleaned_data
 
-            # Detect partial rows
             has_any_value = any([
                 data.get("text"),
                 data.get("equation"),
@@ -1076,15 +1066,15 @@ def question_bank_create(request):
                 "classes": classes,
                 "terms": terms,
                 "sessions": sessions,
+                "topic": topic_name,
                 "option_letters": ['a', 'b', 'c', 'd'],
             })
 
-        # ---------- SAVE ----------
+    # ---------- SAVE ----------
         questions = formset.save(commit=False)
-        
 
         for q in questions:
-            q.subject_id = int(selected_subject)
+            q.subject_id = selected_subject_id
             q.school_class_id = selected_class or None
             q.term = selected_term or ""
             q.session = selected_session or ""
@@ -1095,6 +1085,7 @@ def question_bank_create(request):
 
         messages.success(request, "Questions saved successfully!")
         return redirect("school_admin:question_bank_list")
+
 
     else:
         formset = QuestionFormSet(
