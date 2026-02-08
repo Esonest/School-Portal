@@ -9,6 +9,7 @@ urlpatterns = [
     # -----------------------------
     path('', views.dashboard, name='dashboard'),
     path("payments/modal/", views.payments_modal, name="payments_modal"),
+    path("payment/<int:pk>/void/", views.payment_void, name="payment_void"),
     path('<int:school_id>/', views.transaction_list, name='transaction_list'),
     path('<int:school_id>/create/', views.transaction_create, name='transaction_create'),
     path('update/<int:pk>/', views.transaction_update, name='transaction_update'),

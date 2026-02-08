@@ -3,6 +3,9 @@ from django.db import models
 from django.conf import settings
 from django.utils import timezone
 from accounts.models import School
+import uuid
+from django.db.models import Sum
+
 
 User = settings.AUTH_USER_MODEL
 
@@ -97,6 +100,18 @@ class Invoice(models.Model):
     @property
     def outstanding(self):
         return self.total_amount - self.amount_paid
+    
+    def recalc_amount_paid(self):
+        """
+        Recalculates amount_paid based on all approved payments.
+        Voided/reversed payments are ignored.
+        """
+        approved_total = self.payments.filter(status="approved").aggregate(
+            total=Sum("amount")
+        )["total"] or 0
+
+        self.amount_paid = approved_total
+        super().save(update_fields=["amount_paid"])
 
     @property
     def status(self):
@@ -235,6 +250,7 @@ class Payment(models.Model):
     reference = models.CharField(
         max_length=100,
         unique=True,
+        blank=True,
         help_text="Gateway reference or internal transaction ID"
     )
 
@@ -251,12 +267,28 @@ class Payment(models.Model):
         related_name="recorded_payments"
     )
 
+    status = models.CharField(
+        max_length=20,
+        choices=(
+            ("approved", "Approved"),
+            ("voided", "Voided"),
+            ("reversed", "Reversed"),
+        ),
+        default="approved",
+        help_text="Current status of the payment"
+    )
+
+
     metadata = models.JSONField(
         null=True,
         blank=True,
         help_text="Raw gateway metadata (Paystack, Moniepoint, etc.)"
     )
-
+    
+    def save(self, *args, **kwargs):
+        if not self.reference:
+            self.reference = f"MAN-{uuid.uuid4().hex[:12].upper()}"
+        super().save(*args, **kwargs)
     # -----------------------------
     # Meta & Indexes
     # -----------------------------

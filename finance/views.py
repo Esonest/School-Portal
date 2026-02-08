@@ -323,6 +323,30 @@ def payments_modal(request):
 
 
 
+def payment_void(request, pk):
+    if not request.user.is_accountant_user:
+        messages.error(request, "You do not have permission to void payments.")
+        return redirect("finance:payment_list")
+    
+    payment = get_object_or_404(Payment, pk=pk)
+
+    if payment.payment_method == "online":
+        messages.error(request, "Online payments cannot be voided manually.")
+        return redirect("finance:payment_list")
+
+    if payment.status != "approved":
+        messages.warning(request, "Payment is already voided or reversed.")
+        return redirect("finance:payment_list")
+
+    # Void the payment
+    payment.status = "voided"
+    payment.save(update_fields=["status"])
+
+    # Recalculate invoice amount_paid
+    payment.invoice.recalc_amount_paid()
+
+    messages.success(request, f"Payment {payment.reference} has been voided and invoice updated.")
+    return redirect("finance:payment_list")
 
 
 
