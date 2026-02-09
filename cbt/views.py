@@ -164,10 +164,11 @@ def take_exam(request, exam_id, question_index):
     question_id = question_order[question_index]
     question = get_object_or_404(CBTQuestion, id=question_id)
 
-    # ------------------ QUESTION TEXT / EQUATION ------------------
+    # ------------------ QUESTION TEXT / DIAGRAM / EQUATION ------------------
     question_data = {
         "text": question.text or "",
         "equation": question.equation or "",
+        "diagram": question.diagram or "",
     }
 
 

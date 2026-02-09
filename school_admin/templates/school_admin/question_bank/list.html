@@ -89,6 +89,22 @@
         {% endif %}
       </div>
 
+{% if q.diagram %}
+<div class="mt-2 flex justify-center">
+  <div class="w-full max-w-xs
+              h-40 sm:h-48
+              border rounded bg-gray-50
+              flex items-center justify-center">
+
+    <img src="{{ q.diagram.url }}"
+         class="max-w-full max-h-full object-contain"
+         alt="Diagram">
+  </div>
+</div>
+{% endif %}
+
+
+
       <!-- META -->
       <div class="flex justify-between text-sm text-gray-600
                   flex-wrap gap-2">
@@ -139,6 +155,20 @@
                   No equation provided
                 </div>
               {% endif %}
+              
+              {% if q.diagram %}
+<div class="mt-2
+            w-full max-w-sm
+            h-32
+            flex items-center justify-center
+            border rounded bg-gray-50">
+
+  <img src="{{ q.diagram.url }}"
+       class="max-w-full max-h-full object-contain"
+       alt="Diagram">
+</div>
+{% endif %}
+
             </td>
 
             <td class="px-4 py-3 text-center">{{ q.subject.name }}</td>

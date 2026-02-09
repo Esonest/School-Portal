@@ -265,25 +265,47 @@ class QuestionBankForm(forms.ModelForm):
         })
     )
 
-    # New LaTeX equation field
     equation = forms.CharField(
         required=False,
-        widget=forms.HiddenInput()  # will be populated by MathLive JS
+        widget=forms.HiddenInput()
     )
-    option_a = forms.CharField( required=False,widget=forms.TextInput(attrs={"class": "w-full border rounded-lg px-3 py-2"}))
-    option_b = forms.CharField(required=False,widget=forms.TextInput(attrs={"class": "w-full border rounded-lg px-3 py-2"}))
+
+    diagram = forms.ImageField(
+        required=False,
+        widget=forms.ClearableFileInput(attrs={
+            "class": "w-full border rounded-lg px-3 py-2"
+        })
+    )
+
+    option_a = forms.CharField(required=False, widget=forms.TextInput(attrs={"class": "w-full border rounded-lg px-3 py-2"}))
+    option_b = forms.CharField(required=False, widget=forms.TextInput(attrs={"class": "w-full border rounded-lg px-3 py-2"}))
     option_c = forms.CharField(required=False, widget=forms.TextInput(attrs={"class": "w-full border rounded-lg px-3 py-2"}))
     option_d = forms.CharField(required=False, widget=forms.TextInput(attrs={"class": "w-full border rounded-lg px-3 py-2"}))
+
     correct_option = forms.ChoiceField(
         required=False,
         choices=[('A', 'A'), ('B', 'B'), ('C', 'C'), ('D', 'D')],
         widget=forms.Select(attrs={"class": "w-full border rounded-lg px-3 py-2"})
     )
-    marks = forms.IntegerField( required=False,widget=forms.NumberInput(attrs={"class": "w-full border rounded-lg px-3 py-2"}))
+
+    marks = forms.IntegerField(
+        required=False,
+        widget=forms.NumberInput(attrs={"class": "w-full border rounded-lg px-3 py-2"})
+    )
 
     class Meta:
         model = QuestionBank
-        fields = ['text', 'equation', 'option_a', 'option_b', 'option_c', 'option_d', 'correct_option', 'marks']
+        fields = [
+            "text",
+            "equation",
+            "diagram",    
+            "option_a",
+            "option_b",
+            "option_c",
+            "option_d",
+            "correct_option",
+            "marks",
+        ]
 
     def has_changed(self):
         if not self.is_bound:
@@ -291,8 +313,10 @@ class QuestionBankForm(forms.ModelForm):
 
         text = self.data.get(f"{self.prefix}-text", "").strip()
         equation = self.data.get(f"{self.prefix}-equation", "").strip()
+        diagram = self.files.get(f"{self.prefix}-diagram")
 
-        return bool(text or equation)
+        return bool(text or equation or diagram)
+
     
 
 from django.forms import BaseModelFormSet

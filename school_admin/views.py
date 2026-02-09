@@ -968,10 +968,12 @@ def question_bank_create(request):
 
     if request.method == "POST":
         formset = QuestionFormSet(
-        request.POST,
-        queryset=QuestionBank.objects.none(),
-        user=request.user
+            request.POST,
+            request.FILES,  
+            queryset=QuestionBank.objects.none(),
+            user=request.user
         )
+
 
         selected_subject = request.POST.get("subject", "").strip()
         selected_class = request.POST.get("school_class")

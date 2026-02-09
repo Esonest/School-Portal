@@ -74,6 +74,27 @@
   </div>
 {% endif %}
 
+{% if question_data.diagram %}
+  <div class="question-diagram
+              mt-4 mb-4
+              flex justify-center items-center
+              w-full">
+
+    <div class="w-full max-w-md
+                h-56 sm:h-64 md:h-72
+                flex items-center justify-center
+                border rounded-lg bg-white">
+
+      <img src="{{ question_data.diagram.url }}"
+           alt="Question diagram"
+           class="max-w-full max-h-full
+                  object-contain" />
+    </div>
+
+  </div>
+{% endif %}
+
+
 <!-- OPTIONS -->
 <form id="exam-form"
       method="post"

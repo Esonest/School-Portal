@@ -56,6 +56,20 @@
         </div>
       {% endif %}
 
+      {% if q.diagram %}
+<div class="mt-2 flex justify-center">
+  <div class="w-full max-w-xs
+              h-40 sm:h-48
+              border rounded bg-gray-50
+              flex items-center justify-center">
+
+    <img src="{{ q.diagram.url }}"
+         class="max-w-full max-h-full object-contain"
+         alt="Diagram">
+  </div>
+</div>
+{% endif %}
+
       <!-- OPTIONS -->
       <div class="text-sm text-gray-700 space-y-1 mt-1
                   break-words overflow-wrap-anywhere">
@@ -139,6 +153,20 @@
                   {{ q.equation }}
                 </div>
               {% endif %}
+
+              {% if q.diagram %}
+<div class="mt-2
+            w-full max-w-sm
+            h-32
+            flex items-center justify-center
+            border rounded bg-gray-50">
+
+  <img src="{{ q.diagram.url }}"
+       class="max-w-full max-h-full object-contain"
+       alt="Diagram">
+</div>
+{% endif %}
+
             </td>
 
             <!-- Options -->
