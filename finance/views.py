@@ -327,11 +327,11 @@ def payment_void(request, pk):
     if not request.user.is_accountant_user:
         messages.error(request, "You do not have permission to void payments.")
         return redirect("finance:payment_list")
-    
+
     payment = get_object_or_404(Payment, pk=pk)
 
-    if payment.payment_method == "online":
-        messages.error(request, "Online payments cannot be voided manually.")
+    if payment.payment_method not in ["cash", "pos"]:
+        messages.error(request, "Only manual payments can be voided.")
         return redirect("finance:payment_list")
 
     if payment.status != "approved":
@@ -347,6 +347,7 @@ def payment_void(request, pk):
 
     messages.success(request, f"Payment {payment.reference} has been voided and invoice updated.")
     return redirect("finance:payment_list")
+
 
 
 
@@ -674,6 +675,10 @@ def student_dashboard(request):
         school_class_id=current_class_id
     ).order_by('-created_at')
 
+    for inv in invoices:
+        inv.recalc_amount_paid()
+
+
     total_invoiced = invoices.aggregate(
         total=Sum('total_amount')
     )['total'] or Decimal('0')
@@ -688,10 +693,14 @@ def student_dashboard(request):
     # Payments
     # Include payments via invoice or student VAs
     # -----------------------------
-    payments_base = Payment.objects.filter(
-        Q(invoice__in=invoices) | Q(student=student),
-        status='approved'
-    ).select_related('invoice', 'invoice__student', 'student').order_by('-payment_date')
+    payments_base = (
+        Payment.objects
+        .filter(status='approved', invoice__in=invoices)
+        .select_related('invoice', 'invoice__student')
+        .order_by('-payment_date')
+    )
+
+
 
     payments = payments_base[:10]
 
@@ -804,6 +813,29 @@ def invoice_list(request):
 
 
 
+@login_required
+def approve_payment(request, payment_id):
+    payment = get_object_or_404(Payment, pk=payment_id)
+    invoice = payment.invoice
+
+    # 🔐 Paystack is auto-approved & immutable
+    if payment.payment_method == "online":
+        return HttpResponseForbidden("Online payments cannot be approved manually")
+
+    # 🚫 Invoice already settled
+    if invoice.amount_paid >= invoice.total_amount:
+        messages.error(request, "Invoice already fully paid.")
+        return redirect("finance:payment_list")
+
+    # 🚫 Already approved
+    if payment.status == "approved":
+        return redirect("finance:payment_list")
+
+    payment.status = "approved"
+    payment.approved_by = request.user
+    payment.save()
+
+    return redirect("finance:payment_list")
 
 
 
@@ -1126,44 +1158,54 @@ def generate_invoices(request):
 
 from decimal import Decimal
 
-
 @login_required
 def record_payment(request):
     school = request.user.school
     current_session = request.GET.get("session", SESSION_LIST[0])
     current_term = request.GET.get("term", "1")  # default to first term
 
+    # Materialize invoices as list to avoid cursor issues
+    invoices_qs = Invoice.objects.filter(school=school)
+    invoices = list(invoices_qs)  # <- fixes psycopg2 cursor errors
+
     if request.method == "POST":
         form = PaymentForm(request.POST, school=school)
+        # Pass already evaluated queryset to form
+        form.fields['invoice'].queryset = invoices_qs
+
         if form.is_valid():
             payment = form.save(commit=False)
 
-            # 🔒 Set controlled fields (never trust form for these)
+            # 🔒 Controlled fields
             payment.school = school
             payment.recorded_by = request.user
-
-            # If Payment model does NOT have session/term, remove these lines
             payment.session = form.cleaned_data.get("session", current_session)
             payment.term = form.cleaned_data.get("term", current_term)
 
-            # ✅ SAVE ONCE — invoice.amount_paid is auto-synced in model
-            payment.save()
+            # ⚡ Prevent double payments
+            invoice = payment.invoice
+            outstanding = invoice.total_amount - invoice.amount_paid
+            if payment.amount > outstanding:
+                form.add_error("amount", f"Payment exceeds outstanding balance ({outstanding:.2f})")
+            else:
+                payment.save()  # Invoice.amount_paid auto-synced via model
 
-            # 🧾 Create receipt (read from invoice to avoid mismatch)
-            Receipt.objects.create(
-                student=payment.invoice.student,
-                school_class=payment.invoice.school_class,
-                payment=payment,
-                amount=payment.amount,
-                session=payment.session,
-                term=payment.term,
-                school=school,
-            )
+                # Create receipt
+                Receipt.objects.create(
+                    student=invoice.student,
+                    school_class=invoice.school_class,
+                    payment=payment,
+                    amount=payment.amount,
+                    session=payment.session,
+                    term=payment.term,
+                    school=school,
+                )
 
-            messages.success(request, "Payment recorded successfully")
-            return redirect("finance:invoice_list")
+                messages.success(request, "Payment recorded successfully")
+                return redirect("finance:invoice_list")
     else:
         form = PaymentForm(school=school)
+        form.fields['invoice'].queryset = invoices_qs  # force queryset
 
     return render(request, "finance/record_payment.html", {
         "form": form,
@@ -1173,6 +1215,7 @@ def record_payment(request):
         "sessions": SESSION_LIST,
         "term_choices": Score.TERM_CHOICES,
     })
+
 
 
 

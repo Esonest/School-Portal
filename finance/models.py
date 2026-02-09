@@ -5,6 +5,9 @@ from django.utils import timezone
 from accounts.models import School
 import uuid
 from django.db.models import Sum
+from decimal import Decimal
+from django.core.exceptions import ValidationError
+import uuid
 
 
 User = settings.AUTH_USER_MODEL
@@ -99,22 +102,32 @@ class Invoice(models.Model):
 
     @property
     def outstanding(self):
+        """
+        Amount still unpaid on this invoice.
+        """
         return self.total_amount - self.amount_paid
-    
+
     def recalc_amount_paid(self):
         """
-        Recalculates amount_paid based on all approved payments.
-        Voided/reversed payments are ignored.
+        Recalculate the total amount paid based **only on approved payments**.
+        Voided or reversed payments are ignored.
+        Prevents overpaying beyond total_amount.
         """
         approved_total = self.payments.filter(status="approved").aggregate(
             total=Sum("amount")
         )["total"] or 0
 
-        self.amount_paid = approved_total
+        # HARD CAP: never exceed total_amount
+        self.amount_paid = min(approved_total, self.total_amount)
+
+        # Use super().save() to avoid recursion if Payment.save calls this
         super().save(update_fields=["amount_paid"])
 
     @property
     def status(self):
+        """
+        Invoice payment status.
+        """
         if self.amount_paid == 0:
             return "UNPAID"
         elif self.amount_paid < self.total_amount:
@@ -122,13 +135,16 @@ class Invoice(models.Model):
         return "PAID"
 
     def save(self, *args, **kwargs):
-        # Ensure invoice class always matches student class
+        """
+        Ensure invoice class matches student class if not set.
+        """
         if not self.school_class:
             self.school_class = self.student.school_class
         super().save(*args, **kwargs)
 
     def __str__(self):
         return f"{self.student} - {self.title} ({self.session} T{self.term})"
+
     
 
 
@@ -228,11 +244,6 @@ class Payment(models.Model):
         
     )
 
-    status = models.CharField(
-        max_length=20,
-        default="approved",
-        help_text="Status of the payment"
-    )
 
     # -----------------------------
     # Payment Details
@@ -285,10 +296,50 @@ class Payment(models.Model):
         help_text="Raw gateway metadata (Paystack, Moniepoint, etc.)"
     )
     
+    def clean(self):
+        """
+        Enforce immutability rules.
+        """
+        if not self.pk:
+            return
+
+        old = Payment.objects.get(pk=self.pk)
+
+        # 🔒 Online (Paystack) payments are immutable once approved
+        if (
+            old.payment_method == "online"
+            and old.status == "approved"
+            and self.status != "approved"
+        ):
+            raise ValidationError(
+                "Online (Paystack) payments cannot be modified or voided."
+            )
+
     def save(self, *args, **kwargs):
+        # Capture previous status BEFORE saving
+        old_status = None
+        if self.pk:
+            old_status = (
+                Payment.objects
+                .filter(pk=self.pk)
+                .values_list("status", flat=True)
+                .first()
+            )
+
+        # Ensure reference exists (manual payments)
         if not self.reference:
             self.reference = f"MAN-{uuid.uuid4().hex[:12].upper()}"
+
+        # Run validations (calls clean())
+        self.full_clean()
+
+        # Save payment
         super().save(*args, **kwargs)
+
+        # Recalculate invoice ONLY if status changed
+        if self.invoice and old_status != self.status:
+            self.invoice.recalc_amount_paid()
+
     # -----------------------------
     # Meta & Indexes
     # -----------------------------
