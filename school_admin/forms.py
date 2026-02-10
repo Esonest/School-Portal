@@ -235,7 +235,7 @@ class CBTQuestionForm(forms.ModelForm):
     class Meta:
         model = CBTQuestion
         fields = [
-            'text', 'option_a', 'option_b',
+            'text', "diagram", 'option_a', 'option_b',
             'option_c', 'option_d', 'correct_option', 'marks'
         ]
 

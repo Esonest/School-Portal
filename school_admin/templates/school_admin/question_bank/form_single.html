@@ -5,7 +5,7 @@
 <div class="max-w-3xl mx-auto px-4 py-6">
   <h1 class="text-2xl font-bold text-{{ school.theme_color }}-600">Edit Question</h1>
 
-  <form method="post" class="space-y-6 bg-white rounded-xl shadow p-6">
+  <form method="post" enctype="multipart/form-data" class="space-y-6 bg-white rounded-xl shadow p-6">
     {% csrf_token %}
 
     <!-- READ-ONLY META -->
@@ -40,20 +40,17 @@
       <label class="block text-sm font-medium mb-1">Question Text</label>
       {{ form.text|add_class:"w-full border rounded-lg px-3 py-2" }}
     </div>
-      
-      {% if form.instance.diagram %}
-<div class="my-4 flex justify-center">
-  <div class="w-full max-w-md
-              h-56 sm:h-64 md:h-72
-              border rounded-lg bg-gray-50
-              flex items-center justify-center">
 
-    <img src="{{ form.instance.diagram.url }}"
-         alt="Question diagram"
-         class="max-w-full max-h-full object-contain">
-  </div>
-</div>
-{% endif %}
+    <!-- EXISTING DIAGRAM -->
+    {% if form.instance.diagram %}
+    <div class="my-4 flex justify-center">
+      <div class="w-full max-w-md h-56 sm:h-64 md:h-72 border rounded-lg bg-gray-50 flex items-center justify-center">
+        <img src="{{ form.instance.diagram.url }}"
+             alt="Question diagram"
+             class="max-w-full max-h-full object-contain">
+      </div>
+    </div>
+    {% endif %}
 
     <!-- EQUATION (MathLive) -->
     <div>
@@ -73,6 +70,17 @@
                   class="w-full border rounded-lg px-3 py-2 bg-gray-50"
                   style="min-height:70px;"
                   read-only></math-field>
+    </div>
+
+    <!-- DIAGRAM UPLOAD -->
+    <div>
+      <label class="block text-sm font-medium mb-1">
+        Change Diagram (optional)
+      </label>
+      {{ form.diagram|add_class:"block w-full text-sm file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:bg-indigo-50 file:text-indigo-700 hover:file:bg-indigo-100" }}
+      <p class="text-xs text-gray-500 mt-1">
+        Leave empty to keep the current diagram
+      </p>
     </div>
 
     <!-- OPTIONS -->

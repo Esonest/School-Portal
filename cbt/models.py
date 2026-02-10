@@ -60,7 +60,11 @@ class CBTQuestion(models.Model):
         blank=True,
         help_text="Raw LaTeX only, e.g. x^2 + 4x + 4 = 0"
     )
-
+    diagram = models.ImageField(
+        upload_to="cbt/diagrams/",
+        blank=True,
+        null=True
+    )    
     option_a = models.CharField(max_length=400)
     option_b = models.CharField(max_length=400)
     option_c = models.CharField(max_length=400, blank=True)

@@ -168,7 +168,7 @@ def take_exam(request, exam_id, question_index):
     question_data = {
         "text": question.text or "",
         "equation": question.equation or "",
-        "diagram": question.diagram or "",
+        "diagram": getattr(question, "diagram", None),
     }
 
 

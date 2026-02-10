@@ -1142,7 +1142,7 @@ def question_bank_update(request, pk):
     sessions = SESSION_LIST
 
     if request.method == "POST":
-        form = QuestionBankForm(request.POST, instance=question)
+        form = QuestionBankForm(request.POST, request.FILES, instance=question)
 
         if form.is_valid():
             q = form.save(commit=False)
@@ -1293,6 +1293,7 @@ def import_questions_to_exam(request, exam_id):
                     exam=exam,
                     text=q.text,
                     equation=q.equation,
+                    diagram=q.diagram, 
                     option_a=q.option_a,
                     option_b=q.option_b,
                     option_c=q.option_c,
