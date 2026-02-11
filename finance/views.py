@@ -16,6 +16,7 @@ from .models import Invoice, Receipt
 from .forms import FeeTemplate, FeeTemplateForm
 from collections import defaultdict
 from django.db.models import Q
+from .utils import calculate_paystack_fee
 
 
 
@@ -1688,7 +1689,13 @@ def pay_invoice(request, invoice_id):
     # -----------------------------
     # Convert to kobo
     # -----------------------------
-    amount_kobo = int(amount * 100)
+    # -----------------------------------
+    # Calculate Paystack fee (Option A)
+    # -----------------------------------
+    fee, total_to_charge = calculate_paystack_fee(amount)
+
+    amount_kobo = int(total_to_charge * 100)
+
 
     # -----------------------------
     # Ensure email exists
@@ -1711,7 +1718,11 @@ def pay_invoice(request, invoice_id):
             invoice=invoice,
             amount=amount,
             paystack_reference="",
-            status="pending"
+            status="pending",
+            metadata={
+                "paystack_fee": str(fee),
+                "gross_amount": str(total_to_charge),
+            }
         )
     except Exception as e:
         return JsonResponse(
@@ -2059,6 +2070,9 @@ def paystack_webhook(request):
                 return HttpResponse(status=200)
 
             invoice = tx.invoice
+           
+            amount = tx.amount
+
 
             if tx.status != "success":
                 tx.status = "success"

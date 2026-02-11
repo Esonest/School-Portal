@@ -321,6 +321,11 @@
       {% csrf_token %}
       <input type="number" name="amount" id="payAmount" min="1" step="0.01" required
              class="w-full border rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-indigo-500">
+        <div class="text-sm text-gray-600 space-y-1">
+  <p>Processing Fee: ₦<span id="processingFee">0.00</span></p>
+  <p class="font-semibold">Total to Pay: ₦<span id="totalAmount">0.00</span></p>
+</div>
+     
       <div class="flex justify-end gap-2 pt-2">
         <button type="button" onclick="closeModal()" class="bg-gray-200 py-2 px-4 rounded-md">Cancel</button>
         <button type="submit" class="bg-green-600 text-white py-2 px-4 rounded-md">Pay</button>
@@ -331,6 +336,8 @@
 
 <!-- JAVASCRIPT -->
 <script>
+document.addEventListener("DOMContentLoaded", function() {
+
   // FILTER DROPDOWNS
   const classSelect = document.getElementById('class-select');
   const sessionSelect = document.getElementById('session-select');
@@ -338,81 +345,74 @@
 
   function reloadDashboard() {
     const params = new URLSearchParams({
-      class: classSelect.value,
-      session: sessionSelect.value,
-      term: termSelect.value
+      class: classSelect?.value,
+      session: sessionSelect?.value,
+      term: termSelect?.value
     });
     window.location.search = params.toString();
   }
 
-  classSelect.addEventListener('change', reloadDashboard);
-  sessionSelect.addEventListener('change', reloadDashboard);
-  termSelect.addEventListener('change', reloadDashboard);
+  if (classSelect) classSelect.addEventListener('change', reloadDashboard);
+  if (sessionSelect) sessionSelect.addEventListener('change', reloadDashboard);
+  if (termSelect) termSelect.addEventListener('change', reloadDashboard);
 
-  // PAY NOW MODAL
+  // PAY NOW BUTTONS
+
+  function calculatePaystackFee(amount) {
+  if (amount <= 0) return 0;
+
+  let fee = (amount * 0.015) + 100;
+
+  // Cap at ₦2,000
+  if (fee > 2000) {
+    fee = 2000;
+  }
+
+  return fee;
+}
+
   const payButtons = document.querySelectorAll('.pay-now-btn');
   const payForm = document.getElementById('payForm');
   const payAmountInput = document.getElementById('payAmount');
   const modalOutstandingSpan = document.getElementById('modalOutstanding');
-
-  const overallProgressCircle = document.getElementById('overallProgressCircle');
-  const overallProgressPercent = document.getElementById('overallProgressPercent');
-  const overallPaid = document.getElementById('overallPaid');
-
-  let currentInvoiceProgress = null;
-  let invoiceData = {};
 
   payButtons.forEach(btn => {
     btn.addEventListener('click', () => {
       const invoiceId = btn.dataset.invoiceId;
       const total = parseFloat(btn.dataset.total);
       const paid = parseFloat(btn.dataset.paid);
-      const outstanding = total - paid;
+      let outstanding = total - paid;
+      if (outstanding < 0) outstanding = 0;
 
       modalOutstandingSpan.innerText = outstanding.toFixed(2);
       document.getElementById('payModal').classList.remove('hidden');
 
       payForm.action = `/finance/pay_invoice/${invoiceId}/`;
-      payForm.dataset.total = total;
-      payForm.dataset.invoiceId = invoiceId;
-
       payAmountInput.value = outstanding.toFixed(2);
       payAmountInput.max = outstanding.toFixed(2);
 
-      // Get invoice progress circle
-      currentInvoiceProgress = document.querySelector(`.invoice-progress[data-invoice-id="${invoiceId}"]`);
-      invoiceData = { total, paid };
+      updateTotals();
+
     });
   });
 
-  // Update progress as user types
-  payAmountInput.addEventListener('input', () => {
-    if (!currentInvoiceProgress) return;
+  const feeSpan = document.getElementById('processingFee');
+const totalSpan = document.getElementById('totalAmount');
 
-    let entered = parseFloat(payAmountInput.value) || 0;
-    let newPaid = invoiceData.paid + entered;
-    if (newPaid > invoiceData.total) newPaid = invoiceData.total;
+function updateTotals() {
+  const amount = parseFloat(payAmountInput.value) || 0;
 
-    const percent = (newPaid / invoiceData.total) * 100;
+  const fee = calculatePaystackFee(amount);
+  const total = amount + fee;
 
-    const circle = currentInvoiceProgress.querySelector('div:first-child');
-    const percentSpan = currentInvoiceProgress.querySelector('.progress-percent');
+  feeSpan.innerText = fee.toFixed(2);
+  totalSpan.innerText = total.toFixed(2);
+}
 
-    circle.style.background = `conic-gradient(#16a34a ${percent}%, #e5e7eb 0)`;
-    percentSpan.innerText = `${Math.round(percent)}%`;
+payAmountInput.addEventListener('input', updateTotals);
 
-    // Update overall progress dynamically
-    const overallTotal = parseFloat(overallProgressCircle.parentElement.dataset.total);
-    const overallPaidSoFar = parseFloat(overallProgressCircle.parentElement.dataset.paid);
-    const newOverallPaid = overallPaidSoFar + entered;
 
-    const overallPercent = (newOverallPaid / overallTotal) * 100;
-    overallProgressCircle.style.background = `conic-gradient(#16a34a ${overallPercent}%, #e5e7eb 0)`;
-    overallProgressPercent.innerText = `${Math.round(overallPercent)}%`;
-    overallPaid.innerText = newOverallPaid.toFixed(2);
-  });
-
-  // PAY NOW FORM SUBMIT
+  // FORM SUBMIT
   payForm.addEventListener('submit', async function(e) {
     e.preventDefault();
 
@@ -435,10 +435,11 @@
         body: new URLSearchParams({ amount })
       });
 
+      if (!res.ok) throw new Error("Server error");
+
       const data = await res.json();
 
       if (data.status === "success") {
-        document.getElementById('payModal').classList.add('hidden');
         window.location.href = data.checkout_url;
       } else {
         alert(data.message);
@@ -446,14 +447,20 @@
 
     } catch(err) {
       console.error(err);
-      alert("Payment initiation failed. Check your Paystack keys and network.");
+      alert("Payment initiation failed.");
     }
   });
+
+});
 
   function closeModal() {
     document.getElementById('payModal').classList.add('hidden');
   }
 </script>
+
+
+
+
 
 <script>
 document.addEventListener("DOMContentLoaded", function() {

@@ -172,6 +172,7 @@ class PaystackTransaction(models.Model):
         default='pending'
     )
     created_at = models.DateTimeField(auto_now_add=True)
+    metadata = models.JSONField(default=dict, blank=True)
 
     class Meta:
         indexes = [

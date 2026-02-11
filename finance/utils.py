@@ -394,3 +394,36 @@ def ensure_virtual_accounts(student):
 
     except Exception as e:
         print(f"[VA ERROR] Student {student.id}: {e}")
+
+
+
+from decimal import Decimal, ROUND_HALF_UP
+
+
+PAYSTACK_PERCENT = Decimal("0.015")  # 1.5%
+PAYSTACK_FLAT = Decimal("100")
+PAYSTACK_CAP = Decimal("2000")
+
+
+def calculate_paystack_fee(amount: Decimal):
+    """
+    Returns:
+        fee (Decimal)
+        total_to_charge (Decimal)
+    """
+
+    amount = Decimal(amount)
+
+    percentage_fee = amount * PAYSTACK_PERCENT
+    fee = percentage_fee + PAYSTACK_FLAT
+
+    # Apply cap
+    if fee > PAYSTACK_CAP:
+        fee = PAYSTACK_CAP
+
+    total = amount + fee
+
+    return (
+        fee.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP),
+        total.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP),
+    )
