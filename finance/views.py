@@ -2118,8 +2118,9 @@ def paystack_webhook(request):
                 "amount": amount,
                 "status": "approved",
                 "payment_method": (
-                    "bank_transfer" if is_virtual_account else "online"
+                    "bank" if is_virtual_account else "online"
                 ),
+
                 "metadata": {
                     **data,
                     "va_account_number": account_number,
