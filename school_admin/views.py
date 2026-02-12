@@ -1297,6 +1297,7 @@ def import_questions_to_exam(request, exam_id):
                 CBTQuestion.objects.create(
                     exam=exam,
                     source_question=q,
+                    text=q.text,
                     equation=q.equation,
                     diagram=q.diagram, 
                     option_a=q.option_a,
