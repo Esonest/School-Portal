@@ -64,7 +64,14 @@ class CBTQuestion(models.Model):
         upload_to="cbt/diagrams/",
         blank=True,
         null=True
-    )    
+    ) 
+    source_question = models.ForeignKey(
+        "QuestionBank",
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+   
     option_a = models.CharField(max_length=400)
     option_b = models.CharField(max_length=400)
     option_c = models.CharField(max_length=400, blank=True)
@@ -177,7 +184,7 @@ class QuestionBank(models.Model):
         max_length=20,
         blank=True
     )
-
+    
     topic = models.ForeignKey(
         Topic,
         null=True,

@@ -1220,7 +1220,7 @@ from results.utils import SESSION_LIST
 def import_questions_to_exam(request, exam_id):
     user = request.user
     exam = get_object_or_404(CBTExam, id=exam_id)
-
+    school = exam.school
     questions = QuestionBank.objects.select_related("subject")
 
     # ---------------- ROLE-BASED ACCESS ----------------
@@ -1272,15 +1272,20 @@ def import_questions_to_exam(request, exam_id):
     if class_id:
         questions = questions.filter(school_class_id=class_id)
 
+
+    
+
     # ---------------- PAGINATION ----------------
     paginator = Paginator(questions.order_by("-id"), 10)
     page_obj = paginator.get_page(request.GET.get("page"))
 
     # ---------------- ALREADY IMPORTED ----------------
-    imported_texts = set(
+    # ---------------- ALREADY IMPORTED ----------------
+    imported_ids = set(
         CBTQuestion.objects.filter(exam=exam)
-        .values_list("text", flat=True)
+        .values_list("source_question_id", flat=True)
     )
+
 
     # ---------------- IMPORT ----------------
     if request.method == "POST":
@@ -1288,10 +1293,10 @@ def import_questions_to_exam(request, exam_id):
         created = 0
 
         for q in questions.filter(id__in=selected_ids):
-            if q.text not in imported_texts:
+            if q.id not in imported_ids:
                 CBTQuestion.objects.create(
                     exam=exam,
-                    text=q.text,
+                    source_question=q,
                     equation=q.equation,
                     diagram=q.diagram, 
                     option_a=q.option_a,
@@ -1311,6 +1316,10 @@ def import_questions_to_exam(request, exam_id):
         )
     
     topics = Topic.objects.filter(school=school)
+
+    if subject_id:
+        topics = topics.filter(subject_id=subject_id)
+
     return render(request, "school_admin/question_bank/import.html", {
         "exam": exam,
         "questions": page_obj,
@@ -1318,7 +1327,7 @@ def import_questions_to_exam(request, exam_id):
         "classes": classes,
         "topics": topics,
         "sessions": SESSION_LIST,
-        "imported_texts": imported_texts,
+        "imported_ids": imported_ids,
         "page_obj": page_obj,
     })
 

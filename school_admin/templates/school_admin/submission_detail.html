@@ -76,6 +76,15 @@
         </div>
       {% endif %}
 
+      {% if item.question.diagram %}
+<div class="mt-2 flex justify-center">
+  <div class="w-full max-w-xs h-40 sm:h-48 border rounded bg-gray-50 flex items-center justify-center">
+    <img src="{{ item.question.diagram.url }}" class="max-w-full max-h-full object-contain" alt="Diagram">
+  </div>
+</div>
+{% endif %}
+
+
       <!-- SELECTED -->
       <p class="mt-2 break-words overflow-wrap-anywhere">
         <strong>Selected:</strong>
@@ -152,6 +161,14 @@
                         {% if item.question.equation %}
                         <div class="math-content mt-1">{{ item.question.equation|safe }}</div>
                         {% endif %}
+
+                        {% if item.question.diagram %}
+<div class="mt-2 w-full max-w-sm h-32 flex items-center justify-center border rounded bg-gray-50">
+  <img src="{{ item.question.diagram.url }}" class="max-w-full max-h-full object-contain" alt="Diagram">
+</div>
+{% endif %}
+
+
                     </td>
                     <td class="border p-2">
                         {% if item.selected %}
