@@ -170,11 +170,12 @@
         complete your exam.
       </span>
     </div>
+ 
 
+{% include "cbt/partials/calculator.html" %}
   </div>
 
-
-
+  
 
 <!-- 🔴 SUBMIT WARNING MODAL -->
 <div id="submitModal"
@@ -517,6 +518,8 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 </script>
 
+
+
 <style>
 @keyframes fadeIn {
   from { opacity: 0; transform: translateY(5px); }
@@ -536,6 +539,8 @@ document.addEventListener("DOMContentLoaded", () => {
 }
 
 </style>
+
+
 
 {% endblock %}
 

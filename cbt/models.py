@@ -25,7 +25,8 @@ class CBTExam(models.Model):
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
     school = models.ForeignKey(School, on_delete=models.CASCADE, default='', related_name='cbt_exams')
     created_by = models.ForeignKey(Teacher, null=True, blank=True, on_delete=models.SET_NULL, related_name='created_exams')
-
+    
+    allow_calculator = models.BooleanField(default=False)
     session = models.CharField(max_length=20, default='')
     term = models.CharField(max_length=1, choices=TERM_CHOICES, default='')
     school_class = models.ForeignKey(SchoolClass, on_delete=models.CASCADE, null=True, blank=True)

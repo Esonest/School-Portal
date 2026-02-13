@@ -32,7 +32,15 @@
         {% endif %}
       </label>
 
-      {{ field|add_class:"w-full border rounded-lg px-3 py-2" }}
+      {% if field.field.widget.input_type == "checkbox" %}
+  <div class="flex items-center space-x-2">
+    {{ field }}
+    <span>{{ field.label }}</span>
+  </div>
+{% else %}
+  {{ field|add_class:"w-full border rounded-lg px-3 py-2" }}
+{% endif %}
+
 
       {% for error in field.errors %}
         <p class="text-red-500 text-sm mt-1">{{ error }}</p>

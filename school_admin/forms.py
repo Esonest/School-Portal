@@ -193,7 +193,8 @@ class CBTExamForm(forms.ModelForm):
             'start_time',
             'end_time',
             'duration_minutes',
-            'active'
+            'active',
+            'allow_calculator',
         ]
         widgets = {
             'start_time': forms.DateTimeInput(attrs={'type': 'datetime-local'}),

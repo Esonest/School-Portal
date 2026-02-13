@@ -7,7 +7,7 @@ class CBTExamForm(forms.ModelForm):
         model = CBTExam
         fields = [
             'title', 'subject', 'session', 'term', 'school_class',
-            'start_time', 'end_time', 'duration_minutes', 'active'
+            'start_time', 'end_time', 'duration_minutes', 'active','allow_calculator',
         ]
         widgets = {
             'start_time': forms.DateTimeInput(attrs={'type': 'datetime-local'}),
