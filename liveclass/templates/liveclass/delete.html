@@ -1,0 +1,38 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+
+<div class="max-w-xl mx-auto bg-white shadow-xl rounded-2xl p-6">
+
+    <h2 class="text-2xl font-bold text-red-600 mb-4">
+        Delete Live Class
+    </h2>
+
+    <p class="mb-6">
+        Are you sure you want to delete:
+        <strong>{{ live_class.title }}</strong>?
+    </p>
+
+    <div class="bg-gray-100 p-4 rounded-lg mb-6 text-sm">
+        <p><strong>Subject:</strong> {{ live_class.subject }}</p>
+        <p><strong>Class:</strong> {{ live_class.class_room }}</p>
+        <p><strong>Teacher:</strong> {{ live_class.teacher }}</p>
+        <p><strong>Start:</strong> {{ live_class.start_time }}</p>
+    </div>
+
+    <form method="POST" class="flex justify-between">
+        {% csrf_token %}
+
+        <a href="{% url 'liveclass:liveclass_list' %}"
+           class="px-4 py-2 bg-gray-300 rounded-lg hover:bg-gray-400">
+            Cancel
+        </a>
+
+        <button type="submit"
+                class="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700">
+            Yes, Delete
+        </button>
+    </form>
+
+</div>
+
+{% endblock %}

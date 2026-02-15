@@ -1,0 +1,15 @@
+from django.urls import path
+from . import views
+
+app_name = "liveclass"  
+
+urlpatterns = [
+    path("", views.liveclass_list, name="liveclass_list"),
+    path("create/", views.liveclass_create, name="liveclass_create"),
+    path("<int:pk>/edit/", views.liveclass_update, name="liveclass_update"),
+    path("<int:pk>/delete/", views.liveclass_delete, name="liveclass_delete"),
+    path("<int:pk>/join/", views.liveclass_join, name="liveclass_join"),
+    path("<int:pk>/attendance/", views.attendance_dashboard, name="attendance_dashboard"),
+    path("<int:pk>/start/", views.liveclass_start, name="liveclass_start"),
+    path('leave/<int:pk>/', views.liveclass_leave, name='liveclass_leave'),
+]

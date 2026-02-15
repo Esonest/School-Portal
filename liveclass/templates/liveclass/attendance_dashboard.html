@@ -1,0 +1,101 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+
+<div class="max-w-5xl mx-auto px-4 sm:px-6 py-6">
+
+    <!-- PAGE HEADER -->
+    <div class="mb-6">
+        <h1 class="text-2xl sm:text-3xl font-bold text-gray-800">
+            {{ live_class.title }} Attendance
+        </h1>
+
+        <div class="mt-3 inline-flex items-center bg-blue-50 text-blue-700 
+                    px-4 py-2 rounded-lg font-medium shadow-sm">
+            👥 Total Joined: {{ total_attendance_for_class }}
+        </div>
+
+        {% if total_students_in_class %}
+        <div class="mt-1 text-sm text-gray-600">
+            Attendance Percentage: 
+            <span class="font-semibold text-gray-800">{{ attendance_percent|floatformat:1 }}%</span>
+            ({{ total_attendance_for_class }}/{{ total_students_in_class }})
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- DESKTOP TABLE -->
+    <div class="hidden sm:block bg-white shadow-lg rounded-xl overflow-hidden">
+        <table class="min-w-full">
+            <thead class="bg-gray-100 text-gray-700 text-sm uppercase tracking-wide">
+                <tr>
+                    <th class="p-4 text-left">Student</th>
+                    <th class="p-4 text-left">Joined At</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for attendance in attendance_list %}
+                <tr class="border-t hover:bg-gray-50 transition">
+                    <td class="p-4 font-medium text-gray-800">
+                        {{ attendance.student.user.get_full_name }}
+                    </td>
+                    <td class="p-4 text-gray-600">
+                        {{ attendance.joined_at|date:"M d, Y H:i" }}
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="2" class="p-6 text-center text-gray-500">
+                        No students have joined this class yet.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
+    <!-- MOBILE CARD VIEW -->
+    <div class="sm:hidden space-y-4">
+        {% for attendance in attendance_list %}
+        <div class="bg-white shadow-md rounded-xl p-4 border border-gray-100">
+            <div class="font-semibold text-gray-800 text-base">
+                {{ attendance.student.user.get_full_name }}
+            </div>
+            <div class="mt-2 text-sm text-gray-600">
+                Joined: {{ attendance.joined_at|date:"M d, Y H:i" }}
+            </div>
+        </div>
+        {% empty %}
+        <div class="bg-white shadow-md rounded-xl p-4 text-center text-gray-500">
+            No students have joined this class yet.
+        </div>
+        {% endfor %}
+    </div>
+
+    <!-- SCHOOL SUMMARY -->
+    {% if live_classes_in_school %}
+    <div class="mt-10">
+        <h2 class="text-xl sm:text-2xl font-semibold text-gray-800 mb-4">
+            School Live Classes Summary
+        </h2>
+
+        <div class="bg-white shadow-lg rounded-xl divide-y">
+            {% for cls in live_classes_in_school %}
+            <div class="p-4 flex justify-between items-center hover:bg-gray-50 transition">
+                <span class="font-medium text-gray-800">{{ cls.title }}</span>
+                <span class="bg-green-50 text-green-700 px-3 py-1 rounded-full text-sm font-medium">
+                    {{ cls.attendance_count }} Joined
+                </span>
+            </div>
+            {% endfor %}
+        </div>
+
+        <div class="mt-4 text-right font-semibold text-gray-800">
+            Total Attendance in School:
+            <span class="text-blue-600">{{ total_attendance_in_school }}</span>
+        </div>
+    </div>
+    {% endif %}
+
+</div>
+
+{% endblock %}

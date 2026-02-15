@@ -67,6 +67,7 @@ INSTALLED_APPS = [
     "accounts",
     "school_admin",
     "superadmin",
+    "liveclass",
     "widget_tweaks",
     "cloudinary",
     "cloudinary_storage",

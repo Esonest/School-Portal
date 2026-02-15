@@ -1,0 +1,164 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+<div class="max-w-6xl mx-auto px-4 py-6">
+
+    <!-- Header -->
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-6 gap-4">
+        <h1 class="text-2xl font-bold">🎥 Live Classes</h1>
+
+        {% if 'teacher' in roles or 'schooladmin' in roles %}
+        <a href="{% url 'liveclass:liveclass_create' %}"
+           class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded shadow text-center">
+            ➕ Create Class
+        </a>
+        {% endif %}
+    </div>
+
+    <!-- Class Cards -->
+    <div class="space-y-5">
+
+    {% for cls in classes %}
+        <div class="bg-white p-5 rounded-xl shadow border hover:shadow-lg transition relative">
+
+            <!-- Status Badge -->
+            <div class="absolute top-4 right-4">
+                {% if cls.status == "live" %}
+                    <span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-xs font-semibold animate-pulse">
+                        🔴 LIVE
+                    </span>
+                {% elif cls.status == "upcoming" %}
+                    <span class="bg-yellow-100 text-yellow-700 px-3 py-1 rounded-full text-xs font-semibold">
+                        ⏳ Upcoming
+                    </span>
+                {% else %}
+                    <span class="bg-gray-200 text-gray-600 px-3 py-1 rounded-full text-xs font-semibold">
+                        ✅ Ended
+                    </span>
+                {% endif %}
+            </div>
+
+            <!-- Title -->
+            <h2 class="text-lg font-semibold">{{ cls.title }}</h2>
+            <p class="text-sm text-gray-500 mt-1">
+                🕒 {{ cls.start_time }}
+            </p>
+
+          <!-- Attendance Info (Teacher/Admin Only) -->
+{% if 'teacher' in roles or 'schooladmin' in roles %}
+<div class="mt-3">
+    <p class="text-sm text-gray-600 font-medium">
+        👥 Attendance: 
+        {{ cls.attendance_count|default:0 }}/{{ cls.student_count|default:0 }}
+        ({{ cls.attendance_percent|floatformat:1|default:"0.0" }}%)
+    </p>
+
+    <div class="w-full bg-gray-200 rounded-full h-2 mt-1">
+        <div class="bg-indigo-500 h-2 rounded-full transition-all duration-500"
+             style="width: {{ cls.attendance_percent|floatformat:0|default:0|floatformat }}%;">
+        </div>
+    </div>
+</div>
+{% endif %}
+
+            <!-- Countdown -->
+            {% if cls.status == "upcoming" %}
+            <p class="text-sm text-yellow-700 mt-3">
+                ⏱ Starts in:
+                <span data-start="{{ cls.start_time|date:'Y-m-d H:i:s' }}"
+                      class="countdown font-semibold"></span>
+            </p>
+            {% endif %}
+
+            <!-- Action Buttons -->
+            <div class="mt-4 flex flex-wrap gap-2 text-sm">
+
+                <!-- Student -->
+                {% if 'student' in roles %}
+                    {% if cls.status == "live" %}
+                        <a href="{% url 'liveclass:liveclass_join' cls.id %}"
+                           class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded">
+                            ▶ Join Class
+                        </a>
+                    {% else %}
+                        <span class="text-gray-400 border px-3 py-1 rounded">
+                            Not Live Yet
+                        </span>
+                    {% endif %}
+                {% endif %}
+
+                <!-- Teacher & School Admin -->
+                {% if 'teacher' in roles or 'schooladmin' in roles %}
+
+                    {% if cls.status == "live" %}
+                        <a href="{% url 'liveclass:liveclass_join' cls.id %}"
+                           class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded">
+                            ▶ Join / Start
+                        </a>
+
+                    {% elif cls.status == "upcoming" or cls.status == "scheduled" %}
+                        <a href="{% url 'liveclass:liveclass_start' cls.id %}"
+                           class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded">
+                            ⏯ Start Class
+                        </a>
+                    {% else %}
+                        <span class="text-gray-400 border px-3 py-1 rounded">
+                            Ended
+                        </span>
+                    {% endif %}
+
+                    <a href="{% url 'liveclass:attendance_dashboard' cls.id %}"
+                       class="bg-indigo-500 hover:bg-indigo-600 text-white px-3 py-1 rounded">
+                        📊 Attendance
+                    </a>
+
+                    <a href="{% url 'liveclass:liveclass_update' cls.id %}"
+                       class="bg-blue-500 hover:bg-blue-600 text-white px-3 py-1 rounded">
+                        ✏ Edit
+                    </a>
+
+                    <a href="{% url 'liveclass:liveclass_delete' cls.id %}"
+                       class="bg-red-500 hover:bg-red-600 text-white px-3 py-1 rounded">
+                        🗑 Delete
+                    </a>
+
+                {% endif %}
+            </div>
+
+        </div>
+
+    {% empty %}
+        <div class="bg-white p-6 rounded-xl shadow text-center">
+            <p class="text-gray-500">No live classes available.</p>
+        </div>
+    {% endfor %}
+
+    </div>
+</div>
+
+<!-- Countdown Script -->
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+    function updateCountdown() {
+        document.querySelectorAll(".countdown").forEach(function(el) {
+            const startTime = new Date(el.dataset.start + " UTC");
+            const now = new Date();
+            const diff = startTime - now;
+
+            if (diff <= 0) {
+                el.textContent = "Starting now";
+                return;
+            }
+
+            const hours = Math.floor(diff / (1000 * 60 * 60));
+            const minutes = Math.floor((diff / (1000 * 60)) % 60);
+            const seconds = Math.floor((diff / 1000) % 60);
+
+            el.textContent = hours + "h " + minutes + "m " + seconds + "s";
+        });
+    }
+
+    updateCountdown();
+    setInterval(updateCountdown, 1000);
+});
+</script>
+{% endblock %}

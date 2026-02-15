@@ -49,57 +49,110 @@
   <div class="w-full max-w-6xl space-y-14 sm:space-y-16">
 
     <!-- STUDENT PORTALS -->
-    {% if 'student' in roles %}
-    <div>
-      <h3 class="text-xl sm:text-2xl font-bold text-indigo-700 mb-6 flex items-center gap-2">
-        🎓 Student Portals
-      </h3>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8">
-        <a href="{% url 'students:student_dashboard' %}" class="portal-card bg-gradient-to-r from-indigo-500 to-indigo-600">
-          📊 Student Dashboard
-        </a>
-        <a href="{% url 'results:student_portal' %}" class="portal-card bg-gradient-to-r from-purple-500 to-purple-600">
-          📝 Result Portal
-        </a>
-      </div>
-    </div>
-    {% endif %}
+   {% if 'student' in roles %}
+<div>
+  <h3 class="text-xl sm:text-2xl font-bold text-indigo-700 mb-6 flex items-center gap-2">
+    🎓 Student Portals
+  </h3>
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8">
+
+    <a href="{% url 'students:student_dashboard' %}" 
+       class="portal-card bg-gradient-to-r from-indigo-500 to-indigo-600">
+      📊 Student Dashboard
+    </a>
+
+    <a href="{% url 'results:student_portal' %}" 
+       class="portal-card bg-gradient-to-r from-purple-500 to-purple-600">
+      📝 Result Portal
+    </a>
+
+    <!-- NEW -->
+    <a href="{% url 'liveclass:liveclass_list' %}" 
+       class="portal-card bg-gradient-to-r from-blue-500 to-blue-600">
+      🎥 Live Classes
+    </a>
+
+  </div>
+</div>
+{% endif %}
+
 
     <!-- TEACHER PORTALS -->
     {% if 'teacher' in roles %}
-    <div>
-      <h3 class="text-xl sm:text-2xl font-bold text-green-700 mb-6 flex items-center gap-2">
-        🧑‍🏫 Teacher Portals
-      </h3>
-      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
-        <a href="{% url 'teachers:teacher_dashboard' %}" class="portal-card bg-gradient-to-r from-green-500 to-green-600">
-          📚 Teacher Dashboard
-        </a>
-        <a href="{% url 'teachers:teacher_result_dashboard' %}" class="portal-card bg-gradient-to-r from-blue-500 to-blue-600">
-          ✍️ Enter Scores & Domains
-        </a>
-        <a href="{% url 'results:teacher_portal' %}" class="portal-card bg-gradient-to-r from-pink-500 to-pink-600">
-          🧾 Teacher Result Portal
-        </a>
-      </div>
-    </div>
-    {% endif %}
+<div>
+  <h3 class="text-xl sm:text-2xl font-bold text-green-700 mb-6 flex items-center gap-2">
+    🧑‍🏫 Teacher Portals
+  </h3>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+
+    <a href="{% url 'teachers:teacher_dashboard' %}" 
+       class="portal-card bg-gradient-to-r from-green-500 to-green-600">
+      📚 Teacher Dashboard
+    </a>
+
+    <a href="{% url 'teachers:teacher_result_dashboard' %}" 
+       class="portal-card bg-gradient-to-r from-blue-500 to-blue-600">
+      ✍️ Enter Scores & Domains
+    </a>
+
+    <a href="{% url 'results:teacher_portal' %}" 
+       class="portal-card bg-gradient-to-r from-pink-500 to-pink-600">
+      🧾 Teacher Result Portal
+    </a>
+
+    <!-- NEW -->
+    <a href="{% url 'liveclass:liveclass_list' %}" 
+       class="portal-card bg-gradient-to-r from-emerald-500 to-emerald-600">
+      🎥 My Live Classes
+    </a>
+
+    <a href="{% url 'liveclass:liveclass_create' %}" 
+       class="portal-card bg-gradient-to-r from-orange-500 to-orange-600">
+      ➕ Create Live Class
+    </a>
+
+  </div>
+</div>
+{% endif %}
+
 
     <!-- SCHOOL ADMIN -->
-    {% if 'schooladmin' in roles %}
-    <div>
-      <h3 class="text-xl sm:text-2xl font-bold text-indigo-700 mb-6">🏫 School Admin Portals</h3>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8">
-        {% if school %}
-          <a href="{% url 'school_admin:school_admin_dashboard' school.id %}" class="portal-card bg-gradient-to-r from-indigo-500 to-indigo-600">
-            🏢 School Admin Dashboard
-          </a>
-        {% else %}
-          <p class="text-red-500 font-bold text-lg">No school assigned</p>
-        {% endif %}
-      </div>
-    </div>
+   {% if 'schooladmin' in roles %}
+<div>
+  <h3 class="text-xl sm:text-2xl font-bold text-indigo-700 mb-6">
+    🏫 School Admin Portals
+  </h3>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8">
+
+    {% if school %}
+      <a href="{% url 'school_admin:school_admin_dashboard' school.id %}" 
+         class="portal-card bg-gradient-to-r from-indigo-500 to-indigo-600">
+        🏢 School Admin Dashboard
+      </a>
+
+      <!-- NEW -->
+      <a href="{% url 'liveclass:liveclass_list' %}" 
+         class="portal-card bg-gradient-to-r from-teal-500 to-teal-600">
+        🎥 Manage Live Classes
+      </a>
+
+      <a href="{% url 'liveclass:liveclass_create' %}" 
+         class="portal-card bg-gradient-to-r from-yellow-500 to-yellow-600">
+        ➕ Create Live Class
+      </a>
+
+    {% else %}
+      <p class="text-red-500 font-bold text-lg">
+        No school assigned
+      </p>
     {% endif %}
+
+  </div>
+</div>
+{% endif %}
+
 
     <!-- ACCOUNTANT -->
 {% if 'accountant' in roles %}

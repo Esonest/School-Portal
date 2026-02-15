@@ -34,6 +34,7 @@ urlpatterns = [
     path('notes/', include('notes.urls', namespace='notes')),
     path('school_admin/', include('school_admin.urls', namespace='school_admin')),
     path("superadmin/", include("superadmin.urls", namespace='superadmin')),
+    path("liveclass/", include("liveclass.urls", namespace='liveclass')),
 
    
 ]

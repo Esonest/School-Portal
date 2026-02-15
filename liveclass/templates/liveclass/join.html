@@ -1,0 +1,240 @@
+{% extends "accounts/base.html" %}
+{% block content %}
+
+<script src="https://meet.jit.si/external_api.js"></script>
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+
+    <!-- HEADER -->
+    <div class="bg-white shadow-xl rounded-2xl p-5 mb-6 flex flex-col lg:flex-row lg:justify-between gap-4">
+
+        <div>
+            <h2 class="text-2xl sm:text-3xl font-bold text-gray-800">
+                {{ live_class.title }}
+            </h2>
+
+            <div class="flex gap-3 mt-3 flex-wrap items-center text-sm">
+                <span class="flex items-center gap-2 bg-red-50 text-red-600 px-3 py-1 rounded-full font-semibold">
+                    <span class="w-2 h-2 bg-red-600 rounded-full animate-pulse"></span>
+                    LIVE
+                </span>
+
+                <span class="bg-gray-100 px-3 py-1 rounded-full">
+                    Room: {{ live_class.room_name }}
+                </span>
+
+                <span class="bg-purple-50 text-purple-600 px-3 py-1 rounded-full font-medium">
+                    🎥 Recording
+                </span>
+            </div>
+        </div>
+
+        <div class="flex flex-wrap items-center gap-3">
+
+            <div class="bg-gray-100 px-4 py-2 rounded-lg text-sm font-semibold">
+                ⏱ <span id="class-timer">00:00:00</span>
+            </div>
+
+            <div class="bg-blue-50 text-blue-700 px-4 py-2 rounded-lg text-sm font-semibold">
+                👥 <span id="attendance-count">0</span>
+            </div>
+
+            <button id="leave-btn" disabled
+                class="bg-red-600 text-white px-4 py-2 rounded-lg text-sm hover:bg-red-700 transition">
+                🚪 Leave Class
+            </button>
+
+            <button onclick="toggleFullscreen()"
+                class="bg-gray-800 text-white px-4 py-2 rounded-lg text-sm hover:bg-gray-700 transition">
+                ⛶ Fullscreen
+            </button>
+        </div>
+    </div>
+
+    <!-- JOIN BUTTON -->
+    <div class="mb-6 text-center">
+        <button id="join-btn"
+                class="bg-blue-600 text-white px-6 py-3 rounded-xl font-semibold hover:bg-blue-700 transition">
+            Join Class
+        </button>
+    </div>
+
+    <!-- MAIN GRID -->
+    <div class="grid lg:grid-cols-4 gap-6">
+
+        <!-- VIDEO -->
+        <div class="lg:col-span-3 bg-white shadow-2xl rounded-2xl overflow-hidden relative">
+            <div id="jitsi-container" class="w-full h-[75vh]" style="display: none;"></div>
+        </div>
+
+        <!-- SIDEBAR -->
+        <div class="bg-white shadow-xl rounded-2xl p-4 hidden lg:block">
+
+            <h3 class="font-semibold mb-4 flex justify-between">
+                Participants
+                <span id="sidebar-count"
+                    class="text-xs bg-blue-50 text-blue-600 px-2 py-1 rounded-full">
+                    0
+                </span>
+            </h3>
+
+            <div id="participant-list" class="space-y-2 max-h-[55vh] overflow-y-auto text-sm"></div>
+
+            <hr class="my-4">
+
+            <button onclick="raiseHand()"
+                class="w-full bg-yellow-500 text-white py-2 rounded-lg text-sm hover:bg-yellow-600 transition">
+                ✋ Raise Hand
+            </button>
+
+        </div>
+    </div>
+</div>
+
+<!-- FLOATING CHAT -->
+<div id="chat-box"
+     class="fixed bottom-6 right-6 w-80 bg-white shadow-2xl rounded-2xl hidden flex flex-col overflow-hidden z-50">
+
+    <div class="bg-gray-800 text-white p-3 text-sm flex justify-between">
+        Classroom Chat
+        <button onclick="toggleChat()">✕</button>
+    </div>
+
+    <div id="chat-messages" class="p-3 h-60 overflow-y-auto text-sm space-y-2"></div>
+
+    <div class="p-2 border-t flex">
+        <input id="chat-input" class="flex-1 border rounded-lg px-2 text-sm"
+               placeholder="Type message...">
+        <button onclick="sendMessage()"
+                class="ml-2 bg-blue-600 text-white px-3 rounded-lg text-sm">
+            Send
+        </button>
+    </div>
+</div>
+
+<button onclick="toggleChat()"
+    class="fixed bottom-6 right-6 bg-blue-600 text-white p-4 rounded-full shadow-xl">
+    💬
+</button>
+
+<script>
+let api = null;
+let attendanceStarted = false;
+let timer = null;
+let seconds = 0;
+const maxDuration = 7200; // 2 hours max
+
+// === JOIN CLASS ===
+document.getElementById("join-btn").addEventListener("click", function () {
+    if(attendanceStarted) return;
+
+    // 1️⃣ Start attendance via POST
+    fetch("{% url 'liveclass:liveclass_join' live_class.id %}", {
+        method: "POST",
+        headers: { "X-CSRFToken": "{{ csrf_token }}" },
+    }).then(res => {
+        if(res.ok){
+            attendanceStarted = true;
+            document.getElementById("leave-btn").disabled = false;
+            document.getElementById("join-btn").style.display = "none";
+        }
+    });
+
+    // 2️⃣ Show Jitsi
+    const container = document.getElementById("jitsi-container");
+    container.style.display = "block";
+
+    // 3️⃣ Initialize Jitsi
+    api = new JitsiMeetExternalAPI("meet.jit.si", {
+        roomName: "{{ live_class.room_name }}",
+        parentNode: container,
+        userInfo: {
+            displayName: "{{ request.user.get_full_name }}",
+            email: "{{ request.user.email }}"
+        },
+        configOverwrite: { enableWelcomePage: false, prejoinPageEnabled: false },
+        interfaceConfigOverwrite: { DISABLE_JOIN_LEAVE_NOTIFICATIONS: false }
+    });
+
+    // 4️⃣ Participants
+    let participants = 0;
+    api.addEventListener('participantJoined', (data) => {
+        participants++;
+        updateCount();
+        addParticipant(data.displayName);
+    });
+    api.addEventListener('participantLeft', () => {
+        participants--;
+        updateCount();
+    });
+
+    function updateCount(){
+        document.getElementById("attendance-count").innerText = participants;
+        document.getElementById("sidebar-count").innerText = participants;
+    }
+    function addParticipant(name){
+        const div = document.createElement("div");
+        div.className = "bg-gray-50 p-2 rounded";
+        div.innerText = name || "Student";
+        document.getElementById("participant-list").appendChild(div);
+    }
+
+    // 5️⃣ Timer
+    timer = setInterval(() => {
+        seconds++;
+        const hrs = String(Math.floor(seconds / 3600)).padStart(2,'0');
+        const mins = String(Math.floor((seconds % 3600)/60)).padStart(2,'0');
+        const secs = String(seconds % 60).padStart(2,'0');
+        document.getElementById("class-timer").innerText = `${hrs}:${mins}:${secs}`;
+        if(seconds >= maxDuration) leaveClass();
+    }, 1000);
+});
+
+// === LEAVE CLASS ===
+function leaveClass(){
+    if(!attendanceStarted) return;
+    attendanceStarted = false;
+
+    navigator.sendBeacon("{% url 'liveclass:liveclass_leave' live_class.id %}");
+    clearInterval(timer);
+    if(api) api.dispose();
+    window.location.href = "{% url 'liveclass:liveclass_list' %}";
+}
+
+document.getElementById("leave-btn").addEventListener("click", leaveClass);
+
+// === BEFOREUNLOAD SAFETY ===
+window.addEventListener("beforeunload", function () {
+    if(attendanceStarted){
+        navigator.sendBeacon("{% url 'liveclass:liveclass_leave' live_class.id %}");
+    }
+});
+
+// === FULLSCREEN ===
+function toggleFullscreen(){
+    const elem = document.getElementById("jitsi-container");
+    if(!document.fullscreenElement){
+        elem.requestFullscreen();
+    } else {
+        document.exitFullscreen();
+    }
+}
+
+// === CHAT ===
+function toggleChat(){ document.getElementById("chat-box").classList.toggle("hidden"); }
+function sendMessage(){
+    const input = document.getElementById("chat-input");
+    if(!input.value) return;
+    const msg = document.createElement("div");
+    msg.className = "bg-blue-50 p-2 rounded";
+    msg.innerText = input.value;
+    document.getElementById("chat-messages").appendChild(msg);
+    input.value = "";
+}
+
+// === RAISE HAND ===
+function raiseHand(){ alert("✋ Hand Raised!"); }
+
+</script>
+
+{% endblock %}
