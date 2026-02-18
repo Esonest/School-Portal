@@ -68,6 +68,7 @@ INSTALLED_APPS = [
     "school_admin",
     "superadmin",
     "liveclass",
+    "channels",
     "widget_tweaks",
     "cloudinary",
     "cloudinary_storage",
@@ -169,6 +170,17 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'school_management.wsgi.application'
+
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("127.0.0.1", 6379)],  # Redis host
+        },
+    },
+}
+
 
 
 # Database

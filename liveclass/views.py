@@ -200,10 +200,10 @@ def liveclass_delete(request, pk):
 
     return render(request, "liveclass/delete.html", {"live_class": live_class})
 
+
 @login_required
 def liveclass_join(request, pk):
-    school = request.user.school
-
+    school = getattr(request.user, "school", None)
     live_class = get_object_or_404(
         LiveClass.objects.select_related("teacher"),
         pk=pk,
@@ -211,37 +211,44 @@ def liveclass_join(request, pk):
     )
 
     # Permission check
-    if not (
-        request.user.is_student_user
-        or request.user.is_teacher_user
-        or request.user.is_schooladmin
-        or request.user.is_superadmin
-    ):
+    if not any([
+        getattr(request.user, "is_student_user", False),
+        getattr(request.user, "is_teacher_user", False),
+        getattr(request.user, "is_schooladmin", False),
+        getattr(request.user, "is_superadmin", False),
+    ]):
         return HttpResponseForbidden()
 
     # Update status
     live_class.update_status()
-
     if live_class.status != "live":
         messages.error(request, "Class is not currently active.")
         return redirect("liveclass:liveclass_list")
 
-    # Log attendance for students
-    if request.user.is_student_user:
+    # Log attendance (only for students)
+    if getattr(request.user, "is_student_user", False):
         attendance, created = LiveClassAttendance.objects.get_or_create(
             live_class=live_class,
             student=request.user.student_profile
         )
-
-        # If student rejoined, update join time
         if not created and attendance.left_at:
             attendance.joined_at = timezone.now()
             attendance.left_at = None
             attendance.save()
 
+    # Role flags for template
+    is_moderator = any([
+        getattr(request.user, "is_teacher_user", False),
+        getattr(request.user, "is_schooladmin", False),
+        getattr(request.user, "is_superadmin", False),
+    ])
+
     return render(request, "liveclass/join.html", {
-        "live_class": live_class
+        "live_class": live_class,
+        "is_moderator": is_moderator,
+        "youtube_link": live_class.youtube_link,  # pass YouTube link
     })
+
 
 
 from django.db.models import Count
@@ -368,3 +375,45 @@ def liveclass_leave(request, pk):
     # sendBeacon doesn’t expect a redirect, just return 200 OK
     from django.http import HttpResponse
     return HttpResponse(status=200)
+
+
+# views.py
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
+
+@login_required
+@csrf_exempt
+def liveclass_enable_camera(request, pk):
+    """
+    Called via AJAX when a student enables their camera.
+    Marks camera_enabled=True in attendance.
+    """
+    if request.method != "POST":
+        return JsonResponse({"error": "POST required"}, status=400)
+
+    live_class = get_object_or_404(LiveClass, pk=pk, school=request.user.school)
+    
+    if not request.user.is_student_user:
+        return JsonResponse({"error": "Only students"}, status=403)
+
+    attendance, _ = LiveClassAttendance.objects.get_or_create(
+        live_class=live_class,
+        student=request.user.student_profile
+    )
+    attendance.camera_enabled = True
+    attendance.save()
+    return JsonResponse({"success": True})
+
+
+# views.py
+from django.http import JsonResponse
+
+@login_required
+def liveclass_peers(request, pk):
+    live_class = get_object_or_404(LiveClass, pk=pk, school=request.user.school)
+    if not request.user.is_student_user:
+        return JsonResponse({"error": "Only students"}, status=403)
+    
+    # return list of student IDs currently in attendance
+    student_ids = list(live_class.attendances.filter(left_at__isnull=True).values_list('student__user_id', flat=True))
+    return JsonResponse(student_ids, safe=False)

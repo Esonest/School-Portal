@@ -6,12 +6,12 @@
 </button>
 
 <!-- CALCULATOR WINDOW -->
-<!-- CALCULATOR WINDOW -->
 <div id="calculator"
-     class="fixed bottom-4 right-4 bg-gray-800 text-white
-            rounded-xl shadow-2xl hidden z-50
-            w-11/12 sm:w-96 max-h-[80vh] overflow-y-auto">
-
+     class="fixed bottom-0 right-0 bg-gray-800 text-white
+            rounded-t-2xl sm:rounded-xl shadow-2xl hidden z-50
+            w-full sm:w-96
+            h-[85vh] sm:h-auto
+            overflow-hidden">
             
 
  <!-- CALCULATOR HEADER -->
@@ -175,25 +175,65 @@
     grid-template-columns: repeat(5, 1fr);
     gap: 6px;
     padding: 10px;
+    overflow-y: auto;
 }
 
 .calc-grid button {
-    padding: 10px;
-    border-radius: 6px;
+    padding: 12px 6px;
+    border-radius: 8px;
     background: #374151;
     font-size: 0.9rem;
     user-select: none;
     text-align: center;
+    min-height: 48px;
+    transition: 0.2s ease;
 }
+
+.calc-grid button:active {
+    transform: scale(0.95);
+    background: #4b5563;
+}
+
 .calc-grid button:hover { background: #4b5563; }
 .calc-equal { background: #16a34a !important; }
 
-@media (max-width: 480px) {
-    .calculator { bottom: 60px; right: 4px; width: 95%; max-width: unset; }
-    .calc-grid { grid-template-columns: repeat(4, 1fr); gap: 4px; }
-    #display { font-size: 1rem; padding: 10px; }
-    .calc-mode-wrapper button { font-size: 0.75rem; }
+@media (max-width: 640px) {
+
+    #calculator {
+        border-radius: 16px 16px 0 0;
+        left: 0 !important;
+        right: 0 !important;
+        bottom: 0;
+        top: auto !important;
+    }
+
+    .calc-grid {
+        grid-template-columns: repeat(4, 1fr);
+        gap: 5px;
+    }
+
+    .calc-grid button {
+        font-size: 0.8rem;
+        padding: 10px 4px;
+        min-height: 44px;
+    }
+
+    #display {
+        font-size: 1.1rem;
+        padding: 12px;
+    }
 }
+
+
+#calculator {
+    display: flex;
+    flex-direction: column;
+}
+
+.calc-grid {
+    flex: 1;
+}
+
 </style>
 
 <!-- ====== SCRIPT ====== -->

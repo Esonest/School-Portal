@@ -14,20 +14,28 @@
     <form method="POST" class="space-y-5">
         {% csrf_token %}
 
-        {% for field in form %}
-            <div>
-                <label class="block font-semibold mb-1">
-                    {{ field.label }}
-                </label>
-
-                {{ field }}
-
-                {% if field.errors %}
-                    <p class="text-red-600 text-sm mt-1">
-                        {{ field.errors.0 }}
-                    </p>
-                {% endif %}
+        {% if form.non_field_errors %}
+            <div class="bg-red-100 text-red-700 p-3 rounded-lg">
+                {{ form.non_field_errors.0 }}
             </div>
+        {% endif %}
+
+        {% for field in form %}
+            {% if not field.is_hidden %}
+                <div>
+                    <label for="{{ field.id_for_label }}" class="block font-semibold mb-1">
+                        {{ field.label }}
+                    </label>
+
+                    {{ field }}
+
+                    {% if field.errors %}
+                        <p class="text-red-600 text-sm mt-1">
+                            {{ field.errors.0 }}
+                        </p>
+                    {% endif %}
+                </div>
+            {% endif %}
         {% endfor %}
 
         <div class="flex justify-between mt-6">

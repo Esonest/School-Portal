@@ -12,4 +12,8 @@ urlpatterns = [
     path("<int:pk>/attendance/", views.attendance_dashboard, name="attendance_dashboard"),
     path("<int:pk>/start/", views.liveclass_start, name="liveclass_start"),
     path('leave/<int:pk>/', views.liveclass_leave, name='liveclass_leave'),
+    path("join/<int:pk>/enable-camera/", views.liveclass_enable_camera, name="liveclass_enable_camera"),
+    path('liveclass/<int:pk>/peers/', views.liveclass_peers, name='liveclass_peers'),
+
+
 ]
