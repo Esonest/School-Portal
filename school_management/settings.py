@@ -286,6 +286,10 @@ EMAIL_HOST_PASSWORD = os.environ.get("SENDGRID_API_KEY")
 DEFAULT_FROM_EMAIL = "TECHCENTER <techcenter652@gmail.com>"
 
 
+PEERJS_SERVER_DOMAIN = "peerjs-server-production-8400.up.railway.app"
+PEERJS_SERVER_PORT = 443
+PEERJS_SERVER_PATH = "/"
+PEERJS_SECURE = True
 
 
 

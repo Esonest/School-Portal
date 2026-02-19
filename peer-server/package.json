@@ -1,9 +1,0 @@
-{
-  "name": "peerjs-server",
-  "version": "1.0.0",
-  "private": true,
-  "dependencies": {
-    "peer": "^1.4.7",
-    "express": "^4.18.2"
-  }
-}

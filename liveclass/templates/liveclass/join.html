@@ -20,11 +20,14 @@
 
     <!-- TEACHER YOUTUBE STREAM -->
     <div class="mb-4">
-        <iframe id="youtube-iframe" width="100%" height="400"
-            src="{{ live_class.https://youtube.com/@esonestlimited6213 }}?autoplay=1"
-            frameborder="0" allow="autoplay; encrypted-media" allowfullscreen>
-        </iframe>
-    </div>
+    <iframe id="youtube-iframe" width="100%" height="400"
+        src="{{ live_class.youtube_link }}?autoplay=1"
+        frameborder="0"
+        allow="autoplay; encrypted-media"
+        allowfullscreen>
+    </iframe>
+</div>
+
 
     <!-- STUDENT VIDEO GRID -->
     <div id="student-video-grid" class="grid grid-cols-3 gap-2 mb-4"></div>
@@ -99,11 +102,21 @@ function decrementParticipant() {
 }
 
 // ===== PEERJS SETUP =====
-peer = new Peer(studentId, {
-    host: 'YOUR_PEERJS_SERVER_DOMAIN',  // replace with your PeerJS server
-    port: 9000,
-    path: '/'
+   peer = new Peer(studentId, {
+    host: "peerjs-server-production-8400.up.railway.app",
+    port: 443,
+    secure: true,
+    path: "/peerjs",
 });
+
+peer.on("open", id => {
+    console.log("Connected to PeerJS server with ID:", id);
+});
+
+peer.on("error", err => {
+    console.error("PeerJS error:", err);
+});
+
 
 peer.on('call', call => {
     call.answer(localStream);

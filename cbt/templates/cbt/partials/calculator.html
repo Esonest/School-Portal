@@ -1,303 +1,294 @@
-{% if exam.allow_calculator %}
-
-<!-- OPEN BUTTON -->
-<button onclick="openCalculator()" class="calc-open-btn">
-    Calculator
-</button>
-
-<!-- CALCULATOR WINDOW -->
-<div id="calculator"
-     class="fixed bottom-0 right-0 bg-gray-800 text-white
-            rounded-t-2xl sm:rounded-xl shadow-2xl hidden z-50
-            w-full sm:w-96
-            h-[85vh] sm:h-auto
-            overflow-hidden">
-            
-
- <!-- CALCULATOR HEADER -->
-<div id="calc-header"
-     style="display:flex; justify-content:space-between; align-items:center;
-            background:#1f2937; padding:10px; border-top-left-radius:12px; border-top-right-radius:12px;
-            cursor:move; user-select:none; width:100%;">
-    <span style="font-weight:600; color:white; font-size:14px;">Scientific Calculator</span>
-    <div style="display:flex; gap:8px;">
-        <!-- Minimize -->
-        <button onclick="minimizeCalculator()" 
-                style="font-weight:bold; color:#facc15; background:transparent; border:none; font-size:18px; cursor:pointer;"
-                title="Minimize">—</button>
-        <!-- Close -->
-        <button onclick="closeCalculator()" 
-                style="font-weight:bold; color:#f87171; background:transparent; border:none; font-size:18px; cursor:pointer;"
-                title="Close">✕</button>
-    </div>
-</div>
-
-
-
-    <!-- DISPLAY -->
-    <div class="calc-display-wrapper">
-        <input id="display" type="text" readonly>
-    </div>
-
-    <!-- DEG/RAD -->
-    <div class="calc-mode-wrapper">
-        <button onclick="toggleMode()" id="modeBtn">DEG</button>
-        <button onclick="clearDisplay()" class="calc-clear">C</button>
-    </div>
-
-   <!-- BUTTON GRID -->
-<div class="calc-grid">
-
-    <!-- Memory Row -->
-    <button onclick="memoryClear()">MC</button>
-    <button onclick="memoryRecall()">MR</button>
-    <button onclick="memoryAdd()">M+</button>
-    <button onclick="memorySubtract()">M−</button>
-    <button onclick="clearDisplay()">AC</button>
-
-    <!-- 7 8 9 -->
-    <button onclick="append('7')">7</button>
-    <button onclick="append('8')">8</button>
-    <button onclick="append('9')">9</button>
-    <button onclick="append('/')">÷</button>
-    <button onclick="append('Math.sqrt(')">√</button>
-
-    <!-- 4 5 6 -->
-    <button onclick="append('4')">4</button>
-    <button onclick="append('5')">5</button>
-    <button onclick="append('6')">6</button>
-    <button onclick="append('*')">×</button>
-    <button onclick="append('**2')">x²</button>
-
-    <!-- 1 2 3 -->
-    <button onclick="append('1')">1</button>
-    <button onclick="append('2')">2</button>
-    <button onclick="append('3')">3</button>
-    <button onclick="append('-')">−</button>
-    <button onclick="append('Math.pow(')">xʸ</button>
-
-    <!-- 0 row -->
-    <button onclick="append('0')">0</button>
-    <button onclick="append('.')">.</button>
-    <button onclick="append('Math.PI')">π</button>
-    <button onclick="append('+')">+</button>
-    <button onclick="calculate()" class="calc-equal">=</button>
-
-    <!-- Last Row -->
-    <button onclick="append('(')">(</button>
-    <button onclick="append(')')">)</button>
-    <button onclick="deleteLast()">DEL</button>
-    <button onclick="append('Math.sin(')">sin</button>
-    <button onclick="append('Math.cos(')">cos</button>
-
-    <!-- Final Scientific -->
-    <button onclick="append('Math.tan(')">tan</button>
-    <button onclick="append('Math.log10(')">log</button>
-    <button onclick="append('Math.log(')">ln</button>
-    <button onclick="append('Math.E')">e</button>
-
-</div>
-
-</div>
-
-<!-- ====== STYLES ====== -->
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<title>CBT Scientific Calculator</title>
 <style>
-.calc-open-btn {
+body { font-family: Arial, sans-serif; }
+
+/* Floating Open Button */
+#open-calc-btn {
     position: fixed;
     bottom: 12px;
     right: 12px;
     background: #2563eb;
     color: white;
-    padding: 10px 16px;
+    padding: 12px 18px;
     border-radius: 9999px;
     font-weight: 600;
-    z-index: 50;
+    z-index: 9999;
+    cursor: pointer;
     box-shadow: 0 4px 6px rgba(0,0,0,0.2);
 }
 
-.calculator {
-    position: fixed;
-    bottom: 70px;
-    right: 12px;
+/* Calculator Container */
+#calculator {
     width: 90%;
     max-width: 400px;
-    background: #1f2937;
-    color: white;
-    border-radius: 12px;
-    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
-    z-index: 50;
+    background: #f4f4f4;
+    border: 2px solid #000;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+    position: fixed;
+    top: 50px;
+    left: 50%;
+    transform: translateX(-50%);
+    display: none;
+    flex-direction: column;
+    z-index: 9999;
     touch-action: none;
+    transition: height 0.2s ease;
 }
 
+/* Header */
 .calc-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: #111827;
-    padding: 10px 12px;
-    border-top-left-radius: 12px;
-    border-top-right-radius: 12px;
+    background: #004080;
+    color: #fff;
+    padding: 10px;
+    font-weight: bold;
     cursor: move;
+    user-select: none;
+    position: relative;
+    text-align: center;
 }
 
-.calc-title { font-weight: 600; }
-.calc-controls button { margin-left: 6px; font-weight: bold; }
+.calc-header .controls {
+    position: absolute;
+    right: 8px;
+    top: 8px;
+}
 
-.calc-display-wrapper { padding: 10px; }
+.calc-header .controls span {
+    cursor: pointer;
+    font-weight: bold;
+    margin-left: 6px;
+    font-size: 18px;
+}
+
+/* Display */
 #display {
     width: 100%;
-    padding: 12px;
-    font-size: 1.25rem;
-    border-radius: 6px;
-    border: none;
+    height: 55px;
+    font-size: 22px;
     text-align: right;
-    color: black;
+    padding: 8px;
+    border: 1px solid #000;
+    box-sizing: border-box;
 }
 
-.calc-mode-wrapper {
-    padding: 0 10px 10px;
-    display: flex;
-    gap: 6px;
-}
-.calc-mode-wrapper button {
-    background: #7c3aed;
-    padding: 6px 10px;
-    border-radius: 6px;
-    font-size: 0.875rem;
-}
-
-.calc-clear {
-    background: #dc2626;
+/* History */
+#history-panel {
+    height: 100px;
+    overflow-y: auto;
+    background: #fff;
+    border-top: 1px solid #000;
+    border-bottom: 1px solid #000;
+    padding: 5px;
+    font-size: 12px;
 }
 
+/* Grid buttons */
 .calc-grid {
     display: grid;
     grid-template-columns: repeat(5, 1fr);
     gap: 6px;
-    padding: 10px;
-    overflow-y: auto;
+    padding: 6px;
 }
 
 .calc-grid button {
-    padding: 12px 6px;
-    border-radius: 8px;
-    background: #374151;
-    font-size: 0.9rem;
-    user-select: none;
-    text-align: center;
-    min-height: 48px;
-    transition: 0.2s ease;
+    padding: 14px 6px;
+    font-size: 16px;
+    border: 1px solid #000;
+    background: #e6e6e6;
+    cursor: pointer;
+    border-radius: 4px;
 }
 
-.calc-grid button:active {
-    transform: scale(0.95);
-    background: #4b5563;
+.calc-grid button:hover { background: #d4d4d4; }
+
+/* Special buttons */
+.equal-btn { background: #006600 !important; color: white; font-weight: bold; }
+.clear-btn { background: #cc0000 !important; color: white !important; font-weight: bold; }
+
+@media (max-width: 500px) {
+    .calc-grid { grid-template-columns: repeat(4, 1fr); }
+    .calc-grid button { font-size: 14px; padding: 12px 4px; }
+    #display { font-size: 20px; padding: 6px; }
+    #history-panel { font-size: 11px; height: 80px; }
 }
-
-.calc-grid button:hover { background: #4b5563; }
-.calc-equal { background: #16a34a !important; }
-
-@media (max-width: 640px) {
-
-    #calculator {
-        border-radius: 16px 16px 0 0;
-        left: 0 !important;
-        right: 0 !important;
-        bottom: 0;
-        top: auto !important;
-    }
-
-    .calc-grid {
-        grid-template-columns: repeat(4, 1fr);
-        gap: 5px;
-    }
-
-    .calc-grid button {
-        font-size: 0.8rem;
-        padding: 10px 4px;
-        min-height: 44px;
-    }
-
-    #display {
-        font-size: 1.1rem;
-        padding: 12px;
-    }
-}
-
-
-#calculator {
-    display: flex;
-    flex-direction: column;
-}
-
-.calc-grid {
-    flex: 1;
-}
-
 </style>
+</head>
+<body>
 
-<!-- ====== SCRIPT ====== -->
+<!-- Open Button -->
+<div id="open-calc-btn" onclick="openCalculator()">Calculator</div>
+
+<!-- Calculator -->
+<div id="calculator">
+    <div class="calc-header">
+        CBT Scientific Calculator
+        <div class="controls">
+            <span onclick="minimizeCalculator()">−</span>
+            <span onclick="closeCalculator()">✕</span>
+        </div>
+    </div>
+
+    <input type="text" id="display" readonly>
+    <div id="history-panel"></div>
+
+    <div class="calc-grid">
+        <button onclick="append('7')">7</button>
+        <button onclick="append('8')">8</button>
+        <button onclick="append('9')">9</button>
+        <button onclick="append('/')">÷</button>
+        <button onclick="clearDisplay()" class="clear-btn">AC</button>
+
+        <button onclick="append('4')">4</button>
+        <button onclick="append('5')">5</button>
+        <button onclick="append('6')">6</button>
+        <button onclick="append('*')">×</button>
+        <button onclick="percent()">%</button>
+
+        <button onclick="append('1')">1</button>
+        <button onclick="append('2')">2</button>
+        <button onclick="append('3')">3</button>
+        <button onclick="append('-')">−</button>
+        <button onclick="append('^')">xʸ</button>
+
+        <button onclick="append('0')">0</button>
+        <button onclick="append('.')">.</button>
+        <button onclick="calculate()" class="equal-btn">=</button>
+        <button onclick="append('+')">+</button>
+        <button onclick="append('(')">(</button>
+
+        <button onclick="append(')')">)</button>
+        <button onclick="square()">x²</button>
+        <button onclick="append('sin(')">sin</button>
+        <button onclick="append('cos(')">cos</button>
+        <button onclick="append('tan(')">tan</button>
+
+        <button onclick="append('log(')">log</button>
+        <button onclick="append('ln(')">ln</button>
+        <button onclick="append('sqrt(')">√</button>
+        <button onclick="append('π')">π</button>
+        <button onclick="toggleMode()">DEG</button>
+
+        <button onclick="backspace()">⌫</button>
+    </div>
+</div>
+
 <script>
-let memory = 0;
-let isDegree = true;
-const calc = document.getElementById("calculator");
 const display = document.getElementById("display");
+const historyPanel = document.getElementById("history-panel");
+const calculator = document.getElementById("calculator");
+let isDegree = true;
+const MAX_DIGITS = 12;
+let minimized = false;
 
-function openCalculator() { calc.classList.remove("hidden"); }
-function closeCalculator() { calc.classList.add("hidden"); }
-function minimizeCalculator() { calc.classList.toggle("h-16"); }
+/* Open / Close */
+function openCalculator(){ calculator.style.display="flex"; }
+function closeCalculator(){ calculator.style.display="none"; }
 
-function append(value) { display.value += value; }
-function clearDisplay() { display.value = ""; }
-function deleteLast() { display.value = display.value.slice(0, -1); }
-function toggleMode() {
-    isDegree = !isDegree;
-    document.getElementById("modeBtn").innerText = isDegree ? "DEG" : "RAD";
+/* Minimize */
+function minimizeCalculator(){
+    minimized = !minimized;
+    if(minimized){
+        calculator.style.height="60px";
+        calculator.querySelector(".calc-grid").style.display="none";
+        historyPanel.style.display="none";
+    } else {
+        calculator.style.height="auto";
+        calculator.querySelector(".calc-grid").style.display="grid";
+        historyPanel.style.display="block";
+    }
 }
-function calculate() {
-    try {
-        let expr = display.value;
-        if (isDegree) {
-            expr = expr.replace(/Math.sin\((.*?)\)/g, (_, v) => Math.sin(eval(v) * Math.PI/180));
-            expr = expr.replace(/Math.cos\((.*?)\)/g, (_, v) => Math.cos(eval(v) * Math.PI/180));
-            expr = expr.replace(/Math.tan\((.*?)\)/g, (_, v) => Math.tan(eval(v) * Math.PI/180));
-        }
-        display.value = eval(expr);
-    } catch { display.value = "Error"; }
+
+/* Buttons */
+function append(value){
+    const digitsOnly = display.value.replace(/\D/g,"");
+    if(digitsOnly.length>=MAX_DIGITS && /\d/.test(value)) return;
+    display.value += value;
+}
+function square(){ append("^2"); }
+function percent(){ display.value="("+display.value+")/100"; }
+function clearDisplay(){ display.value=""; }
+function backspace(){ display.value=display.value.slice(0,-1); }
+function toggleMode(){ isDegree=!isDegree; event.target.textContent=isDegree?"DEG":"RAD"; }
+
+/* Calculate / History */
+function calculate(){
+    try{
+        let expr=display.value.replace(/π/g,Math.PI);
+        const result=safeEvaluate(expr);
+        const rounded=parseFloat(result.toFixed(8));
+        addToHistory(display.value+" = "+rounded);
+        display.value=rounded;
+    }catch{ display.value="Error"; }
+}
+function addToHistory(entry){
+    const div=document.createElement("div");
+    div.textContent=entry;
+    historyPanel.prepend(div);
+    if(historyPanel.children.length>5) historyPanel.removeChild(historyPanel.lastChild);
 }
 
-/* Memory */
-function memoryClear() { memory = 0; }
-function memoryRecall() { display.value += memory; }
-function memoryAdd() { memory += parseFloat(display.value) || 0; }
-function memorySubtract() { memory -= parseFloat(display.value) || 0; }
+/* Safe Engine */
+function safeEvaluate(expression){
+    const operators={"+":(a,b)=>a+b,"-":(a,b)=>a-b,"*":(a,b)=>a*b,"/":(a,b)=>a/b,"^":(a,b)=>Math.pow(a,b)};
+    const functions={sin:x=>Math.sin(isDegree?x*Math.PI/180:x),
+                     cos:x=>Math.cos(isDegree?x*Math.PI/180:x),
+                     tan:x=>Math.tan(isDegree?x*Math.PI/180:x),
+                     log:x=>Math.log10(x),
+                     ln:x=>Math.log(x),
+                     sqrt:x=>Math.sqrt(x)};
+    function tokenize(s){return s.match(/(\d+(\.\d+)?)|[()+\-*/^]|[A-Za-z]+/g);}
+    function precedence(op){return op=="^"?3:op=="*"||op=="/"?2:1;}
+    function toRPN(tokens){
+        let out=[], stack=[];
+        tokens.forEach(token=>{
+            if(!isNaN(token)) out.push(parseFloat(token));
+            else if(functions[token]) stack.push(token);
+            else if(operators[token]){
+                while(stack.length && operators[stack[stack.length-1]] && precedence(token)<=precedence(stack[stack.length-1])) out.push(stack.pop());
+                stack.push(token);
+            } else if(token=="(") stack.push(token);
+            else if(token==")"){while(stack.length && stack[stack.length-1]!="(") out.push(stack.pop()); stack.pop(); if(functions[stack[stack.length-1]]) out.push(stack.pop());}
+        });
+        while(stack.length) out.push(stack.pop());
+        return out;
+    }
+    function evalRPN(rpn){
+        let stack=[];
+        rpn.forEach(token=>{
+            if(typeof token=="number") stack.push(token);
+            else if(operators[token]){let b=stack.pop(),a=stack.pop(); stack.push(operators[token](a,b));}
+            else if(functions[token]) stack.push(functions[token](stack.pop()));
+        });
+        return stack[0];
+    }
+    return evalRPN(toRPN(tokenize(expression)));
+}
 
-/* Dragging (mobile + desktop) */
-dragElement(calc);
-function dragElement(elmnt) {
-    const header = document.getElementById("calc-header");
+/* Drag */
+dragElement(calculator);
+function dragElement(elmnt){
+    const header=elmnt.querySelector(".calc-header");
     let pos1=0,pos2=0,pos3=0,pos4=0;
-    header.onpointerdown = dragMouseDown;
-
-    function dragMouseDown(e) {
+    header.onpointerdown=dragMouseDown;
+    function dragMouseDown(e){
         e.preventDefault();
-        pos3 = e.clientX; pos4 = e.clientY;
-        document.onpointerup = closeDrag;
-        document.onpointermove = elementDrag;
+        pos3=e.clientX; pos4=e.clientY;
+        document.onpointerup=closeDrag;
+        document.onpointermove=elementDrag;
     }
-    function elementDrag(e) {
+    function elementDrag(e){
         e.preventDefault();
-        pos1 = pos3 - e.clientX;
-        pos2 = pos4 - e.clientY;
-        pos3 = e.clientX; pos4 = e.clientY;
-        elmnt.style.top = (elmnt.offsetTop - pos2) + "px";
-        elmnt.style.left = (elmnt.offsetLeft - pos1) + "px";
+        pos1=pos3-e.clientX; pos2=pos4-e.clientY;
+        pos3=e.clientX; pos4=e.clientY;
+        elmnt.style.top=(elmnt.offsetTop-pos2)+"px";
+        elmnt.style.left=(elmnt.offsetLeft-pos1)+"px";
     }
-    function closeDrag() {
-        document.onpointerup = null;
-        document.onpointermove = null;
-    }
+    function closeDrag(){ document.onpointerup=null; document.onpointermove=null; }
 }
 </script>
-
-{% endif %}
+</body>
+</html>
