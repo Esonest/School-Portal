@@ -37,11 +37,9 @@ class LiveClass(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
 
-    youtube_link = models.URLField(
-        default="https://www.youtube.com/embed/@esonestlimited6213",
-        help_text="Global YouTube live link for all schools"
-    )
+    hms_room_id = models.CharField(max_length=255, blank=True, null=True)
 
+    
     class Meta:
         ordering = ["-start_time"]
 

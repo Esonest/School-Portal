@@ -7,6 +7,10 @@ from django.contrib import messages
 
 from .models import LiveClass,LiveClassAttendance
 from .forms import LiveClassForm
+from django.shortcuts import get_object_or_404, redirect, render
+from django.conf import settings
+import requests
+
 
 
 def is_school_admin(user):
@@ -201,54 +205,105 @@ def liveclass_delete(request, pk):
     return render(request, "liveclass/delete.html", {"live_class": live_class})
 
 
+def generate_100ms_token(room_id, user_id, role):
+    """
+    Generate 100ms auth token for a user.
+    """
+    response = requests.post(
+        "https://api.100ms.live/v2/tokens",
+        auth=(settings.HMS_API_KEY, settings.HMS_API_SECRET),
+        json={
+            "room_id": room_id,
+            "user_id": str(user_id),
+            "role": role,
+        }
+    )
+
+    if response.status_code != 200:
+        return None
+
+    return response.json().get("token")
+
+
 @login_required
 def liveclass_join(request, pk):
-    school = getattr(request.user, "school", None)
+    user = request.user
+    school = getattr(user, "school", None)
+
     live_class = get_object_or_404(
         LiveClass.objects.select_related("teacher"),
         pk=pk,
         school=school
     )
 
-    # Permission check
-    if not any([
-        getattr(request.user, "is_student_user", False),
-        getattr(request.user, "is_teacher_user", False),
-        getattr(request.user, "is_schooladmin", False),
-        getattr(request.user, "is_superadmin", False),
-    ]):
-        return HttpResponseForbidden()
+    # ===============================
+    # PERMISSION CHECK
+    # ===============================
+    is_student = getattr(user, "is_student_user", False)
+    is_teacher = getattr(user, "is_teacher_user", False)
+    is_schooladmin = getattr(user, "is_schooladmin", False)
+    is_superadmin = getattr(user, "is_superadmin", False)
 
-    # Update status
+    if not any([is_student, is_teacher, is_schooladmin, is_superadmin]):
+        return HttpResponseForbidden("Not allowed to join this class.")
+
+    # ===============================
+    # STATUS CHECK
+    # ===============================
     live_class.update_status()
+
     if live_class.status != "live":
         messages.error(request, "Class is not currently active.")
         return redirect("liveclass:liveclass_list")
 
-    # Log attendance (only for students)
-    if getattr(request.user, "is_student_user", False):
+    # ===============================
+    # ATTENDANCE (STUDENTS ONLY)
+    # ===============================
+    if is_student:
         attendance, created = LiveClassAttendance.objects.get_or_create(
             live_class=live_class,
-            student=request.user.student_profile
+            student=user.student_profile
         )
+
         if not created and attendance.left_at:
             attendance.joined_at = timezone.now()
             attendance.left_at = None
-            attendance.save()
+            attendance.save(update_fields=["joined_at", "left_at"])
 
-    # Role flags for template
-    is_moderator = any([
-        getattr(request.user, "is_teacher_user", False),
-        getattr(request.user, "is_schooladmin", False),
-        getattr(request.user, "is_superadmin", False),
-    ])
+    # ===============================
+    # DETERMINE ROLE
+    # ===============================
+    is_moderator = any([is_teacher, is_schooladmin, is_superadmin])
+    role = "teacher" if is_moderator else "student"
 
+    # ===============================
+    # ENSURE ROOM EXISTS
+    # ===============================
+    if not live_class.hms_room_id:
+        messages.error(request, "Live room not configured.")
+        return redirect("liveclass:liveclass_list")
+
+    # ===============================
+    # GENERATE 100ms TOKEN
+    # ===============================
+    token = generate_100ms_token(
+        room_id=live_class.hms_room_id,
+        user_id=user.id,
+        role=role
+    )
+
+    if not token:
+        messages.error(request, "Unable to join live room. Try again.")
+        return redirect("liveclass:liveclass_list")
+
+    # ===============================
+    # RENDER JOIN PAGE
+    # ===============================
     return render(request, "liveclass/join.html", {
         "live_class": live_class,
+        "hms_token": token,
         "is_moderator": is_moderator,
-        "youtube_link": live_class.youtube_link,  # pass YouTube link
     })
-
 
 
 from django.db.models import Count

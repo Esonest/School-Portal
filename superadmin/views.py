@@ -1,6 +1,6 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
-from accounts.decorators import superadmin_required
+from accounts.decorators import superadmin_required, superadmin_or_schooladmin_required
 from accounts.models import User, School, Teacher, SchoolAdmin
 
 
@@ -683,112 +683,166 @@ from django.core.exceptions import PermissionDenied
 
 
 @login_required
+@superadmin_or_schooladmin_required
 def class_list(request):
-    if not request.user.is_superadmin:
-        raise PermissionDenied
 
-    classes = SchoolClass.objects.select_related("school").order_by("name")
+    if request.user.is_superadmin:
+        classes = SchoolClass.objects.select_related("school").order_by("name")
+    else:
+        classes = SchoolClass.objects.select_related("school")\
+            .filter(school=request.user.school)\
+            .order_by("name")
+
     return render(request, "superadmin/classes/class_list.html", {"classes": classes})
 
 
 @login_required
+@superadmin_or_schooladmin_required
 def class_create(request):
-    if not request.user.is_superadmin:
-        raise PermissionDenied
 
     if request.method == "POST":
         form = SchoolClassForm(request.POST)
+
         if form.is_valid():
-            form.save()
+            school_class = form.save(commit=False)
+
+            # 🔒 Force school for schooladmin
+            if request.user.is_schooladmin:
+                school_class.school = request.user.school
+
+            school_class.save()
             messages.success(request, "Class created successfully.")
             return redirect("superadmin:class_list")
     else:
         form = SchoolClassForm()
 
+        # 🔒 Limit school choices for schooladmin
+        if request.user.is_schooladmin:
+            form.fields["school"].queryset = School.objects.filter(id=request.user.school_id)
+
     return render(request, "superadmin/classes/class_form.html", {"form": form})
 
 
 @login_required
+@superadmin_or_schooladmin_required
 def class_edit(request, class_id):
-    if not request.user.is_superadmin:
-        raise PermissionDenied
 
     school_class = get_object_or_404(SchoolClass, id=class_id)
+
+    # 🔒 Prevent editing other schools
+    if request.user.is_schooladmin and school_class.school != request.user.school:
+        raise PermissionDenied
 
     if request.method == "POST":
         form = SchoolClassForm(request.POST, instance=school_class)
         if form.is_valid():
-            form.save()
+            updated = form.save(commit=False)
+
+            if request.user.is_schooladmin:
+                updated.school = request.user.school
+
+            updated.save()
             messages.success(request, "Class updated successfully.")
             return redirect("superadmin:class_list")
     else:
         form = SchoolClassForm(instance=school_class)
 
+        if request.user.is_schooladmin:
+            form.fields["school"].queryset = School.objects.filter(id=request.user.school_id)
+
     return render(request, "superadmin/classes/class_form.html", {"form": form})
 
 
 @login_required
+@superadmin_or_schooladmin_required
 def class_delete(request, class_id):
-    if not request.user.is_superadmin:
-        raise PermissionDenied
 
     school_class = get_object_or_404(SchoolClass, id=class_id)
+
+    if request.user.is_schooladmin and school_class.school != request.user.school:
+        raise PermissionDenied
+
     school_class.delete()
     messages.success(request, "Class deleted successfully.")
 
     return redirect("superadmin:class_list")
 
 @login_required
+@superadmin_or_schooladmin_required
 def subject_list(request):
-    if not request.user.is_superadmin:
-        raise PermissionDenied
 
-    subjects = Subject.objects.select_related("school").order_by("name")
+    if request.user.is_superadmin:
+        subjects = Subject.objects.select_related("school").order_by("name")
+    else:
+        subjects = Subject.objects.select_related("school")\
+            .filter(school=request.user.school)\
+            .order_by("name")
+
     return render(request, "superadmin/subjects/subject_list.html", {"subjects": subjects})
 
 
 @login_required
+@superadmin_or_schooladmin_required
 def subject_create(request):
-    if not request.user.is_superadmin:
-        raise PermissionDenied
 
     if request.method == "POST":
         form = SubjectForm(request.POST)
+
         if form.is_valid():
-            form.save()
+            subject = form.save(commit=False)
+
+            if request.user.is_schooladmin:
+                subject.school = request.user.school
+
+            subject.save()
             messages.success(request, "Subject created successfully.")
             return redirect("superadmin:subject_list")
     else:
         form = SubjectForm()
 
+        if request.user.is_schooladmin:
+            form.fields["school"].queryset = School.objects.filter(id=request.user.school_id)
+
     return render(request, "superadmin/subjects/subject_form.html", {"form": form})
 
-
 @login_required
+@superadmin_or_schooladmin_required
 def subject_edit(request, subject_id):
-    if not request.user.is_superadmin:
-        raise PermissionDenied
 
     subject = get_object_or_404(Subject, id=subject_id)
+
+    if request.user.is_schooladmin and subject.school != request.user.school:
+        raise PermissionDenied
 
     if request.method == "POST":
         form = SubjectForm(request.POST, instance=subject)
         if form.is_valid():
-            form.save()
+            updated = form.save(commit=False)
+
+            if request.user.is_schooladmin:
+                updated.school = request.user.school
+
+            updated.save()
             messages.success(request, "Subject updated successfully.")
             return redirect("superadmin:subject_list")
     else:
         form = SubjectForm(instance=subject)
 
+        if request.user.is_schooladmin:
+            form.fields["school"].queryset = School.objects.filter(id=request.user.school_id)
+
     return render(request, "superadmin/subjects/subject_form.html", {"form": form})
 
 
 @login_required
+@superadmin_or_schooladmin_required
 def subject_delete(request, subject_id):
-    if not request.user.is_superadmin:
-        raise PermissionDenied
 
     subject = get_object_or_404(Subject, id=subject_id)
+
+    if request.user.is_schooladmin and subject.school != request.user.school:
+        raise PermissionDenied
+
     subject.delete()
     messages.success(request, "Subject deleted successfully.")
 

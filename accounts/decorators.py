@@ -74,3 +74,15 @@ def superadmin_required(view_func):
             raise Http404("Not authorized")
         return view_func(request, *args, **kwargs)
     return wrapper
+
+
+from django.core.exceptions import PermissionDenied
+from functools import wraps
+
+def superadmin_or_schooladmin_required(view_func):
+    @wraps(view_func)
+    def wrapper(request, *args, **kwargs):
+        if not (request.user.is_superadmin or request.user.is_schooladmin):
+            raise PermissionDenied
+        return view_func(request, *args, **kwargs)
+    return wrapper

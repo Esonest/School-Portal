@@ -1,0 +1,26 @@
+{% extends "accounts/exam_base.html" %}
+{% block content %}
+
+<div class="min-h-[60vh] flex items-center justify-center px-4">
+  <div class="bg-white shadow-xl rounded-2xl p-8 max-w-lg w-full text-center animate-fadeIn">
+
+    <div class="text-5xl mb-4">✅</div>
+
+    <h2 class="text-2xl font-bold text-gray-800 mb-3">
+      Exam Has Ended
+    </h2>
+
+    <p class="text-gray-600 mb-6">
+      You have already submitted this exam.  
+      You cannot go back to change answers.
+    </p>
+
+    <a href="{% url 'cbt:student_exam_result' exam_id=exam.id %}"
+       class="inline-block bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-semibold shadow">
+       View Result
+    </a>
+
+  </div>
+</div>
+
+{% endblock %}

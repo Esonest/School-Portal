@@ -172,7 +172,9 @@
     </div>
  
 
-{% include "cbt/partials/calculator.html" %}
+{% if exam.allow_calculator %}
+    {% include "cbt/partials/calculator.html" %}
+{% endif %}
   </div>
 
   

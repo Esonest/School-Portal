@@ -82,6 +82,13 @@
     {% csrf_token %}
 
    <!-- ================= MOBILE ================= -->
+    <!-- MOBILE SELECT ALL -->
+<div class="sm:hidden mb-3 flex items-center gap-2">
+  <input type="checkbox" id="selectAllMobile" class="h-4 w-4">
+  <label for="selectAllMobile" class="text-sm font-medium text-gray-700">
+    Select All on This Page
+  </label>
+</div>
 <div class="grid grid-cols-1 gap-4 sm:hidden">
   {% for q in questions %}
     <label class="bg-white rounded-xl shadow p-4 space-y-2 cursor-pointer
@@ -291,12 +298,26 @@
 
 <!-- SELECT ALL -->
 <script>
-  const selectAll = document.getElementById("selectAll");
-  if (selectAll) {
-    selectAll.addEventListener("change", function () {
-      document
-        .querySelectorAll(".question-checkbox:not(:disabled)")
-        .forEach(cb => cb.checked = this.checked);
+  function toggleAll(sourceCheckbox) {
+    document
+      .querySelectorAll(".question-checkbox:not(:disabled)")
+      .forEach(cb => cb.checked = sourceCheckbox.checked);
+  }
+
+  const selectAllDesktop = document.getElementById("selectAll");
+  const selectAllMobile = document.getElementById("selectAllMobile");
+
+  if (selectAllDesktop) {
+    selectAllDesktop.addEventListener("change", function () {
+      toggleAll(this);
+      if (selectAllMobile) selectAllMobile.checked = this.checked;
+    });
+  }
+
+  if (selectAllMobile) {
+    selectAllMobile.addEventListener("change", function () {
+      toggleAll(this);
+      if (selectAllDesktop) selectAllDesktop.checked = this.checked;
     });
   }
 </script>

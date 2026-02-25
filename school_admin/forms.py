@@ -205,15 +205,22 @@ class CBTExamForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         # ---------- GLOBAL TAILWIND STYLING ----------
-        for field in self.fields.values():
-            field.widget.attrs.update({
-                "class": (
-                    "w-full border-gray-300 rounded px-3 py-2 text-slate-800 "
-                    "placeholder-slate-400 focus:outline-none focus:ring-2 "
-                    "focus:ring-indigo-500 transition"
-                )
-            })
+        for name, field in self.fields.items():
+            # Checkbox styling (allow_calculator)
+            if isinstance(field.widget, forms.CheckboxInput):
+                field.widget.attrs.update({
+                    "class": "h-5 w-5 text-indigo-600 border-gray-300 rounded focus:ring-indigo-500"
+                })
 
+            # Normal inputs
+            else:
+                field.widget.attrs.update({
+                    "class": (
+                        "w-full border-gray-300 rounded px-3 py-2 text-slate-800 "
+                        "placeholder-slate-400 focus:outline-none focus:ring-2 "
+                        "focus:ring-indigo-500 transition"
+                    )
+                })
         # ---------- SCHOOL FILTERING ----------
         if user:
             if getattr(user, 'is_superadmin', False):

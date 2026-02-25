@@ -1,243 +1,199 @@
 {% extends "accounts/base.html" %}
 {% block content %}
 
-<div class="max-w-7xl mx-auto px-4 sm:px-6 py-6">
+<div class="h-screen flex flex-col bg-gray-100">
 
-    <!-- CLASS HEADER -->
-    <div class="flex justify-between items-center mb-4">
-        <h2 class="text-2xl sm:text-3xl font-bold">{{ live_class.title }}</h2>
+  <!-- HEADER -->
+  <div class="bg-white shadow px-6 py-4 flex justify-between items-center">
+    <h2 class="text-xl font-bold">{{ live_class.title }}</h2>
 
-        <div class="flex gap-4">
-            <div class="bg-gray-100 px-4 py-2 rounded-lg text-sm font-semibold">
-                ⏱ <span id="class-timer">00:00:00</span>
-            </div>
-            <div class="bg-blue-50 text-blue-700 px-4 py-2 rounded-lg text-sm font-semibold">
-                👥 <span id="attendance-count">0</span>
-            </div>
-            <button id="leave-btn" class="bg-red-600 text-white px-4 py-2 rounded-lg">🚪 Leave Class</button>
-        </div>
+    <div class="flex items-center gap-4">
+      <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-lg text-sm">
+        👥 <span id="participant-count">0</span>
+      </span>
+
+      {% if is_moderator %}
+      <button id="mute-all-btn"
+        class="bg-yellow-500 text-white px-3 py-2 rounded-lg text-sm">
+        🔇 Mute All
+      </button>
+      {% endif %}
+
+      <button id="leave-btn"
+        class="bg-red-600 text-white px-4 py-2 rounded-lg">
+        Leave
+      </button>
     </div>
+  </div>
 
-    <!-- TEACHER YOUTUBE STREAM -->
-    <div class="mb-4">
-    <iframe id="youtube-iframe" width="100%" height="400"
-        src="{{ live_class.youtube_link }}?autoplay=1"
-        frameborder="0"
-        allow="autoplay; encrypted-media"
-        allowfullscreen>
-    </iframe>
-</div>
+  <!-- VIDEO GRID -->
+  <div id="video-grid"
+    class="flex-1 grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3 p-4 overflow-auto">
+  </div>
 
+  <!-- CONTROLS -->
+  <div class="bg-white shadow p-4 flex justify-center gap-4">
 
-    <!-- STUDENT VIDEO GRID -->
-    <div id="student-video-grid" class="grid grid-cols-3 gap-2 mb-4"></div>
-    <button id="enable-camera-btn" class="bg-green-600 text-white px-4 py-2 rounded-lg mb-4">
-        Enable My Camera
+    <button id="mic-btn" class="bg-gray-200 px-4 py-2 rounded-lg">
+      🎤 Mic
     </button>
 
-    <!-- RAISE HAND -->
-    <button id="raise-hand-btn" class="w-full bg-yellow-500 text-white py-2 rounded-lg text-sm hover:bg-yellow-600 mb-4">
-        ✋ Raise Hand
+    <button id="cam-btn" class="bg-gray-200 px-4 py-2 rounded-lg">
+      📷 Camera
     </button>
 
-    <!-- CHAT BOX -->
-    <div id="chat-box" class="fixed bottom-6 right-6 w-80 bg-white shadow-2xl rounded-2xl hidden flex flex-col overflow-hidden z-50">
-        <div class="bg-gray-800 text-white p-3 text-sm flex justify-between">
-            Classroom Chat
-            <button onclick="toggleChat()">✕</button>
-        </div>
-        <div id="chat-messages" class="p-3 h-60 overflow-y-auto text-sm space-y-2"></div>
-        <div class="p-2 border-t flex">
-            <input id="chat-input" class="flex-1 border rounded-lg px-2 text-sm" placeholder="Type message...">
-            <button id="chat-send-btn" class="ml-2 bg-blue-600 text-white px-3 rounded-lg text-sm">Send</button>
-        </div>
+    <button id="hand-btn" class="bg-yellow-500 text-white px-4 py-2 rounded-lg">
+      ✋ Raise Hand
+    </button>
+
+    {% if is_moderator %}
+    <button id="screen-btn"
+      class="bg-blue-600 text-white px-4 py-2 rounded-lg">
+      🖥 Share Screen
+    </button>
+    {% endif %}
+
+  </div>
+
+  <!-- CHAT -->
+  <div class="fixed bottom-6 right-6 w-80 bg-white shadow-xl rounded-xl hidden flex-col"
+       id="chat-box">
+    <div class="bg-gray-800 text-white p-3 flex justify-between">
+      Class Chat
+      <button onclick="toggleChat()">✕</button>
     </div>
-    <button onclick="toggleChat()" class="fixed bottom-6 right-6 bg-blue-600 text-white p-4 rounded-full shadow-xl">💬</button>
+    <div id="chat-messages" class="p-3 h-60 overflow-y-auto text-sm"></div>
+    <div class="p-2 border-t flex">
+      <input id="chat-input"
+        class="flex-1 border rounded px-2 text-sm"
+        placeholder="Message..." />
+      <button id="send-btn"
+        class="ml-2 bg-blue-600 text-white px-3 rounded">
+        Send
+      </button>
+    </div>
+  </div>
+
+  <button onclick="toggleChat()"
+    class="fixed bottom-6 right-6 bg-blue-600 text-white p-4 rounded-full shadow-xl">
+    💬
+  </button>
+
 </div>
 
-<!-- PEERJS -->
-<script src="https://unpkg.com/peerjs@1.4.7/dist/peerjs.min.js"></script>
+<!-- 100ms CORE SDK -->
+<script src="https://unpkg.com/@100mslive/hms-video-store@latest/dist/hms-video-store.min.js"></script>
 
 <script>
-let attendanceStarted = false;
-let timer = null;
-let seconds = 0;
-const maxDuration = 7200;
-let participantCount = 0;
+const { HMSReactiveStore } = HMSVideoStore;
 
-const classTimer = document.getElementById("class-timer");
-const attendanceCount = document.getElementById("attendance-count");
-const leaveBtn = document.getElementById("leave-btn");
-const enableCameraBtn = document.getElementById("enable-camera-btn");
-const studentVideoGrid = document.getElementById("student-video-grid");
-const raiseHandBtn = document.getElementById("raise-hand-btn");
+const hms = new HMSReactiveStore();
+const actions = hms.getActions();
+const store = hms.getStore();
 
-let localStream;
-let peer;
-let peers = {};
+const grid = document.getElementById("video-grid");
+const countEl = document.getElementById("participant-count");
 
-const studentId = "{{ request.user.id }}";
-const liveClassId = "{{ live_class.id }}";
-
-// ===== TIMER =====
-function startTimer() {
-    timer = setInterval(() => {
-        seconds++;
-        const hrs = String(Math.floor(seconds / 3600)).padStart(2,'0');
-        const mins = String(Math.floor((seconds % 3600)/60)).padStart(2,'0');
-        const secs = String(seconds % 60).padStart(2,'0');
-        classTimer.innerText = `${hrs}:${mins}:${secs}`;
-        if(seconds >= maxDuration) leaveClass();
-    }, 1000);
-}
-
-// ===== PARTICIPANT COUNTER =====
-function incrementParticipant() {
-    participantCount++;
-    attendanceCount.innerText = participantCount;
-}
-function decrementParticipant() {
-    participantCount = Math.max(0, participantCount - 1);
-    attendanceCount.innerText = participantCount;
-}
-
-// ===== PEERJS SETUP =====
-   peer = new Peer(studentId, {
-    host: "peerjs-server-production-8400.up.railway.app",
-    port: 443,
-    secure: true,
-    path: "/peerjs",
+// ================= JOIN =================
+actions.join({
+  userName: "{{ request.user.get_full_name|escapejs }}",
+  authToken: "{{ hms_token }}"
 });
 
-peer.on("open", id => {
-    console.log("Connected to PeerJS server with ID:", id);
-});
+// ================= RENDER =================
+function render() {
+  const state = store.getState();
+  grid.innerHTML = "";
+  countEl.innerText = state.peers.length;
 
-peer.on("error", err => {
-    console.error("PeerJS error:", err);
-});
+  state.peers.forEach(peer => {
+    const track = state.tracks.find(
+      t => t.peerId === peer.id && t.type === "video"
+    );
 
+    const box = document.createElement("div");
+    box.className = "bg-black rounded-lg relative overflow-hidden";
 
-peer.on('call', call => {
-    call.answer(localStream);
-    const videoEl = document.createElement("video");
-    call.on('stream', remoteStream => addRemoteVideo(videoEl, remoteStream));
-});
+    const video = document.createElement("video");
+    video.autoplay = true;
+    video.playsInline = true;
+    video.className = "w-full h-48 object-cover";
 
-// ===== ENABLE CAMERA =====
-enableCameraBtn.addEventListener("click", async () => {
-    if(localStream) return;
+    if (track) actions.attachVideo(track.id, video);
 
-    try {
-        localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
-        const videoEl = document.createElement("video");
-        videoEl.srcObject = localStream;
-        videoEl.autoplay = true;
-        videoEl.muted = true;
-        videoEl.className = "rounded shadow-lg w-full h-32 object-cover";
-        studentVideoGrid.appendChild(videoEl);
+    const label = document.createElement("div");
+    label.className =
+      "absolute bottom-2 left-2 bg-black bg-opacity-50 text-white text-xs px-2 py-1 rounded";
+    label.innerText = peer.name;
 
-        incrementParticipant();
-
-        await fetch("{% url 'liveclass:liveclass_enable_camera' live_class.id %}", {
-            method: "POST",
-            headers: {"X-CSRFToken": "{{ csrf_token }}"}
-        });
-
-        // Connect to other students
-        fetch(`/liveclass/{{ live_class.id }}/peers/`)
-            .then(r => r.json())
-            .then(ids => {
-                ids.forEach(id => {
-                    if(id === studentId || peers[id]) return;
-                    const call = peer.call(id, localStream);
-                    const remoteVideo = document.createElement("video");
-                    call.on('stream', remoteStream => addRemoteVideo(remoteVideo, remoteStream));
-                    call.on('close', decrementParticipant);
-                    peers[id] = call;
-                });
-            });
-
-        attendanceStarted = true;
-        startTimer();
-
-    } catch(err){
-        console.error(err);
-        alert("Cannot access camera/mic.");
-    }
-});
-
-// Add remote video
-function addRemoteVideo(videoEl, stream){
-    videoEl.srcObject = stream;
-    videoEl.autoplay = true;
-    videoEl.className = "rounded shadow-lg w-full h-32 object-cover";
-    studentVideoGrid.appendChild(videoEl);
-    incrementParticipant();
+    box.append(video, label);
+    grid.appendChild(box);
+  });
 }
 
-// ===== LEAVE CLASS =====
-function leaveClass(){
-    if(!attendanceStarted) return;
-    attendanceStarted = false;
+store.subscribe(render);
 
-    if(localStream){
-        localStream.getTracks().forEach(track => track.stop());
-    }
+// ================= CONTROLS =================
+document.getElementById("mic-btn").onclick =
+  () => actions.setLocalAudioEnabled(
+    !store.getState().localPeer.audioTrack?.enabled
+  );
 
-    for(let id in peers) peers[id].close();
-    clearInterval(timer);
+document.getElementById("cam-btn").onclick =
+  () => actions.setLocalVideoEnabled(
+    !store.getState().localPeer.videoTrack?.enabled
+  );
 
-    navigator.sendBeacon("{% url 'liveclass:liveclass_leave' live_class.id %}");
-    window.location.href = "{% url 'liveclass:liveclass_list' %}";
-}
-leaveBtn.addEventListener("click", leaveClass);
-window.addEventListener("beforeunload", leaveClass);
+// ================= RAISE HAND =================
+document.getElementById("hand-btn").onclick =
+  () => actions.sendBroadcastMessage("HAND_RAISED");
 
-// ===== CHAT + RAISE HAND (WEBSOCKET) =====
-const wsScheme = window.location.protocol === "https:" ? "wss" : "ws";
-const chatSocket = new WebSocket(`${wsScheme}://${window.location.host}/ws/liveclass/${liveClassId}/`);
-
-chatSocket.onmessage = function(e){
-    const data = JSON.parse(e.data);
-    const msgContainer = document.getElementById("chat-messages");
-
-    if(data.action === "raise_hand"){
-        const handMsg = document.createElement("div");
-        handMsg.className = "bg-yellow-50 p-2 rounded";
-        handMsg.innerText = `${data.sender} raised their hand ✋`;
-        msgContainer.appendChild(handMsg);
-    } else {
-        const chatMsg = document.createElement("div");
-        chatMsg.className = "bg-blue-50 p-2 rounded";
-        chatMsg.innerText = `${data.sender}: ${data.message}`;
-        msgContainer.appendChild(chatMsg);
-    }
-    msgContainer.scrollTop = msgContainer.scrollHeight;
+// ================= CHAT =================
+document.getElementById("send-btn").onclick = () => {
+  const input = document.getElementById("chat-input");
+  if (!input.value) return;
+  actions.sendBroadcastMessage(input.value);
+  input.value = "";
 };
 
-// Send chat
-document.getElementById("chat-send-btn").addEventListener("click", () => {
-    const input = document.getElementById("chat-input");
-    if(!input.value) return;
-    chatSocket.send(JSON.stringify({
-        message: input.value,
-        sender: "{{ request.user.get_full_name }}",
-        action: "chat"
-    }));
-    input.value = "";
+store.subscribe(() => {
+  const msgs = store.getState().messages;
+  const box = document.getElementById("chat-messages");
+  box.innerHTML = "";
+  msgs.forEach(m => {
+    const div = document.createElement("div");
+    div.innerText = `${m.senderName}: ${m.message}`;
+    box.appendChild(div);
+  });
 });
 
-// Raise hand
-raiseHandBtn.addEventListener("click", () => {
-    chatSocket.send(JSON.stringify({
-        action: "raise_hand",
-        sender: "{{ request.user.get_full_name }}"
-    }));
-});
+// ================= MODERATOR =================
+{% if is_moderator %}
+document.getElementById("screen-btn").onclick =
+  () => actions.setScreenShareEnabled(true);
 
-// Toggle chat box
-function toggleChat(){ document.getElementById("chat-box").classList.toggle("hidden"); }
+document.getElementById("mute-all-btn").onclick =
+  () => store.getState().peers.forEach(p => {
+    if (!p.isLocal) actions.setRemoteTrackEnabled(p.audioTrack, false);
+  });
+
+// Auto-end class when teacher leaves
+window.addEventListener("beforeunload", () => {
+  actions.leave();
+});
+{% endif %}
+
+// ================= LEAVE =================
+document.getElementById("leave-btn").onclick = async () => {
+  await actions.leave();
+  navigator.sendBeacon("{% url 'liveclass:liveclass_leave' live_class.id %}");
+  window.location.href = "{% url 'liveclass:liveclass_list' %}";
+};
+
+// ================= UI =================
+function toggleChat() {
+  document.getElementById("chat-box").classList.toggle("hidden");
+}
 </script>
 
 {% endblock %}

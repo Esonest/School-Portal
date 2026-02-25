@@ -144,8 +144,12 @@ def take_exam(request, exam_id, question_index):
         return redirect("cbt:start_exam_page", exam_id=exam.id)
 
     # Prevent retake after completion
+   # Prevent access after completion
     if submission.completed_on:
-        return redirect("cbt:exam_result", exam_id=exam.id)
+        return render(request, "cbt/exam_ended.html", {
+            "exam": exam,
+            "student": student,
+        })
 
     # ------------------ QUESTION ORDER ------------------
     question_order = request.session.get("question_order") or submission.raw_answers.get("_question_order")
@@ -159,7 +163,10 @@ def take_exam(request, exam_id, question_index):
         request.session["question_order"] = question_order
 
     if question_index >= len(question_order):
-        return redirect("cbt:submit_exam", exam_id=exam.id)
+        return render(request, "cbt/exam_ended.html", {
+            "exam": exam,
+            "student": student,
+        })
 
     question_id = question_order[question_index]
     question = get_object_or_404(CBTQuestion, id=question_id)
