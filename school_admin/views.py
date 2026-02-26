@@ -2,9 +2,11 @@ from django.shortcuts import render
 from django.contrib.auth.decorators import login_required, user_passes_test
 from accounts.models import School, User
 from attendance.models import Attendance
-from results.models import ClassScoreSetting, ClassSubjectTeacher
+from results.models import ClassScoreSetting, ClassSubjectTeacher, Subject
 from finance.models import SchoolTermSetting
 from results.utils import SESSION_CHOICES
+from superadmin.views import class_create, class_edit, class_delete, subject_create, subject_edit, subject_delete 
+
 # Permission checks
 def is_superadmin(user):
     return user.role == 'superadmin'
@@ -65,6 +67,7 @@ def school_admin_dashboard(request, school_id):
     lesson_count = LessonNote.objects.filter(school=school).count()
     assignment_count = Assignment.objects.filter(school=school).count()
     attendance_count = Attendance.objects.filter(school=school).count()
+    subject_count = Subject.objects.filter(school=school).count()
     classes = SchoolClass.objects.filter(school=school).prefetch_related('students')
     class_subject_teacher_count = ClassSubjectTeacher.objects.filter(school_class__school=school).count()
     class_score_settings = ClassScoreSetting.objects.filter(school_class__school=school).select_related('school_class')
@@ -80,6 +83,7 @@ def school_admin_dashboard(request, school_id):
         'lesson_count': lesson_count,
         'assignment_count': assignment_count,
         'attendance_count': attendance_count,
+        'subject_count': subject_count,
         "classes": classes,
         'current_session': current_session,
         'class_score_settings': class_score_settings,
@@ -3207,3 +3211,36 @@ def school_term_settings(request):
     }
     return render(request, "school_admin/admin/school_term_setting.html", context)
 
+
+@login_required
+@user_passes_test(is_schooladmin)
+def class_list(request, school_id):
+    school = get_object_or_404(School, id=school_id)
+
+    # Security check
+    if request.user.school.id != school.id:
+        return HttpResponse("Unauthorized", status=403)
+
+    classes = SchoolClass.objects.filter(school=school)
+
+    return render(request, "superadmin/classes/class_list.html", {
+        "school": school,
+        "classes": classes,
+        "user_role": "School Admin"
+    })
+
+@login_required
+@user_passes_test(is_schooladmin)
+def subject_list(request, school_id):
+    school = get_object_or_404(School, id=school_id)
+
+    if request.user.school.id != school.id:
+        return HttpResponse("Unauthorized", status=403)
+
+    subjects = Subject.objects.filter(school=school)
+
+    return render(request, "superadmin/subjects/subject_list.html", {
+        "school": school,
+        "subjects": subjects,
+        "user_role": "School Admin"
+    })

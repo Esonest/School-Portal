@@ -109,8 +109,7 @@ urlpatterns = [
     path('school/<int:school_id>/block-unblock-students/', views.block_unblock_students,name='block_unblock_students'),
 
 
-
-    path("classes/", views.admin_class_list, name="admin-class-list"),
+    path("admin-classes/", views.admin_class_list, name="admin-class-list"),
     path("classes/<int:class_id>/students/", views.admin_class_students, name="admin-class-students"),
     path('students/<int:student_id>/results/', views.admin_student_results,name='admin-student-results'),
     path("score/<int:score_id>/edit/", views.admin_edit_score, name="admin-edit-score"),
@@ -141,7 +140,18 @@ urlpatterns = [
 
 
     path("school-admin/term-settings/",views.school_term_settings,name="school_term_settings"),
+    
 
+    # school_admin/urls.py
+    path('<int:school_id>/classes/', views.class_list, name='class_list'),
+    path("classes/create/", views.class_create, name="class_create"),
+    path("classes/<int:class_id>/edit/", views.class_edit, name="class_edit"),
+    path("classes/<int:class_id>/delete/", views.class_delete, name="class_delete"),
+
+    path('<int:school_id>/subjects/', views.subject_list, name='subject_list'),
+    path("subjects/create/", views.subject_create, name="subject_create"),
+    path("subjects/<int:subject_id>/edit/", views.subject_edit, name="subject_edit"),
+    path("subjects/<int:subject_id>/delete/", views.subject_delete, name="subject_delete"),
 
 ]
 

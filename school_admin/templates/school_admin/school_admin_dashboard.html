@@ -67,7 +67,36 @@
                     {{ class_count }}
                 </span>
             </a>
+            
+            <!-- Classes Card -->
+<a href="{% url 'school_admin:class_list' school.id %}"
+   class="group flex items-center justify-between p-5 bg-indigo-50 rounded-xl shadow-lg hover:shadow-xl transition duration-300">
 
+    <div class="flex items-center gap-4">
+        <i class="fas fa-chalkboard text-indigo-600 text-2xl"></i>
+        <p class="text-lg font-semibold text-gray-800">Classes</p>
+    </div>
+
+    <span class="bg-indigo-100 text-indigo-800 text-sm font-semibold px-3 py-1 rounded-full">
+        {{ class_count }}
+    </span>
+</a>
+
+
+<!-- Subjects Card -->
+<a href="{% url 'school_admin:subject_list' school.id %}"
+   class="group flex items-center justify-between p-5 bg-violet-50 rounded-xl shadow-lg hover:shadow-xl transition duration-300">
+
+    <div class="flex items-center gap-4">
+        <i class="fas fa-book text-violet-600 text-2xl"></i>
+        <p class="text-lg font-semibold text-gray-800">Subjects</p>
+    </div>
+
+    <span class="bg-violet-100 text-violet-800 text-sm font-semibold px-3 py-1 rounded-full">
+        {{ subject_count }}
+    </span>
+</a>
+             
             <!-- Accountants -->
             <a href="{% url 'school_admin:accountant_list' school.id %}" 
                class="group flex items-center justify-between p-5 bg-emerald-50 rounded-xl shadow-lg border-2 border-transparent hover:border-gradient-to-r hover:from-emerald-400 hover:to-emerald-600 transition duration-300">
