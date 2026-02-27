@@ -72,7 +72,16 @@ class CBTQuestion(models.Model):
         null=True,
         blank=True
     )
-   
+    option_a_equation = models.TextField(blank=True)
+    option_b_equation = models.TextField(blank=True)
+    option_c_equation = models.TextField(blank=True)
+    option_d_equation = models.TextField(blank=True)
+
+    option_a_diagram = models.ImageField(upload_to="cbt/options/", blank=True, null=True)
+    option_b_diagram = models.ImageField(upload_to="cbt/options/", blank=True, null=True)
+    option_c_diagram = models.ImageField(upload_to="cbt/options/", blank=True, null=True)
+    option_d_diagram = models.ImageField(upload_to="cbt/options/", blank=True, null=True)
+
     option_a = models.CharField(max_length=400)
     option_b = models.CharField(max_length=400)
     option_c = models.CharField(max_length=400, blank=True)
@@ -88,19 +97,35 @@ class CBTQuestion(models.Model):
         db_table = "CBTQuestion"
 
     def get_shuffled_options(self):
-        """
-        Returns a shuffled list of (label, text).
-        Labels remain original (A/B/C/D) so marking stays correct.
-        """
         options = [
-            ('A', self.option_a),
-            ('B', self.option_b),
-            ('C', self.option_c),
-            ('D', self.option_d),
+            ('A', {
+                'text': self.option_a,
+                'equation': self.option_a_equation,
+                'diagram': self.option_a_diagram
+            }),
+            ('B', {
+                'text': self.option_b,
+                'equation': self.option_b_equation,
+                'diagram': self.option_b_diagram
+            }),
+            ('C', {
+                'text': self.option_c,
+                'equation': self.option_c_equation,
+                'diagram': self.option_c_diagram
+            }),
+            ('D', {
+                'text': self.option_d,
+                'equation': self.option_d_equation,
+                'diagram': self.option_d_diagram
+            }),
         ]
 
-        # remove empty options
-        options = [(label, text) for label, text in options if text and text.strip()]
+    # remove completely empty options
+        options = [
+            (label, data)
+            for label, data in options
+            if data['text'] or data['equation'] or data['diagram']
+        ]
 
         random.shuffle(options)
         return options
@@ -206,11 +231,24 @@ class QuestionBank(models.Model):
         null=True,
         blank=True
     )
+      
+    option_a_equation = models.TextField(blank=True)
+    option_b_equation = models.TextField(blank=True)
+    option_c_equation = models.TextField(blank=True)
+    option_d_equation = models.TextField(blank=True)
+
+    option_a_diagram = models.ImageField(upload_to="question_bank/options/", blank=True, null=True)
+    option_b_diagram = models.ImageField(upload_to="question_bank/options/", blank=True, null=True)
+    option_c_diagram = models.ImageField(upload_to="question_bank/options/", blank=True, null=True)
+    option_d_diagram = models.ImageField (upload_to="question_bank/options/", blank=True, null=True)
 
     option_a = models.CharField(max_length=400)
     option_b = models.CharField(max_length=400)
     option_c = models.CharField(max_length=400, blank=True)
     option_d = models.CharField(max_length=400, blank=True)
+
+
+     
 
     correct_option = models.CharField(
         max_length=1,
@@ -236,6 +274,11 @@ class QuestionBank(models.Model):
         self.option_b = normalize_latex(self.option_b)
         self.option_c = normalize_latex(self.option_c)
         self.option_d = normalize_latex(self.option_d)
+
+        self.option_a_equation = normalize_latex(self.option_a_equation)
+        self.option_b_equation = normalize_latex(self.option_b_equation)
+        self.option_c_equation = normalize_latex(self.option_c_equation)
+        self.option_d_equation = normalize_latex(self.option_d_equation)
 
         super().save(*args, **kwargs)
   

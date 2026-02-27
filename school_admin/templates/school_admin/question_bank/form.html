@@ -98,28 +98,97 @@
 
 
           <!-- Options with MathLive -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-2">
-            <div>
-              {{ form.option_a.label_tag }}
-              <math-field class="equation-field w-full border rounded-lg px-3 py-2 bg-white" style="min-height: 60px;"></math-field>
-              <input type="hidden" name="{{ form.option_a.html_name }}" class="mathlive-hidden" value="{{ form.option_a.value|default_if_none:'' }}">
-            </div>
-            <div>
-              {{ form.option_b.label_tag }}
-              <math-field class="equation-field w-full border rounded-lg px-3 py-2 bg-white" style="min-height: 60px;"></math-field>
-              <input type="hidden" name="{{ form.option_b.html_name }}" class="mathlive-hidden" value="{{ form.option_b.value|default_if_none:'' }}">
-            </div>
-            <div>
-              {{ form.option_c.label_tag }}
-              <math-field class="equation-field w-full border rounded-lg px-3 py-2 bg-white" style="min-height: 60px;"></math-field>
-              <input type="hidden" name="{{ form.option_c.html_name }}" class="mathlive-hidden" value="{{ form.option_c.value|default_if_none:'' }}">
-            </div>
-            <div>
-              {{ form.option_d.label_tag }}
-              <math-field class="equation-field w-full border rounded-lg px-3 py-2 bg-white" style="min-height: 60px;"></math-field>
-              <input type="hidden" name="{{ form.option_d.html_name }}" class="mathlive-hidden" value="{{ form.option_d.value|default_if_none:'' }}">
-            </div>
-          </div>
+          <!-- Options with MathLive + Diagram -->
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-2">
+
+  <div class="space-y-2">
+  <label class="font-semibold">Option A</label>
+
+  <!-- Text -->
+  {{ form.option_a }}
+
+  <!-- Equation -->
+  <math-field class="equation-field w-full border rounded-lg px-3 py-2 bg-white"
+              style="min-height: 60px;"></math-field>
+  <input type="hidden"
+         name="{{ form.option_a_equation.html_name }}"
+         class="mathlive-hidden"
+         value="{{ form.option_a_equation.value|default_if_none:'' }}">
+
+  <!-- Diagram -->
+  <div>
+    <label class="block text-xs text-gray-500 mt-1">Diagram (optional)</label>
+    {{ form.option_a_diagram }}
+  </div>
+</div>
+
+
+  <div class="space-y-2">
+  <label class="font-semibold">Option B</label>
+
+  <!-- Text -->
+  {{ form.option_b }}
+
+  <!-- Equation -->
+  <math-field class="equation-field w-full border rounded-lg px-3 py-2 bg-white"
+              style="min-height: 60px;"></math-field>
+  <input type="hidden"
+         name="{{ form.option_b_equation.html_name }}"
+         class="mathlive-hidden"
+         value="{{ form.option_b_equation.value|default_if_none:'' }}">
+
+  <!-- Diagram -->
+  <div>
+    <label class="block text-xs text-gray-500 mt-1">Diagram (optional)</label>
+    {{ form.option_b_diagram }}
+  </div>
+</div>
+
+  <!-- OPTION C -->
+  <div class="space-y-2">
+  <label class="font-semibold">Option C</label>
+
+  <!-- Text -->
+  {{ form.option_c }}
+
+  <!-- Equation -->
+  <math-field class="equation-field w-full border rounded-lg px-3 py-2 bg-white"
+              style="min-height: 60px;"></math-field>
+  <input type="hidden"
+         name="{{ form.option_c_equation.html_name }}"
+         class="mathlive-hidden"
+         value="{{ form.option_c_equation.value|default_if_none:'' }}">
+
+  <!-- Diagram -->
+  <div>
+    <label class="block text-xs text-gray-500 mt-1">Diagram (optional)</label>
+    {{ form.option_c_diagram }}
+  </div>
+</div>
+
+  <!-- OPTION D -->
+  <div class="space-y-2">
+  <label class="font-semibold">Option D</label>
+
+  <!-- Text -->
+  {{ form.option_d }}
+
+  <!-- Equation -->
+  <math-field class="equation-field w-full border rounded-lg px-3 py-2 bg-white"
+              style="min-height: 60px;"></math-field>
+  <input type="hidden"
+         name="{{ form.option_d_equation.html_name }}"
+         class="mathlive-hidden"
+         value="{{ form.option_d_equation.value|default_if_none:'' }}">
+
+  <!-- Diagram -->
+  <div>
+    <label class="block text-xs text-gray-500 mt-1">Diagram (optional)</label>
+    {{ form.option_d_diagram }}
+  </div>
+</div>
+
+</div>
 
           <!-- Correct Option / Marks -->
           <div class="grid grid-cols-2 gap-4 mt-3">
@@ -152,73 +221,82 @@
 
 <!-- JS: handle MathLive hidden input syncing -->
 <script>
-document.addEventListener('DOMContentLoaded', () => {
-  document.querySelectorAll('.question-form').forEach(block => {
-    // Main equation
-    const eq = block.querySelector('math-field.equation-field');
-    const hiddenEq = block.querySelector('input[name="{{ form.equation.html_name }}"], input.mathlive-hidden');
-    if (eq && hiddenEq) {
-      eq.addEventListener('input', () => hiddenEq.value = eq.getValue('latex'));
-      if (hiddenEq.value) eq.setValue(hiddenEq.value, { format: 'latex' });
-    }
+document.addEventListener('DOMContentLoaded', function () {
 
-    // Options
-    ['option_a','option_b','option_c','option_d'].forEach(opt => {
-      const hiddenInput = block.querySelector(`input[name$="${opt}"]`);
-      const mf = hiddenInput?.previousElementSibling;
-      if (mf && hiddenInput) {
-        mf.addEventListener('input', () => hiddenInput.value = mf.getValue('latex'));
-        if (hiddenInput.value) mf.setValue(hiddenInput.value, { format: 'latex' });
+  function initializeMathLive(formBlock) {
+    const mathFields = formBlock.querySelectorAll('math-field.equation-field');
+
+    mathFields.forEach((mf, index) => {
+      const hiddenInputs = formBlock.querySelectorAll('input.mathlive-hidden');
+      const hiddenInput = hiddenInputs[index];
+
+      if (!hiddenInput) return;
+
+      // Prevent duplicate listeners
+      mf.removeEventListener('input', mf._listener);
+
+      const listener = function () {
+        hiddenInput.value = mf.getValue('latex');
+      };
+
+      mf.addEventListener('input', listener);
+      mf._listener = listener;
+
+      // Restore saved value (important when editing)
+      if (hiddenInput.value) {
+        mf.setValue(hiddenInput.value, { format: 'latex' });
       }
     });
+  }
+
+  // Initialize existing forms
+  document.querySelectorAll('.question-form').forEach(formBlock => {
+    initializeMathLive(formBlock);
   });
 
-  // Add new question
+
+  // -------------------------------
+  // ADD NEW QUESTION (FORMSET)
+  // -------------------------------
+
   const addButton = document.getElementById('add-question');
   const container = document.getElementById('questions-container');
   const totalFormsInput = document.getElementById('id_form-TOTAL_FORMS');
 
-  addButton.addEventListener('click', () => {
-    let totalForms = parseInt(totalFormsInput.value);
-    if (totalForms >= 20) return;
+  if (addButton) {
+    addButton.addEventListener('click', function () {
 
-    const firstForm = container.querySelector('.question-form');
-    const newForm = firstForm.cloneNode(true);
+      let totalForms = parseInt(totalFormsInput.value);
+      if (totalForms >= 20) return;
 
-    // Update indices
-    newForm.innerHTML = newForm.innerHTML.replace(/form-(\d+)-/g, `form-${totalForms}-`);
+      const firstForm = container.querySelector('.question-form');
+      const newForm = firstForm.cloneNode(true);
 
-    // Clear fields
-    newForm.querySelectorAll('input, textarea, select').forEach(el => {
-      if (el.type === 'checkbox' || el.type === 'radio') el.checked = false;
-      else el.value = '';
-    });
+      // Update form index
+      newForm.innerHTML = newForm.innerHTML.replace(/form-(\d+)-/g, `form-${totalForms}-`);
 
-    // Clear MathLive
-    newForm.querySelectorAll('math-field').forEach(mf => mf.setValue(''));
-
-    container.appendChild(newForm);
-    totalFormsInput.value = totalForms + 1;
-
-    // Reinitialize MathLive for new form
-    document.querySelectorAll('.question-form').forEach(block => {
-      const eq = block.querySelector('math-field.equation-field');
-      const hiddenEq = block.querySelector('input.mathlive-hidden');
-      if (eq && hiddenEq) {
-        eq.addEventListener('input', () => hiddenEq.value = eq.getValue('latex'));
-        if (hiddenEq.value) eq.setValue(hiddenEq.value, { format: 'latex' });
-      }
-
-      ['option_a','option_b','option_c','option_d'].forEach(opt => {
-        const hiddenInput = block.querySelector(`input[name$="${opt}"]`);
-        const mf = hiddenInput?.previousElementSibling;
-        if (mf && hiddenInput) {
-          mf.addEventListener('input', () => hiddenInput.value = mf.getValue('latex'));
-          if (hiddenInput.value) mf.setValue(hiddenInput.value, { format: 'latex' });
+      // Clear text, hidden, file inputs
+      newForm.querySelectorAll('input, textarea, select').forEach(el => {
+        if (el.type === 'checkbox' || el.type === 'radio') {
+          el.checked = false;
+        } else {
+          el.value = '';
         }
       });
+
+      // Clear MathLive fields
+      newForm.querySelectorAll('math-field').forEach(mf => {
+        mf.setValue('');
+      });
+
+      container.appendChild(newForm);
+      totalFormsInput.value = totalForms + 1;
+
+      // Initialize MathLive for new form only
+      initializeMathLive(newForm);
     });
-  });
+  }
+
 });
 </script>
 
@@ -229,6 +307,7 @@ math-field {
   cursor: text;
   display: block;
 }
+
 </style>
 
 {% endblock %}

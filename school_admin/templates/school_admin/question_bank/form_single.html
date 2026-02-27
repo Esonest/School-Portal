@@ -85,38 +85,117 @@
 
     <!-- OPTIONS -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-      <!-- OPTION A -->
-      <div>
-        {{ form.option_a.label_tag }}
-        <math-field class="equation-field w-full border rounded-lg px-3 py-2 bg-white" style="min-height:60px;"></math-field>
-        <input type="hidden" name="{{ form.option_a.html_name }}" class="mathlive-hidden"
-               value="{{ form.instance.option_a|default_if_none:'' }}">
-      </div>
+     <!-- OPTION A -->
+<div class="space-y-2 border rounded-lg p-3">
+  <label class="font-semibold">Option A</label>
 
+  <!-- TEXT -->
+  {{ form.option_a|add_class:"w-full border rounded-lg px-3 py-2" }}
+
+  <!-- EQUATION -->
+  <label class="text-xs text-gray-500">Equation (optional)</label>
+  <math-field 
+      class="equation-field w-full border rounded-lg px-3 py-2 bg-white"
+      data-target="{{ form.option_a_equation.html_name }}"
+      style="min-height:60px;">
+  </math-field>
+  <input type="hidden"
+         name="{{ form.option_a_equation.html_name }}"
+         class="mathlive-hidden"
+         value="{{ form.instance.option_a_equation|default_if_none:'' }}">
+
+  <!-- DIAGRAM -->
+  <div>
+    <label class="text-xs text-gray-500">Diagram (optional)</label>
+    {{ form.option_a_diagram }}
+  </div>
+</div>
       <!-- OPTION B -->
-      <div>
-        {{ form.option_b.label_tag }}
-        <math-field class="equation-field w-full border rounded-lg px-3 py-2 bg-white" style="min-height:60px;"></math-field>
-        <input type="hidden" name="{{ form.option_b.html_name }}" class="mathlive-hidden"
-               value="{{ form.instance.option_b|default_if_none:'' }}">
-      </div>
+      <div class="space-y-2 border rounded-lg p-3">
+
+  <label class="font-semibold">Option B </label>
+
+  <!-- TEXT -->
+  {{ form.option_b|add_class:"w-full border rounded-lg px-3 py-2" }}
+
+  <!-- EQUATION -->
+  <label class="text-xs text-gray-500">Equation (optional)</label>
+  <math-field 
+      class="equation-field w-full border rounded-lg px-3 py-2 bg-white"
+      data-target="{{ form.option_b_equation.html_name }}"
+      style="min-height:60px;">
+  </math-field>
+
+  <input type="hidden"
+         name="{{ form.option_b_equation.html_name }}"
+         class="mathlive-hidden"
+         value="{{ form.instance.option_b_equation|default_if_none:'' }}">
+
+  <!-- DIAGRAM -->
+  <div>
+    <label class="text-xs text-gray-500">Diagram (optional)</label>
+    {{ form.option_b_diagram }}
+  </div>
+
+</div>
 
       <!-- OPTION C -->
-      <div>
-        {{ form.option_c.label_tag }}
-        <math-field class="equation-field w-full border rounded-lg px-3 py-2 bg-white" style="min-height:60px;"></math-field>
-        <input type="hidden" name="{{ form.option_c.html_name }}" class="mathlive-hidden"
-               value="{{ form.instance.option_c|default_if_none:'' }}">
-      </div>
+      <div class="space-y-2 border rounded-lg p-3">
+
+  <label class="font-semibold">Option C</label>
+
+  <!-- TEXT -->
+  {{ form.option_c|add_class:"w-full border rounded-lg px-3 py-2" }}
+
+  <!-- EQUATION -->
+  <label class="text-xs text-gray-500">Equation (optional)</label>
+  <math-field 
+      class="equation-field w-full border rounded-lg px-3 py-2 bg-white"
+      data-target="{{ form.option_c_equation.html_name }}"
+      style="min-height:60px;">
+  </math-field>
+
+  <input type="hidden"
+         name="{{ form.option_c_equation.html_name }}"
+         class="mathlive-hidden"
+         value="{{ form.instance.option_c_equation|default_if_none:'' }}">
+
+  <!-- DIAGRAM -->
+  <div>
+    <label class="text-xs text-gray-500">Diagram (optional)</label>
+    {{ form.option_c_diagram }}
+  </div>
+
+</div>
 
       <!-- OPTION D -->
-      <div>
-        {{ form.option_d.label_tag }}
-        <math-field class="equation-field w-full border rounded-lg px-3 py-2 bg-white" style="min-height:60px;"></math-field>
-        <input type="hidden" name="{{ form.option_d.html_name }}" class="mathlive-hidden"
-               value="{{ form.instance.option_d|default_if_none:'' }}">
-      </div>
-    </div>
+      <div class="space-y-2 border rounded-lg p-3">
+
+  <label class="font-semibold">Option D</label>
+
+  <!-- TEXT -->
+  {{ form.option_d|add_class:"w-full border rounded-lg px-3 py-2" }}
+
+  <!-- EQUATION -->
+  <label class="text-xs text-gray-500">Equation (optional)</label>
+  <math-field 
+      class="equation-field w-full border rounded-lg px-3 py-2 bg-white"
+      data-target="{{ form.option_d_equation.html_name }}"
+      style="min-height:60px;">
+  </math-field>
+
+  <input type="hidden"
+         name="{{ form.option_d_equation.html_name }}"
+         class="mathlive-hidden"
+         value="{{ form.instance.option_d_equation|default_if_none:'' }}">
+
+  <!-- DIAGRAM -->
+  <div>
+    <label class="text-xs text-gray-500">Diagram (optional)</label>
+    {{ form.option_d_diagram }}
+  </div>
+
+</div>
 
     <!-- CORRECT / MARKS -->
     <div class="grid grid-cols-2 gap-4 mt-3">

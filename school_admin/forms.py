@@ -243,14 +243,31 @@ class CBTQuestionForm(forms.ModelForm):
     class Meta:
         model = CBTQuestion
         fields = [
-            'text', "diagram", 'option_a', 'option_b',
-            'option_c', 'option_d', 'correct_option', 'marks'
+            'text',
+            'equation',
+            'diagram',
+
+            'option_a', 'option_a_equation', 'option_a_diagram',
+            'option_b', 'option_b_equation', 'option_b_diagram',
+            'option_c', 'option_c_equation', 'option_c_diagram',
+            'option_d', 'option_d_equation', 'option_d_diagram',
+
+            'correct_option',
+            'marks'
         ]
+
+        widgets = {
+            'equation': forms.HiddenInput(),
+            'option_a_equation': forms.HiddenInput(),
+            'option_b_equation': forms.HiddenInput(),
+            'option_c_equation': forms.HiddenInput(),
+            'option_d_equation': forms.HiddenInput(),
+        }
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        # allow empty forms so unused questions don't block save
+        # allow empty forms (formset behavior)
         for field in self.fields.values():
             field.required = False
 
@@ -290,6 +307,16 @@ class QuestionBankForm(forms.ModelForm):
     option_c = forms.CharField(required=False, widget=forms.TextInput(attrs={"class": "w-full border rounded-lg px-3 py-2"}))
     option_d = forms.CharField(required=False, widget=forms.TextInput(attrs={"class": "w-full border rounded-lg px-3 py-2"}))
 
+    option_a_equation = forms.CharField(required=False, widget=forms.HiddenInput())
+    option_b_equation = forms.CharField(required=False, widget=forms.HiddenInput())
+    option_c_equation = forms.CharField(required=False, widget=forms.HiddenInput())
+    option_d_equation = forms.CharField(required=False, widget=forms.HiddenInput())
+
+    option_a_diagram = forms.ImageField(required=False)
+    option_b_diagram = forms.ImageField(required=False)
+    option_c_diagram = forms.ImageField(required=False)
+    option_d_diagram = forms.ImageField(required=False)
+
     correct_option = forms.ChoiceField(
         required=False,
         choices=[('A', 'A'), ('B', 'B'), ('C', 'C'), ('D', 'D')],
@@ -306,11 +333,13 @@ class QuestionBankForm(forms.ModelForm):
         fields = [
             "text",
             "equation",
-            "diagram",    
-            "option_a",
-            "option_b",
-            "option_c",
-            "option_d",
+            "diagram", 
+
+            "option_a", "option_a_equation", "option_a_diagram",
+            "option_b", "option_b_equation", "option_b_diagram",
+            "option_c", "option_c_equation", "option_c_diagram",
+            "option_d", "option_d_equation", "option_d_diagram",
+
             "correct_option",
             "marks",
         ]
@@ -323,7 +352,22 @@ class QuestionBankForm(forms.ModelForm):
         equation = self.data.get(f"{self.prefix}-equation", "").strip()
         diagram = self.files.get(f"{self.prefix}-diagram")
 
-        return bool(text or equation or diagram)
+        options_filled = any([
+            self.data.get(f"{self.prefix}-option_a", "").strip(),
+            self.data.get(f"{self.prefix}-option_b", "").strip(),
+            self.data.get(f"{self.prefix}-option_c", "").strip(),
+            self.data.get(f"{self.prefix}-option_d", "").strip(),
+            self.data.get(f"{self.prefix}-option_a_equation", "").strip(),
+            self.data.get(f"{self.prefix}-option_b_equation", "").strip(),
+            self.data.get(f"{self.prefix}-option_c_equation", "").strip(),
+            self.data.get(f"{self.prefix}-option_d_equation", "").strip(),
+            self.files.get(f"{self.prefix}-option_a_diagram"),
+            self.files.get(f"{self.prefix}-option_b_diagram"),
+            self.files.get(f"{self.prefix}-option_c_diagram"),
+            self.files.get(f"{self.prefix}-option_d_diagram"),
+        ])
+
+        return bool(text or equation or diagram or options_filled)
 
     
 
