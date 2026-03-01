@@ -808,6 +808,7 @@ def submission_detail(request, school_id, exam_id, submission_id):
                     "label": label,
                     "text": opt.get("text"),
                     "equation": opt.get("equation"),
+                    "diagram": opt.get("diagram"),
                 })
                 # Compare lowercase stripped text to find correct option
                 orig_text = getattr(q, f"option_{q.correct_option.lower()}", "").strip().lower()
@@ -815,10 +816,10 @@ def submission_detail(request, school_id, exam_id, submission_id):
                     correct_letter = label
         else:
             options = [
-                {"label": "A", "text": q.option_a, "equation": None},
-                {"label": "B", "text": q.option_b, "equation": None},
-                {"label": "C", "text": q.option_c, "equation": None},
-                {"label": "D", "text": q.option_d, "equation": None},
+                {"label": "A", "text": q.option_a, "equation": None, "diagram": getattr(q, "diagram_a", None)},
+                {"label": "B", "text": q.option_b, "equation": None, "diagram": getattr(q, "diagram_b", None)},
+                {"label": "C", "text": q.option_c, "equation": None, "diagram": getattr(q, "diagram_c", None)},
+                {"label": "D", "text": q.option_d, "equation": None, "diagram": getattr(q, "diagram_d", None)},
             ]
             correct_letter = q.correct_option
 
@@ -1042,18 +1043,44 @@ def question_bank_create(request):
             has_any_value = any([
                 data.get("text"),
                 data.get("equation"),
+                data.get("diagram"),
+
                 data.get("option_a"),
+                data.get("option_a_equation"),
+                data.get("option_a_diagram"),
+
                 data.get("option_b"),
+                data.get("option_b_equation"),
+                data.get("option_b_diagram"),
+
                 data.get("option_c"),
+                data.get("option_c_equation"),
+                data.get("option_c_diagram"),
+
                 data.get("option_d"),
+                data.get("option_d_equation"),
+                data.get("option_d_diagram"),
+            ])
+
+            def option_is_empty(prefix):
+                return not any([
+                    data.get(f"{prefix}"),
+                    data.get(f"{prefix}_equation"),
+                    data.get(f"{prefix}_diagram"),
+                ])
+
+            question_empty = not any([
+                data.get("text"),
+                data.get("equation"),
+                data.get("diagram"),
             ])
 
             required_missing = any([
-                not data.get("text"),
-                not data.get("option_a"),
-                not data.get("option_b"),
-                not data.get("option_c"),
-                not data.get("option_d"),
+                question_empty,
+                option_is_empty("option_a"),
+                option_is_empty("option_b"),
+                option_is_empty("option_c"),
+                option_is_empty("option_d"),
                 not data.get("correct_option"),
                 data.get("marks") in (None, ""),
             ])
@@ -1223,19 +1250,20 @@ from results.utils import SESSION_LIST
 @user_passes_test(is_admin)
 def import_questions_to_exam(request, exam_id):
     user = request.user
-    exam = get_object_or_404(CBTExam, id=exam_id)
-    school = exam.school
-    questions = QuestionBank.objects.select_related("subject")
 
     # ---------------- ROLE-BASED ACCESS ----------------
     if hasattr(user, "school_admin_profile"):
         school = user.school_admin_profile.school
-        questions = questions.filter(school=school)
+        exam = get_object_or_404(CBTExam, id=exam_id, school=school)
+
+        questions = QuestionBank.objects.filter(school=school).select_related("subject")
         subjects = Subject.objects.filter(school=school)
         classes = SchoolClass.objects.filter(school=school)
 
     elif hasattr(user, "teacher_profile"):
         teacher = user.teacher_profile
+        school = teacher.school
+        exam = get_object_or_404(CBTExam, id=exam_id, school=school)
 
         subjects = Subject.objects.filter(
             class_teachers__teacher=teacher
@@ -1245,10 +1273,11 @@ def import_questions_to_exam(request, exam_id):
             subject_teachers__teacher=teacher
         ).distinct()
 
-        questions = questions.filter(
+        questions = QuestionBank.objects.filter(
             created_by=teacher,
             subject__in=subjects
-        )
+        ).select_related("subject")
+
     else:
         raise PermissionDenied("You do not have permission.")
 
@@ -1259,7 +1288,6 @@ def import_questions_to_exam(request, exam_id):
     class_id = request.GET.get("class")
     topic_id = request.GET.get("topic")
 
-
     if subject_id:
         questions = questions.filter(subject_id=subject_id)
 
@@ -1269,45 +1297,54 @@ def import_questions_to_exam(request, exam_id):
     if session:
         questions = questions.filter(session=session)
 
-    
     if topic_id:
         questions = questions.filter(topic_id=topic_id)
-    
+
     if class_id:
         questions = questions.filter(school_class_id=class_id)
-
-
-    
 
     # ---------------- PAGINATION ----------------
     paginator = Paginator(questions.order_by("-id"), 10)
     page_obj = paginator.get_page(request.GET.get("page"))
 
-    # ---------------- ALREADY IMPORTED ----------------
-    # ---------------- ALREADY IMPORTED ----------------
+    # ---------------- IMPORTED IDS ----------------
     imported_ids = set(
         CBTQuestion.objects.filter(exam=exam)
         .values_list("source_question_id", flat=True)
     )
 
-
     # ---------------- IMPORT ----------------
     if request.method == "POST":
         selected_ids = request.POST.getlist("questions")
+        selected_questions = questions.filter(id__in=selected_ids)
+
         created = 0
 
-        for q in questions.filter(id__in=selected_ids):
+        for q in selected_questions:
             if q.id not in imported_ids:
                 CBTQuestion.objects.create(
                     exam=exam,
                     source_question=q,
                     text=q.text,
                     equation=q.equation,
-                    diagram=q.diagram, 
+                    diagram=q.diagram,
+
                     option_a=q.option_a,
+                    option_a_equation=q.option_a_equation,
+                    option_a_diagram=q.option_a_diagram,
+
                     option_b=q.option_b,
+                    option_b_equation=q.option_b_equation,
+                    option_b_diagram=q.option_b_diagram,
+
                     option_c=q.option_c,
+                    option_c_equation=q.option_c_equation,
+                    option_c_diagram=q.option_c_diagram,
+
                     option_d=q.option_d,
+                    option_d_equation=q.option_d_equation,
+                    option_d_diagram=q.option_d_diagram,
+
                     correct_option=q.correct_option,
                     marks=q.marks
                 )
@@ -1319,9 +1356,8 @@ def import_questions_to_exam(request, exam_id):
             school_id=exam.school.id,
             exam_id=exam.id
         )
-    
-    topics = Topic.objects.filter(school=school)
 
+    topics = Topic.objects.filter(school=school)
     if subject_id:
         topics = topics.filter(subject_id=subject_id)
 
@@ -1333,7 +1369,6 @@ def import_questions_to_exam(request, exam_id):
         "topics": topics,
         "sessions": SESSION_LIST,
         "imported_ids": imported_ids,
-        "page_obj": page_obj,
     })
 
 

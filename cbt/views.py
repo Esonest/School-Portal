@@ -189,6 +189,12 @@ def take_exam(request, exam_id, question_index):
 # Get previously shuffled options (if student reloads page)
     shuffled_opts = submission.raw_answers.get(shuffle_key)
 
+    
+
+# 🔥 If old structure (no diagram key), rebuild
+    if shuffled_opts and "diagram" not in shuffled_opts[0]:
+        shuffled_opts = None
+
     if not shuffled_opts:
         # Build structured options (text + optional equation)
         def extract_equation(text):
@@ -204,21 +210,25 @@ def take_exam(request, exam_id, question_index):
             {
                 "text": question.option_a,
                 "equation": extract_equation(question.option_a),
+                "diagram": question.option_a_diagram.url if question.option_a_diagram else None,
                 "is_correct": question.correct_option == "A",
             },
             {
                 "text": question.option_b,
                 "equation": extract_equation(question.option_b),
+                "diagram": question.option_b_diagram.url if question.option_b_diagram else None,
                 "is_correct": question.correct_option == "B",
             },
             {
                 "text": question.option_c,
                 "equation": extract_equation(question.option_c),
+                "diagram": question.option_c_diagram.url if question.option_c_diagram else None,
                 "is_correct": question.correct_option == "C",
             },
             {
                 "text": question.option_d,
                 "equation": extract_equation(question.option_d),
+                "diagram": question.option_d_diagram.url if question.option_d_diagram else None,
                 "is_correct": question.correct_option == "D",
             },
         ]
@@ -226,7 +236,14 @@ def take_exam(request, exam_id, question_index):
 
 
     # Remove empty options
-        option_pool = [opt for opt in option_pool if opt["text"] and opt["text"].strip()]
+        option_pool = [
+            opt for opt in option_pool
+            if (
+                (opt["text"] and opt["text"].strip())
+                or opt.get("equation")
+                or opt.get("diagram")
+            )
+        ]
 
     # Shuffle options
         import random
@@ -249,7 +266,9 @@ def take_exam(request, exam_id, question_index):
         {
             "label": label,
             "text": opt["text"],
-            "equation": opt["equation"],  # will be None if no option equation
+            "equation": opt["equation"],
+            "diagram": opt.get("diagram"),
+                
         }
         for label, opt in zip(["A", "B", "C", "D"], shuffled_opts)
     ]
@@ -306,12 +325,15 @@ def take_exam(request, exam_id, question_index):
         exam_start_time = int(exam_start_time)
 
     time_limit = exam.duration_minutes * 60
+    
 
+    selected_answer = submission.raw_answers.get(str(question.id))
     return render(request, "cbt/take_exam.html", {
         "exam": exam,
         "question": question,
         "question_data": question_data,
         "options": options,
+        "selected_answer": selected_answer,
         "question_index": question_index,
         "current_question_number": question_index + 1,
         "total_questions": len(question_order),
@@ -504,15 +526,16 @@ def student_exam_result(request, exam_id):
                     "label": label,
                     "text": opt.get("text"),
                     "equation": opt.get("equation"),
+                    "diagram": opt.get("diagram"),
                 }
                 for label, opt in zip(["A", "B", "C", "D"], shuffled_opts)
             ]
         else:
             options = [
-                {"label": "A", "text": q.option_a, "equation": None},
-                {"label": "B", "text": q.option_b, "equation": None},
-                {"label": "C", "text": q.option_c, "equation": None},
-                {"label": "D", "text": q.option_d, "equation": None},
+                {"label": "A", "text": q.option_a, "equation": None, "diagram": getattr(q, "diagram_a", None)},
+                {"label": "B", "text": q.option_b, "equation": None, "diagram": getattr(q, "diagram_b", None)},
+                {"label": "C", "text": q.option_c, "equation": None, "diagram": getattr(q, "diagram_c", None)},
+                {"label": "D", "text": q.option_d, "equation": None, "diagram": getattr(q, "diagram_d", None)},
             ]
 
         if selected:
@@ -609,15 +632,16 @@ def student_submission_detail(request, submission_id):
                     "label": label,
                     "text": opt.get("text"),
                     "equation": opt.get("equation"),
+                    "diagram": opt.get("diagram"),
                 }
                 for label, opt in zip(["A", "B", "C", "D"], shuffled_opts)
             ]
         else:
             options = [
-                {"label": "A", "text": q.option_a, "equation": None},
-                {"label": "B", "text": q.option_b, "equation": None},
-                {"label": "C", "text": q.option_c, "equation": None},
-                {"label": "D", "text": q.option_d, "equation": None},
+                {"label": "A", "text": q.option_a, "equation": None,"diagram": getattr(q, "diagram_a", None)},
+                {"label": "B", "text": q.option_b, "equation": None, "diagram": getattr(q, "diagram_b", None)},
+                {"label": "C", "text": q.option_c, "equation": None, "diagram": getattr(q, "diagram_c", None)},
+                {"label": "D", "text": q.option_d, "equation": None, "diagram": getattr(q, "diagram_d", None)},
             ]
 
         question_map.append({

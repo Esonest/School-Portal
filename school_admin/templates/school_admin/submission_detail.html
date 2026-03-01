@@ -93,14 +93,29 @@
             {{ item.selected }}.
             {% for opt in item.options %}
               {% if opt.label == item.selected %}
-                <span class="math-content
-                             max-w-full overflow-x-auto leading-snug">
-                  {% if opt.equation %}
-                    {{ opt.equation|safe }}
-                  {% else %}
-                    {{ opt.text|safe }}
-                  {% endif %}
-                </span>
+                <span class="math-content block space-y-1">
+
+  {% if opt.text %}
+    <div class="whitespace-pre-wrap break-words overflow-wrap-anywhere">
+      {{ opt.text|safe }}
+    </div>
+  {% endif %}
+
+  {% if opt.equation %}
+    <div class="max-w-full overflow-x-auto leading-snug">
+      {{ opt.equation|safe }}
+    </div>
+  {% endif %}
+
+  {% if opt.diagram %}
+    <div class="mt-2 w-full max-w-xs h-32 border rounded bg-gray-50 flex items-center justify-center">
+      <img src="{{ opt.diagram }}"
+           class="max-w-full max-h-full object-contain"
+           alt="Option Diagram">
+    </div>
+  {% endif %}
+
+</span>
               {% endif %}
             {% endfor %}
           </span>
@@ -116,14 +131,29 @@
           {{ item.correct }}.
           {% for opt in item.options %}
             {% if opt.label == item.correct %}
-              <span class="math-content
-                           max-w-full overflow-x-auto leading-snug">
-                {% if opt.equation %}
-                  {{ opt.equation|safe }}
-                {% else %}
-                  {{ opt.text|safe }}
-                {% endif %}
-              </span>
+              <span class="math-content block space-y-1">
+
+  {% if opt.text %}
+    <div class="whitespace-pre-wrap break-words overflow-wrap-anywhere">
+      {{ opt.text|safe }}
+    </div>
+  {% endif %}
+
+  {% if opt.equation %}
+    <div class="max-w-full overflow-x-auto leading-snug">
+      {{ opt.equation|safe }}
+    </div>
+  {% endif %}
+
+  {% if opt.diagram %}
+    <div class="mt-2 w-full max-w-xs h-32 border rounded bg-gray-50 flex items-center justify-center">
+      <img src="{{ opt.diagram }}"
+           class="max-w-full max-h-full object-contain"
+           alt="Option Diagram">
+    </div>
+  {% endif %}
+
+</span>
             {% endif %}
           {% endfor %}
         </span>
@@ -176,9 +206,31 @@
                             {{ item.selected }}.
                             {% for opt in item.options %}
                                 {% if opt.label == item.selected %}
-                                <span class="math-content">
-                                    {% if opt.equation %}{{ opt.equation|safe }}{% else %}{{ opt.text|safe }}{% endif %}
-                                </span>
+                                <span class="space-y-1 inline-block align-top">
+
+  {% if opt.text %}
+    <span class="block whitespace-pre-wrap break-words">
+      {{ opt.text|safe }}
+    </span>
+  {% endif %}
+
+  {% if opt.equation %}
+    <span class="block math-content overflow-x-auto">
+      {{ opt.equation|safe }}
+    </span>
+  {% endif %}
+
+  {% if opt.diagram %}
+    <span class="block mt-1">
+      <span class="w-full max-w-sm h-28 inline-flex items-center justify-center border rounded bg-gray-50">
+        <img src="{{ opt.diagram }}"
+             class="max-w-full max-h-full object-contain"
+             alt="Option Diagram">
+      </span>
+    </span>
+  {% endif %}
+
+</span>
                                 {% endif %}
                             {% endfor %}
                         </span>
@@ -188,9 +240,31 @@
                         {{ item.correct }}.
                         {% for opt in item.options %}
                             {% if opt.label == item.correct %}
-                            <span class="math-content">
-                                {% if opt.equation %}{{ opt.equation|safe }}{% else %}{{ opt.text|safe }}{% endif %}
-                            </span>
+                            <span class="space-y-1 inline-block align-top">
+
+  {% if opt.text %}
+    <span class="block whitespace-pre-wrap break-words">
+      {{ opt.text|safe }}
+    </span>
+  {% endif %}
+
+  {% if opt.equation %}
+    <span class="block math-content overflow-x-auto">
+      {{ opt.equation|safe }}
+    </span>
+  {% endif %}
+
+  {% if opt.diagram %}
+    <span class="block mt-1">
+      <span class="w-full max-w-sm h-28 inline-flex items-center justify-center border rounded bg-gray-50">
+        <img src="{{ opt.diagram }}"
+             class="max-w-full max-h-full object-contain"
+             alt="Option Diagram">
+      </span>
+    </span>
+  {% endif %}
+
+</span>
                             {% endif %}
                         {% endfor %}
                     </td>

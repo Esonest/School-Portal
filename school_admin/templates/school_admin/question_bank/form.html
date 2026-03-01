@@ -224,30 +224,32 @@
 document.addEventListener('DOMContentLoaded', function () {
 
   function initializeMathLive(formBlock) {
-    const mathFields = formBlock.querySelectorAll('math-field.equation-field');
+  const mathFields = formBlock.querySelectorAll('math-field.equation-field');
 
-    mathFields.forEach((mf, index) => {
-      const hiddenInputs = formBlock.querySelectorAll('input.mathlive-hidden');
-      const hiddenInput = hiddenInputs[index];
+  mathFields.forEach((mf) => {
 
-      if (!hiddenInput) return;
+    // Find the hidden input inside the SAME wrapper
+    const hiddenInput = mf.parentElement.querySelector('input.mathlive-hidden');
+    if (!hiddenInput) return;
 
-      // Prevent duplicate listeners
+    // Remove old listener if exists
+    if (mf._listener) {
       mf.removeEventListener('input', mf._listener);
+    }
 
-      const listener = function () {
-        hiddenInput.value = mf.getValue('latex');
-      };
+    const listener = function () {
+      hiddenInput.value = mf.getValue('latex');
+    };
 
-      mf.addEventListener('input', listener);
-      mf._listener = listener;
+    mf.addEventListener('input', listener);
+    mf._listener = listener;
 
-      // Restore saved value (important when editing)
-      if (hiddenInput.value) {
-        mf.setValue(hiddenInput.value, { format: 'latex' });
-      }
-    });
-  }
+    // Restore value (for edit mode)
+    if (hiddenInput.value) {
+      mf.setValue(hiddenInput.value, { format: 'latex' });
+    }
+  });
+}
 
   // Initialize existing forms
   document.querySelectorAll('.question-form').forEach(formBlock => {
@@ -269,7 +271,7 @@ document.addEventListener('DOMContentLoaded', function () {
       let totalForms = parseInt(totalFormsInput.value);
       if (totalForms >= 20) return;
 
-      const firstForm = container.querySelector('.question-form');
+      const firstForm = container.querySelector('.question-form').cloneNode(true);
       const newForm = firstForm.cloneNode(true);
 
       // Update form index

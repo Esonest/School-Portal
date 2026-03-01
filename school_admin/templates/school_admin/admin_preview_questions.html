@@ -71,42 +71,125 @@
 {% endif %}
 
       <!-- OPTIONS -->
-      <div class="text-sm text-gray-700 space-y-1 mt-1
-                  break-words overflow-wrap-anywhere">
+<div class="text-sm text-gray-700 space-y-3 mt-2
+            break-words overflow-wrap-anywhere">
 
-        <div>
-          <strong>A:</strong>
-          <span class="whitespace-pre-wrap break-words">
-            {{ q.option_a|safe }}
-          </span>
-        </div>
+  <!-- OPTION A -->
+  <div>
+    <strong>A:</strong>
 
-        <div>
-          <strong>B:</strong>
-          <span class="whitespace-pre-wrap break-words">
-            {{ q.option_b|safe }}
-          </span>
-        </div>
-
-        {% if q.option_c %}
-          <div>
-            <strong>C:</strong>
-            <span class="whitespace-pre-wrap break-words">
-              {{ q.option_c|safe }}
-            </span>
-          </div>
-        {% endif %}
-
-        {% if q.option_d %}
-          <div>
-            <strong>D:</strong>
-            <span class="whitespace-pre-wrap break-words">
-              {{ q.option_d|safe }}
-            </span>
-          </div>
-        {% endif %}
+    {% if q.option_a %}
+      <div class="whitespace-pre-wrap break-words">
+        {{ q.option_a|safe }}
       </div>
+    {% endif %}
 
+    {% if q.option_a_equation %}
+      <div class="mt-1 mathjax text-base overflow-x-auto">
+        {{ q.option_a_equation }}
+      </div>
+    {% endif %}
+
+    {% if q.option_a_diagram %}
+      <div class="mt-2 w-full max-w-xs h-32
+                  flex items-center justify-center
+                  border rounded bg-gray-50">
+        <img src="{{ q.option_a_diagram.url }}"
+             class="max-w-full max-h-full object-contain"
+             alt="Option A Diagram">
+      </div>
+    {% endif %}
+  </div>
+
+
+  <!-- OPTION B -->
+  <div>
+    <strong>B:</strong>
+
+    {% if q.option_b %}
+      <div class="whitespace-pre-wrap break-words">
+        {{ q.option_b|safe }}
+      </div>
+    {% endif %}
+
+    {% if q.option_b_equation %}
+      <div class="mt-1 mathjax text-base overflow-x-auto">
+        {{ q.option_b_equation }}
+      </div>
+    {% endif %}
+
+    {% if q.option_b_diagram %}
+      <div class="mt-2 w-full max-w-xs h-32
+                  flex items-center justify-center
+                  border rounded bg-gray-50">
+        <img src="{{ q.option_b_diagram.url }}"
+             class="max-w-full max-h-full object-contain"
+             alt="Option B Diagram">
+      </div>
+    {% endif %}
+  </div>
+
+
+  <!-- OPTION C -->
+  {% if q.option_c or q.option_c_equation or q.option_c_diagram %}
+  <div>
+    <strong>C:</strong>
+
+    {% if q.option_c %}
+      <div class="whitespace-pre-wrap break-words">
+        {{ q.option_c|safe }}
+      </div>
+    {% endif %}
+
+    {% if q.option_c_equation %}
+      <div class="mt-1 mathjax text-base overflow-x-auto">
+        {{ q.option_c_equation }}
+      </div>
+    {% endif %}
+
+    {% if q.option_c_diagram %}
+      <div class="mt-2 w-full max-w-xs h-32
+                  flex items-center justify-center
+                  border rounded bg-gray-50">
+        <img src="{{ q.option_c_diagram.url }}"
+             class="max-w-full max-h-full object-contain"
+             alt="Option C Diagram">
+      </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+
+  <!-- OPTION D -->
+  {% if q.option_d or q.option_d_equation or q.option_d_diagram %}
+  <div>
+    <strong>D:</strong>
+
+    {% if q.option_d %}
+      <div class="whitespace-pre-wrap break-words">
+        {{ q.option_d|safe }}
+      </div>
+    {% endif %}
+
+    {% if q.option_d_equation %}
+      <div class="mt-1 mathjax text-base overflow-x-auto">
+        {{ q.option_d_equation }}
+      </div>
+    {% endif %}
+
+    {% if q.option_d_diagram %}
+      <div class="mt-2 w-full max-w-xs h-32
+                  flex items-center justify-center
+                  border rounded bg-gray-50">
+        <img src="{{ q.option_d_diagram.url }}"
+             class="max-w-full max-h-full object-contain"
+             alt="Option D Diagram">
+      </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+</div>
       <!-- CORRECT ANSWER -->
       <div class="text-sm font-semibold text-green-700 mt-1">
         Correct Answer: {{ q.correct_option }}
@@ -170,19 +253,97 @@
             </td>
 
             <!-- Options -->
-            <td class="px-4 py-3 text-gray-700 space-y-2">
-              <div><strong>A:</strong> {{ q.option_a|safe }}</div>
-              <div><strong>B:</strong> {{ q.option_b|safe }}</div>
+            <td class="px-4 py-3 text-gray-700 space-y-4">
 
-              {% if q.option_c %}
-                <div><strong>C:</strong> {{ q.option_c|safe }}</div>
-              {% endif %}
+  <!-- A -->
+  <div>
+    <strong>A:</strong>
+    {% if q.option_a %}
+      <div>{{ q.option_a|safe }}</div>
+    {% endif %}
+    {% if q.option_a_equation %}
+      <div class="mathjax mt-1 text-sm overflow-x-auto">
+        {{ q.option_a_equation }}
+      </div>
+    {% endif %}
+    {% if q.option_a_diagram %}
+      <div class="mt-1 w-full max-w-xs h-24
+                  flex items-center justify-center
+                  border rounded bg-gray-50">
+        <img src="{{ q.option_a_diagram.url }}"
+             class="max-w-full max-h-full object-contain">
+      </div>
+    {% endif %}
+  </div>
 
-              {% if q.option_d %}
-                <div><strong>D:</strong> {{ q.option_d|safe }}</div>
-              {% endif %}
-            </td>
+  <!-- B -->
+  <div>
+    <strong>B:</strong>
+    {% if q.option_b %}
+      <div>{{ q.option_b|safe }}</div>
+    {% endif %}
+    {% if q.option_b_equation %}
+      <div class="mathjax mt-1 text-sm overflow-x-auto">
+        {{ q.option_b_equation }}
+      </div>
+    {% endif %}
+    {% if q.option_b_diagram %}
+      <div class="mt-1 w-full max-w-xs h-24
+                  flex items-center justify-center
+                  border rounded bg-gray-50">
+        <img src="{{ q.option_b_diagram.url }}"
+             class="max-w-full max-h-full object-contain">
+      </div>
+    {% endif %}
+  </div>
 
+  <!-- C -->
+  {% if q.option_c or q.option_c_equation or q.option_c_diagram %}
+  <div>
+    <strong>C:</strong>
+    {% if q.option_c %}
+      <div>{{ q.option_c|safe }}</div>
+    {% endif %}
+    {% if q.option_c_equation %}
+      <div class="mathjax mt-1 text-sm overflow-x-auto">
+        {{ q.option_c_equation }}
+      </div>
+    {% endif %}
+    {% if q.option_c_diagram %}
+      <div class="mt-1 w-full max-w-xs h-24
+                  flex items-center justify-center
+                  border rounded bg-gray-50">
+        <img src="{{ q.option_c_diagram.url }}"
+             class="max-w-full max-h-full object-contain">
+      </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+  <!-- D -->
+  {% if q.option_d or q.option_d_equation or q.option_d_diagram %}
+  <div>
+    <strong>D:</strong>
+    {% if q.option_d %}
+      <div>{{ q.option_d|safe }}</div>
+    {% endif %}
+    {% if q.option_d_equation %}
+      <div class="mathjax mt-1 text-sm overflow-x-auto">
+        {{ q.option_d_equation }}
+      </div>
+    {% endif %}
+    {% if q.option_d_diagram %}
+      <div class="mt-1 w-full max-w-xs h-24
+                  flex items-center justify-center
+                  border rounded bg-gray-50">
+        <img src="{{ q.option_d_diagram.url }}"
+             class="max-w-full max-h-full object-contain">
+      </div>
+    {% endif %}
+  </div>
+  {% endif %}
+
+</td>
             <!-- Correct -->
             <td class="px-4 py-3 font-semibold text-green-700">
               {{ q.correct_option }}
