@@ -1364,6 +1364,7 @@ def import_questions_to_exam(request, exam_id):
     return render(request, "school_admin/question_bank/import.html", {
         "exam": exam,
         "questions": page_obj,
+        "page_obj": page_obj,
         "subjects": subjects,
         "classes": classes,
         "topics": topics,

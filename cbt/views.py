@@ -325,7 +325,7 @@ def take_exam(request, exam_id, question_index):
         exam_start_time = int(exam_start_time)
 
     time_limit = exam.duration_minutes * 60
-    
+     
 
     selected_answer = submission.raw_answers.get(str(question.id))
     return render(request, "cbt/take_exam.html", {
