@@ -1,7 +1,7 @@
 {% extends "accounts/base.html" %}
 {% load widget_tweaks %}
-
 {% block content %}
+{% load static %}
 <div class="max-w-6xl mx-auto px-4 py-6">
   <h1 class="text-2xl font-bold text-{{ school.theme_color }}-600">Add Questions to Question Bank</h1>
 
@@ -9,6 +9,7 @@
       class="space-y-6 bg-white rounded-xl shadow p-6">
 
     {% csrf_token %}
+    {{ formset.media }}
 
     <!-- Filters -->
     <div class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
@@ -74,11 +75,12 @@
 
           <!-- Question Text -->
           <div>
-            <label class="block text-sm font-medium mb-1">Question Text</label>
-            <textarea name="{{ form.text.html_name }}"
-                      class="w-full border rounded-lg px-3 py-2"
-                      rows="4"
-                      placeholder="Type the question here...">{{ form.text.value|default_if_none:"" }}</textarea>
+            <div>
+  <label class="block text-sm font-medium mb-1">
+    Question Text
+  </label>
+  {{ form.text }}
+</div>
           </div>
 
           <!-- Equation -->
@@ -224,42 +226,33 @@
 document.addEventListener('DOMContentLoaded', function () {
 
   function initializeMathLive(formBlock) {
-  const mathFields = formBlock.querySelectorAll('math-field.equation-field');
+    const mathFields = formBlock.querySelectorAll('math-field.equation-field');
 
-  mathFields.forEach((mf) => {
+    mathFields.forEach((mf) => {
+      const hiddenInput = mf.parentElement.querySelector('input.mathlive-hidden');
+      if (!hiddenInput) return;
 
-    // Find the hidden input inside the SAME wrapper
-    const hiddenInput = mf.parentElement.querySelector('input.mathlive-hidden');
-    if (!hiddenInput) return;
+      if (mf._listener) {
+        mf.removeEventListener('input', mf._listener);
+      }
 
-    // Remove old listener if exists
-    if (mf._listener) {
-      mf.removeEventListener('input', mf._listener);
-    }
+      const listener = function () {
+        hiddenInput.value = mf.getValue('latex');
+      };
 
-    const listener = function () {
-      hiddenInput.value = mf.getValue('latex');
-    };
+      mf.addEventListener('input', listener);
+      mf._listener = listener;
 
-    mf.addEventListener('input', listener);
-    mf._listener = listener;
+      if (hiddenInput.value) {
+        mf.setValue(hiddenInput.value, { format: 'latex' });
+      }
+    });
+  }
 
-    // Restore value (for edit mode)
-    if (hiddenInput.value) {
-      mf.setValue(hiddenInput.value, { format: 'latex' });
-    }
-  });
-}
-
-  // Initialize existing forms
+  // Initialize existing
   document.querySelectorAll('.question-form').forEach(formBlock => {
     initializeMathLive(formBlock);
   });
-
-
-  // -------------------------------
-  // ADD NEW QUESTION (FORMSET)
-  // -------------------------------
 
   const addButton = document.getElementById('add-question');
   const container = document.getElementById('questions-container');
@@ -271,13 +264,13 @@ document.addEventListener('DOMContentLoaded', function () {
       let totalForms = parseInt(totalFormsInput.value);
       if (totalForms >= 20) return;
 
-      const firstForm = container.querySelector('.question-form').cloneNode(true);
+      const firstForm = container.querySelector('.question-form');
       const newForm = firstForm.cloneNode(true);
 
       // Update form index
       newForm.innerHTML = newForm.innerHTML.replace(/form-(\d+)-/g, `form-${totalForms}-`);
 
-      // Clear text, hidden, file inputs
+      // Clear inputs
       newForm.querySelectorAll('input, textarea, select').forEach(el => {
         if (el.type === 'checkbox' || el.type === 'radio') {
           el.checked = false;
@@ -286,7 +279,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
       });
 
-      // Clear MathLive fields
+      // Clear math fields
       newForm.querySelectorAll('math-field').forEach(mf => {
         mf.setValue('');
       });
@@ -294,7 +287,24 @@ document.addEventListener('DOMContentLoaded', function () {
       container.appendChild(newForm);
       totalFormsInput.value = totalForms + 1;
 
-      // Initialize MathLive for new form only
+      // Initialize CKEditor ONLY for new textareas
+      setTimeout(function () {
+        if (typeof CKEDITOR !== 'undefined') {
+          // Fix IDs and initialize CKEditor
+newForm.querySelectorAll('textarea').forEach(el => {
+    const oldId = el.id;
+    const newId = oldId.replace(/form-(\d+)-/, `form-${totalForms}-`);
+    el.id = newId;
+    el.name = el.name.replace(/form-(\d+)-/, `form-${totalForms}-`);
+
+    // Initialize CKEditor
+    if (!CKEDITOR.instances[newId]) {
+        CKEDITOR.replace(newId);
+    }
+});
+        }
+      }, 100);
+
       initializeMathLive(newForm);
     });
   }
@@ -311,5 +321,6 @@ math-field {
 }
 
 </style>
+
 
 {% endblock %}

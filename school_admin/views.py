@@ -4,7 +4,7 @@ from accounts.models import School, User
 from attendance.models import Attendance
 from results.models import ClassScoreSetting, ClassSubjectTeacher, Subject
 from finance.models import SchoolTermSetting
-from results.utils import SESSION_CHOICES
+from results.utils import SESSION_CHOICES, normalize_latex
 from superadmin.views import class_create, class_edit, class_delete, subject_create, subject_edit, subject_delete 
 
 # Permission checks
@@ -815,12 +815,14 @@ def submission_detail(request, school_id, exam_id, submission_id):
                 if opt.get("text", "").strip().lower() == orig_text:
                     correct_letter = label
         else:
-            options = [
-                {"label": "A", "text": q.option_a, "equation": None, "diagram": getattr(q, "diagram_a", None)},
-                {"label": "B", "text": q.option_b, "equation": None, "diagram": getattr(q, "diagram_b", None)},
-                {"label": "C", "text": q.option_c, "equation": None, "diagram": getattr(q, "diagram_c", None)},
-                {"label": "D", "text": q.option_d, "equation": None, "diagram": getattr(q, "diagram_d", None)},
-            ]
+            options = []
+            for label in ["A", "B", "C", "D"]:
+                options.append({
+                    "label": label,
+                    "text": getattr(q, f"option_{label.lower()}"),
+                    "equation": getattr(q, f"option_{label.lower()}_equation"),
+                    "diagram": getattr(q, f"option_{label.lower()}_diagram").url if getattr(q, f"option_{label.lower()}_diagram") else None,
+                })
             correct_letter = q.correct_option
 
         question_map.append({
@@ -1107,6 +1109,14 @@ def question_bank_create(request):
         questions = formset.save(commit=False)
 
         for q in questions:
+
+            q.equation = normalize_latex(q.equation)
+
+            q.option_a_equation = normalize_latex(q.option_a_equation)
+            q.option_b_equation = normalize_latex(q.option_b_equation)
+            q.option_c_equation = normalize_latex(q.option_c_equation)
+            q.option_d_equation = normalize_latex(q.option_d_equation)
+
             q.subject_id = selected_subject_id
             q.school_class_id = selected_class or None
             q.term = selected_term or ""

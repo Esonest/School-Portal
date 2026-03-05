@@ -90,7 +90,15 @@ MIDDLEWARE = [
 
 STATIC_URL = "/static/"
 STATIC_ROOT = BASE_DIR / "staticfiles"
-STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+STATICFILES_DIRS = [
+    BASE_DIR / "static",
+]
+
+
+if DEBUG:
+    STATICFILES_STORAGE = "django.contrib.staticfiles.storage.StaticFilesStorage"
+else:
+    STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
 MEDIA_URL = "/media/"
 MEDIA_ROOT = BASE_DIR / "media"
@@ -109,25 +117,6 @@ STORAGES = {
 
 
 
-CKEDITOR_CONFIGS = {
-    'equation_only': {
-        'toolbar': [
-            ['Mathjax'],   # ✅ Equation button only
-        ],
-        'height': 160,
-        'width': '100%',
-        'extraPlugins': ','.join([
-            'mathjax',
-        ]),
-        'mathJaxLib': 'https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js',
-        'removeButtons': (
-            'Bold,Italic,Underline,Strike,Subscript,Superscript,'
-            'Image,Table,Link,Unlink,Anchor,Styles,Format,Font,FontSize,'
-            'TextColor,BGColor,Smiley,SpecialChar'
-        ),
-        'allowedContent': True,   # ✅ allow pasted equations
-    }
-}
 
 
 AUTH_USER_MODEL = "accounts.User"
@@ -137,6 +126,7 @@ LOGIN_REDIRECT_URL = "/portal-selection/"
 LOGOUT_REDIRECT_URL ="/accounts/login/"
 
 CRISPY_TEMPLATE_PACK = "bootstrap5"
+CKEDITOR_UPLOAD_PATH = "uploads/"
 
 MESSAGE_TAGS = {
     messages.ERROR: "error",
@@ -225,7 +215,42 @@ AUTH_PASSWORD_VALIDATORS = [
     },
 ]
 
+CKEDITOR_CONFIGS = {
 
+    'equation_only': {
+        'toolbar': 'Basic',
+        'toolbar_Basic': [
+            ['Bold', 'Italic'],
+            ['Subscript', 'Superscript'],
+            ['NumberedList', 'BulletedList'],
+            ['Link'],
+            ['Undo', 'Redo'],
+        ],
+        'height': 150,
+        'width': '100%',
+        'removePlugins': 'exportpdf,clipboard,uploadimage',
+    },
+
+    'full_features': {
+        'toolbar': 'Custom',
+        'toolbar_Custom': [
+            ['Format', 'Font', 'FontSize'],
+            ['Bold', 'Italic', 'Underline', 'Strike'],
+            ['Subscript', 'Superscript'],
+            ['TextColor', 'BGColor'],
+            ['NumberedList', 'BulletedList'],
+            ['Outdent', 'Indent'],
+            ['JustifyLeft', 'JustifyCenter', 'JustifyRight', 'JustifyBlock'],
+            ['Link', 'Unlink'],
+            ['Image', 'Table'],
+            ['RemoveFormat'],
+            ['Undo', 'Redo']
+        ],
+        'height': 200,
+        'width': '100%',
+        'removePlugins': 'exportpdf,clipboard,uploadimage',
+    }
+}
 # Internationalization
 # https://docs.djangoproject.com/en/5.2/topics/i18n/
 

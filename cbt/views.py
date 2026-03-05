@@ -7,7 +7,7 @@ from django.http import JsonResponse, HttpResponseForbidden
 from django.views.decorators.csrf import csrf_exempt
 from .models import CBTExam, CBTQuestion, CBTSubmission
 from students.models import Student
-from results.utils import portal_required, wrap_latex
+from results.utils import portal_required, normalize_latex
 
 
 # --------------------------------------
@@ -192,42 +192,37 @@ def take_exam(request, exam_id, question_index):
     
 
 # 🔥 If old structure (no diagram key), rebuild
-    if shuffled_opts and "diagram" not in shuffled_opts[0]:
+    if shuffled_opts and (
+        "diagram" not in shuffled_opts[0] or
+        "equation" not in shuffled_opts[0]
+    ):
         shuffled_opts = None
 
     if not shuffled_opts:
-        # Build structured options (text + optional equation)
-        def extract_equation(text):
-            if not text:
-                return None
-            text = text.strip()
-            if text.startswith("\\(") or text.startswith("$"):
-                return text
-            return None
 
 
         option_pool = [
             {
                 "text": question.option_a,
-                "equation": extract_equation(question.option_a),
+                "equation":question.option_a_equation,
                 "diagram": question.option_a_diagram.url if question.option_a_diagram else None,
                 "is_correct": question.correct_option == "A",
             },
             {
                 "text": question.option_b,
-                "equation": extract_equation(question.option_b),
+                "equation": question.option_b_equation,
                 "diagram": question.option_b_diagram.url if question.option_b_diagram else None,
                 "is_correct": question.correct_option == "B",
             },
             {
                 "text": question.option_c,
-                "equation": extract_equation(question.option_c),
+                "equation":question.option_c_equation,
                 "diagram": question.option_c_diagram.url if question.option_c_diagram else None,
                 "is_correct": question.correct_option == "C",
             },
             {
                 "text": question.option_d,
-                "equation": extract_equation(question.option_d),
+                "equation": question.option_d_equation,
                 "diagram": question.option_d_diagram.url if question.option_d_diagram else None,
                 "is_correct": question.correct_option == "D",
             },
@@ -637,12 +632,14 @@ def student_submission_detail(request, submission_id):
                 for label, opt in zip(["A", "B", "C", "D"], shuffled_opts)
             ]
         else:
-            options = [
-                {"label": "A", "text": q.option_a, "equation": None,"diagram": getattr(q, "diagram_a", None)},
-                {"label": "B", "text": q.option_b, "equation": None, "diagram": getattr(q, "diagram_b", None)},
-                {"label": "C", "text": q.option_c, "equation": None, "diagram": getattr(q, "diagram_c", None)},
-                {"label": "D", "text": q.option_d, "equation": None, "diagram": getattr(q, "diagram_d", None)},
-            ]
+            options = []
+            for label in ["A", "B", "C", "D"]:
+                options.append({
+                    "label": label,
+                    "text": getattr(q, f"option_{label.lower()}"),
+                    "equation": normalize_latex(getattr(q, f"option_{label.lower()}_equation")),
+                    "diagram": getattr(q, f"option_{label.lower()}_diagram").url if getattr(q, f"option_{label.lower()}_diagram") else None,
+                })
 
         question_map.append({
             "question": q,

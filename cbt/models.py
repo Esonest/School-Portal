@@ -82,10 +82,10 @@ class CBTQuestion(models.Model):
     option_c_diagram = models.ImageField(upload_to="cbt/options/", blank=True, null=True)
     option_d_diagram = models.ImageField(upload_to="cbt/options/", blank=True, null=True)
 
-    option_a = models.CharField(max_length=400)
-    option_b = models.CharField(max_length=400)
-    option_c = models.CharField(max_length=400, blank=True)
-    option_d = models.CharField(max_length=400, blank=True)
+    option_a = RichTextField(config_name='full_features')
+    option_b = RichTextField(config_name='full_features')
+    option_c = RichTextField(config_name='full_features', blank=True)
+    option_d = RichTextField(config_name='full_features', blank=True)
 
     correct_option = models.CharField(
         max_length=1,
@@ -132,13 +132,20 @@ class CBTQuestion(models.Model):
     
 
     def save(self, *args, **kwargs):
-        # -------------------------------
-        # PERMANENT FIX: Store raw LaTeX only
-        # -------------------------------
+        # Clean text
         if self.text:
             self.text = self.text.strip()
-        if self.equation:
-            self.equation = self.equation.strip()  # <-- no \( ... \)
+
+        # Normalize main equation
+        self.equation = normalize_latex(self.equation)
+
+    # Normalize option equations
+        self.option_a_equation = normalize_latex(self.option_a_equation)
+        self.option_b_equation = normalize_latex(self.option_b_equation)
+        self.option_c_equation = normalize_latex(self.option_c_equation)
+        self.option_d_equation = normalize_latex(self.option_d_equation)
+
+    # Clean option text
         self.option_a = self.option_a.strip() if self.option_a else ""
         self.option_b = self.option_b.strip() if self.option_b else ""
         self.option_c = self.option_c.strip() if self.option_c else ""
@@ -242,10 +249,10 @@ class QuestionBank(models.Model):
     option_c_diagram = models.ImageField(upload_to="question_bank/options/", blank=True, null=True)
     option_d_diagram = models.ImageField (upload_to="question_bank/options/", blank=True, null=True)
 
-    option_a = models.CharField(max_length=400)
-    option_b = models.CharField(max_length=400)
-    option_c = models.CharField(max_length=400, blank=True)
-    option_d = models.CharField(max_length=400, blank=True)
+    option_a = RichTextField(config_name='full_features')
+    option_b = RichTextField(config_name='full_features')
+    option_c = RichTextField(config_name='full_features', blank=True)
+    option_d = RichTextField(config_name='full_features', blank=True)
 
 
      
@@ -270,10 +277,6 @@ class QuestionBank(models.Model):
 
             # Normalize raw LaTeX fields for options
         self.equation = normalize_latex(self.equation)
-        self.option_a = normalize_latex(self.option_a)
-        self.option_b = normalize_latex(self.option_b)
-        self.option_c = normalize_latex(self.option_c)
-        self.option_d = normalize_latex(self.option_d)
 
         self.option_a_equation = normalize_latex(self.option_a_equation)
         self.option_b_equation = normalize_latex(self.option_b_equation)

@@ -64,7 +64,7 @@
 {% if question_data.text %}
   <p class="question-text text-base sm:text-lg md:text-xl
            text-gray-900 leading-relaxed mb-2">
-    {{ question_data.text }}
+    {{ question_data.text|safe }}
   </p>
 {% endif %}
 
@@ -127,10 +127,6 @@
   </div>
 </label>
 {% endfor %}
-
-
-
-
 
       <!-- NAVIGATION -->
       <div class="flex gap-3 mt-4">

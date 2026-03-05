@@ -2,12 +2,14 @@
 
 {% block content %}
 <style>
-  .math-content mjx-container {
+.mathjax mjx-container {
   max-width: 100%;
   margin: 0 !important;
 }
 
 </style>
+
+
 <div class="max-w-7xl mx-auto px-4 py-6">
 
   <!-- HEADER -->
@@ -55,47 +57,107 @@
       <div class="text-gray-700 space-y-2 mt-2">
 
         <div class="break-words overflow-wrap-anywhere">
-          <strong>A:</strong>
-          <span class="math-content max-w-full overflow-x-auto">
-            {{ q.option_a|safe }}
-          </span>
-          {% if q.correct_option == 'A' %}
-            <span class="text-green-700 font-bold ml-1">✔ Correct</span>
-          {% endif %}
-        </div>
+  <strong>A:</strong>
 
-        <div class="break-words overflow-wrap-anywhere">
-          <strong>B:</strong>
-          <span class="math-content max-w-full overflow-x-auto">
-            {{ q.option_b|safe }}
-          </span>
-          {% if q.correct_option == 'B' %}
-            <span class="text-green-700 font-bold ml-1">✔ Correct</span>
-          {% endif %}
-        </div>
+  {% if q.option_a %}
+    {{ q.option_a|safe }}
+  {% endif %}
 
-        {% if q.option_c %}
-        <div class="break-words overflow-wrap-anywhere">
-          <strong>C:</strong>
-          <span class="math-content max-w-full overflow-x-auto">
-            {{ q.option_c|safe }}
-          </span>
-          {% if q.correct_option == 'C' %}
-            <span class="text-green-700 font-bold ml-1">✔ Correct</span>
-          {% endif %}
-        </div>
-        {% endif %}
+  {% if q.option_a_equation %}
+ <div class="mathjax mt-1 text-sm overflow-x-auto">
+    {{ q.option_a_equation|escape }}
+  </div>
+  {% endif %}
 
-        {% if q.option_d %}
-        <div class="break-words overflow-wrap-anywhere">
-          <strong>D:</strong>
-          <span class="math-content max-w-full overflow-x-auto">
-            {{ q.option_d|safe }}
-          </span>
-          {% if q.correct_option == 'D' %}
-            <span class="text-green-700 font-bold ml-1">✔ Correct</span>
-          {% endif %}
-        </div>
+  {% if q.option_a_diagram %}
+  <div class="mt-2">
+    <img src="{{ q.option_a_diagram.url }}"
+         class="max-w-full max-h-32 object-contain border rounded">
+  </div>
+  {% endif %}
+
+  {% if q.correct_option == 'A' %}
+    <span class="text-green-700 font-bold ml-1">✔ Correct</span>
+  {% endif %}
+</div>
+
+       <div>
+<strong>B:</strong>
+
+{% if q.option_b %}
+{{ q.option_b|safe }}
+{% endif %}
+
+{% if q.option_b_equation %}
+<div class="mathjax mt-1 text-sm overflow-x-auto">
+{{ q.option_b_equation|escape }}
+</div>
+{% endif %}
+
+{% if q.option_b_diagram %}
+<div class="mt-2">
+<img src="{{ q.option_b_diagram.url }}"
+     class="max-w-full max-h-32 object-contain border rounded">
+</div>
+{% endif %}
+
+{% if q.correct_option == 'B' %}
+<span class="text-green-700 font-bold">✔ Correct</span>
+{% endif %}
+</div>
+        {% if q.option_c or q.option_c_equation or q.option_c_diagram %}
+<div>
+<strong>C:</strong>
+
+{% if q.option_c %}
+{{ q.option_c|safe }}
+{% endif %}
+
+{% if q.option_c_equation %}
+<div class="mathjax mt-1 text-sm overflow-x-auto">
+{{ q.option_c_equation|escape }}
+</div>
+{% endif %}
+
+{% if q.option_c_diagram %}
+<div class="mt-2">
+<img src="{{ q.option_c_diagram.url }}"
+     class="max-w-full max-h-32 object-contain border rounded">
+</div>
+{% endif %}
+
+{% if q.correct_option == 'C' %}
+<span class="text-green-700 font-bold">✔ Correct</span>
+{% endif %}
+</div>
+{% endif %}
+
+
+        {% if q.option_d or q.option_d_equation or q.option_d_diagram %}
+        <div>
+<strong>D:</strong>
+
+{% if q.option_d %}
+{{ q.option_d|safe }}
+{% endif %}
+
+{% if q.option_d_equation %}
+<div class="mathjax mt-1 text-sm overflow-x-auto">
+{{ q.option_d_equation|escape }}
+</div>
+{% endif %}
+
+{% if q.option_d_diagram %}
+<div class="mt-2">
+<img src="{{ q.option_d_diagram.url }}"
+     class="max-w-full max-h-32 object-contain border rounded">
+</div>
+{% endif %}
+
+{% if q.correct_option == 'D' %}
+<span class="text-green-700 font-bold">✔ Correct</span>
+{% endif %}
+</div>
         {% endif %}
 
       </div>
@@ -150,32 +212,107 @@
           <!-- Options -->
           <td class="px-4 py-3 text-gray-700 space-y-1">
             <div>
-              <strong>A:</strong> {{ q.option_a|safe }}
-              {% if q.correct_option == 'A' %}
-                <span class="text-green-700 font-bold">✔ Correct</span>
-              {% endif %}
-            </div>
+<strong>A:</strong>
+
+{% if q.option_a %}
+{{ q.option_a|safe }}
+{% endif %}
+
+{% if q.option_a_equation %}
+<div class="mathjax mt-1 text-sm overflow-x-auto">
+{{ q.option_a_equation|escape }}
+</div>
+{% endif %}
+
+{% if q.option_a_diagram %}
+<div class="mt-1">
+<img src="{{ q.option_a_diagram.url }}"
+     class="max-h-24 object-contain border rounded">
+</div>
+{% endif %}
+
+{% if q.correct_option == 'A' %}
+<span class="text-green-700 font-bold">✔ Correct</span>
+{% endif %}
+</div>
             <div>
-              <strong>B:</strong> {{ q.option_b|safe }}
-              {% if q.correct_option == 'B' %}
-                <span class="text-green-700 font-bold">✔ Correct</span>
-              {% endif %}
-            </div>
-            {% if q.option_c %}
-            <div>
-              <strong>C:</strong> {{ q.option_c|safe }}
-              {% if q.correct_option == 'C' %}
-                <span class="text-green-700 font-bold">✔ Correct</span>
-              {% endif %}
-            </div>
+<strong>B:</strong>
+
+{% if q.option_b %}
+{{ q.option_b|safe }}
+{% endif %}
+
+{% if q.option_b_equation %}
+<div class="mathjax mt-1 text-sm overflow-x-auto">
+{{ q.option_b_equation|escape }}
+</div>
+{% endif %}
+
+{% if q.option_b_diagram %}
+<div class="mt-1">
+<img src="{{ q.option_b_diagram.url }}"
+     class="max-h-24 object-contain border rounded">
+</div>
+{% endif %}
+
+{% if q.correct_option == 'B' %}
+<span class="text-green-700 font-bold">✔ Correct</span>
+{% endif %}
+</div>
+
+
+            {% if q.option_c or q.option_c_equation or q.option_c_diagram %}
+           <div>
+<strong>C:</strong>
+
+{% if q.option_c %}
+{{ q.option_c|safe }}
+{% endif %}
+
+{% if q.option_c_equation %}
+<div class="mathjax mt-1 text-sm overflow-x-auto">
+{{ q.option_c_equation|escape }}
+</div>
+{% endif %}
+
+{% if q.option_c_diagram %}
+<div class="mt-1">
+<img src="{{ q.option_c_diagram.url }}"
+     class="max-h-24 object-contain border rounded">
+</div>
+{% endif %}
+
+{% if q.correct_option == 'C' %}
+<span class="text-green-700 font-bold">✔ Correct</span>
+{% endif %}
+</div>
             {% endif %}
-            {% if q.option_d %}
-            <div>
-              <strong>D:</strong> {{ q.option_d|safe }}
-              {% if q.correct_option == 'D' %}
-                <span class="text-green-700 font-bold">✔ Correct</span>
-              {% endif %}
-            </div>
+
+            {% if q.option_d or q.option_d_equation or q.option_d_diagram %}
+           <div>
+<strong>D:</strong>
+
+{% if q.option_d %}
+{{ q.option_d|safe }}
+{% endif %}
+
+{% if q.option_d_equation %}
+<div class="mathjax mt-1 text-sm overflow-x-auto">
+{{ q.option_d_equation|escape }}
+</div>
+{% endif %}
+
+{% if q.option_d_diagram %}
+<div class="mt-1">
+<img src="{{ q.option_d_diagram.url }}"
+     class="max-h-24 object-contain border rounded">
+</div>
+{% endif %}
+
+{% if q.correct_option == 'D' %}
+<span class="text-green-700 font-bold">✔ Correct</span>
+{% endif %}
+</div>
             {% endif %}
           </td>
         </tr>
@@ -192,9 +329,14 @@
 
 </div>
 
-<!-- ================= MATHJAX ================= -->
-<script type="text/javascript" id="MathJax-script" async
-  src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js">
-</script>
+<!-- MathJax -->
+<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+  if (window.MathJax) {
+    MathJax.typesetPromise();
+  }
+});
+</script>
 {% endblock %}

@@ -2,6 +2,7 @@ from django import forms
 from students.models import Student
 from accounts.models import User
 from results.utils import generate_unique_username
+from ckeditor_uploader.widgets import CKEditorUploadingWidget
 
 
 tailwind_input = "w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
@@ -237,9 +238,12 @@ class CBTExamForm(forms.ModelForm):
 
 
 
-
-
 class CBTQuestionForm(forms.ModelForm):
+    text = forms.CharField(
+            required=False,
+            widget=CKEditorUploadingWidget(config_name='full_features')
+        )
+     
     class Meta:
         model = CBTQuestion
         fields = [
@@ -284,10 +288,7 @@ from django.forms import BaseModelFormSet
 class QuestionBankForm(forms.ModelForm):
     text = forms.CharField(
         required=False,
-        widget=forms.Textarea(attrs={
-            "class": "w-full min-h-[140px] text-base rounded-lg border border-gray-300 px-3 py-2 "
-                     "focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500"
-        })
+        widget=CKEditorUploadingWidget(config_name='full_features')
     )
 
     equation = forms.CharField(

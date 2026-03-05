@@ -275,3 +275,5 @@ def wrap_latex(text):
     
     # Very simple example: wrap anything with backslash or ^/_ in $
     return re.sub(r'(\\[a-zA-Z]+|[a-zA-Z0-9]+[\^_][a-zA-Z0-9]+)', replacer, text)
+
+   

@@ -7,6 +7,7 @@
 
   <form method="post" enctype="multipart/form-data" class="space-y-6 bg-white rounded-xl shadow p-6">
     {% csrf_token %}
+    {{ formset.media }}
 
     <!-- READ-ONLY META -->
     <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -194,6 +195,7 @@
     <label class="text-xs text-gray-500">Diagram (optional)</label>
     {{ form.option_d_diagram }}
   </div>
+      </div>
 
 </div>
 
@@ -219,26 +221,41 @@
 <!-- ================= SYNC SCRIPT ================= -->
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-  const blocks = document.querySelectorAll('.equation-field');
-  const hidden = document.querySelectorAll('.mathlive-hidden');
-  const preview = document.getElementById('preview');
 
-  blocks.forEach((mf, i) => {
-    const hiddenInput = hidden[i];
+  document.querySelectorAll('.equation-field').forEach((mf) => {
+    
+    const targetName = mf.dataset.target;
+    let hiddenInput;
+
+    if (targetName) {
+      hiddenInput = document.querySelector(
+        `input[name="${targetName}"]`
+      );
+    } else {
+      // fallback for main question equation
+      hiddenInput = mf.nextElementSibling;
+    }
+
     if (!hiddenInput) return;
 
-    // preload existing LaTeX
+    // preload existing value
     if (hiddenInput.value) {
       mf.setValue(hiddenInput.value, { format: 'latex' });
-      if (preview && i === 0) preview.setValue(hiddenInput.value, { format: 'latex' });
     }
 
     mf.addEventListener('input', () => {
-      const latex = mf.getValue('latex');
-      hiddenInput.value = latex;
-      if (preview && i === 0) preview.setValue(latex, { format: 'latex' });
+      hiddenInput.value = mf.getValue('latex');
+
+      // update preview only for main equation
+      if (!targetName) {
+        const preview = document.getElementById('preview');
+        if (preview) {
+          preview.setValue(hiddenInput.value, { format: 'latex' });
+        }
+      }
     });
   });
+
 });
 </script>
 

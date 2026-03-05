@@ -73,7 +73,7 @@
       {% if item.question.equation %}
         <div class="math-content mt-1
                     max-w-full overflow-x-auto leading-snug">
-          {{ item.question.equation|safe }}
+         {{ item.question.equation|escape }}
         </div>
       {% endif %}
 
@@ -105,7 +105,7 @@
 
   {% if opt.equation %}
     <div class="max-w-full overflow-x-auto leading-snug">
-      {{ opt.equation|safe }}
+     {{ opt.equation|escape }}
     </div>
   {% endif %}
 
@@ -144,7 +144,7 @@
 
   {% if opt.equation %}
     <div class="max-w-full overflow-x-auto leading-snug">
-      {{ opt.equation|safe }}
+     {{ opt.equation|escape }}
     </div>
   {% endif %}
 
@@ -191,7 +191,7 @@
                     <td class="border p-2">
                         <div class="math-content">{{ item.question.text|safe }}</div>
                         {% if item.question.equation %}
-                        <div class="math-content mt-1">{{ item.question.equation|safe }}</div>
+                        <div class="math-content mt-1">{{ item.question.equation|escape }}</div>
                         {% endif %}
                         {% if item.question.diagram %}
 <div class="mt-2 w-full max-w-sm h-32 flex items-center justify-center border rounded bg-gray-50">
@@ -217,7 +217,7 @@
 
   {% if opt.equation %}
     <span class="block math-content overflow-x-auto">
-      {{ opt.equation|safe }}
+      {{ opt.equation|escape }}
     </span>
   {% endif %}
 
@@ -251,7 +251,7 @@
 
   {% if opt.equation %}
     <span class="block math-content overflow-x-auto">
-      {{ opt.equation|safe }}
+      {{ opt.equation|escape }}
     </span>
   {% endif %}
 
@@ -285,10 +285,18 @@
 
 <!-- MathJax trigger (renders all math) -->
 <script>
-document.addEventListener("DOMContentLoaded", () => {
-  if (window.MathJax) {
-    MathJax.typesetPromise();
+document.addEventListener("DOMContentLoaded", function () {
+
+  function renderMath() {
+    if (window.MathJax && MathJax.typesetPromise) {
+      MathJax.typesetPromise();
+    } else {
+      setTimeout(renderMath, 200);
+    }
   }
+
+  renderMath();
+
 });
 </script>
 {% endblock %}
