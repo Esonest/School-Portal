@@ -225,10 +225,36 @@
 <script>
 document.addEventListener('DOMContentLoaded', function () {
 
+  /* ---------- CKEDITOR INITIALIZER ---------- */
+  function initializeCKEditors(scope) {
+    if (typeof CKEDITOR === 'undefined') return;
+
+    scope.querySelectorAll('textarea').forEach(function(textarea) {
+
+      if (!textarea.id) return;
+
+      // Remove existing editor if it exists
+      if (CKEDITOR.instances[textarea.id]) {
+        CKEDITOR.instances[textarea.id].destroy(true);
+      }
+
+      // Ensure textarea is visible
+      textarea.style.display = '';
+
+      // Create rich CKEditor
+      CKEDITOR.replace(textarea.id);
+
+    });
+  }
+
+
+  /* ---------- MATHLIVE INITIALIZER ---------- */
   function initializeMathLive(formBlock) {
+
     const mathFields = formBlock.querySelectorAll('math-field.equation-field');
 
     mathFields.forEach((mf) => {
+
       const hiddenInput = mf.parentElement.querySelector('input.mathlive-hidden');
       if (!hiddenInput) return;
 
@@ -249,16 +275,25 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-  // Initialize existing
-  document.querySelectorAll('.question-form').forEach(formBlock => {
-    initializeMathLive(formBlock);
-  });
 
-  const addButton = document.getElementById('add-question');
+  /* ---------- INITIAL PAGE SETUP ---------- */
+
   const container = document.getElementById('questions-container');
+  const addButton = document.getElementById('add-question');
   const totalFormsInput = document.getElementById('id_form-TOTAL_FORMS');
 
+  // Initialize editors for existing questions
+  initializeCKEditors(document);
+
+  document.querySelectorAll('.question-form').forEach(form => {
+    initializeMathLive(form);
+  });
+
+
+  /* ---------- ADD QUESTION ---------- */
+
   if (addButton) {
+
     addButton.addEventListener('click', function () {
 
       let totalForms = parseInt(totalFormsInput.value);
@@ -267,19 +302,34 @@ document.addEventListener('DOMContentLoaded', function () {
       const firstForm = container.querySelector('.question-form');
       const newForm = firstForm.cloneNode(true);
 
-      // Update form index
-      newForm.innerHTML = newForm.innerHTML.replace(/form-(\d+)-/g, `form-${totalForms}-`);
+      /* Remove cloned CKEditor UI */
+      newForm.querySelectorAll('.cke').forEach(el => el.remove());
 
-      // Clear inputs
-      newForm.querySelectorAll('input, textarea, select').forEach(el => {
-        if (el.type === 'checkbox' || el.type === 'radio') {
-          el.checked = false;
-        } else {
-          el.value = '';
-        }
+      /* Restore textarea visibility */
+      newForm.querySelectorAll('textarea').forEach(textarea => {
+        textarea.style.display = '';
       });
 
-      // Clear math fields
+      /* Update form indexes */
+      newForm.querySelectorAll('input, textarea, select').forEach(el => {
+
+        if (el.name) {
+          el.name = el.name.replace(/form-(\d+)-/, `form-${totalForms}-`);
+        }
+
+        if (el.id) {
+          el.id = el.id.replace(/form-(\d+)-/, `form-${totalForms}-`);
+        }
+
+        if (el.type === 'checkbox' || el.type === 'radio') {
+          el.checked = false;
+        } else if (el.type !== 'hidden') {
+          el.value = '';
+        }
+
+      });
+
+      /* Reset MathLive fields */
       newForm.querySelectorAll('math-field').forEach(mf => {
         mf.setValue('');
       });
@@ -287,26 +337,16 @@ document.addEventListener('DOMContentLoaded', function () {
       container.appendChild(newForm);
       totalFormsInput.value = totalForms + 1;
 
-      // Initialize CKEditor ONLY for new textareas
+      /* Reinitialize CKEditor */
       setTimeout(function () {
-        if (typeof CKEDITOR !== 'undefined') {
-          // Fix IDs and initialize CKEditor
-newForm.querySelectorAll('textarea').forEach(el => {
-    const oldId = el.id;
-    const newId = oldId.replace(/form-(\d+)-/, `form-${totalForms}-`);
-    el.id = newId;
-    el.name = el.name.replace(/form-(\d+)-/, `form-${totalForms}-`);
-
-    // Initialize CKEditor
-    if (!CKEDITOR.instances[newId]) {
-        CKEDITOR.replace(newId);
-    }
-});
-        }
+        initializeCKEditors(newForm);
       }, 100);
 
+      /* Reinitialize MathLive */
       initializeMathLive(newForm);
+
     });
+
   }
 
 });
