@@ -1,0 +1,36 @@
+<div id="import-message"
+     style="display:none;"
+     class="fixed top-6 right-6 z-50 max-w-sm w-full shadow-lg rounded-xl overflow-hidden animate-fadeIn">
+
+  <div id="import-message-box"
+       class="p-4 flex items-start gap-3">
+
+
+<!-- Icon -->
+<div id="import-message-icon" class="text-xl pt-1"></div>
+
+<!-- Text -->
+<div class="flex-1">
+  <p id="import-message-title" class="font-semibold text-sm"></p>
+  <p id="import-message-text" class="text-sm opacity-90"></p>
+</div>
+
+<!-- Close -->
+<button onclick="closeImportMessage()" class="text-lg font-bold leading-none">
+  &times;
+</button>
+
+
+  </div>
+</div>
+
+<style>
+.animate-fadeIn{
+  animation: fadeIn .25s ease-in-out;
+}
+
+@keyframes fadeIn{
+  from{opacity:0; transform:translateY(-10px);}
+  to{opacity:1; transform:translateY(0);}
+}
+</style>

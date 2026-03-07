@@ -61,6 +61,107 @@
 
     {{ formset.management_form }}
 
+    <div class="bg-yellow-50 border border-yellow-200 p-4 rounded-lg mb-6">
+  <label class="font-semibold block mb-2">
+  Generate  Bulk Questions (Paste from Word / PDF)
+  </label>
+
+  <textarea id="bulk-question-input"
+  class="w-full border rounded-lg p-3 h-48"
+  placeholder="Paste questions here..."></textarea>
+
+  <button
+  type="button"
+  id="import-questions"
+  class="mt-3 px-5 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+  Generate Questions
+  </button>
+  
+</div>
+      
+<template id="empty-form-template">
+  <div class="question-form border-b py-4 relative space-y-3">
+    <h2 class="font-semibold mb-2">Question</h2>
+
+    <!-- Question Text -->
+    <div>
+      <label class="block text-sm font-medium mb-1">Question Text</label>
+      <textarea name="form-__prefix__-text" id="id_form-__prefix__-text"></textarea>
+    </div>
+
+    <!-- Equation -->
+    <div>
+      <label class="block text-sm font-medium mb-1">Equation (optional)</label>
+      <math-field class="equation-field w-full border rounded-lg px-3 py-2 bg-white" style="min-height:80px;"></math-field>
+      <input type="hidden" name="form-__prefix__-equation" class="mathlive-hidden">
+    </div>
+
+    <!-- Options A-D -->
+    <div class="grid grid-cols-1 gap-6 mt-2">
+
+      <!-- Option A -->
+      <div class="space-y-2">
+        <label class="font-semibold">Option A</label>
+        <input type="text"
+       name="form-__prefix__-option_a"
+       class="w-full border rounded-lg px-3 py-2">
+        <math-field class="equation-field w-full border rounded-lg px-3 py-2 bg-white" style="min-height:60px;"></math-field>
+        <input type="hidden" name="form-__prefix__-option_a_equation" class="mathlive-hidden">
+      </div>
+
+      <!-- Option B -->
+      <div class="space-y-2">
+        <label class="font-semibold">Option B</label>
+        <input type="text"
+       name="form-__prefix__-option_b"
+       class="w-full border rounded-lg px-3 py-2">
+        <math-field class="equation-field w-full border rounded-lg px-3 py-2 bg-white" style="min-height:60px;"></math-field>
+        <input type="hidden" name="form-__prefix__-option_b_equation" class="mathlive-hidden">
+      </div>
+
+      <!-- Option C -->
+      <div class="space-y-2">
+        <label class="font-semibold">Option C</label>
+        <input type="text"
+       name="form-__prefix__-option_c"
+       class="w-full border rounded-lg px-3 py-2">
+        <math-field class="equation-field w-full border rounded-lg px-3 py-2 bg-white" style="min-height:60px;"></math-field>
+        <input type="hidden" name="form-__prefix__-option_c_equation" class="mathlive-hidden">
+      </div>
+
+      <!-- Option D -->
+      <div class="space-y-2">
+        <label class="font-semibold">Option D</label>
+        <input type="text"
+       name="form-__prefix__-option_d"
+       class="w-full border rounded-lg px-3 py-2">
+        <math-field class="equation-field w-full border rounded-lg px-3 py-2 bg-white" style="min-height:60px;"></math-field>
+        <input type="hidden" name="form-__prefix__-option_d_equation" class="mathlive-hidden">
+      </div>
+
+    </div>
+
+    <!-- Correct Option / Marks -->
+    <div class="grid grid-cols-2 gap-4 mt-3">
+      <div>
+        <label>Correct Option</label>
+        <select name="form-__prefix__-correct_option">
+          <option value="">Select</option>
+          <option value="A">A</option>
+          <option value="B">B</option>
+          <option value="C">C</option>
+          <option value="D">D</option>
+        </select>
+      </div>
+      <div>
+        <label>Marks</label>
+        <input type="number" name="form-__prefix__-marks" value="1">
+      </div>
+    </div>
+
+  </div>
+</template>
+
     <!-- Questions -->
     <div id="questions-container">
       {% for form in formset %}
@@ -216,6 +317,7 @@
   </form>
 </div>
 
+{% include "school_admin/question_bank/import_message.html" %}
 <!-- MathLive -->
 <script type="module">
   import 'https://unpkg.com/mathlive?module';
@@ -232,6 +334,7 @@ document.addEventListener('DOMContentLoaded', function () {
     scope.querySelectorAll('textarea').forEach(function(textarea) {
 
       if (!textarea.id) return;
+      if(textarea.id === 'bulk-question-input') return;
 
       // Remove existing editor if it exists
       if (CKEDITOR.instances[textarea.id]) {
@@ -297,7 +400,7 @@ document.addEventListener('DOMContentLoaded', function () {
     addButton.addEventListener('click', function () {
 
       let totalForms = parseInt(totalFormsInput.value);
-      if (totalForms >= 20) return;
+      if (totalForms >= 500) return;
 
       const firstForm = container.querySelector('.question-form');
       const newForm = firstForm.cloneNode(true);
@@ -350,6 +453,315 @@ document.addEventListener('DOMContentLoaded', function () {
   }
 
 });
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function(){
+
+  const container = document.getElementById('questions-container');
+  const totalFormsInput = document.getElementById('id_form-TOTAL_FORMS');
+  const importBtn = document.getElementById('import-questions');
+
+  function initializeCKEditors(scope){
+    if(typeof CKEDITOR === 'undefined') return;
+    scope.querySelectorAll('textarea').forEach(textarea=>{
+      if(!textarea.id || textarea.id === 'bulk-question-input') return;
+      if(CKEDITOR.instances[textarea.id]) CKEDITOR.instances[textarea.id].destroy(true);
+      CKEDITOR.replace(textarea.id);
+    });
+  }
+
+  function initializeMathLive(scope){
+    scope.querySelectorAll('math-field.equation-field').forEach(mf=>{
+      const hiddenInput = mf.parentElement.querySelector('input.mathlive-hidden');
+      if(!hiddenInput) return;
+      if(mf._listener) mf.removeEventListener('input', mf._listener);
+      const listener = ()=> hiddenInput.value = mf.getValue('latex');
+      mf.addEventListener('input', listener);
+      mf._listener = listener;
+      if(hiddenInput.value) mf.setValue(hiddenInput.value, {format:'latex'});
+    });
+  }
+
+  function getEmptyForm(index){
+    const template = document.getElementById('empty-form-template');
+    const clone = template.content.firstElementChild.cloneNode(true);
+
+    // Replace all __prefix__ with index
+    clone.querySelectorAll('input, select, textarea').forEach(el=>{
+      if(el.name) el.name = el.name.replace(/__prefix__/, index);
+      if(el.id) el.id = el.id.replace(/__prefix__/, index);
+    });
+
+    return clone;
+  }
+
+// Convert physics-style units like kgm-2s-2 to LaTeX
+function convertToLatex(str){
+  if(!str) return "";
+
+  // Match letters followed by optional -number (like m-2, s2)
+  return str.replace(/([a-zA-Z]+)(-?\d+)/g, (match, unit, exp)=>{
+    if(exp === "1") return unit;           // no need for ^1
+    else return `${unit}^{${exp}}`;         // wrap exponent in {}
+  });
+}
+
+  importBtn?.addEventListener('click', ()=>{
+    const textarea = document.getElementById('bulk-question-input');
+    if(!textarea?.value.trim()){ showImportMessage(
+  "error",
+  "Import Failed",
+  "Please paste questions before Generating."
+); return; }
+
+  let rawText = textarea.value
+  .replace(/\r/g, '')
+  .replace(/\t/g, ' ')
+  .trim();
+
+// normalize line breaks
+rawText = rawText.replace(/\n{2,}/g, '\n');
+
+// split questions
+const questionBlocks = rawText
+  .split(/(?=\n?\s*\d+[\.\)]\s)/)
+  .map(b => b.trim())
+  .filter(b => b);
+
+    let totalForms = parseInt(totalFormsInput.value);
+    let importedCount = 0;
+
+    questionBlocks.forEach(block=>{
+  const lines = block.split('\n').map(l=>l.trim()).filter(l=>l);
+
+  if(lines.length === 0) return;   // skip empty block
+
+  let question="", A="", B="", C="", D="", correct="", marks=1;
+  let qEquation="", aEq="", bEq="", cEq="", dEq="";
+
+      lines.forEach(line => {
+  if(line.match(/^\d+[\.\)]/)) question = line.replace(/^\d+[\.\)]\s*/, '');
+  else if(line.match(/^\(?A[\)\.\-\s]/i)){
+  const val = line.replace(/^\(?A[\)\.\-\s]*/i,'');
+
+  if(/[a-zA-Z]+\d?-?\d+[a-zA-Z]*-?\d*/.test(val)){
+    aEq = val;
+  } else {
+    A = val;
+  }
+}
+
+else if(line.match(/^\(?B[\)\.\-\s]/i)){
+  const val = line.replace(/^\(?B[\)\.\-\s]*/i,'');
+
+  if(/[a-zA-Z]+\d?-?\d+[a-zA-Z]*-?\d*/.test(val)){
+    bEq = val;
+  } else {
+    B = val;
+  }
+}
+
+else if(line.match(/^\(?C[\)\.\-\s]/i)){
+  const val = line.replace(/^\(?C[\)\.\-\s]*/i,'');
+
+  if(/[a-zA-Z]+\d?-?\d+[a-zA-Z]*-?\d*/.test(val)){
+    cEq = val;
+  } else {
+    C = val;
+  }
+}
+
+else if(line.match(/^\(?D[\)\.\-\s]/i)){
+  const val = line.replace(/^\(?D[\)\.\-\s]*/i,'');
+
+  if(/[a-zA-Z]+\d?-?\d+[a-zA-Z]*-?\d*/.test(val)){
+    dEq = val;
+  } else {
+    D = val;
+  }
+}
+  else if(line.match(/^(ans|answer)/i)) correct = line.replace(/^(ans|answer)[:\s]*/i,'').toUpperCase();
+  else if(line.match(/marks?/i)){ const m=line.match(/\d+/); if(m) marks=m[0]; }
+
+ // detect latex equation
+if(/^\$.*\$$/.test(line)){
+  const eq = line.replace(/^\$|\$$/g,'').trim();
+
+  if(!question) qEquation = eq;
+  else if(A && !aEq) aEq = eq;
+  else if(B && !bEq) bEq = eq;
+  else if(C && !cEq) cEq = eq;
+  else if(D && !dEq) dEq = eq;
+}
+
+// detect scientific notation like kgm-2s-2
+else if(/[a-zA-Z]+\d?-?\d+[a-zA-Z]*-?\d*/.test(line)){
+
+  if(A && !aEq) aEq = line;
+  else if(B && !bEq) bEq = line;
+  else if(C && !cEq) cEq = line;
+  else if(D && !dEq) dEq = line;
+
+}
+});
+
+      if(!question) return;  // prevents empty forms
+
+        const newForm = getEmptyForm(totalForms);
+      container.appendChild(newForm);
+      importedCount++;
+
+  /* ---------- TEXT SETTER ---------- */
+
+  const setValue = (name,val)=>{
+    const el = newForm.querySelector(`[name="form-${totalForms}-${name}"]`);
+    if(!el) return;
+
+    if(typeof CKEDITOR !== 'undefined' && CKEDITOR.instances[el.id])
+        CKEDITOR.instances[el.id].setData(val);
+    else
+        el.value = val;
+  };
+
+  /* ---------- MATH SETTER ---------- */
+
+  const setMath = (name,val)=>{
+    const hidden = newForm.querySelector(`[name="form-${totalForms}-${name}"]`);
+    if(!hidden) return;
+
+    hidden.value = val;
+
+    const mf = hidden.parentElement.querySelector("math-field");
+    if(mf) mf.setValue(val,{format:'latex'});
+  };
+
+  /* ---------- FILL TEXT ---------- */
+
+  setValue("text", question);
+  setValue("option_a", A);
+  setValue("option_b", B);
+  setValue("option_c", C);
+  setValue("option_d", D);
+  setValue("marks", marks);
+
+  /* ---------- FILL EQUATIONS ---------- */
+
+ if(qEquation) setMath("equation", qEquation);
+ if(aEq) setMath("option_a_equation", aEq);
+ if(bEq) setMath("option_b_equation", bEq);
+ if(cEq) setMath("option_c_equation", cEq);
+ if(dEq) setMath("option_d_equation", dEq);
+
+  if(correct){
+    const sel = newForm.querySelector(`[name="form-${totalForms}-correct_option"]`);
+    if(sel) sel.value = correct;
+  }
+
+  initializeCKEditors(newForm);
+  initializeMathLive(newForm);
+
+  totalForms++;
+});
+
+    totalFormsInput.value = totalForms;
+   showImportMessage(
+  "success",
+  "Import Successful",
+  importedCount + " Questions Generated successfully."
+);
+    if(container.lastElementChild){
+  container.lastElementChild.scrollIntoView({behavior:'smooth'});
+}
+  });
+
+});
+</script>
+
+<script>
+document.getElementById("bulk-question-input").addEventListener("paste", function(e){
+
+const textarea = this;
+const clipboardData = e.clipboardData || window.clipboardData;
+const items = clipboardData.items;
+
+/* ---------- HANDLE IMAGE PASTE ---------- */
+
+for (let i = 0; i < items.length; i++) {
+
+  if (items[i].type.indexOf("image") !== -1) {
+
+    const blob = items[i].getAsFile();
+    const reader = new FileReader();
+
+    reader.onload = function(event){
+
+      const img = document.createElement("img");
+      img.src = event.target.result;
+      img.style.maxWidth = "200px";
+      img.style.marginTop = "10px";
+
+      textarea.parentElement.appendChild(img);
+
+    };
+
+    reader.readAsDataURL(blob);
+    return; // stop further processing
+  }
+}
+
+/* ---------- HANDLE TEXT PASTE ---------- */
+
+const text = clipboardData.getData("text");
+
+e.preventDefault();
+
+const start = textarea.selectionStart;
+const end = textarea.selectionEnd;
+
+textarea.value =
+textarea.value.substring(0, start) +
+text +
+textarea.value.substring(end);
+
+textarea.selectionStart = textarea.selectionEnd = start + text.length;
+
+});
+</script>
+
+
+<script>
+
+  function showImportMessage(type, title, text){
+
+  const box = document.getElementById("import-message-box");
+  const icon = document.getElementById("import-message-icon");
+  const titleEl = document.getElementById("import-message-title");
+  const textEl = document.getElementById("import-message-text");
+
+  if(!box) return;
+
+  if(type === "success"){
+    box.className = "p-4 flex items-start gap-3 bg-green-100 text-green-800";
+    icon.innerHTML = "✅";
+  }
+  else{
+    box.className = "p-4 flex items-start gap-3 bg-red-100 text-red-800";
+    icon.innerHTML = "❌";
+  }
+
+  titleEl.innerText = title;
+  textEl.innerText = text;
+
+  document.getElementById("import-message").style.display = "block";
+
+  setTimeout(closeImportMessage, 4000);
+}
+
+function closeImportMessage(){
+  const msg = document.getElementById("import-message");
+  if(msg) msg.style.display = "none";
+}
 </script>
 
 <style>
