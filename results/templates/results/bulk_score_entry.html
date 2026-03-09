@@ -22,6 +22,18 @@
     <form method="get" class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto flex-wrap">
       <input type="hidden" name="page" value="{{ page_obj.number }}">
 
+      <!-- SCHOOL selector for admin -->
+{% if request.user.is_superuser or request.user.is_school_admin %}
+<select name="school_id" onchange="this.form.submit()" class="px-3 py-2 border rounded w-full sm:w-auto">
+    <option value="">-- Select school --</option>
+    {% for sch in schools %}
+        <option value="{{ sch.id }}" {% if selected_school and selected_school.id == sch.id %}selected{% endif %}>
+            {{ sch.name }}
+        </option>
+    {% endfor %}
+</select>
+{% endif %}
+
       <!-- SESSION selector -->
       <select name="session" onchange="this.form.submit()" class="px-3 py-2 border rounded w-full sm:w-auto">
         <option value="">-- Select session --</option>
@@ -42,12 +54,12 @@
 
       <!-- Subject selector -->
       <select name="subject_id" multiple size="4" class="px-3 py-2 border rounded w-full sm:w-auto">
-        {% for subj in request.user.teacher_profile.subjects.all %}
-          <option value="{{ subj.id }}" {% if subj.id in selected_subject_ids %}selected{% endif %}>
-            {{ subj.name }}
-          </option>
-        {% endfor %}
-      </select>
+    {% for subj in subjects %}
+      <option value="{{ subj.id }}" {% if subj.id in selected_subject_ids %}selected{% endif %}>
+        {{ subj.name }}
+      </option>
+    {% endfor %}
+</select>
 
       <!-- Term selector -->
       <select name="term" onchange="this.form.submit()" class="px-3 py-2 border rounded w-full sm:w-auto">

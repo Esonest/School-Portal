@@ -132,30 +132,6 @@ def student_result(request, student_id):
     return render(request, 'results/student_result.html', context)
 
 
-from django.forms import modelformset_factory
-from django.shortcuts import redirect
-
-
-
-from django.shortcuts import render, get_object_or_404, redirect
-from django.contrib import messages
-from django.core.paginator import Paginator, EmptyPage, PageNotAnInteger
-from django.forms import modelformset_factory
-from django.apps import apps
-from django.contrib.auth.decorators import login_required
-
-Score = apps.get_model('results', 'Score')
-Student = apps.get_model('students', 'Student')
-SchoolClass = apps.get_model('students', 'SchoolClass')
-School = apps.get_model('accounts', 'School')
-# Subject may be optional in your project
-try:
-    Subject = apps.get_model('results', 'Subject')
-except LookupError:
-    Subject = None
-
-from .forms import ScoreBulkForm
-
 
 
 from django.shortcuts import get_object_or_404, redirect, render
@@ -164,61 +140,126 @@ from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
 from django.contrib.auth.decorators import login_required
 from .utils import SESSION_LIST  # import the session list
 
+from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib import messages
+from django.core.paginator import Paginator, PageNotAnInteger, EmptyPage
+from django.contrib.auth.decorators import login_required, user_passes_test
+from django.apps import apps
+
+Score = apps.get_model('results', 'Score')
+Student = apps.get_model('students', 'Student')
+SchoolClass = apps.get_model('students', 'SchoolClass')
+School = apps.get_model('accounts', 'School')
+try:
+    Subject = apps.get_model('results', 'Subject')
+except LookupError:
+    Subject = None
+
+from accounts.models import SystemSetting
+from .models import ClassScoreSetting
+from .utils import SESSION_LIST
+
+
+def is_admin(user):
+    return hasattr(user, "admin_profile")
+
+def is_teacher(user):
+    return hasattr(user, "teacher_profile")
+
 
 @login_required
 def bulk_score_entry(request, school_id):
-    teacher = getattr(request.user, 'teacher_profile', None)
+    """
+    Smart view: Admin sees all classes and subjects.
+    Teacher sees only their classes and subjects.
+    """
+    user = request.user
+    teacher = getattr(user, 'teacher_profile', None)
+    admin = getattr(user, 'admin_profile', None)
+
     school = get_object_or_404(School, id=school_id)
 
-    setting, _ = SystemSetting.objects.get_or_create(
-        id=1,
-        defaults={"current_session": SESSION_LIST[0], "current_term": "1"}
-    )
-    current_session = setting.current_session
-    current_term = setting.current_term
 
-    selected_session = request.GET.get("session") or request.POST.get("session") or current_session
-    selected_term = request.GET.get("term") or request.POST.get("term") or current_term
-
-    # Classes
-    try:
-        classes_qs = SchoolClass.objects.filter(teacher=teacher, school=school)
-    except:
+# override if dropdown is used (admin selects another school)
+    selected_school_id = request.GET.get('school_id')
+    selected_school = school  # default
+    if selected_school_id:
         try:
-            classes_qs = teacher.classes.filter(school=school)
-        except:
-            classes_qs = SchoolClass.objects.filter(school=school)
+            selected_school = School.objects.get(id=int(selected_school_id))
+        except School.DoesNotExist:
+            selected_school = school
 
-    # Subjects
-    if teacher:
-        try:
-            subjects_qs = Subject.objects.filter(teacher=teacher, school=school)
-        except:
-            subjects_qs = Subject.objects.filter(school=school)
-    else:
-        subjects_qs = Subject.objects.filter(school=school)
+    classes_qs = SchoolClass.objects.filter(school=selected_school).order_by('name')
 
     selected_class_id = request.GET.get('class_id') or request.POST.get('class_id')
-    selected_subject_ids = request.GET.getlist('subject_id') or request.POST.getlist('subject_id')
-    page = request.GET.get('page') or request.POST.get('page') or 1
-
     selected_class = None
     if selected_class_id:
         try:
             selected_class = classes_qs.get(id=int(selected_class_id))
-        except:
+        except SchoolClass.DoesNotExist:
             selected_class = None
 
+# if only one class, select it automatically
+    if not selected_class and classes_qs.count() == 1:
+        selected_class = classes_qs.first()        
+
+    # Get current session and term
+    setting = SystemSetting.objects.first()
+    current_session = setting.current_session if setting else SESSION_LIST[0]
+    current_term = setting.current_term if setting else "1"
+
+    selected_session = request.GET.get("session") or request.POST.get("session") or current_session
+    selected_term = request.GET.get("term") or request.POST.get("term") or current_term
+
+    # --- CLASSES ---
+    classes = SchoolClass.objects.filter(school=selected_school)
+    students = Student.objects.filter(school_class__in=classes)
+    # --- CLASSES ---
+    if admin:
+        classes_qs = SchoolClass.objects.filter(school=selected_school).order_by('name')
+    elif teacher:
+    # Classes where this teacher teaches any subject
+        classes_qs = SchoolClass.objects.filter(subject_teachers__teacher=teacher).distinct().order_by('name')
+    else:
+        classes_qs = SchoolClass.objects.filter(school=selected_school).order_by('name')
+
+# --- SELECT CLASS ---
+    selected_class_id = request.GET.get('class_id') or request.POST.get('class_id')
+    selected_class = None
+    if selected_class_id:
+        try:
+            selected_class = classes_qs.get(id=int(selected_class_id))
+        except SchoolClass.DoesNotExist:
+            selected_class = None
     if not selected_class and classes_qs.count() == 1:
         selected_class = classes_qs.first()
 
-    selected_subjects = Subject.objects.filter(id__in=selected_subject_ids) if selected_subject_ids else []
-    selected_subject_ids = [int(sid) for sid in selected_subject_ids]
+# --- SUBJECTS ---
+    if admin:
+        subjects_qs = Subject.objects.filter(school=selected_school)
+    elif teacher:
+        if selected_class:
+            # Subjects in this class that this teacher teaches
+            subjects_qs = Subject.objects.filter(
+                class_teachers__teacher=teacher,
+                class_teachers__school_class=selected_class
+            ).distinct()
+        else:
+            # All subjects this teacher teaches in the school
+            subjects_qs = Subject.objects.filter(
+                class_teachers__teacher=teacher,
+                class_teachers__school_class__school=selected_school
+            ).distinct()
+    else:
+        subjects_qs = Subject.objects.filter(school=selected_school)
 
-    # Students
-    students_qs = Student.objects.filter(school_class=selected_class).order_by(
-        'user__first_name', 'user__last_name'
-    )
+    selected_subject_ids = request.GET.getlist('subject_id') or request.POST.getlist('subject_id')
+    selected_subject_ids = [int(sid) for sid in selected_subject_ids]
+    selected_subjects = Subject.objects.filter(id__in=selected_subject_ids) if selected_subject_ids else []
+
+    # --- STUDENTS ---
+    students_qs = Student.objects.filter(school_class=selected_class).order_by('user__first_name', 'user__last_name')
+    page = request.GET.get('page') or request.POST.get('page') or 1
     paginator = Paginator(students_qs, 20)
     try:
         students_page = paginator.page(page)
@@ -230,7 +271,7 @@ def bulk_score_entry(request, school_id):
     page_students = list(students_page.object_list)
     page_student_ids = [s.id for s in page_students]
 
-    # Ensure scores exist
+    # --- ENSURE SCORES EXIST ---
     if request.method == 'GET' and selected_subject_ids:
         for st in page_students:
             for sid in selected_subject_ids:
@@ -241,28 +282,28 @@ def bulk_score_entry(request, school_id):
                         subject=subj,
                         session=selected_session,
                         term=selected_term,
-                        school=school,
+                        school=selected_school,
                         school_class=selected_class, 
                         defaults={'ca': 0, 'exam': 0}
                     )
 
+    # --- GET SCORES ---
     scores = Score.objects.filter(
         student__id__in=page_student_ids,
         subject__id__in=selected_subject_ids,
         session=selected_session,
         term=selected_term,
-        school=school
+        school=selected_school,
     )
     scores_map = {}
     for sc in scores:
         scores_map.setdefault(sc.student_id, {})[sc.subject_id] = sc
 
-    # Read class score settings
+    # --- CLASS SCORE SETTINGS ---
     is_ca_enabled = True
     ca_max = 40
     exam_max = 60
     mode = 'ca_exam'
-
     if selected_class:
         try:
             setting = selected_class.score_setting
@@ -273,21 +314,17 @@ def bulk_score_entry(request, school_id):
         except ClassScoreSetting.DoesNotExist:
             pass
 
-    # POST: save scores
+    # --- POST: SAVE SCORES ---
     if request.method == 'POST' and 'delete_student' not in request.POST:
         errors = []
-
         for st in page_students:
             for sid in selected_subject_ids:
-                # --- SAFE float conversion ---
                 exam_val_str = request.POST.get(f"exam_{st.id}_{sid}", "")
                 exam_val = float(exam_val_str) if exam_val_str.strip() else 0
-
                 ca_val = 0
                 if is_ca_enabled:
                     ca_val_str = request.POST.get(f"ca_{st.id}_{sid}", "")
                     ca_val = float(ca_val_str) if ca_val_str.strip() else 0
-                # ---------------------------
 
                 if not (0 <= exam_val <= exam_max):
                     errors.append(f"Exam must be 0–{exam_max} for {st.full_name()}")
@@ -305,7 +342,7 @@ def bulk_score_entry(request, school_id):
                     subject=subj,
                     session=selected_session,
                     term=selected_term,
-                    school=school,
+                   school=selected_school,
                     school_class=selected_class,
                     defaults={'ca': ca_val, 'exam': exam_val}
                 )
@@ -314,13 +351,13 @@ def bulk_score_entry(request, school_id):
                     score_obj.exam = exam_val
                     score_obj.save()
 
-        # Show messages
         if errors:
             for err in errors:
                 messages.error(request, err)
         else:
             messages.success(request, "Scores saved successfully.")
 
+        # Redirect with query params
         params = [f'class_id={selected_class.id}']
         for sid in selected_subject_ids:
             params.append(f'subject_id={sid}')
@@ -329,10 +366,8 @@ def bulk_score_entry(request, school_id):
         params.append(f'page={students_page.number}')
         return redirect(f"{request.path}?{'&'.join(params)}")
 
-    template_name = 'results/bulk_score_entry.html'
-
-    return render(request, template_name, {
-        'school': school,
+    return render(request, 'results/bulk_score_entry.html', {
+        'school': selected_school,
         'classes': classes_qs,
         'subjects': subjects_qs,
         'selected_class': selected_class,
@@ -350,6 +385,8 @@ def bulk_score_entry(request, school_id):
         'ca_max': ca_max,
         'exam_max': exam_max,
         'mode': mode,
+        'is_admin': admin is not None,
+        'is_teacher': teacher is not None,
     })
 
 
@@ -497,21 +534,32 @@ def bulk_psycho_affective(request, school_id):
     # USER / SCHOOL CONTEXT
     # ----------------------------
     teacher = getattr(request.user, 'teacher_profile', None)
+    admin = getattr(request.user, 'admin_profile', None)
     school = get_object_or_404(School, id=school_id)
+
+# Allow admin/superadmin to switch school from dropdown
+    selected_school_id = request.GET.get("school_id")
+    selected_school = school
+
+    if selected_school_id:
+        try:
+            selected_school = School.objects.get(id=int(selected_school_id))
+        except School.DoesNotExist:
+            selected_school = school
 
     # ----------------------------
     # CLASSES AVAILABLE TO TEACHER
     # ----------------------------
-    if teacher:
-        try:
-            classes_qs = SchoolClass.objects.filter(teacher=teacher, school=school)
-        except:
-            try:
-                classes_qs = teacher.classes.filter(school=school)
-            except:
-                classes_qs = SchoolClass.objects.filter(school=school)
-    else:
-        classes_qs = SchoolClass.objects.filter(school=school)
+    if admin:
+        classes_qs = SchoolClass.objects.filter(school=selected_school).order_by("name")
+
+    elif teacher:
+        classes_qs = SchoolClass.objects.filter(
+            subject_teachers__teacher=teacher
+        ).distinct().order_by("name")
+
+    else:  # superadmin
+        classes_qs = SchoolClass.objects.filter(school=selected_school).order_by("name")
 
     selected_class_id = request.GET.get('class_id') or request.POST.get('class_id')
     page_num = request.GET.get('page') or request.POST.get('page') or 1
@@ -529,6 +577,9 @@ def bulk_psycho_affective(request, school_id):
     if not selected_class:
         return render(request, 'results/bulk_psycho_affective_select.html', {
             'classes': classes_qs,
+            'school': selected_school,
+            'selected_school': selected_school,
+            'schools': School.objects.all(),
             'school': school,
             'selected_class': None,
             'session_choices': session_choices,
@@ -569,7 +620,7 @@ def bulk_psycho_affective(request, school_id):
                 'creativity': 1,
                 'sports': 1,
                 'handwriting': 1,
-                'school': school,
+                'school': selected_school,
             }
         )
 
@@ -583,7 +634,7 @@ def bulk_psycho_affective(request, school_id):
                 'behavior': 1,
                 'attentiveness': 1,
                 'perseverance': 1,
-                'school': school,
+                'school': selected_school,
             }
         )
 
@@ -592,14 +643,14 @@ def bulk_psycho_affective(request, school_id):
     # ----------------------------
     psy_instances = [
         Psychomotor.objects.filter(
-            student=st, session=selected_session, term=selected_term
+            student=st, session=selected_session, term=selected_term,school=selected_school
         ).first()
         for st in page_students
     ]
 
     aff_instances = [
         Affective.objects.filter(
-            student=st, session=selected_session, term=selected_term
+            student=st, session=selected_session, term=selected_term,school=selected_school
         ).first()
         for st in page_students
     ]
@@ -642,8 +693,8 @@ def bulk_psycho_affective(request, school_id):
                 psy_obj = r['psy_form'].save(commit=False)
                 aff_obj = r['aff_form'].save(commit=False)
 
-                psy_obj.school = school
-                aff_obj.school = school
+                psy_obj.school = selected_school
+                aff_obj.school = selected_school
 
                 psy_obj.recorded_by = request.user
                 aff_obj.recorded_by = request.user
@@ -663,12 +714,15 @@ def bulk_psycho_affective(request, school_id):
 
         else:
             messages.error(request, "There were validation errors. Please correct and save again.")
+    
 
+    schools = School.objects.all()
     # ----------------------------
     # RENDER PAGE
     # ----------------------------
     context = {
-        'school': school,
+        'school': selected_school,
+        'selected_school': selected_school,
         'classes': classes_qs,
         'selected_class': selected_class,
         'students_page': students_page,

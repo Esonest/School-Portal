@@ -5,7 +5,7 @@ app_name = 'results'
 
 urlpatterns = [
     path('student/<int:student_id>/', views.student_result, name='student_result'),
-    path('bulk_score_entry/<int:school_id>/', views.bulk_score_entry, name='bulk_score_entry'),
+    path('school/<int:school_id>/scores/', views.bulk_score_entry, name='bulk_score_entry'),
     path('bulk_psycho_affective/<int:school_id>/', views.bulk_psycho_affective, name='bulk_psycho_affective'),
     path('termly_report/<int:student_id>/', views.generate_termly_report, name='termly_report'),
     path('cumulative_report/<int:student_id>/', views.generate_cumulative_report, name='cumulative_report'),

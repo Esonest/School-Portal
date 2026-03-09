@@ -4,6 +4,7 @@ from accounts.models import School, User
 from attendance.models import Attendance
 from results.models import ClassScoreSetting, ClassSubjectTeacher, Subject
 from finance.models import SchoolTermSetting
+from django.shortcuts import get_object_or_404
 from results.utils import SESSION_CHOICES, normalize_latex
 from superadmin.views import class_create, class_edit, class_delete, subject_create, subject_edit, subject_delete 
 
@@ -42,10 +43,7 @@ def super_admin_dashboard(request):
 @user_passes_test(is_schooladmin)
 def school_admin_dashboard(request, school_id):
     # Get the school using the ID from the URL
-    try:
-        school = School.objects.get(id=school_id)
-    except School.DoesNotExist:
-        return HttpResponse("School not found", status=404)
+    school = get_object_or_404(School, id=school_id)
 
     # Optional: Ensure this admin belongs to this school
     if request.user.school.id != school.id:
@@ -71,7 +69,19 @@ def school_admin_dashboard(request, school_id):
     classes = SchoolClass.objects.filter(school=school).prefetch_related('students')
     class_subject_teacher_count = ClassSubjectTeacher.objects.filter(school_class__school=school).count()
     class_score_settings = ClassScoreSetting.objects.filter(school_class__school=school).select_related('school_class')
+    
 
+    # Chart data
+    class_names = []
+    class_student_counts = []
+
+    for c in classes:
+        class_names.append(c.name)
+        class_student_counts.append(c.students.count())
+
+    subject_names = list(
+        Subject.objects.filter(school=school).values_list("name", flat=True)
+    )
 
     context = {
         'school': school,
@@ -86,6 +96,9 @@ def school_admin_dashboard(request, school_id):
         'subject_count': subject_count,
         "classes": classes,
         'current_session': current_session,
+        "class_names": class_names,
+        "class_student_counts": class_student_counts,
+        "subject_names": subject_names,
         'class_score_settings': class_score_settings,
         "class_count": class_count,
         "class_subject_teacher_count": class_subject_teacher_count
