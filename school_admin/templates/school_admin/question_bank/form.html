@@ -2,6 +2,7 @@
 {% load widget_tweaks %}
 {% block content %}
 {% load static %}
+
 <div class="max-w-6xl mx-auto px-4 py-6">
   <h1 class="text-2xl font-bold text-{{ school.theme_color }}-600">Add Questions to Question Bank</h1>
 
@@ -459,240 +460,476 @@ document.addEventListener('DOMContentLoaded', function () {
 </script>
 
 <script>
-document.addEventListener('DOMContentLoaded', function(){
+document.addEventListener("DOMContentLoaded", function(){
 
-  const container = document.getElementById('questions-container');
-  const totalFormsInput = document.getElementById('id_form-TOTAL_FORMS');
-  const importBtn = document.getElementById('import-questions');
+const container = document.getElementById("questions-container");
+const totalFormsInput = document.getElementById("id_form-TOTAL_FORMS");
+const importBtn = document.getElementById("import-questions");
 
-  function initializeCKEditors(scope){
-    if(typeof CKEDITOR === 'undefined') return;
-    scope.querySelectorAll('textarea').forEach(textarea=>{
-      if(!textarea.id || textarea.id === 'bulk-question-input') return;
-      if(CKEDITOR.instances[textarea.id]) CKEDITOR.instances[textarea.id].destroy(true);
-      CKEDITOR.replace(textarea.id);
-    });
-  }
+/* -----------------------------
+CREATE EMPTY FORM
+----------------------------- */
 
-  function initializeMathLive(scope){
-    scope.querySelectorAll('math-field.equation-field').forEach(mf=>{
-      const hiddenInput = mf.parentElement.querySelector('input.mathlive-hidden');
-      if(!hiddenInput) return;
-      if(mf._listener) mf.removeEventListener('input', mf._listener);
-      const listener = ()=> hiddenInput.value = mf.getValue('latex');
-      mf.addEventListener('input', listener);
-      mf._listener = listener;
-      if(hiddenInput.value) mf.setValue(hiddenInput.value, {format:'latex'});
-    });
-  }
+function getEmptyForm(index){
 
-  function getEmptyForm(index){
-    const template = document.getElementById('empty-form-template');
-    const clone = template.content.firstElementChild.cloneNode(true);
+const template = document.getElementById("empty-form-template");
+const clone = template.content.firstElementChild.cloneNode(true);
 
-    // Replace all __prefix__ with index
-    clone.querySelectorAll('input, select, textarea').forEach(el=>{
-      if(el.name) el.name = el.name.replace(/__prefix__/, index);
-      if(el.id) el.id = el.id.replace(/__prefix__/, index);
-    });
+clone.querySelectorAll("input,textarea,select").forEach(el=>{
 
-    return clone;
-  }
+if(el.name) el.name = el.name.replace(/__prefix__/,index);
+if(el.id) el.id = el.id.replace(/__prefix__/,index);
 
-// Convert physics-style units like kgm-2s-2 to LaTeX
-function convertToLatex(str){
-  if(!str) return "";
+});
 
-  // Match letters followed by optional -number (like m-2, s2)
-  return str.replace(/([a-zA-Z]+)(-?\d+)/g, (match, unit, exp)=>{
-    if(exp === "1") return unit;           // no need for ^1
-    else return `${unit}^{${exp}}`;         // wrap exponent in {}
-  });
+return clone;
 }
 
+/* -----------------------------
+RENUMBER QUESTIONS
+----------------------------- */
 
 function renumberQuestions(){
-  document.querySelectorAll("#questions-container .question-form").forEach((form,i)=>{
 
-    const badge = form.querySelector(".question-badge");
-    const text = form.querySelector(".question-text");
+document.querySelectorAll("#questions-container .question-form")
+.forEach((form,i)=>{
 
-    if(badge) badge.textContent = i + 1;
-    if(text) text.textContent = "Question";
+const badge = form.querySelector(".question-badge");
+const text = form.querySelector(".question-text");
 
-  });
+if(badge) badge.textContent = i+1;
+if(text) text.textContent = "Question";
+
+});
+
 }
-  importBtn?.addEventListener('click', ()=>{
-    const textarea = document.getElementById('bulk-question-input');
-    if(!textarea?.value.trim()){ showImportMessage(
+
+/* -----------------------------
+CONVERT PHYSICS UNITS TO LATEX
+----------------------------- */
+
+function convertUnits(str){
+
+if(!str) return "";
+
+return str.replace(/([a-zA-Z]+)(-?\d+)/g,(m,u,e)=>{
+
+if(e==="1") return u;
+
+return u+"^{"+e+"}";
+
+});
+
+}
+
+/* -----------------------------
+SET TEXT FIELD
+----------------------------- */
+
+function setValue(form,index,name,val){
+
+const el = form.querySelector(`[name="form-${index}-${name}"]`);
+
+if(el) el.value = val;
+
+}
+
+/* -----------------------------
+SET MATH FIELD
+----------------------------- */
+
+function setMath(form,index,name,val){
+
+const hidden = form.querySelector(`[name="form-${index}-${name}"]`);
+
+if(!hidden) return;
+
+hidden.value = val;
+
+const mf = hidden.parentElement.querySelector("math-field");
+
+if(mf){
+setTimeout(()=>{
+mf.setValue(val,{format:"latex"});
+},30);
+}
+
+}
+
+
+function convertInlineMath(str){
+  if(!str) return "";
+
+  let s = str;
+
+  // Fractions: 4/3 → \frac{4}{3}
+  s = s.replace(/(\d+)\s*\/\s*(\d+)/g,"\\\\frac{$1}{$2}");
+
+  // Powers: x^2 → x^{2}
+  s = s.replace(/([a-zA-Z0-9])\^(\d+)/g,"$1^{$2}");
+
+  // Square root: √9 → \sqrt{9}
+  s = s.replace(/√(\d+)/g,"\\\\sqrt{$1}");
+
+  s = s.replace(/900/g,"90°");
+
+  // Multiplication / division symbols
+  s = s.replace(/×/g,"\\\\times");
+  s = s.replace(/÷/g,"\\\\div");
+
+  return s;
+}
+
+
+/* -----------------------------
+BULK IMPORT
+----------------------------- */
+
+importBtn?.addEventListener("click",function(){
+
+const textarea = document.getElementById("bulk-question-input");
+
+if(!textarea.value.trim()){
+showImportMessage(
   "error",
   "Import Failed",
-  "Please paste questions before Generating."
-); return; }
-
-  let rawText = textarea.value
-  .replace(/\r/g, '')
-  .replace(/\t/g, ' ')
-  .trim();
-
-// normalize line breaks
-rawText = rawText.replace(/\n{2,}/g, '\n');
-
-// split questions
-const questionBlocks = rawText
-  .split(/(?=\n?\s*\d+[\.\)]\s)/)
-  .map(b => b.trim())
-  .filter(b => b);
-
-    let totalForms = parseInt(totalFormsInput.value);
-    let importedCount = 0;
-
-    questionBlocks.forEach(block=>{
-  const lines = block.split('\n').map(l=>l.trim()).filter(l=>l);
-
-  if(lines.length === 0) return;   // skip empty block
-
-  let question="", A="", B="", C="", D="", correct="", marks=1;
-  let qEquation="", aEq="", bEq="", cEq="", dEq="";
-
-      lines.forEach(line => {
-  if(line.match(/^\d+[\.\)]/)) question = line.replace(/^\d+[\.\)]\s*/, '');
-  else if(line.match(/^\(?A[\)\.\-\s]/i)){
-  const val = line.replace(/^\(?A[\)\.\-\s]*/i,'');
-
-  if(/[a-zA-Z]+\d?-?\d+[a-zA-Z]*-?\d*/.test(val)){
-    aEq = val;
-  } else {
-    A = val;
-  }
+  "Please paste questions before generating."
+);
+return;
 }
+
+let rawText = textarea.value
+.replace(/\r/g,'')
+.replace(/\t/g,' ')
+.trim();
+
+rawText = rawText.replace(/\n{2,}/g,"\n");
+
+const questionBlocks = rawText
+.split(/\n(?=\s*\d+[\.\)]\s)/)   // split only when number starts new line
+.map(b=>b.trim())
+.filter(b => /^\d+[\.\)]\s/.test(b));  // keep only real questions
+
+let totalForms = parseInt(totalFormsInput.value);
+
+/* FAST DOM INSERT */
+const fragment = document.createDocumentFragment();
+
+questionBlocks.forEach(block=>{
+
+const lines = block.split("\n")
+.map(l=>l.trim())
+.filter(Boolean);
+
+if(lines.length===0) return;
+
+let question="",qEq="";
+let A="",B="",C="",D="";
+let aEq="",bEq="",cEq="",dEq="";
+let correct="",marks=1;
+
+
+
+function detectEquation(str){
+
+if(!str) return {text:"", eq:""};
+
+str = str.trim();
+
+/* Detect explicit $$ math */
+
+if(str.startsWith("$$") && str.endsWith("$$")){
+
+let eq = str.replace(/\$\$/g,"").trim();
+
+return {
+text:"",
+eq:convertToLatex(eq)
+};
+
+}
+
+/* Detect math characters */
+
+const hasMath = /[=+\-*/^√π]/.test(str);
+const hasTrig = /\b(sin|cos|tan|log|ln)\b/i.test(str);
+
+/* If mostly math */
+
+if(hasMath || hasTrig){
+
+return {
+text:"",
+eq:convertToLatex(str)
+};
+
+}
+
+/* Otherwise treat as text */
+
+return {
+text:str,
+eq:""
+};
+
+}
+
+
+function convertToLatex(str){
+
+if(!str) return "";
+
+let s = str;
+
+/* powers */
+s = s.replace(/([a-zA-Z0-9])\^(\d+)/g,"$1^{$2}");
+
+/* square root */
+s = s.replace(/√(\d+)/g,"\\sqrt{$1}");
+
+ // Fractions: 4/3 → \frac{4}{3}
+  s = s.replace(/(\d+)\s*\/\s*(\d+)/g,"\\frac{$1}{$2}");
+
+/* multiplication */
+s = s.replace(/×/g,"\\times");
+
+
+/* Powers: x2 -> x^{2} */
+s = s.replace(/([a-zA-Z])(\d+)/g,"$1^{$2}");
+
+/* Explicit powers: x^2 -> x^{2} */
+s = s.replace(/([a-zA-Z0-9])\^(\d+)/g,"$1^{$2}");
+
+
+
+/* Normalize spaces */
+s = s.replace(/\s+/g," ").trim();
+
+/* Degree symbol */
+s = s.replace(/(\d+)\s*°/g,"$1^{\\circ}");
+
+/* Trig */
+s = s.replace(/\bsin\b/gi,"\\\\sin");
+s = s.replace(/\bcos\b/gi,"\\\\cos");
+s = s.replace(/\btan\b/gi,"\\\\tan");
+
+/* Log */
+s = s.replace(/\blog\b/gi,"\\\\log");
+
+/* Natural log */
+s = s.replace(/\bln\b/gi,"\\\\ln");
+
+/* division */
+s = s.replace(/÷/g,"\\div");
+
+return s;
+
+}
+
+lines.forEach(line => {
+
+/* QUESTION */
+
+if(line.match(/^\d+[\.\)]/)){
+
+let q = line.replace(/^\d+[\.\)]\s*/,'');
+
+/* detect if question contains math */
+
+if(/[=\/\^\+\-\*√π]/i.test(q)){
+
+question = "";
+qEq = convertToLatex(q);
+
+}else{
+
+question = q;
+qEq = "";
+
+}
+
+}
+
+/* OPTION A */
+
+else if(line.match(/^\(?A[\)\.\-\s]/i)){
+
+let val = line.replace(/^\(?A[\)\.\-\s]*/i,'').trim();
+
+const res = detectEquation(val);
+
+A = res.text;
+aEq = res.eq;
+
+}
+
+/* OPTION B */
 
 else if(line.match(/^\(?B[\)\.\-\s]/i)){
-  const val = line.replace(/^\(?B[\)\.\-\s]*/i,'');
 
-  if(/[a-zA-Z]+\d?-?\d+[a-zA-Z]*-?\d*/.test(val)){
-    bEq = val;
-  } else {
-    B = val;
-  }
+let val = line.replace(/^\(?B[\)\.\-\s]*/i,'').trim();
+
+const res = detectEquation(val);
+
+B = res.text;
+bEq = res.eq;
+
 }
+
+/* OPTION C */
 
 else if(line.match(/^\(?C[\)\.\-\s]/i)){
-  const val = line.replace(/^\(?C[\)\.\-\s]*/i,'');
 
-  if(/[a-zA-Z]+\d?-?\d+[a-zA-Z]*-?\d*/.test(val)){
-    cEq = val;
-  } else {
-    C = val;
-  }
+let val = line.replace(/^\(?C[\)\.\-\s]*/i,'').trim();
+
+const res = detectEquation(val);
+
+C = res.text;
+cEq = res.eq;
+
 }
+
+/* OPTION D */
 
 else if(line.match(/^\(?D[\)\.\-\s]/i)){
-  const val = line.replace(/^\(?D[\)\.\-\s]*/i,'');
 
-  if(/[a-zA-Z]+\d?-?\d+[a-zA-Z]*-?\d*/.test(val)){
-    dEq = val;
-  } else {
-    D = val;
-  }
-}
-  else if(line.match(/^(ans|answer)/i)) correct = line.replace(/^(ans|answer)[:\s]*/i,'').toUpperCase();
-  else if(line.match(/marks?/i)){ const m=line.match(/\d+/); if(m) marks=m[0]; }
+let val = line.replace(/^\(?D[\)\.\-\s]*/i,'').trim();
 
- // detect latex equation
-if(/^\$.*\$$/.test(line)){
-  const eq = line.replace(/^\$|\$$/g,'').trim();
+const res = detectEquation(val);
 
-  if(!question) qEquation = eq;
-  else if(A && !aEq) aEq = eq;
-  else if(B && !bEq) bEq = eq;
-  else if(C && !cEq) cEq = eq;
-  else if(D && !dEq) dEq = eq;
-}
-
-// detect scientific notation like kgm-2s-2
-else if(/[a-zA-Z]+\d?-?\d+[a-zA-Z]*-?\d*/.test(line)){
-
-  if(A && !aEq) aEq = line;
-  else if(B && !bEq) bEq = line;
-  else if(C && !cEq) cEq = line;
-  else if(D && !dEq) dEq = line;
+D = res.text;
+dEq = res.eq;
 
 }
+
+/* ANSWER */
+
+else if(line.match(/^(ans|answer)/i)){
+
+correct = line.replace(/^(ans|answer)[:\s]*/i,'').toUpperCase();
+
+}
+
+/* MARKS */
+
+else if(line.match(/marks?/i)){
+
+const m = line.match(/\d+/);
+
+if(m) marks = m[0];
+
+}
+
 });
 
-      if(!question) return;  // prevents empty forms
+if(!question && !qEq) return;
 
-        const newForm = getEmptyForm(totalForms);
-      container.appendChild(newForm);
-      importedCount++;
+const newForm = getEmptyForm(totalForms);
 
-  /* ---------- TEXT SETTER ---------- */
+/* TEXT */
 
-  const setValue = (name,val)=>{
-    const el = newForm.querySelector(`[name="form-${totalForms}-${name}"]`);
-    if(!el) return;
+setValue(newForm,totalForms,"text",question);
+setValue(newForm,totalForms,"option_a",A);
+setValue(newForm,totalForms,"option_b",B);
+setValue(newForm,totalForms,"option_c",C);
+setValue(newForm,totalForms,"option_d",D);
+setValue(newForm,totalForms,"marks",marks);
 
-    if(typeof CKEDITOR !== 'undefined' && CKEDITOR.instances[el.id])
-        CKEDITOR.instances[el.id].setData(val);
-    else
-        el.value = val;
-  };
+/* MATH */
 
-  /* ---------- MATH SETTER ---------- */
+if(qEq) setMath(newForm,totalForms,"equation",qEq);
+if(aEq) setMath(newForm,totalForms,"option_a_equation",aEq);
+if(bEq) setMath(newForm,totalForms,"option_b_equation",bEq);
+if(cEq) setMath(newForm,totalForms,"option_c_equation",cEq);
+if(dEq) setMath(newForm,totalForms,"option_d_equation",dEq);
 
-  const setMath = (name,val)=>{
-    const hidden = newForm.querySelector(`[name="form-${totalForms}-${name}"]`);
-    if(!hidden) return;
 
-    hidden.value = val;
+/* CORRECT OPTION */
 
-    const mf = hidden.parentElement.querySelector("math-field");
-    if(mf) mf.setValue(val,{format:'latex'});
-  };
+const sel = newForm.querySelector(`[name="form-${totalForms}-correct_option"]`);
 
-  /* ---------- FILL TEXT ---------- */
+if(sel) sel.value = correct;
 
-  setValue("text", question);
-  setValue("option_a", A);
-  setValue("option_b", B);
-  setValue("option_c", C);
-  setValue("option_d", D);
-  setValue("marks", marks);
+fragment.appendChild(newForm);
 
-  /* ---------- FILL EQUATIONS ---------- */
+totalForms++;
 
- if(qEquation) setMath("equation", qEquation);
- if(aEq) setMath("option_a_equation", aEq);
- if(bEq) setMath("option_b_equation", bEq);
- if(cEq) setMath("option_c_equation", cEq);
- if(dEq) setMath("option_d_equation", dEq);
-
-  if(correct){
-    const sel = newForm.querySelector(`[name="form-${totalForms}-correct_option"]`);
-    if(sel) sel.value = correct;
-  }
-
-  initializeCKEditors(newForm);
-  initializeMathLive(newForm);
-   renumberQuestions();
-  totalForms++;
 });
 
-    totalFormsInput.value = totalForms;
-   showImportMessage(
+/* INSERT ALL QUESTIONS */
+
+container.appendChild(fragment);
+
+totalFormsInput.value = totalForms;
+
+renumberQuestions();
+
+showImportMessage(
   "success",
   "Import Successful",
-  importedCount + " Questions Generated successfully."
+  questionBlocks.length + " questions generated successfully."
 );
-    if(container.lastElementChild){
-  container.lastElementChild.scrollIntoView({behavior:'smooth'});
+
+});
+
+/* -----------------------------
+LAZY CKEDITOR
+----------------------------- */
+
+document.addEventListener("focusin",function(e){
+
+if(e.target.tagName==="TEXTAREA" && e.target.id!=="bulk-question-input"){
+
+const textarea = e.target;
+
+if(typeof CKEDITOR==="undefined") return;
+
+if(!CKEDITOR.instances[textarea.id]){
+
+CKEDITOR.replace(textarea.id);
+
 }
-  });
+
+}
+
+});
+
+/* -----------------------------
+LAZY MATHLIVE
+----------------------------- */
+
+document.addEventListener("focusin",function(e){
+
+if(e.target.tagName==="MATH-FIELD"){
+
+const mf = e.target;
+
+if(mf._initialized) return;
+
+const hidden = mf.parentElement.querySelector(".mathlive-hidden");
+
+if(!hidden) return;
+
+mf.addEventListener("input",()=>{
+
+hidden.value = mf.getValue("latex");
+
+});
+
+if(hidden.value){
+
+mf.setValue(hidden.value,{format:"latex"});
+
+}
+
+mf._initialized = true;
+
+}
+
+});
 
 });
 </script>
-
 <script>
 document.getElementById("bulk-question-input").addEventListener("paste", function(e){
 
@@ -787,6 +1024,91 @@ math-field {
   display: block;
 }
 
+</style>
+
+<script>
+
+function showImportMessage(type,title,text){
+
+  const container = document.getElementById("toast-container");
+  if(!container) return;
+
+  const toast = document.createElement("div");
+
+  toast.className = "toast toast-"+type;
+
+  const icon =
+    type === "success" ? "✅" :
+    type === "error" ? "❌" :
+    "ℹ️";
+
+  toast.innerHTML = `
+    <div>${icon}</div>
+    <div>
+      <div class="toast-title">${title}</div>
+      <div class="toast-text">${text}</div>
+    </div>
+    <div class="toast-close">&times;</div>
+  `;
+
+  container.appendChild(toast);
+
+  toast.querySelector(".toast-close").onclick = ()=>{
+    toast.remove();
+  };
+
+  setTimeout(()=>{
+    toast.remove();
+  },4000);
+
+}
+
+</script>
+
+<style>
+.toast{
+  min-width:280px;
+  max-width:360px;
+  padding:14px 16px;
+  border-radius:10px;
+  box-shadow:0 10px 25px rgba(0,0,0,0.15);
+  color:#fff;
+  font-size:14px;
+  display:flex;
+  gap:10px;
+  align-items:flex-start;
+  animation:toastIn 0.35s ease;
+}
+
+.toast-success{background:#16a34a;}
+.toast-error{background:#dc2626;}
+.toast-info{background:#2563eb;}
+
+.toast-title{
+  font-weight:600;
+  font-size:15px;
+}
+
+.toast-text{
+  opacity:0.9;
+}
+
+.toast-close{
+  margin-left:auto;
+  cursor:pointer;
+  font-weight:bold;
+}
+
+@keyframes toastIn{
+  from{
+    transform:translateX(100%);
+    opacity:0;
+  }
+  to{
+    transform:translateX(0);
+    opacity:1;
+  }
+}
 </style>
 
 
