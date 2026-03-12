@@ -313,6 +313,10 @@
       </button>
     </div>
 
+   <div id="draft-status" class="text-sm text-yellow-600 font-medium">
+Draft not saved
+</div>
+
     <!-- Form Actions -->
     <div class="flex justify-end gap-3 pt-4">
       <a href="{% url 'school_admin:question_bank_list' %}" class="px-4 py-2 rounded-lg border">Cancel</a>
@@ -1016,16 +1020,6 @@ function closeImportMessage(){
 }
 </script>
 
-<style>
-math-field {
-  pointer-events: auto !important;
-  user-select: text !important;
-  cursor: text;
-  display: block;
-}
-
-</style>
-
 <script>
 
 function showImportMessage(type,title,text){
@@ -1065,6 +1059,317 @@ function showImportMessage(type,title,text){
 
 </script>
 
+
+
+<script>
+
+window.addEventListener("beforeunload", function (e) {
+
+const draft = localStorage.getItem("question_bank_draft");
+
+if(!draft) return;
+
+const data = JSON.parse(draft);
+
+/* check if any field actually contains data */
+
+const hasContent = Object.values(data).some(val => {
+
+return val !== "" && val !== false && val !== null;
+
+});
+
+if(hasContent){
+
+e.preventDefault();
+e.returnValue="";
+
+}
+
+});
+
+</script>
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function(){
+
+const STORAGE_KEY = "question_bank_draft";
+
+/* -------------------------
+COLLECT FORM DATA
+------------------------- */
+
+function collectFormData(){
+
+const form = document.querySelector("form");
+if(!form) return {};
+
+const data = {};
+
+form.querySelectorAll("input, textarea, select").forEach(el=>{
+
+if(!el.name) return;
+
+if(el.type==="checkbox" || el.type==="radio"){
+data[el.name] = el.checked;
+}else{
+data[el.name] = el.value;
+}
+
+});
+
+/* Capture MathLive values */
+
+document.querySelectorAll("math-field").forEach((mf,i)=>{
+
+data["mathlive_"+i] = mf.getValue("latex");
+
+});
+
+return data;
+
+}
+
+/* -------------------------
+SAVE DRAFT
+------------------------- */
+
+function saveDraft(){
+
+const data = collectFormData();
+
+if(Object.values(data).some(v => v !== "" && v !== null)){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+const status = document.getElementById("draft-status");
+if(status) status.innerText = "Draft saved";
+      status.className = "text-sm text-green-600 font-medium";
+
+}
+
+/* -------------------------
+RESTORE DRAFT
+------------------------- */
+
+function restoreDraft(){
+
+const saved = localStorage.getItem("question_bank_draft");
+if(!saved) return;
+
+const data = JSON.parse(saved);
+
+const container = document.getElementById("questions-container");
+const totalFormsInput = document.getElementById("id_form-TOTAL_FORMS");
+
+if(!container || !totalFormsInput) return;
+
+/* ---------------------------
+Find highest saved form index
+--------------------------- */
+
+let maxIndex = -1;
+
+Object.keys(data).forEach(key=>{
+const match = key.match(/form-(\d+)-/);
+if(match){
+maxIndex = Math.max(maxIndex, parseInt(match[1]));
+}
+});
+
+if(maxIndex < 0) return;
+
+/* ---------------------------
+Create missing forms by cloning
+--------------------------- */
+
+let currentForms = parseInt(totalFormsInput.value);
+
+const template = document.getElementById("empty-form-template");
+
+for(let i=currentForms;i<=maxIndex;i++){
+
+if(!template) break;
+
+const clone = template.content.firstElementChild.cloneNode(true);
+
+clone.querySelectorAll("input, textarea, select").forEach(el=>{
+
+if(el.name) el.name = el.name.replace(/__prefix__/,i);
+if(el.id) el.id = el.id.replace(/__prefix__/,i);
+
+});
+
+container.appendChild(clone);
+
+}
+
+totalFormsInput.value = maxIndex + 1;
+
+/* ---------------------------
+Restore normal inputs
+--------------------------- */
+
+Object.keys(data).forEach(name=>{
+
+if(name.startsWith("mathlive_")) return;
+
+const el = document.querySelector(`[name="${name}"]`);
+
+if(!el) return;
+
+if(el.type === "checkbox" || el.type === "radio"){
+  el.checked = data[name];
+}
+else{
+
+  /* restore textarea value */
+  el.value = data[name];
+
+  /* if CKEditor already exists update it */
+  if(typeof CKEDITOR !== "undefined" && CKEDITOR.instances[el.id]){
+    CKEDITOR.instances[el.id].setData(data[name]);
+  }
+
+  /* if CKEditor not initialized yet, create it */
+  else if(typeof CKEDITOR !== "undefined" && el.tagName === "TEXTAREA"){
+    
+    setTimeout(function(){
+
+      if(!CKEDITOR.instances[el.id]){
+        CKEDITOR.replace(el.id);
+      }
+
+      CKEDITOR.instances[el.id].setData(data[name]);
+
+    },200);
+
+  }
+
+}
+
+});
+
+/* ---------------------------
+Restore MathLive
+--------------------------- */
+
+setTimeout(()=>{
+
+document.querySelectorAll("math-field").forEach(mf=>{
+
+const hidden = mf.parentElement.querySelector(".mathlive-hidden");
+if(!hidden) return;
+
+const val = data[hidden.name];
+
+if(val){
+mf.setValue(val,{format:"latex"});
+hidden.value = val;
+}
+
+});
+
+},300);
+
+const status = document.getElementById("draft-status");
+
+if(status){
+status.innerText = "Draft restored";
+status.className = "text-sm text-green-600 font-medium";
+}
+
+}
+
+/* --------------------------------
+WAIT UNTIL QUESTIONS ARE LOADED
+-------------------------------- */
+
+function waitForForms(){
+
+const forms = document.querySelectorAll(".question-form");
+
+if(forms.length === 0){
+
+setTimeout(waitForForms,300);
+
+return;
+
+}
+
+restoreDraft();
+
+}
+
+
+
+
+/* -------------------------
+AUTOSAVE TIMER
+------------------------- */
+
+let draftTimer;
+
+document.addEventListener("input", function(){
+
+clearTimeout(draftTimer);
+
+draftTimer = setTimeout(function(){
+  saveDraft();
+},500);
+
+});
+
+/* -------------------------
+CLEAR AFTER SUBMIT
+------------------------- */
+
+const form = document.querySelector("form");
+
+if(form){
+
+form.addEventListener("submit",function(){
+
+localStorage.removeItem(STORAGE_KEY);
+
+});
+
+}
+
+/* -------------------------
+WARN BEFORE LEAVING PAGE
+------------------------- */
+
+window.addEventListener("beforeunload",function(e){
+
+if(localStorage.getItem(STORAGE_KEY)){
+
+e.preventDefault();
+e.returnValue="";
+
+}
+
+});
+
+/* -------------------------
+RESTORE ON LOAD
+------------------------- */
+
+setTimeout(function(){
+
+restoreDraft();
+
+document.querySelectorAll(".question-form").forEach(form=>{
+  initializeMathLive(form);
+});
+
+},1500);
+
+
+});
+
+</script>
 <style>
 .toast{
   min-width:280px;
@@ -1109,6 +1414,16 @@ function showImportMessage(type,title,text){
     opacity:1;
   }
 }
+</style>
+
+<style>
+math-field {
+  pointer-events: auto !important;
+  user-select: text !important;
+  cursor: text;
+  display: block;
+}
+
 </style>
 
 
