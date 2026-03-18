@@ -61,6 +61,7 @@
     </div>
 
     {{ formset.management_form }}
+    
 
     <div class="bg-yellow-50 border border-yellow-200 p-4 rounded-lg mb-6">
   <label class="font-semibold block mb-2">
@@ -808,10 +809,9 @@ dEq = res.eq;
 
 /* ANSWER */
 
-else if(line.match(/^(ans|answer)/i)){
-
-correct = line.replace(/^(ans|answer)[:\s]*/i,'').toUpperCase();
-
+else if(/(ans|answer|correct)/i.test(line)){
+const m = line.match(/[ABCD]/i);
+if(m) correct = m[0].toUpperCase();
 }
 
 /* MARKS */
@@ -828,6 +828,11 @@ if(m) marks = m[0];
 
 if(!question && !qEq) return;
 
+if(!A || !B || !C || !D){
+  console.warn("Skipping incomplete question");
+  return;
+}
+
 const newForm = getEmptyForm(totalForms);
 
 /* TEXT */
@@ -837,6 +842,13 @@ setValue(newForm,totalForms,"option_a",A);
 setValue(newForm,totalForms,"option_b",B);
 setValue(newForm,totalForms,"option_c",C);
 setValue(newForm,totalForms,"option_d",D);
+
+marks = parseInt(marks);
+
+if(isNaN(marks) || marks < 0){
+  console.warn("Invalid marks detected, resetting to 1");
+  marks = 1;
+}
 setValue(newForm,totalForms,"marks",marks);
 
 /* MATH */
@@ -852,7 +864,13 @@ if(dEq) setMath(newForm,totalForms,"option_d_equation",dEq);
 
 const sel = newForm.querySelector(`[name="form-${totalForms}-correct_option"]`);
 
-if(sel) sel.value = correct;
+if(sel){
+  if(["A","B","C","D"].includes(correct)){
+    sel.value = correct;
+  } else {
+    sel.value = ""; // leave blank
+  }
+}
 
 fragment.appendChild(newForm);
 

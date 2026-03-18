@@ -3,19 +3,40 @@ from django.contrib.auth.decorators import login_required
 from django.core.exceptions import PermissionDenied
 
 
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+
 @login_required
 def portal_selection(request):
-    """
-    Show portal selection page where users choose which dashboard to access.
-    """
     user = request.user
+    if getattr(user, 'is_deleted', False):
+        logout(request)
+        messages.error(request, "Your account has been deleted.")
+        return redirect('accounts:login')
 
-    # Determine roles
+    # Ensure role profiles exist
+    if user.role == 'teacher' and not hasattr(user, 'teacher_profile'):
+        logout(request)
+        messages.error(request, "Your profile is missing. Contact admin.")
+        return redirect('accounts:login')
+    if user.role == 'student' and not hasattr(user, 'student_profile'):
+        logout(request)
+        messages.error(request, "Your profile is missing. Contact admin.")
+        return redirect('accounts:login')
+    if user.role == 'schooladmin' and not hasattr(user, 'school_admin_profile'):
+        logout(request)
+        messages.error(request, "Your profile is missing. Contact admin.")
+        return redirect('accounts:login')
+
     roles = []
 
-    if hasattr(user, 'teacherprofile') or user.role == 'teacher':
+    if hasattr(user, 'teacher_profile') or user.role == 'teacher':
         roles.append('teacher')
-    if hasattr(user, 'studentprofile') or user.role == 'student':
+    if hasattr(user, 'student_profile') or user.role == 'student':
         roles.append('student')
     if user.role == 'schooladmin':
         roles.append('schooladmin')
@@ -24,15 +45,14 @@ def portal_selection(request):
     if user.role == 'accountant':
         roles.append('accountant')
 
-    # Add related objects for roles that need them
+    # School objects for admin/accountant dashboards
     school = getattr(user, 'school', None) if 'schooladmin' in roles else None
-    # Assuming accountant also has a school (or organization) relation
     accountant_school = getattr(user, 'school', None) if 'accountant' in roles else None
 
     context = {
         'roles': roles,
-        'school': school,                # for school admin dashboard
-        'accountant_school': accountant_school,  # for accountant dashboard links
+        'school': school,
+        'accountant_school': accountant_school,
     }
 
     return render(request, 'accounts/portal_selection.html', context)
@@ -47,19 +67,33 @@ from django.urls import reverse
 from django.contrib.auth.decorators import login_required
 
 
+
 def login_view(request):
-    """Handles user login and redirects to portal selection"""
     if request.user.is_authenticated:
-        # Already logged in → go straight to portal selection
         return redirect('accounts:portal_selection')
 
     if request.method == "POST":
         username = request.POST.get("username")
         password = request.POST.get("password")
-
         user = authenticate(request, username=username, password=password)
 
         if user is not None:
+            # ❌ Block deleted users
+            if getattr(user, 'is_deleted', False):
+                messages.error(request, "This account has been deleted. Contact admin.")
+                return redirect('accounts:login')
+
+            # ❌ Block users without profile
+            if user.role == 'teacher' and not hasattr(user, 'teacher_profile'):
+                messages.error(request, "This account has been deleted. Contact admin.")
+                return redirect('accounts:login')
+            if user.role == 'student' and not hasattr(user, 'student_profile'):
+                messages.error(request, "This account has been deleted. Contact admin.")
+                return redirect('accounts:login')
+            if user.role == 'schooladmin' and not hasattr(user, 'school_admin_profile'):
+                messages.error(request, "This account has been deleted. Contact admin.")
+                return redirect('accounts:login')
+
             login(request, user)
             return redirect('accounts:portal_selection')
         else:

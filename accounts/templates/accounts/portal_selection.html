@@ -48,8 +48,8 @@
 <div class="min-h-screen flex items-center justify-center px-4 sm:px-6 -mt-12 sm:-mt-16">
   <div class="w-full max-w-6xl space-y-14 sm:space-y-16">
 
-    <!-- STUDENT PORTALS -->
-   {% if 'student' in roles %}
+   <!-- STUDENT PORTALS -->
+{% if 'student' in roles %}
 <div>
   <h3 class="text-xl sm:text-2xl font-bold text-indigo-700 mb-6 flex items-center gap-2">
     🎓 Student Portals
@@ -66,7 +66,6 @@
       📝 Result Portal
     </a>
 
-    <!-- NEW -->
     <a href="{% url 'liveclass:liveclass_list' %}" 
        class="portal-card bg-gradient-to-r from-blue-500 to-blue-600">
       🎥 Live Classes
@@ -76,14 +75,12 @@
 </div>
 {% endif %}
 
-
-    <!-- TEACHER PORTALS -->
-    {% if 'teacher' in roles %}
+<!-- TEACHER PORTALS -->
+{% if 'teacher' in roles %}
 <div>
   <h3 class="text-xl sm:text-2xl font-bold text-green-700 mb-6 flex items-center gap-2">
     🧑‍🏫 Teacher Portals
   </h3>
-
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
 
     <a href="{% url 'teachers:teacher_dashboard' %}" 
@@ -101,7 +98,6 @@
       🧾 Teacher Result Portal
     </a>
 
-    <!-- NEW -->
     <a href="{% url 'liveclass:liveclass_list' %}" 
        class="portal-card bg-gradient-to-r from-emerald-500 to-emerald-600">
       🎥 My Live Classes
@@ -116,9 +112,8 @@
 </div>
 {% endif %}
 
-
-    <!-- SCHOOL ADMIN -->
-   {% if 'schooladmin' in roles %}
+<!-- SCHOOL ADMIN -->
+{% if 'schooladmin' in roles and school %}
 <div>
   <h3 class="text-xl sm:text-2xl font-bold text-indigo-700 mb-6">
     🏫 School Admin Portals
@@ -126,36 +121,27 @@
 
   <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8">
 
-    {% if school %}
-      <a href="{% url 'school_admin:school_admin_dashboard' school.id %}" 
-         class="portal-card bg-gradient-to-r from-indigo-500 to-indigo-600">
-        🏢 School Admin Dashboard
-      </a>
+    <a href="{% url 'school_admin:school_admin_dashboard' school.id %}" 
+       class="portal-card bg-gradient-to-r from-indigo-500 to-indigo-600">
+      🏢 School Admin Dashboard
+    </a>
 
-      <!-- NEW -->
-      <a href="{% url 'liveclass:liveclass_list' %}" 
-         class="portal-card bg-gradient-to-r from-teal-500 to-teal-600">
-        🎥 Manage Live Classes
-      </a>
+    <a href="{% url 'liveclass:liveclass_list' %}" 
+       class="portal-card bg-gradient-to-r from-teal-500 to-teal-600">
+      🎥 Manage Live Classes
+    </a>
 
-      <a href="{% url 'liveclass:liveclass_create' %}" 
-         class="portal-card bg-gradient-to-r from-yellow-500 to-yellow-600">
-        ➕ Create Live Class
-      </a>
-
-    {% else %}
-      <p class="text-red-500 font-bold text-lg">
-        No school assigned
-      </p>
-    {% endif %}
+    <a href="{% url 'liveclass:liveclass_create' %}" 
+       class="portal-card bg-gradient-to-r from-yellow-500 to-yellow-600">
+      ➕ Create Live Class
+    </a>
 
   </div>
 </div>
 {% endif %}
 
-
-    <!-- ACCOUNTANT -->
-{% if 'accountant' in roles %}
+<!-- ACCOUNTANT -->
+{% if 'accountant' in roles and accountant_school %}
 <div>
   <h3 class="text-xl sm:text-2xl font-bold text-yellow-700 mb-6">
     💰 Accountant / Finance Portals
@@ -163,20 +149,15 @@
 
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
 
-    <!-- Dashboard -->
-    <a href="{% url 'finance:dashboard' %}"
-       class="portal-card bg-gradient-to-r from-yellow-500 to-yellow-600">
+    <a href="{% url 'finance:dashboard' %}" class="portal-card bg-gradient-to-r from-yellow-500 to-yellow-600">
       📈 Finance Dashboard
     </a>
 
-    <!-- Invoices -->
-    <a href="{% url 'finance:invoice_list' %}"
-       class="portal-card bg-gradient-to-r from-orange-500 to-orange-600">
+    <a href="{% url 'finance:invoice_list' %}" class="portal-card bg-gradient-to-r from-orange-500 to-orange-600">
       📄 View Invoices
     </a>
 
-    <a href="{% url 'finance:invoice_create' %}"
-       class="portal-card bg-gradient-to-r from-indigo-500 to-indigo-600">
+    <a href="{% url 'finance:invoice_create' %}" class="portal-card bg-gradient-to-r from-indigo-500 to-indigo-600">
       ➕ Create Invoice
     </a>
 
@@ -185,64 +166,49 @@
       ⚙️ Generate Bulk Invoices
     </a>
 
-    <!-- Payments -->
-    <a href="{% url 'finance:payment_list' %}"
-       class="portal-card bg-gradient-to-r from-emerald-500 to-emerald-600">
+    <a href="{% url 'finance:payment_list' %}" class="portal-card bg-gradient-to-r from-emerald-500 to-emerald-600">
       💵 Payments
     </a>
 
-    <a href="{% url 'finance:record_payment' %}"
-       class="portal-card bg-gradient-to-r from-teal-500 to-teal-600">
+    <a href="{% url 'finance:record_payment' %}" class="portal-card bg-gradient-to-r from-teal-500 to-teal-600">
       💳 Record Payment
     </a>
 
-    <!-- Fees -->
-    <a href="{% url 'finance:fee_template_list' %}"
-       class="portal-card bg-gradient-to-r from-purple-500 to-purple-600">
+    <a href="{% url 'finance:fee_template_list' %}" class="portal-card bg-gradient-to-r from-purple-500 to-purple-600">
       🏷 Fee Templates
     </a>
 
+    <div class="portal-card bg-gradient-to-r from-red-500 to-red-600 flex flex-col justify-between p-6">
+      <div>💸 Expenses</div>
+      <div class="mt-4 flex flex-col gap-2">
+        <a href="{% url 'finance:expense_create' %}" class="px-3 py-2 bg-white/20 hover:bg-white/30 text-white rounded font-semibold text-sm text-center">
+           ➕ Create Expense
+        </a>
+        <a href="{% url 'finance:expense_list' %}" class="px-3 py-2 bg-white/20 hover:bg-white/30 text-white rounded font-semibold text-sm text-center">
+           📄 View Expenses
+        </a>
+      </div>
+    </div>
 
-      <!-- Expenses Card -->
-<div class="portal-card bg-gradient-to-r from-red-500 to-red-600 flex flex-col justify-between p-6">
-  <div>
-    💸 Expenses
-  </div>
-  <div class="mt-4 flex flex-col gap-2">
-    <a href="{% url 'finance:expense_create' %}" 
-       class="px-3 py-2 bg-white/20 hover:bg-white/30 text-white rounded font-semibold text-sm text-center">
-       ➕ Create Expense
-    </a>
-    <a href="{% url 'finance:expense_list' %}" 
-       class="px-3 py-2 bg-white/20 hover:bg-white/30 text-white rounded font-semibold text-sm text-center">
-       📄 View Expenses
-    </a>
-  </div>
-</div>
-
-    <!-- Reports -->
-    <a href="{% url 'finance:financial_reports' %}"
-       class="portal-card bg-gradient-to-r from-slate-600 to-slate-700">
-      📊 Financial Reports
-      <span class="text-sm opacity-90">(Session / Term)</span>
+    <a href="{% url 'finance:financial_reports' %}" class="portal-card bg-gradient-to-r from-slate-600 to-slate-700">
+      📊 Financial Reports <span class="text-sm opacity-90">(Session / Term)</span>
     </a>
 
   </div>
 </div>
 {% endif %}
 
-
-    <!-- SUPER ADMIN -->
-    {% if 'superadmin' in roles %}
-    <div>
-      <h3 class="text-xl sm:text-2xl font-bold text-indigo-700 mb-6">🛠 Super Admin Portals</h3>
-      <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8">
-        <a href="{% url 'superadmin:dashboard' %}" class="portal-card bg-gradient-to-r from-indigo-500 to-indigo-600">
-          🛡 Super Admin Dashboard
-        </a>
-      </div>
-    </div>
-    {% endif %}
+<!-- SUPER ADMIN -->
+{% if 'superadmin' in roles %}
+<div>
+  <h3 class="text-xl sm:text-2xl font-bold text-indigo-700 mb-6">🛠 Super Admin Portals</h3>
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-6 sm:gap-8">
+    <a href="{% url 'superadmin:dashboard' %}" class="portal-card bg-gradient-to-r from-indigo-500 to-indigo-600">
+      🛡 Super Admin Dashboard
+    </a>
+  </div>
+</div>
+{% endif %}
 
   </div>
 </div>

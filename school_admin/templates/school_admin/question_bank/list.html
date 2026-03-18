@@ -27,7 +27,7 @@
   </div>
 
   <!-- Search & Filters -->
-  <form method="get" class="mb-6 grid grid-cols-1 sm:grid-cols-5 gap-4">
+  <form method="get" class="mb-6 grid grid-cols-1 sm:grid-cols-3 gap-4">
     <select name="subject" class="border border-gray-300 rounded-lg px-3 py-2">
       <option value="">All Subjects</option>
       {% for subject in subjects %}
@@ -47,21 +47,6 @@
         </option>
       {% endfor %}
     </select>
-
-    <select name="term" class="border border-gray-300 rounded-lg px-3 py-2">
-      <option value="">All Terms</option>
-      <option value="1" {% if request.GET.term == "1" %}selected{% endif %}>Term 1</option>
-      <option value="2" {% if request.GET.term == "2" %}selected{% endif %}>Term 2</option>
-      <option value="3" {% if request.GET.term == "3" %}selected{% endif %}>Term 3</option>
-    </select>
-
-    <select name="session" class="border border-gray-300 rounded-lg px-3 py-2">
-      <option value="">Select Session</option>
-      {% for s in sessions %}
-        <option value="{{ s }}">{{ s }}</option>
-      {% endfor %}
-    </select>
-
     <button type="submit"
             class="bg-indigo-600 text-white rounded-lg px-4 py-2 hover:bg-indigo-700">
       Search
@@ -193,26 +178,103 @@
   </div>
 
   <!-- Pagination -->
-  {% if page_obj.has_other_pages %}
-    <div class="flex justify-center mt-8">
-      <nav class="inline-flex items-center gap-1 text-sm">
-        {% if page_obj.has_previous %}
-          <a href="?page={{ page_obj.previous_page_number }}&{{ request.GET.urlencode|cut:'page=' }}"
-             class="px-3 py-2 border rounded-lg hover:bg-gray-100">Prev</a>
-        {% endif %}
+ {% if page_obj.has_other_pages %}
+<div class="mt-8 space-y-3">
 
-        <span class="px-4 py-2 text-gray-600">
-          Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
-        </span>
+  <!-- ================= MOBILE ================= -->
+  <div class="sticky bottom-0 bg-white border-t p-3 sm:hidden">
 
-        {% if page_obj.has_next %}
-          <a href="?page={{ page_obj.next_page_number }}&{{ request.GET.urlencode|cut:'page=' }}"
-             class="px-3 py-2 border rounded-lg hover:bg-gray-100">Next</a>
-        {% endif %}
-      </nav>
+    <!-- Prev / Next -->
+    <div class="flex justify-between items-center gap-2 mb-2">
+
+      {% if page_obj.has_previous %}
+        <a href="?page={{ page_obj.previous_page_number }}&{{ request.GET.urlencode|cut:'page='|cut:'&page=' }}"
+           class="px-4 py-2 rounded-lg bg-gray-100">←</a>
+      {% else %}
+        <div></div>
+      {% endif %}
+
+      <span class="text-sm text-gray-500">
+        {{ page_obj.number }}/{{ page_obj.paginator.num_pages }}
+      </span>
+
+      {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}&{{ request.GET.urlencode|cut:'page='|cut:'&page=' }}"
+           class="px-4 py-2 rounded-lg bg-indigo-600 text-white">→</a>
+      {% else %}
+        <div></div>
+      {% endif %}
     </div>
-  {% endif %}
+
+    <!-- Tabs -->
+    <div class="flex overflow-x-auto gap-2 pb-2">
+      {% for num in page_obj.paginator.page_range %}
+        {% if num >= page_obj.number|add:'-3' and num <= page_obj.number|add:'3' %}
+          <a href="?page={{ num }}&{{ request.GET.urlencode|cut:'page='|cut:'&page=' }}"
+             class="flex-shrink-0 px-4 py-2 rounded-lg border
+             {% if page_obj.number == num %}
+               bg-indigo-600 text-white border-indigo-600
+             {% else %}
+               bg-white text-gray-700
+             {% endif %}">
+            {{ num }}
+          </a>
+        {% endif %}
+      {% endfor %}
+    </div>
+
+  </div>
+
+  <!-- ================= DESKTOP ================= -->
+  <div class="hidden sm:flex justify-center">
+    <div class="flex items-center gap-2 flex-wrap">
+
+      {% if page_obj.has_previous %}
+        <a href="?page=1&{{ request.GET.urlencode|cut:'page='|cut:'&page=' }}"
+           class="px-3 py-2 border rounded">First</a>
+
+        <a href="?page={{ page_obj.previous_page_number }}&{{ request.GET.urlencode|cut:'page='|cut:'&page=' }}"
+           class="px-3 py-2 border rounded">Prev</a>
+      {% endif %}
+
+      {% for num in page_obj.paginator.page_range %}
+        {% if num >= page_obj.number|add:'-3' and num <= page_obj.number|add:'3' %}
+          <a href="?page={{ num }}&{{ request.GET.urlencode|cut:'page='|cut:'&page=' }}"
+             class="px-3 py-2 rounded border
+             {% if page_obj.number == num %}
+               bg-indigo-600 text-white border-indigo-600
+             {% endif %}">
+            {{ num }}
+          </a>
+        {% endif %}
+      {% endfor %}
+
+      {% if page_obj.has_next %}
+        <a href="?page={{ page_obj.next_page_number }}&{{ request.GET.urlencode|cut:'page='|cut:'&page=' }}"
+           class="px-3 py-2 border rounded">Next</a>
+
+        <a href="?page={{ page_obj.paginator.num_pages }}&{{ request.GET.urlencode|cut:'page='|cut:'&page=' }}"
+           class="px-3 py-2 border rounded">Last</a>
+      {% endif %}
+
+    </div>
+  </div>
 
 </div>
+{% endif %}
 
+
+
+<script>
+  document.querySelectorAll('a[href*="page="]').forEach(link => {
+    link.addEventListener('click', () => {
+      localStorage.setItem("scrollToTop", "true");
+    });
+  });
+
+  if(localStorage.getItem("scrollToTop") === "true"){
+    window.scrollTo({ top: 0, behavior: "smooth" });
+    localStorage.removeItem("scrollToTop");
+  }
+</script>
 {% endblock %}

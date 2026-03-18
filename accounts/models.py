@@ -88,6 +88,7 @@ class User(AbstractUser):
     # Legacy compatibility
     is_teacher = models.BooleanField(default=False)
     is_student = models.BooleanField(default=False)
+    is_deleted = models.BooleanField(default=False)
 
     phone = models.CharField(max_length=20, blank=True, null=True)
     address = models.TextField(blank=True)
@@ -96,6 +97,12 @@ class User(AbstractUser):
     def __str__(self):
         # Always show username as primary representation
         return self.username
+
+
+    @property
+    def is_active_user(self):
+        """Checks if user is active and not deleted"""
+        return not self.is_deleted and self.is_active    
 
     @property
     def is_superadmin(self):

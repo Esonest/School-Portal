@@ -911,13 +911,7 @@ def question_bank_list(request):
     if class_id:
         questions = questions.filter(school_class_id=class_id)
 
-    term = request.GET.get("term")
-    if term:
-        questions = questions.filter(term=term)
 
-    session = request.GET.get("session")
-    if session:
-        questions = questions.filter(session=session)
 
     # Pagination
     paginator = Paginator(questions, 10)  # 10 per page
@@ -929,8 +923,6 @@ def question_bank_list(request):
         "topics": topics,
         "subjects": subjects,
         "classes": classes,
-        "terms": ['1', '2', '3'],
-        "sessions": SESSION_LIST,
         "page_obj": page_obj,
         "school": school,
     })
@@ -982,7 +974,7 @@ def question_bank_create(request):
         form=QuestionBankForm,
         formset=BaseQuestionFormSet,
         extra=10,
-        max_num=20,
+        max_num=500,
         can_delete=True,
     )
 
@@ -993,6 +985,7 @@ def question_bank_create(request):
             queryset=QuestionBank.objects.none(),
             user=request.user
         )
+
 
 
         selected_subject = request.POST.get("subject", "").strip()
@@ -1045,6 +1038,8 @@ def question_bank_create(request):
                 "topic": topic_name,
                 "option_letters": ['a', 'b', 'c', 'd'],
             })
+
+            
 
     # ---------- STRICT COMPLETENESS CHECK ----------
         incomplete_forms = []

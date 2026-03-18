@@ -86,6 +86,13 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    'accounts.middleware.BlockDeletedUserMiddleware',
+
+]
+
+AUTHENTICATION_BACKENDS = [
+    'accounts.backends.ActiveUserBackend',  # your custom backend
+    'django.contrib.auth.backends.ModelBackend',  # fallback
 ]
 
 STATIC_URL = "/static/"
@@ -317,7 +324,7 @@ PEERJS_SERVER_PATH = "/"
 PEERJS_SECURE = True
 
 
-
+DATA_UPLOAD_MAX_NUMBER_FIELDS = 50000
 
 
 
