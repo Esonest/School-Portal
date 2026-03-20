@@ -11,7 +11,7 @@
       <h1 class="text-xl sm:text-2xl font-bold text-{{ school.theme_color }}-800">
         {{ school.name }}
       </h1>
-      <p class="text-sm text-gray-600 mt-1">
+      <p class="text-xl sm:text-xl font-bold text-{{ school.theme_color }}-400">
         {% if exam_id %}
           Submissions for “{{ exam.title }}”
         {% else %}
@@ -32,7 +32,7 @@
   <!-- ===================== -->
   <!-- MOBILE CARDS VIEW -->
   <!-- ===================== -->
-  <div class="md:hidden space-y-4">
+  <div class="md:hidden print:hidden space-y-4">
 
     {% for row in submissions %}
       {% if row.student.school %}
@@ -83,10 +83,10 @@
   <!-- ===================== -->
   <!-- DESKTOP / TABLE VIEW -->
   <!-- ===================== -->
-  <div class="hidden md:block bg-white rounded-lg shadow-sm border overflow-hidden">
+  <div class="hidden md:block print:block bg-white rounded-lg shadow-sm border overflow-hidden">
 
     <div class="overflow-x-auto">
-      <table class="min-w-full text-sm text-left border-collapse">
+     <table class="min-w-full text-xs text-left border-collapse">
 
         <thead class="bg-gray-100 text-gray-700 uppercase text-xs tracking-wide">
           <tr>
@@ -153,4 +153,47 @@
   </div>
 
 </div>
+
+<style>
+@media print {
+
+  /* Remove margins so it fits one page */
+  @page {
+    size: A4;
+    margin: 10mm;
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Reduce font size for printing */
+  table {
+    font-size: 10px;
+  }
+
+  th, td {
+  padding: 2px !important;
+}
+  /* Hide unnecessary things */
+  button, a {
+    display: none !important;
+  }
+
+  /* Force everything into one page */
+  html, body {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  /* Prevent breaking */
+  table, tr, td {
+    page-break-inside: avoid !important;
+  }
+
+}
+
+
+</style>
 {% endblock %}

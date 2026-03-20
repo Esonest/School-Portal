@@ -272,21 +272,7 @@ def bulk_score_entry(request, school_id):
     page_student_ids = [s.id for s in page_students]
 
     # --- ENSURE SCORES EXIST ---
-    if request.method == 'GET' and selected_subject_ids:
-        for st in page_students:
-            for sid in selected_subject_ids:
-                subj = Subject.objects.filter(id=sid).first()
-                if subj:
-                    Score.objects.get_or_create(
-                        student=st,
-                        subject=subj,
-                        session=selected_session,
-                        term=selected_term,
-                        school=selected_school,
-                        school_class=selected_class, 
-                        defaults={'ca': 0, 'exam': 0}
-                    )
-
+   
     # --- GET SCORES ---
     scores = Score.objects.filter(
         student__id__in=page_student_ids,
@@ -319,33 +305,42 @@ def bulk_score_entry(request, school_id):
         errors = []
         for st in page_students:
             for sid in selected_subject_ids:
-                exam_val_str = request.POST.get(f"exam_{st.id}_{sid}", "")
-                exam_val = float(exam_val_str) if exam_val_str.strip() else 0
-                ca_val = 0
-                if is_ca_enabled:
-                    ca_val_str = request.POST.get(f"ca_{st.id}_{sid}", "")
-                    ca_val = float(ca_val_str) if ca_val_str.strip() else 0
+                exam_val_str = request.POST.get(f"exam_{st.id}_{sid}", "").strip()
+                ca_val_str = request.POST.get(f"ca_{st.id}_{sid}", "").strip() if is_ca_enabled else ""
 
+        # ✅ STEP 3A: Skip if BOTH are empty
+                if exam_val_str == "" and ca_val_str == "":
+                    continue
+
+        # ✅ STEP 3B: Convert values
+                exam_val = float(exam_val_str) if exam_val_str else 0
+                ca_val = float(ca_val_str) if ca_val_str else 0
+
+        # ✅ STEP 3C: Validate
                 if not (0 <= exam_val <= exam_max):
                     errors.append(f"Exam must be 0–{exam_max} for {st.full_name()}")
                     continue
+
                 if is_ca_enabled and not (0 <= ca_val <= ca_max):
                     errors.append(f"CA must be 0–{ca_max} for {st.full_name()}")
                     continue
 
+        # ✅ STEP 3D: Get subject
                 subj = Subject.objects.filter(id=sid).first()
                 if not subj:
                     continue
 
+        # ✅ STEP 3E: Save ONLY if data exists
                 score_obj, created = Score.objects.get_or_create(
                     student=st,
                     subject=subj,
                     session=selected_session,
                     term=selected_term,
-                   school=selected_school,
+                    school=selected_school,
                     school_class=selected_class,
                     defaults={'ca': ca_val, 'exam': exam_val}
                 )
+
                 if not created:
                     score_obj.ca = ca_val
                     score_obj.exam = exam_val
@@ -2752,7 +2747,7 @@ def build_student_result_context(student, term, session, exam_class):
         term=term,
         session=session,
         school_class=exam_class
-    ).select_related("subject", "school")
+    ).filter(Q(ca__gt=0) | Q(exam__gt=0)).select_related("subject", "school")
 
     school = student.school
 

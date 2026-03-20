@@ -52,7 +52,7 @@
     <h2 class="text-lg md:text-xl font-semibold relative z-10">Answers</h2>
 
    <!-- ================= MOBILE ================= -->
-<div class="md:hidden space-y-4 relative z-10">
+<div class="md:hidden print:hidden space-y-4 relative z-10">
   {% for item in question_map %}
     <div class="bg-white p-4 rounded shadow border
                 w-full max-w-full overflow-hidden break-words">
@@ -171,8 +171,8 @@
 
 
     <!-- ================= DESKTOP ================= -->
-    <div class="hidden md:block overflow-x-auto relative z-10">
-        <table class="w-full border border-gray-300 bg-white text-sm">
+    <div class="hidden md:block print:block overflow-x-auto relative z-10">
+       <table class="w-full border border-gray-300 bg-white text-xs">
             <thead class="bg-gray-100">
                 <tr>
                     <th class="border p-2">#</th>
@@ -283,6 +283,75 @@
 
 </div>
 
+
+<style>
+@media print {
+
+  /* Page setup */
+  @page {
+    size: A4;
+    margin: 8mm;
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+  }
+
+  /* Hide button */
+  button {
+    display: none !important;
+  }
+
+  /* Force desktop table only */
+  .md\:hidden {
+    display: none !important;
+  }
+
+  .md\:block {
+    display: block !important;
+  }
+
+  /* Compress everything */
+  table {
+    font-size: 9px !important;
+    width: 100%;
+  }
+
+  th, td {
+    padding: 3px !important;
+    vertical-align: top;
+  }
+
+  /* Reduce header size */
+  h1 { font-size: 16px !important; }
+  h2 { font-size: 14px !important; }
+  p  { font-size: 10px !important; }
+
+  /* Reduce images */
+  img {
+    max-height: 60px !important;
+  }
+
+  /* Math content shrink */
+  .math-content {
+    font-size: 9px !important;
+    line-height: 1.2 !important;
+  }
+
+  /* Prevent ugly breaks */
+  tr {
+    page-break-inside: avoid;
+  }
+
+ .result-container {
+    height: auto !important;
+    overflow: visible !important;
+  }
+
+}
+</style>
+
 <!-- MathJax trigger (renders all math) -->
 <script>
 document.addEventListener("DOMContentLoaded", () => {
@@ -291,4 +360,6 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 });
 </script>
+
+
 {% endblock %}
