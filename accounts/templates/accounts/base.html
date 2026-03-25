@@ -166,6 +166,32 @@ window.MathJax = {
       import "https://unpkg.com/mathlive?module";
     </script>
     
-    
+    <script>
+let timeout = 600000; // 10 minutes in ms
+let warningTime = 540000; // 9 minutes
+
+let logoutTimer;
+let warningTimer;
+
+function resetTimers() {
+    clearTimeout(logoutTimer);
+    clearTimeout(warningTimer);
+
+    warningTimer = setTimeout(() => {
+        alert("You will be logged out in 1 minute due to inactivity.");
+    }, warningTime);
+
+    logoutTimer = setTimeout(() => {
+        window.location.href = "{% url 'accounts:login' %}";
+    }, timeout);
+}
+
+// Reset on activity
+['click', 'mousemove', 'keypress', 'scroll'].forEach(event => {
+    window.addEventListener(event, resetTimers);
+});
+
+resetTimers();
+</script>
 </body>
 </html>

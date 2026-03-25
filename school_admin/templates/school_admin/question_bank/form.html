@@ -61,6 +61,13 @@
     </div>
 
     {{ formset.management_form }}
+
+    <div class="flex items-center gap-2 mb-3">
+  <input type="checkbox" id="delete-all-checkbox">
+  <label for="delete-all-checkbox" class="text-sm font-medium text-red-600">
+    Delete All Questions
+  </label>
+</div>
     
 
     <div class="bg-yellow-50 border border-yellow-200 p-4 rounded-lg mb-6">
@@ -83,6 +90,10 @@
       
 <template id="empty-form-template">
   <div class="question-form border-b py-4 relative space-y-3">
+
+    <label class="absolute top-2 right-2 text-sm text-red-600">
+  <input type="checkbox" name="form-__prefix__-DELETE"> Delete
+</label>
     <h2 class="question-title flex items-center gap-2 font-semibold mb-3">
   <span class="question-badge bg-blue-600 text-white px-3 py-1 rounded text-sm">1</span>
   <span class="question-text">Question</span>
@@ -471,6 +482,21 @@ const container = document.getElementById("questions-container");
 const totalFormsInput = document.getElementById("id_form-TOTAL_FORMS");
 const importBtn = document.getElementById("import-questions");
 
+
+const deleteAllCheckbox = document.getElementById("delete-all-checkbox");
+
+deleteAllCheckbox?.addEventListener("change", function(){
+
+  const allDeleteInputs = document.querySelectorAll(
+    'input[name$="-DELETE"]'
+  );
+
+  allDeleteInputs.forEach(input => {
+    input.checked = deleteAllCheckbox.checked;
+  });
+
+});
+
 /* -----------------------------
 CREATE EMPTY FORM
 ----------------------------- */
@@ -613,9 +639,10 @@ rawText = rawText.replace(/\n{2,}/g,"\n");
 const questionBlocks = rawText
 .split(/\n(?=\s*\d+[\.\)]\s)/)   // split only when number starts new line
 .map(b=>b.trim())
-.filter(b => /^\d+[\.\)]\s/.test(b));  // keep only real questions
+.filter(b => b.length > 10);  // keep only real questions
 
 let totalForms = parseInt(totalFormsInput.value);
+let createdCount = 0;
 
 /* FAST DOM INSERT */
 const fragment = document.createDocumentFragment();
@@ -810,8 +837,13 @@ dEq = res.eq;
 /* ANSWER */
 
 else if(/(ans|answer|correct)/i.test(line)){
-const m = line.match(/[ABCD]/i);
-if(m) correct = m[0].toUpperCase();
+
+  const m = line.match(/\b([ABCD])\b/i);
+
+  if(m){
+    correct = m[1].toUpperCase();
+  }
+
 }
 
 /* MARKS */
@@ -828,8 +860,8 @@ if(m) marks = m[0];
 
 if(!question && !qEq) return;
 
-if(!A || !B || !C || !D){
-  console.warn("Skipping incomplete question");
+if(!A && !B && !C && !D){
+  console.warn("Skipping empty question");
   return;
 }
 
@@ -874,6 +906,8 @@ if(sel){
 
 fragment.appendChild(newForm);
 
+createdCount++;
+
 totalForms++;
 
 });
@@ -882,6 +916,12 @@ totalForms++;
 
 container.appendChild(fragment);
 
+if(deleteAllCheckbox && deleteAllCheckbox.checked){
+  document.querySelectorAll('input[name$="-DELETE"]').forEach(cb=>{
+    cb.checked = true;
+  });
+}
+
 totalFormsInput.value = totalForms;
 
 renumberQuestions();
@@ -889,7 +929,7 @@ renumberQuestions();
 showImportMessage(
   "success",
   "Import Successful",
-  questionBlocks.length + " questions generated successfully."
+ createdCount + " questions generated successfully."
 );
 
 });
