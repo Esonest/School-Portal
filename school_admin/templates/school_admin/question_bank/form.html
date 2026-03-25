@@ -1428,6 +1428,15 @@ document.querySelectorAll(".question-form").forEach(form=>{
 });
 
 </script>
+
+<script>
+let logoutTime = 600000; // 10 min
+
+setTimeout(() => {
+    localStorage.setItem("autoSavedWork", document.body.innerHTML);
+}, logoutTime - 5000); // save 5 seconds before logout
+</script>
+
 <style>
 .toast{
   min-width:280px;

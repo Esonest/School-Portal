@@ -60,8 +60,8 @@ class AutoLogoutMiddleware:
 
                 if elapsed > self.timeout:
                     logout(request)
-                    messages.warning(request, "You were logged out due to inactivity.")
-                    return redirect('accounts:login')
+                    messages.warning(request, "Session expired. Please login again.")
+                    return redirect(f"{settings.LOGIN_URL}?next={request.path}")
 
             # Update last activity time
             request.session['last_activity'] = current_time

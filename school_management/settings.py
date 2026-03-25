@@ -15,6 +15,7 @@ from pathlib import Path
 import os
 from dotenv import load_dotenv
 from django.contrib.messages import constants as messages
+from django.urls import reverse_lazy
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -84,10 +85,10 @@ MIDDLEWARE = [
     "django.middleware.common.CommonMiddleware",
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
-    'accounts.middleware.AutoLogoutMiddleware',
     "django.contrib.messages.middleware.MessageMiddleware",
-    "django.middleware.clickjacking.XFrameOptionsMiddleware",
     'accounts.middleware.BlockDeletedUserMiddleware',
+    'accounts.middleware.AutoLogoutMiddleware',
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
 
 ]
 
@@ -129,10 +130,11 @@ STORAGES = {
 
 AUTH_USER_MODEL = "accounts.User"
 
-LOGIN_URL = "/accounts/login/"
-LOGIN_REDIRECT_URL = "/portal-selection/"
-LOGOUT_REDIRECT_URL ="/accounts/login/"
 
+
+LOGIN_URL = reverse_lazy('login')
+LOGIN_REDIRECT_URL = reverse_lazy('portal_selection')
+LOGOUT_REDIRECT_URL = reverse_lazy('login')
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 CKEDITOR_UPLOAD_PATH = "uploads/"
 
