@@ -15,24 +15,23 @@ class BlockDeletedUserMiddleware:
             # ❌ Block deleted users
             if getattr(user, 'is_deleted', False):
                 logout(request)
-                return redirect('accounts:login')
+                return redirect(f"{settings.LOGIN_URL}?next={request.path}")
 
             # ❌ Block inactive schools
             if user.school and not user.school.active:
                 logout(request)
-                return redirect('accounts:login')
+                return redirect(f"{settings.LOGIN_URL}?next={request.path}")
 
             # ❌ Block users without profile for their role
             if user.role == 'teacher' and not hasattr(user, 'teacher_profile'):
                 logout(request)
-                return redirect('accounts:login')
+                return redirect(f"{settings.LOGIN_URL}?next={request.path}")
             if user.role == 'student' and not hasattr(user, 'student_profile'):
                 logout(request)
-                return redirect('accounts:login')
+                return redirect(f"{settings.LOGIN_URL}?next={request.path}")
             if user.role == 'schooladmin' and not hasattr(user, 'school_admin_profile'):
                 logout(request)
-                return redirect('accounts:login')
-
+                return redirect(f"{settings.LOGIN_URL}?next={request.path}")
         return self.get_response(request)
 
 # accounts/middleware.py
