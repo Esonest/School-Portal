@@ -1429,31 +1429,6 @@ document.querySelectorAll(".question-form").forEach(form=>{
 
 </script>
 
-<script>
-function saveDraft() {
-    const data = {
-        content: document.getElementById("questions-container")?.innerHTML
-    };
-    localStorage.setItem("question_draft", JSON.stringify(data));
-}
-
-// Save every 5 seconds
-setInterval(saveDraft, 5000);
-</script>
-
-<script>
-window.addEventListener('load', () => {
-    const saved = localStorage.getItem("question_draft");
-    if (!saved) return;
-
-    const data = JSON.parse(saved);
-
-    const container = document.getElementById("questions-container");
-    if (container && data.content) {
-        container.innerHTML = data.content;
-    }
-});
-</script>
 
 <script>
 let timeout = 3600000; // 10 min
