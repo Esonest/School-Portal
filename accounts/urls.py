@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import portal_selection, login_view, logout_view, home, open_portal,about, contact,help, contact_us
+from .views import portal_selection, keep_alive, login_view, logout_view, home, open_portal,about, contact,help, contact_us
 
 app_name = 'accounts'
 
@@ -14,6 +14,7 @@ urlpatterns = [
     path('portal-selection/', portal_selection, name='portal_selection'),
     # dynamic portals
     path("portal/<int:school_id>/<str:portal>/", open_portal, name="open_portal"),
+    path('keep-alive/', keep_alive, name='keep_alive'),
 
 
 ]

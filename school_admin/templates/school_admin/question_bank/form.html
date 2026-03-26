@@ -1430,11 +1430,62 @@ document.querySelectorAll(".question-form").forEach(form=>{
 </script>
 
 <script>
-let logoutTime = 600000; // 10 min
+function saveDraft() {
+    const data = {
+        content: document.getElementById("questions-container")?.innerHTML
+    };
+    localStorage.setItem("question_draft", JSON.stringify(data));
+}
 
-setTimeout(() => {
-    localStorage.setItem("autoSavedWork", document.body.innerHTML);
-}, logoutTime - 5000); // save 5 seconds before logout
+// Save every 5 seconds
+setInterval(saveDraft, 5000);
+</script>
+
+<script>
+window.addEventListener('load', () => {
+    const saved = localStorage.getItem("question_draft");
+    if (!saved) return;
+
+    const data = JSON.parse(saved);
+
+    const container = document.getElementById("questions-container");
+    if (container && data.content) {
+        container.innerHTML = data.content;
+    }
+});
+</script>
+
+<script>
+let timeout = 600000; // 10 min
+let warningTime = 540000; // 9 min
+
+let warningTimer = setTimeout(() => {
+    alert("⚠️ You will be logged out in 1 minute due to inactivity!");
+}, warningTime);
+</script>
+
+<script>
+let lastPing = 0;
+let keepAliveTimer;
+
+function sendKeepAlive() {
+    const now = Date.now();
+
+    if (now - lastPing > 60000) { // max once per minute
+        fetch("{% url 'accounts:keep_alive' %}", {
+            method: "GET",
+            credentials: "same-origin"
+        });
+        lastPing = now;
+    }
+}
+
+['keydown', 'mousemove', 'click', 'scroll', 'input'].forEach(event => {
+    window.addEventListener(event, () => {
+        clearTimeout(keepAliveTimer);
+        keepAliveTimer = setTimeout(sendKeepAlive, 2000);
+    });
+});
 </script>
 
 <style>

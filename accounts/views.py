@@ -267,4 +267,10 @@ def contact_us(request):
 
 
 
+import time
+from django.http import JsonResponse
 
+def keep_alive(request):
+    if request.user.is_authenticated:
+        request.session['last_activity'] = time.time()
+    return JsonResponse({"status": "ok"})

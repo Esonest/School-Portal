@@ -29,6 +29,11 @@
       </div>
     {% endif %}
 
+    <div id="timeout-msg" class="hidden text-yellow-600 text-center mb-3">
+  ⚠️ Session expired. Please login again.
+</div>
+
+
     <form method="post" action="{% url 'accounts:login' %}" class="space-y-6" id="loginForm">
       {% csrf_token %}
 
@@ -163,6 +168,13 @@ setTimeout(() => loginContainer.classList.remove('animate-shake'), 500);
 {% endif %}
 </script>
 
+<script>
+const params = new URLSearchParams(window.location.search);
+
+if (params.get("reason") === "timeout") {
+    document.getElementById("timeout-msg").classList.remove("hidden");
+}
+</script>
 <style>
 @keyframes shake {
   0%, 100% { transform: translateX(0); }

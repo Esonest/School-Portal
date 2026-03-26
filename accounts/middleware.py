@@ -41,13 +41,16 @@ from django.contrib.auth import logout
 from django.shortcuts import redirect
 from django.contrib import messages
 
+import time
+from django.conf import settings
+from django.contrib import messages
+from django.contrib.auth import logout
+from django.shortcuts import redirect
+
 class AutoLogoutMiddleware:
-    """
-    Logs out user after inactivity timeout
-    """
     def __init__(self, get_response):
         self.get_response = get_response
-        self.timeout = 600  # 10 minutes (change as needed)
+        self.timeout = 600  # 10 minutes
 
     def __call__(self, request):
         if request.user.is_authenticated:
@@ -58,11 +61,14 @@ class AutoLogoutMiddleware:
                 elapsed = current_time - last_activity
 
                 if elapsed > self.timeout:
-                    logout(request)
-                    messages.warning(request, "Session expired. Please login again.")
-                    return redirect(f"{settings.LOGIN_URL}?next={request.path}")
+                    msg = "Session expired. Please login again."
 
-            # Update last activity time
+                    logout(request)
+                    messages.warning(request, msg)
+
+                    # ✅ HERE is where it goes
+                    return redirect(f"{settings.LOGIN_URL}?next={request.path}&reason=timeout")
+
             request.session['last_activity'] = current_time
 
         return self.get_response(request)        
