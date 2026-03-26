@@ -138,6 +138,9 @@ LOGOUT_REDIRECT_URL = reverse_lazy('accounts:login')
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 CKEDITOR_UPLOAD_PATH = "uploads/"
 
+SESSION_COOKIE_AGE = 3600  # 1 hour
+SESSION_SAVE_EVERY_REQUEST = True  # keeps session alive on activity
+
 MESSAGE_TAGS = {
     messages.ERROR: "error",
     messages.SUCCESS: "success",

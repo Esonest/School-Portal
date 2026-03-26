@@ -50,7 +50,7 @@ from django.shortcuts import redirect
 class AutoLogoutMiddleware:
     def __init__(self, get_response):
         self.get_response = get_response
-        self.timeout = 600  # 10 minutes
+        self.timeout = 3600  # 10 minutes
 
     def __call__(self, request):
         if request.user.is_authenticated:

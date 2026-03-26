@@ -168,11 +168,31 @@ setTimeout(() => loginContainer.classList.remove('animate-shake'), 500);
 {% endif %}
 </script>
 
+
+<script>
+const params = new URLSearchParams(window.location.search);
+
+if (params.get("reason") === "timeout") {
+    alert("⚠️ Session expired due to inactivity. Please login again.");
+}
+</script>
+
 <script>
 const params = new URLSearchParams(window.location.search);
 
 if (params.get("reason") === "timeout") {
     document.getElementById("timeout-msg").classList.remove("hidden");
+}
+</script>
+
+<script>
+const params = new URLSearchParams(window.location.search);
+
+if (params.get("reason") === "timeout") {
+    document.getElementById("timeout-msg").classList.remove("hidden");
+
+    // remove param from URL
+    window.history.replaceState({}, document.title, window.location.pathname);
 }
 </script>
 <style>
