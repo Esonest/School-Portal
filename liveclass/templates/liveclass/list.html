@@ -75,7 +75,7 @@
                 <!-- Student -->
                 {% if 'student' in roles %}
                     {% if cls.status == "live" %}
-                        <a href="{% url 'liveclass:liveclass_join' cls.id %}"
+                        <a href="http://localhost:5173/liveclass/{{ cls.id }}"
                            class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded">
                             ▶ Join Class
                         </a>
@@ -90,7 +90,7 @@
                 {% if 'teacher' in roles or 'schooladmin' in roles %}
 
                     {% if cls.status == "live" %}
-                        <a href="{% url 'liveclass:liveclass_join' cls.id %}"
+                        <a href="http://localhost:5173/liveclass/{{ cls.id }}"
                            class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded">
                             ▶ Join / Start
                         </a>

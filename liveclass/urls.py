@@ -14,6 +14,13 @@ urlpatterns = [
     path('leave/<int:pk>/', views.liveclass_leave, name='liveclass_leave'),
     path("join/<int:pk>/enable-camera/", views.liveclass_enable_camera, name="liveclass_enable_camera"),
     path('liveclass/<int:pk>/peers/', views.liveclass_peers, name='liveclass_peers'),
+    
+  
+    path('api/liveclass/<int:pk>/token/', views.liveclass_token_api, name='liveclass_token_api'),
+   
+    path("<int:pk>/start-recording/", views.start_recording_api),
+    path("api/translate/", views.translate, name="translate"),
+
 
 
 ]

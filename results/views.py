@@ -399,18 +399,13 @@ def class_score_settings(request, school_id):
     classes = SchoolClass.objects.filter(school=school).order_by('name')
 
     # Ensure settings exist for every class
-    for cls in classes:
-        ClassScoreSetting.objects.get_or_create(
-            school_class=cls,
-            defaults={
-                "ca_max": 0,    # allow zero
-                "exam_max": 100 # default dynamic total
-            }
-        )
+    from django.db.models import Prefetch
+
+    classes = SchoolClass.objects.filter(school=school).select_related("score_setting")
 
     if request.method == "POST":
         for cls in classes:
-            setting = ClassScoreSetting.objects.get(school_class=cls)
+            setting, _ = ClassScoreSetting.objects.get_or_create(school_class=cls)
 
             # Get values from input – allow zero values
             ca_max = request.POST.get(f"ca_max_{cls.id}", "0")
@@ -418,18 +413,14 @@ def class_score_settings(request, school_id):
 
             # Convert to int safely
             try:
-                ca_max = int(ca_max)
+                setting.ca_max = max(0, float(ca_max))
             except:
-                ca_max = 0
+                setting.ca_max = 0
 
             try:
-                exam_max = int(exam_max)
+                setting.exam_max = max(0, float(exam_max))
             except:
-                exam_max = 0
-
-            # Save without requiring positive numbers
-            setting.ca_max = max(0, ca_max)
-            setting.exam_max = max(0, exam_max)
+                setting.exam_max = 0
             setting.save()
 
         messages.success(request, "Score settings updated.")
@@ -2565,34 +2556,43 @@ def apply_placeholders(template, student, term, session):
     )
 
 
+import random
+
 def get_random_comment(school, student, grade, term, session, comment_type):
     """
     comment_type = 'principal' or 'teacher'
     Supports:
         - Rotation
         - Placeholders
-        - School-saved comments first
-        - Random default fallback
+        - School DB comments
+        - Random fallback
     """
+    from .models import SchoolGradeComment
 
-    gs = GradeSetting.objects.filter(school=school).first()
+    # ---------- 1️⃣ FETCH FROM DB ----------
+    qs = SchoolGradeComment.objects.filter(
+        school=school,
+        grade=grade,
+        comment_type=comment_type
+    )
 
-    # ---------- 1️⃣ SCHOOL-SAVED COMMENTS ----------
-    if gs:
-        if comment_type == "principal":
-            comment_list = (gs.principal_comments or {}).get(grade)
-        else:
-            comment_list = (gs.teacher_comments or {}).get(grade)
+    # Prefer class-specific comments
+    if student.school_class:
+        class_qs = qs.filter(SchoolClass=student.school_class)
+        if class_qs.exists():
+            qs = class_qs
 
-        if comment_list:
-            if isinstance(comment_list, str):
-                comment_list = [comment_list]  # convert to list
+    comment_list = list(qs.values_list("text", flat=True))
 
-            # Rotate through list
-            selected = rotate_list(f"{school.id}-{comment_type}-{grade}", comment_list)
-            return apply_placeholders(selected, student, term, session)
+    # ---------- 2️⃣ USE DB COMMENTS ----------
+    if comment_list:
+        selected = rotate_list(
+            f"{school.id}-{comment_type}-{grade}",
+            comment_list
+        )
+        return apply_placeholders(selected, student, term, session)
 
-    # ---------- 2️⃣ DEFAULT RANDOM FALLBACK ----------
+    # ---------- 3️⃣ DEFAULT FALLBACK ----------
     if comment_type == "principal":
         default_list = PRINCIPAL_COMMENTS.get(grade, [])
     else:
@@ -2602,9 +2602,8 @@ def get_random_comment(school, student, grade, term, session, comment_type):
         selected = random.choice(default_list)
         return apply_placeholders(selected, student, term, session)
 
-    # ---------- 3️⃣ FINAL FALLBACK ----------
+    # ---------- 4️⃣ FINAL FALLBACK ----------
     return apply_placeholders("Keep improving, {name}.", student, term, session)
-
 
 
 
@@ -2615,31 +2614,60 @@ from .forms import GradeSettingForm
 from .models import GradeSetting
 
 
+from django.forms import modelformset_factory
 @login_required
 def grade_settings(request, school_id):
-    if request.user.school.id != school_id:
-        messages.error(request, "You cannot access another school's grade settings.")
-        return redirect("school_admin:admin_dashboard")
-
     school = request.user.school
-    grade_setting, _ = GradeSetting.objects.get_or_create(school=school)
+
+    GradeFormSet = modelformset_factory(
+        GradeSetting,
+        form=GradeSettingForm,
+        extra=0,  # 🔥 IMPORTANT: let JS handle adding
+        can_delete=True,
+        fields=('SchoolClass', 'grade', 'min_score', 'interpretation')
+    )
+
+    queryset = GradeSetting.objects.filter(school=school)
 
     if request.method == "POST":
-        form = GradeSettingForm(request.POST, instance=grade_setting)
-        if form.is_valid():
-            form.save()
+        formset = GradeFormSet(
+            request.POST,
+            queryset=queryset,
+            form_kwargs={'school': school}
+        )
+
+        if formset.is_valid():
+            instances = formset.save(commit=False)
+
+    # Delete objects
+            for obj in formset.deleted_objects:
+                obj.delete()
+
+    # Save new/updated
+            for obj in instances:
+                obj.school = school
+                obj.save()
+
             messages.success(request, "Grade settings updated successfully.")
             return redirect("results:grade_settings", school.id)
+
+        else:
+            for i, form in enumerate(formset):
+                if form.errors:
+                    print(f"Form {i} errors:", form.errors)
+
+            messages.error(request, "Please fix the errors below.")
+
     else:
-        form = GradeSettingForm(instance=grade_setting)
+        formset = GradeFormSet(
+            queryset=queryset,
+            form_kwargs={'school': school}
+        )
 
-    context = {
-        "form": form,
-        "school": school,
-    }
-    return render(request, "results/grade_settings.html", context)
-
-
+    return render(request, "results/grade_settings.html", {
+        "formset": formset,
+        "school": school
+    })
 @login_required
 def grade_settings_overview(request, school_id):
     # Ensure admin belongs to the school
@@ -2648,7 +2676,7 @@ def grade_settings_overview(request, school_id):
         return redirect("school_admin:admin_dashboard")
 
     school = request.user.school
-    settings, _ = GradeSetting.objects.get_or_create(school=school)
+    GradeSetting.objects.filter(school=school)
 
     # Existing dictionaries
     grades = settings.grades or {}
@@ -2715,7 +2743,7 @@ def build_student_result_context(student, term, session, exam_class):
     """
     if session not in SESSION_LIST:
         raise ValueError(f"Invalid session supplied: {session}")
-    
+    total = 0  # 🔥 prevents future crashes
     # get the class student was in during this session
     exam_class_id = (
         Score.objects
@@ -2771,10 +2799,10 @@ def build_student_result_context(student, term, session, exam_class):
 
     class_has_ca = False  # flag to detect if any CA is set
 
-    # Fetch school-specific grade interpretations
-    grade_settings, _ = GradeSetting.objects.get_or_create(school=school)
-    grade_interpretations_map = getattr(grade_settings, "grade_interpretations", {})
-
+    grade_interpretations_map = {
+        (gs.SchoolClass_id, gs.grade): gs.interpretation
+        for gs in GradeSetting.objects.filter(school=school)
+    }
     # Compute class averages per subject
     subject_ids = [s.subject_id for s in scores_qs]
     class_avg_map = {}
@@ -2799,11 +2827,14 @@ def build_student_result_context(student, term, session, exam_class):
 
         cst = cst_map.get(s.subject_id)
         teacher_name = cst.teacher.user.get_full_name() if cst and cst.teacher else "N/A"
-        grade = grade_from_score_dynamic(total, school)
+        grade = grade_from_score_dynamic(total, school, exam_class)
 
         # Add class average and school-specific grade interpretation
         class_average = class_avg_map.get(s.subject_id, 0)
-        grade_interpretation = grade_interpretations_map.get(grade) or interpret_grade(grade)
+        grade_interpretation = (
+            grade_interpretations_map.get((exam_class.id, grade))
+            or interpret_grade(grade)
+        )
 
         scores.append({
             "subject": s.subject.name,
@@ -2842,7 +2873,7 @@ def build_student_result_context(student, term, session, exam_class):
         student=student, term=term, session=session
     ).first()
 
-    final_grade = grade_from_score_dynamic(avg, school)
+    final_grade = grade_from_score_dynamic(avg, school, exam_class)
 
     if not result_comment or not result_comment.is_locked:
         principal_comment = get_random_comment(

@@ -2556,7 +2556,7 @@ def admin_student_results(request, student_id):
             "ca": ca,
             "exam": exam,
             "total": total,
-            "grade": grade_from_score_dynamic(total, school),
+            "grade": grade_from_score_dynamic(total, school, student.school_class),
             "teacher": cst_map.get(s.subject_id, "N/A"),
         })
 
@@ -2585,11 +2585,63 @@ def admin_student_results(request, student_id):
             queryset=scores_qs,
             form_kwargs={"show_ca": is_ca_enabled}     #  ⭐ pass flag here
         )
-        if formset.is_valid():
-            formset.save()
+        if request.method == "POST":
+            for s in scores_qs:
+                ca_key = f"ca_{s.id}"
+                exam_key = f"exam_{s.id}"
 
-            # ... unchanged logic ...
-            # (rest of your POST logic stays the same)
+                if ca_key in request.POST:
+                    try:
+                        s.ca = float(request.POST.get(ca_key, 0) or 0)
+                    except (TypeError, ValueError):
+                        s.ca = 0
+
+                if exam_key in request.POST:
+                    try:
+                        s.exam = float(request.POST.get(exam_key, 0) or 0)
+                    except (TypeError, ValueError):
+                        s.exam = 0
+
+                s.save()
+
+            psychomotor_obj, _ = Psychomotor.objects.get_or_create(
+                student=student,
+                term=term,
+                session=session
+            )
+
+            for field in ["neatness", "agility", "creativity", "sports", "handwriting"]:
+                value = request.POST.get(field)
+                if value:
+                    setattr(psychomotor_obj, field, int(value))
+
+            psychomotor_obj.save()  
+
+            affective_obj, _ = Affective.objects.get_or_create(
+                student=student,
+                term=term,
+                session=session
+            )
+
+            for field in ["punctuality", "cooperation", "behavior", "attentiveness", "perseverance"]:
+                value = request.POST.get(field)
+                if value:
+                    setattr(affective_obj, field, int(value))
+
+            affective_obj.save()  
+
+            rc, _ = ResultComment.objects.get_or_create(
+                student=student,
+                term=term,
+                session=session,
+                defaults={"school": school}
+            )
+
+            rc.teacher_comment = request.POST.get("teacher_comment", "")
+            rc.principal_comment = request.POST.get("principal_comment", "")
+            rc.save()
+            
+        
 
             return redirect(request.path + f"?term={term}&session={session}")
 

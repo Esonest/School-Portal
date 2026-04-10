@@ -1,55 +1,151 @@
 {% extends "accounts/base.html" %}
 {% load custom_filters %}
+{% load widget_tweaks %}
 
 {% block content %}
-<div class="max-w-4xl mx-auto py-8">
-  <h1 class="text-3xl font-bold mb-6">{{ school.name }} Grade Settings</h1>
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+  <h1 class="text-2xl sm:text-3xl font-bold mb-6 text-gray-800">
+    {{ school.name }} Grade Settings
+  </h1>
 
-  <form method="POST" class="space-y-6 bg-white p-6 rounded-lg shadow-md">
+  <form method="POST" class="bg-white shadow-lg rounded-xl p-4 sm:p-6 space-y-6">
     {% csrf_token %}
+    {{ formset.management_form }}
 
-    <!-- Grades JSON -->
-    <div>
-      <label class="block text-gray-700 font-medium mb-2">Grades (JSON)</label>
-      {{ form.grades|add_class:"w-full border-gray-300 rounded px-3 py-2 focus:ring focus:ring-blue-300" }}
-      <p class="text-gray-500 text-sm mt-1">{{ form.grades.help_text }}</p>
+    <div class="overflow-x-auto">
+      <table class="min-w-full border border-gray-200 rounded-lg overflow-hidden">
+        <thead class="bg-gray-100 text-gray-700 text-sm uppercase">
+          <tr>
+            <th class="px-3 py-2 text-left">Class</th>
+            <th class="px-3 py-2 text-left">Grade</th>
+            <th class="px-3 py-2 text-left">Min Score</th>
+            <th class="px-3 py-2 text-left">Interpretation</th>
+            <th class="px-3 py-2 text-center">Delete</th>
+          </tr>
+        </thead>
+
+        <tbody class="text-sm" id="grade-body">
+          {% for form in formset %}
+          <tr class="border-t hover:bg-gray-50 transition">
+            {{ form.id }}
+            <td class="px-2 py-2">
+              {{ form.SchoolClass|add_class:"w-full border rounded px-2 py-1 focus:ring focus:ring-blue-200" }}
+              {% if form.SchoolClass.errors %}
+                <p class="text-red-600 text-xs mt-1">{{ form.SchoolClass.errors|join:", " }}</p>
+              {% endif %}
+            </td>
+            <td class="px-2 py-2">
+              {{ form.grade|add_class:"w-full border rounded px-2 py-1 focus:ring focus:ring-blue-200" }}
+              {% if form.grade.errors %}
+                <p class="text-red-600 text-xs mt-1">{{ form.grade.errors|join:", " }}</p>
+              {% endif %}
+            </td>
+            <td class="px-2 py-2">
+              {{ form.min_score|add_class:"w-full border rounded px-2 py-1 focus:ring focus:ring-blue-200" }}
+              {% if form.min_score.errors %}
+                <p class="text-red-600 text-xs mt-1">{{ form.min_score.errors|join:", " }}</p>
+              {% endif %}
+            </td>
+            <td class="px-2 py-2">
+              {{ form.interpretation|add_class:"w-full border rounded px-2 py-1 focus:ring focus:ring-blue-200" }}
+              {% if form.interpretation.errors %}
+                <p class="text-red-600 text-xs mt-1">{{ form.interpretation.errors|join:", " }}</p>
+              {% endif %}
+            </td>
+            <td class="px-2 py-2 text-center">
+              <button type="button" class="delete-row-btn text-red-600 font-bold hover:text-red-800">&times;</button>
+              {{ form.DELETE }}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
     </div>
 
-    <!-- Grade Interpretations JSON -->
-    <div>
-      <label class="block text-gray-700 font-medium mb-2">Grade Interpretations (JSON)</label>
-      {{ form.grade_interpretations|add_class:"w-full border-gray-300 rounded px-3 py-2 focus:ring focus:ring-purple-300" }}
-      <p class="text-gray-500 text-sm mt-1">{{ form.grade_interpretations.help_text }}</p>
-    </div>
+    <!-- Empty form template -->
+    <table style="display: none;">
+      <tbody>
+        <tr id="empty-form-template">
+            {{ formset.empty_form.id }} 
+          <td class="px-2 py-2">
+            {{ formset.empty_form.SchoolClass|add_class:"w-full border rounded px-2 py-1 focus:ring focus:ring-blue-200" }}
+          </td>
+          <td class="px-2 py-2">
+            {{ formset.empty_form.grade|add_class:"w-full border rounded px-2 py-1 focus:ring focus:ring-blue-200" }}
+          </td>
+          <td class="px-2 py-2">
+            {{ formset.empty_form.min_score|add_class:"w-full border rounded px-2 py-1 focus:ring focus:ring-blue-200" }}
+          </td>
+          <td class="px-2 py-2">
+            {{ formset.empty_form.interpretation|add_class:"w-full border rounded px-2 py-1 focus:ring focus:ring-blue-200" }}
+          </td>
+          <td class="px-2 py-2 text-center">
+            <button type="button" class="delete-row-btn text-red-600 font-bold hover:text-red-800">&times;</button>
+            <input type="checkbox" name="form-__prefix__-DELETE" id="id_form-__prefix__-DELETE" style="display:none;">
+          </td>
+        </tr>
+      </tbody>
+    </table>
 
-    <!-- Principal Comments -->
-    <div>
-      <label class="block text-gray-700 font-medium mb-2">Principal Comments (JSON)</label>
-      {{ form.principal_comments|add_class:"w-full border-gray-300 rounded px-3 py-2 focus:ring focus:ring-green-300" }}
-      <p class="text-gray-500 text-sm mt-1">{{ form.principal_comments.help_text }}</p>
-    </div>
+    <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+      <button type="button" id="add-row-btn"
+        class="w-full sm:w-auto bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg">
+        + Add Row
+      </button>
 
-    <!-- Teacher Comments -->
-    <div>
-      <label class="block text-gray-700 font-medium mb-2">Teacher Comments (JSON)</label>
-      {{ form.teacher_comments|add_class:"w-full border-gray-300 rounded px-3 py-2 focus:ring focus:ring-yellow-300" }}
-      <p class="text-gray-500 text-sm mt-1">{{ form.teacher_comments.help_text }}</p>
+      <button type="submit"
+        class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-2 rounded-lg shadow-md transition">
+        Save Settings
+      </button>
     </div>
-
-    <button type="submit"
-      class="bg-blue-600 hover:bg-blue-700 text-white font-semibold px-6 py-3 rounded shadow-md transition">
-      Save Settings
-    </button>
   </form>
 
   {% if messages %}
-    <div class="mt-4">
+    <div class="mt-4 space-y-2">
       {% for message in messages %}
-        <div class="p-3 rounded mb-2 {{ message.tags }} bg-green-100 text-green-800">
+        <div class="p-3 rounded {{ message.tags|default:'bg-green-100 text-green-800' }}">
           {{ message }}
         </div>
       {% endfor %}
     </div>
   {% endif %}
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function() {
+  const addBtn = document.getElementById("add-row-btn");
+  const tableBody = document.getElementById("grade-body");
+  const totalForms = document.querySelector("#id_form-TOTAL_FORMS");
+  const emptyTemplate = document.getElementById("empty-form-template").outerHTML;
+
+  // Add new row
+  addBtn.addEventListener("click", function() {
+  let formCount = parseInt(totalForms.value);
+
+  let newRowHtml = emptyTemplate.replace(/__prefix__/g, formCount);
+  tableBody.insertAdjacentHTML("beforeend", newRowHtml);
+
+  totalForms.value = formCount + 1;
+
+
+    // Highlight empty fields
+    const newRow = tableBody.lastElementChild;
+    newRow.classList.add("bg-yellow-50"); // row background
+    newRow.querySelectorAll("select, input").forEach(input => {
+      input.classList.add("border-red-300");
+    });
+  });
+
+  // Delete row dynamically
+  tableBody.addEventListener("click", function(e) {
+  if (e.target && e.target.classList.contains("delete-row-btn")) {
+    const row = e.target.closest("tr");
+    const checkbox = row.querySelector('input[type="checkbox"][name$="-DELETE"]');
+
+    if (checkbox) checkbox.checked = true;
+    row.style.display = "none";
+  }
+});
+});
+</script>
 {% endblock %}

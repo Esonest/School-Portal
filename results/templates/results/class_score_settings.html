@@ -20,11 +20,11 @@
                 <tr class="border-b">
                     <td class="p-3 border">{{ cls.name }}</td>
                     <td class="p-3 border">
-                        <input type="number" name="ca_max_{{ cls.id }}" value="{{ cls.score_setting.ca_max }}"
+                        <input type="number" name="ca_max_{{ cls.id }}" value="{{ cls.score_setting.ca_max|default:0 }}"
                                class="w-20 px-2 py-1 border rounded" min="0">
                     </td>
                     <td class="p-3 border">
-                        <input type="number" name="exam_max_{{ cls.id }}" value="{{ cls.score_setting.exam_max }}"
+                        <input type="number" name="exam_max_{{ cls.id }}" value="{{ cls.score_setting.exam_max|default:0 }}"
                                class="w-20 px-2 py-1 border rounded" min="0">
                     </td>
                 </tr>

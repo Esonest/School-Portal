@@ -76,10 +76,12 @@ INSTALLED_APPS = [
 
     'ckeditor',
     'ckeditor_uploader',
+    "corsheaders",
 ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
+    "corsheaders.middleware.CorsMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -89,6 +91,7 @@ MIDDLEWARE = [
     'accounts.middleware.BlockDeletedUserMiddleware',
     'accounts.middleware.AutoLogoutMiddleware',
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    
 
 ]
 
@@ -123,9 +126,18 @@ STORAGES = {
 }
 
 
+CORS_ALLOW_CREDENTIALS = True
+
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5173",
+    "http://localhost:3000",
+
+]
 
 
-
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:3000",
+]
 
 
 AUTH_USER_MODEL = "accounts.User"
@@ -326,10 +338,8 @@ EMAIL_HOST_PASSWORD = os.environ.get("SENDGRID_API_KEY")
 DEFAULT_FROM_EMAIL = "TECHCENTER <techcenter652@gmail.com>"
 
 
-PEERJS_SERVER_DOMAIN = "peerjs-server-production-8400.up.railway.app"
-PEERJS_SERVER_PORT = 443
-PEERJS_SERVER_PATH = "/"
-PEERJS_SECURE = True
+HMS_API_KEY = os.getenv("HMS_API_KEY")
+HMS_API_SECRET = os.getenv("HMS_API_SECRET")
 
 
 DATA_UPLOAD_MAX_NUMBER_FIELDS = 50000

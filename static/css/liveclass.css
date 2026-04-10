@@ -1,0 +1,74 @@
+body {
+  margin: 0;
+  font-family: sans-serif;
+  background: #0f172a;
+  color: white;
+}
+
+.video-grid video {
+  width: 100%;
+  height: auto;
+  background: black;
+  border-radius: 10px;
+}
+
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.5rem 1rem;
+  background-color: #1e293b; /* slate-950 */
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.participants {
+  padding: 1rem;
+  border-bottom: 1px solid #334155; /* slate-800 */
+  overflow-y: auto;
+  max-height: 16rem;
+}
+
+.chat {
+  flex: 1;
+  overflow-y: auto;
+  padding: 1rem;
+}
+
+.input-container {
+  display: flex;
+  border-top: 1px solid #334155;
+}
+
+.input-container input {
+  flex: 1;
+  padding: 0.5rem;
+  background-color: #1e293b;
+  border: none;
+  outline: none;
+  color: white;
+}
+
+.input-container button {
+  padding: 0.5rem 1rem;
+  background-color: #2563eb;
+  color: white;
+  border: none;
+  cursor: pointer;
+  border-radius: 4px;
+}
+
+.controls button {
+  padding: 0.5rem 1rem;
+  margin: 0 0.25rem;
+  border-radius: 4px;
+  border: none;
+  cursor: pointer;
+  color: white;
+}
+
+.bg-red { background-color: #dc2626; }
+.bg-yellow { background-color: #ca8a04; }
+.bg-indigo { background-color: #4f46e5; }
+.bg-green { background-color: #16a34a; }
+.bg-purple { background-color: #8b5cf6; }
+.bg-slate { background-color: #334155; }

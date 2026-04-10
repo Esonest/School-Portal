@@ -55,36 +55,38 @@ from django.db.models import UniqueConstraint
 from django.db import models
 
 class GradeSetting(models.Model):
-    school = models.OneToOneField(School, on_delete=models.CASCADE)
+    school = models.ForeignKey(School, on_delete=models.CASCADE)
+    SchoolClass = models.ForeignKey(SchoolClass, on_delete=models.CASCADE, null=True, blank=True)  # 👈 IMPORTANT
 
-    # Store grades as JSON: {"A": 90, "B1": 85, "B2": 80, "C1": 75, "D": 60, "F": 0}
-    grades = models.JSONField(default=dict)
+    grade = models.CharField(max_length=2, null=True)  # A, B, C
+    min_score = models.IntegerField(null=True)
 
-    # Store per-grade comments for principal and teacher
-    # Example: {"A": "Excellent work", "B": "Good effort", ...}
-    grade_interpretations = models.JSONField(default=dict, blank=True)
-    principal_comments = models.JSONField(default=dict, blank=True)
-    teacher_comments = models.JSONField(default=dict, blank=True)
+    # Optional fallback (if no interpretation found in comments)
+    interpretation = models.CharField(max_length=255, blank=True)
+
+    class Meta:
+        ordering = ["-min_score"]  # highest first
 
     def __str__(self):
-        return f"{self.school.name} Grade Settings"
+        return f"{self.grade} ({self.min_score}+)"
 
-
-
-
-def grade_from_score_dynamic(score, school):
+def grade_from_score_dynamic(score, school, school_class=None):
     from .models import GradeSetting
-    settings, _ = GradeSetting.objects.get_or_create(school=school)
 
-    # Sort grades descending by score to check highest first
-    sorted_grades = sorted(settings.grades.items(), key=lambda x: x[1], reverse=True)
+    qs = GradeSetting.objects.filter(school=school)
 
-    for grade, min_score in sorted_grades:
-        if score >= min_score:
-            return grade
+    # Optional: class-specific grading
+    if school_class:
+        qs = qs.filter(SchoolClass=school_class)
+
+    # Highest min_score first
+    qs = qs.order_by("-min_score")
+
+    for setting in qs:
+        if score >= setting.min_score:
+            return setting.grade
+
     return "F"
-
-
 
 class ClassScoreSetting(models.Model):
     school_class = models.OneToOneField(
@@ -270,20 +272,32 @@ class ResultComment(models.Model):
 
 
 from django.db import models
-
 class SchoolGradeComment(models.Model):
-    school = models.ForeignKey(School, on_delete=models.CASCADE, related_name="grade_comments")
-    grade = models.CharField(max_length=2)  # A, B, C, D, F
+    school = models.ForeignKey(School, on_delete=models.CASCADE)
+    SchoolClass = models.ForeignKey(SchoolClass, on_delete=models.CASCADE, null=True)  # 👈 ADD THIS
+
+    grade = models.CharField(max_length=2, null=True)  # A, B, C, etc.
+
     comment_type = models.CharField(
         max_length=10,
         choices=(('principal', 'Principal'), ('teacher', 'Teacher'))
     )
+
     text = models.TextField(help_text="Use {name} to include student's name")
+
     interpretation = models.CharField(
         max_length=50,
         blank=True,
-        help_text="Optional: Enter a grade interpretation like 'Excellent', 'Good', etc."
+        help_text="Optional: e.g. Excellent, Outstanding"
     )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('school', 'SchoolClass', 'grade', 'comment_type', 'text')
+
+    def __str__(self):
+        return f"{self.school.name} - {self.class_obj} - {self.grade} - {self.comment_type}"
 
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -292,6 +306,8 @@ class SchoolGradeComment(models.Model):
 
     def __str__(self):
         return f"{self.school.name} - {self.grade} - {self.comment_type}"
+
+
 
 
 

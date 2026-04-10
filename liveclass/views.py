@@ -4,6 +4,9 @@ from django.http import HttpResponseForbidden
 from django.utils import timezone
 from django.db.models import Count
 from django.contrib import messages
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
+import json
 
 from .models import LiveClass,LiveClassAttendance
 from .forms import LiveClassForm
@@ -11,6 +14,31 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.conf import settings
 import requests
 
+import jwt
+import time
+from django.conf import settings
+
+import time
+import uuid
+import jwt
+from django.conf import settings
+from django.contrib.auth import get_user_model
+
+User = get_user_model()
+
+
+def generate_100ms_token(payload):
+    return jwt.encode({
+        "access_key": settings.HMS_API_KEY,
+        "room_id": payload.get("room_id"),
+        "user_id": payload.get("user_id"),
+        "role": payload.get("role"),
+        "type": "app",
+        "version": 2,
+        "iat": int(time.time()),
+        "exp": int(time.time()) + 86400,
+        "jti": str(uuid.uuid4()),
+    }, settings.HMS_API_SECRET, algorithm="HS256")
 
 
 def is_school_admin(user):
@@ -116,6 +144,8 @@ def liveclass_list(request):
 # CREATE
 # ========================
 
+import os
+
 @login_required
 def liveclass_create(request):
 
@@ -133,6 +163,9 @@ def liveclass_create(request):
 
             if request.user.is_teacher_user:
                 live_class.teacher = request.user.teacher_profile
+
+            # ✅ ASSIGN ROOM ID HERE
+            live_class.room_id = os.getenv("ROOM_ID")
 
             live_class.save()
             return redirect("liveclass:liveclass_list")
@@ -205,105 +238,105 @@ def liveclass_delete(request, pk):
     return render(request, "liveclass/delete.html", {"live_class": live_class})
 
 
-def generate_100ms_token(room_id, user_id, role):
-    """
-    Generate 100ms auth token for a user.
-    """
-    response = requests.post(
-        "https://api.100ms.live/v2/tokens",
-        auth=(settings.HMS_API_KEY, settings.HMS_API_SECRET),
-        json={
-            "room_id": room_id,
-            "user_id": str(user_id),
-            "role": role,
-        }
-    )
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404, render, redirect
+from django.http import HttpResponseForbidden
+from django.contrib import messages
+from django.utils import timezone
 
-    if response.status_code != 200:
-        return None
-
-    return response.json().get("token")
-
+from .models import LiveClass, LiveClassAttendance
+import uuid
+from django.http import JsonResponse
 
 @login_required
 def liveclass_join(request, pk):
     user = request.user
     school = getattr(user, "school", None)
 
-    live_class = get_object_or_404(
-        LiveClass.objects.select_related("teacher"),
-        pk=pk,
-        school=school
-    )
+    live_class = get_object_or_404(LiveClass, pk=pk, school=school)
 
-    # ===============================
-    # PERMISSION CHECK
-    # ===============================
-    is_student = getattr(user, "is_student_user", False)
-    is_teacher = getattr(user, "is_teacher_user", False)
-    is_schooladmin = getattr(user, "is_schooladmin", False)
-    is_superadmin = getattr(user, "is_superadmin", False)
+    # Permission check
+    if not any([
+        getattr(user, "is_student_user", False),
+        getattr(user, "is_teacher_user", False),
+        getattr(user, "is_schooladmin", False),
+        getattr(user, "is_superadmin", False),
+    ]):
+        return HttpResponseForbidden()
 
-    if not any([is_student, is_teacher, is_schooladmin, is_superadmin]):
-        return HttpResponseForbidden("Not allowed to join this class.")
-
-    # ===============================
-    # STATUS CHECK
-    # ===============================
+    # Ensure class is live
     live_class.update_status()
-
     if live_class.status != "live":
         messages.error(request, "Class is not currently active.")
         return redirect("liveclass:liveclass_list")
 
-    # ===============================
-    # ATTENDANCE (STUDENTS ONLY)
-    # ===============================
-    if is_student:
+    # Assign role
+    if getattr(user, "is_teacher_user", False) or getattr(user, "is_schooladmin", False) or getattr(user, "is_superadmin", False):
+        role = "teacher"
+    else:
+        role = "student"
+
+    # Create room if missing
+    if not live_class.room_id:
+        import uuid
+        live_class.room_id = str(uuid.uuid4())
+        live_class.save()
+
+    room_created = create_100ms_room_if_missing(live_class.room_id)
+    if not room_created:
+        messages.error(request, "Unable to create or access 100ms room. Check API keys.")
+        return redirect("liveclass:liveclass_list")
+
+    # Attendance (students only)
+    if getattr(user, "is_student_user", False):
         attendance, created = LiveClassAttendance.objects.get_or_create(
             live_class=live_class,
-            student=user.student_profile
+            student=request.user.student_profile
         )
-
         if not created and attendance.left_at:
             attendance.joined_at = timezone.now()
             attendance.left_at = None
-            attendance.save(update_fields=["joined_at", "left_at"])
+            attendance.save()
 
-    # ===============================
-    # DETERMINE ROLE
-    # ===============================
-    is_moderator = any([is_teacher, is_schooladmin, is_superadmin])
-    role = "teacher" if is_moderator else "student"
+    # Generate app token for frontend
+    token = generate_100ms_app_token(user.id, role, live_class.room_id)
+    return JsonResponse({
+        "token": token,
+        "role": role,
+        "room_id": live_class.room_id,
+        "username": user.get_full_name() or user.username,
+    })
+    
 
-    # ===============================
-    # ENSURE ROOM EXISTS
-    # ===============================
-    if not live_class.hms_room_id:
-        messages.error(request, "Live room not configured.")
-        return redirect("liveclass:liveclass_list")
+    print(f"🎯 DEBUG: USER: {user.id}, ROLE: {role}, ROOM: {live_class.room_id}")
+    print(f"Token length: {len(token)}")
 
-    # ===============================
-    # GENERATE 100ms TOKEN
-    # ===============================
-    token = generate_100ms_token(
-        room_id=live_class.hms_room_id,
-        user_id=user.id,
-        role=role
+import requests
+from django.conf import settings
+
+def start_recording(room_id):
+    payload = {
+        "access_key": settings.HMS_API_KEY,
+        "type": "management",
+        "version": 2,
+        "iat": int(time.time()),
+        "exp": int(time.time()) + 3600,
+    }
+
+    management_token = jwt.encode(
+        payload,
+        settings.HMS_API_SECRET,
+        algorithm="HS256"
     )
 
-    if not token:
-        messages.error(request, "Unable to join live room. Try again.")
-        return redirect("liveclass:liveclass_list")
+    url = f"https://api.100ms.live/v2/recordings/room/{room_id}/start"
 
-    # ===============================
-    # RENDER JOIN PAGE
-    # ===============================
-    return render(request, "liveclass/join.html", {
-        "live_class": live_class,
-        "hms_token": token,
-        "is_moderator": is_moderator,
-    })
+    requests.post(
+        url,
+        headers={
+            "Authorization": f"Bearer {management_token}"
+        }
+    )   
 
 
 from django.db.models import Count
@@ -319,7 +352,7 @@ def attendance_dashboard(request, pk):
     """
     school = request.user.school
     live_class = get_object_or_404(
-        LiveClass.objects.prefetch_related("attendances__student", "class_room__students"),
+        LiveClass.objects.prefetch_related(     "attendances__student", "class_room__students"),
         pk=pk, school=school
     )
 
@@ -361,7 +394,36 @@ def attendance_dashboard(request, pk):
     })
 
 
+from django.http import JsonResponse
 
+@login_required
+def heartbeat(request, pk):
+    attendance = LiveClassAttendance.objects.filter(
+        live_class_id=pk,
+        student=request.user.student_profile
+    ).first()
+
+    if attendance:
+        attendance.last_seen = timezone.now()
+        attendance.save()
+
+    return JsonResponse({"status": "ok"})    
+
+
+@csrf_exempt
+def recording_webhook(request):
+    data = json.loads(request.body)
+
+    if data.get("type") == "recording.success":
+        room_id = data["data"]["room_id"]
+        url = data["data"]["url"]
+
+        live_class = LiveClass.objects.filter(room_id=room_id).first()
+        if live_class:
+            live_class.recording_url = url
+            live_class.save()
+
+    return JsonResponse({"status": "ok"})
 
 from django.shortcuts import get_object_or_404, redirect
 from django.contrib.auth.decorators import login_required
@@ -433,8 +495,7 @@ def liveclass_leave(request, pk):
 
 
 # views.py
-from django.views.decorators.csrf import csrf_exempt
-from django.http import JsonResponse
+
 
 @login_required
 @csrf_exempt
@@ -472,3 +533,213 @@ def liveclass_peers(request, pk):
     # return list of student IDs currently in attendance
     student_ids = list(live_class.attendances.filter(left_at__isnull=True).values_list('student__user_id', flat=True))
     return JsonResponse(student_ids, safe=False)
+
+
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404
+
+from django.http import JsonResponse
+from .models import LiveClass
+
+# views.py
+import uuid
+import time
+import jwt
+import requests
+from django.conf import settings
+from django.http import JsonResponse
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404
+from .models import LiveClass
+
+# ------------------------------
+# Utility functions
+# ------------------------------
+
+def generate_management_token():
+    """Generate a valid 100ms management token"""
+    payload = {
+        "access_key": settings.HMS_API_KEY,
+        "type": "management",
+        "version": 2,
+        "iat": int(time.time()),
+        "exp": int(time.time()) + 3600,
+        "jti": str(uuid.uuid4()),
+    }
+    return jwt.encode(payload, settings.HMS_API_SECRET, algorithm="HS256")
+
+def create_100ms_room_if_missing(room_id: str):
+    """Return REAL 100ms room_id"""
+    mgmt_token = generate_management_token()
+    headers = {"Authorization": f"Bearer {mgmt_token}"}
+    base_url = "https://api.100ms.live/v2/rooms"
+
+    # 1. Try to fetch room (if it already exists in 100ms)
+    resp = requests.get(f"{base_url}/{room_id}", headers=headers)
+
+    if resp.status_code == 200:
+        data = resp.json()
+        real_room_id = data["id"]
+        print(f"✅ Existing Room ID: {real_room_id}")
+        return real_room_id  # ✅ RETURN REAL ID
+
+    # 2. Create new room
+    data = {
+        "name": f"Room-{room_id}",
+        "region": "us",
+        "template_id": "69c6dc546236da36a7d8f3f4",
+    }
+
+    resp = requests.post(base_url, json=data, headers=headers)
+
+    if resp.status_code in [200, 201]:
+        room_data = resp.json()
+
+        # 🔥 THIS IS WHERE IT GOES
+        real_room_id = room_data["id"]
+        print(f"✅ Created Room ID: {real_room_id}")
+
+        return real_room_id  # ✅ IMPORTANT
+
+    # ❌ Failure
+    print(f"❌ Failed to create room: {resp.status_code} {resp.text}")
+    return None
+
+
+def generate_100ms_app_token(user_id, role, room_id):
+    """Generate a 100ms app token for the frontend"""
+    payload = {
+        "access_key": settings.HMS_API_KEY,
+        "room_id": room_id,
+        "user_id": str(user_id),
+        "role": role,
+        "type": "app",
+        "version": 2,
+        "iat": int(time.time()),
+        "exp": int(time.time()) + 86400,  # 24h expiry
+        "jti": str(uuid.uuid4()),
+    }
+    print("🎯 TOKEN PAYLOAD:", payload)
+    return jwt.encode(payload, settings.HMS_API_SECRET, algorithm="HS256")
+
+
+# ------------------------------
+# API View: get token
+# ------------------------------
+
+@login_required
+def liveclass_token_api(request, pk):
+    user = request.user
+    live_class = get_object_or_404(LiveClass, pk=pk, school=getattr(user, "school", None))
+
+    # Determine role
+    if getattr(user, "is_teacher_user", False) or getattr(user, "is_schooladmin", False) or getattr(user, "is_superadmin", False):
+        role = "teacher"
+    else:
+        role = "student"
+
+    # Ensure room_id exists
+    # Ensure local room_id exists (temporary UUID)
+    if not live_class.room_id:
+        live_class.room_id = str(uuid.uuid4())
+        live_class.save()
+
+# ✅ Create / fetch REAL 100ms room ID
+    real_room_id = create_100ms_room_if_missing(live_class.room_id)
+
+    if not real_room_id:
+        return JsonResponse({"error": "Room creation failed"}, status=500)
+
+# ✅ VERY IMPORTANT: store REAL 100ms room ID
+    if live_class.room_id != real_room_id:
+        live_class.room_id = real_room_id
+        live_class.save()
+
+# Generate token with REAL room ID
+    token = generate_100ms_app_token(user.id, role, live_class.room_id)
+
+    return JsonResponse({
+        "token": token,
+        "role": role,
+        "room_id": live_class.room_id,
+        "username": user.get_full_name() or user.username,
+    })
+
+@login_required
+def start_recording_api(request, pk):
+    live_class = get_object_or_404(LiveClass, pk=pk, school=request.user.school)
+
+    if not (request.user.is_teacher_user or request.user.is_schooladmin or request.user.is_superadmin):
+        return JsonResponse({"error": "Forbidden"}, status=403)
+
+    start_recording(live_class.room_id)
+
+    return JsonResponse({"success": True})    
+
+
+from django.contrib.auth import get_user_model
+User = get_user_model()
+
+@login_required
+def approve_user(request):
+    if not (request.user.is_teacher_user or request.user.is_schooladmin or request.user.is_superadmin):
+        return JsonResponse({"error": "Forbidden"}, status=403)
+
+    user_id = request.POST.get("user_id")
+    user = User.objects.get(id=user_id)
+
+    token = generate_100ms_app_token(user.id, "student", None)
+
+    return JsonResponse({"token": token})
+
+
+@login_required
+def move_to_breakout(request):
+    if not (request.user.is_teacher_user or request.user.is_schooladmin or request.user.is_superadmin):
+        return JsonResponse({"error": "Forbidden"}, status=403)
+
+    user_id = request.POST.get("user_id")
+    room = request.POST.get("room")
+
+    token = generate_100ms_app_token(user_id, room, None)
+
+    return JsonResponse({"token": token})
+
+# views.py
+import requests
+from django.http import JsonResponse
+import json
+
+# views.py
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+import json
+
+@csrf_exempt
+def translate(request):
+    if request.method == "POST":
+        data = json.loads(request.body)
+        text = data.get("text", "")
+        target = data.get("target", "en")
+
+        try:
+            url = "https://translate.googleapis.com/translate_a/single"
+            params = {
+                "client": "gtx",
+                "sl": "auto",
+                "tl": target,
+                "dt": "t",
+                "q": text,
+            }
+
+            response = requests.get(url, params=params)
+            result = response.json()
+
+            translated = result[0][0][0]
+
+            return JsonResponse({"translated": translated})
+        except Exception as e:
+            return JsonResponse({"translated": text, "error": str(e)})
+
+    return JsonResponse({"error": "Invalid method"}, status=400)

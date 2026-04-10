@@ -37,7 +37,7 @@ class LiveClass(models.Model):
 
     created_at = models.DateTimeField(auto_now_add=True)
 
-    hms_room_id = models.CharField(max_length=255, blank=True, null=True)
+    room_id = models.CharField(max_length=255, blank=True, null=True)
 
     
     class Meta:

@@ -157,70 +157,34 @@ from .models import GradeSetting
 import json
 
 
-class GradeSettingForm(forms.ModelForm):
-    grades = forms.CharField(
-        widget=forms.Textarea(attrs={"rows": 6}),
-        help_text='Enter JSON like {"A": 90, "B": 80, "C": 70, "D": 60, "F": 0}'
-    )
-    grade_interpretations = forms.CharField(
-        widget=forms.Textarea(attrs={"rows": 6}),
-        required=False,
-        help_text='Enter JSON for grade interpretations per grade like {"A": "Excellent", "B": "Very Good"}'
-    )
-    principal_comments = forms.CharField(
-        widget=forms.Textarea(attrs={"rows": 6}),
-        required=False,
-        help_text='Enter JSON for principal comments per grade like {"A": "Excellent", "B": "Good"}'
-    )
-    teacher_comments = forms.CharField(
-        widget=forms.Textarea(attrs={"rows": 6}),
-        required=False,
-        help_text='Enter JSON for teacher comments per grade like {"A": "Excellent", "B": "Good"}'
-    )
 
+from django import forms
+from .models import GradeSetting
+
+from django import forms
+from .models import GradeSetting, SchoolClass
+
+class GradeSettingForm(forms.ModelForm):
     class Meta:
         model = GradeSetting
-        fields = ["grades", "grade_interpretations", "principal_comments", "teacher_comments"]
+        fields = ['SchoolClass', 'grade', 'min_score', 'interpretation']
 
     def __init__(self, *args, **kwargs):
-        instance = kwargs.get("instance")
-        if instance:
-            initial = kwargs.get("initial", {})
-            initial["grades"] = json.dumps(instance.grades, indent=4)
-            initial["grade_interpretations"] = json.dumps(getattr(instance, "grade_interpretations", {}), indent=4)
-            initial["principal_comments"] = json.dumps(getattr(instance, "principal_comments", {}), indent=4)
-            initial["teacher_comments"] = json.dumps(getattr(instance, "teacher_comments", {}), indent=4)
-            kwargs["initial"] = initial
+        school = kwargs.pop('school', None)
         super().__init__(*args, **kwargs)
 
-    def clean_grades(self):
-        return self._clean_json_field("grades")
+        # 🔥 CRITICAL FIX
+        self.empty_permitted = True
 
-    def clean_grade_interpretations(self):
-        return self._clean_json_field("grade_interpretations")
+        if school:
+            self.fields['SchoolClass'].queryset = SchoolClass.objects.filter(school=school)
+            self.fields['SchoolClass'].empty_label = "Select Class"
 
-    def clean_principal_comments(self):
-        return self._clean_json_field("principal_comments")
+    def clean(self):
+        cleaned_data = super().clean()
 
-    def clean_teacher_comments(self):
-        return self._clean_json_field("teacher_comments")
+        # 🔥 SKIP validation if marked for deletion
+        if cleaned_data.get("DELETE"):
+            return cleaned_data
 
-    def _clean_json_field(self, field_name):
-        data = self.cleaned_data[field_name]
-        try:
-            parsed = json.loads(data)
-            if not isinstance(parsed, dict):
-                raise forms.ValidationError(f"{field_name} must be a JSON object")
-        except json.JSONDecodeError:
-            raise forms.ValidationError(f"Invalid JSON format for {field_name}")
-        return parsed
-
-    def save(self, commit=True):
-        instance = super().save(commit=False)
-        instance.grades = self.cleaned_data["grades"]
-        instance.grade_interpretations = self.cleaned_data.get("grade_interpretations", {})
-        instance.principal_comments = self.cleaned_data.get("principal_comments", {})
-        instance.teacher_comments = self.cleaned_data.get("teacher_comments", {})
-        if commit:
-            instance.save()
-        return instance
+        return cleaned_data
