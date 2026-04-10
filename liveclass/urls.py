@@ -21,6 +21,6 @@ urlpatterns = [
     path("<int:pk>/start-recording/", views.start_recording_api),
     path("api/translate/", views.translate, name="translate"),
 
-
+    path("app/", views.liveclass_frontend, name="frontend"),
 
 ]

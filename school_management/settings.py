@@ -73,15 +73,12 @@ INSTALLED_APPS = [
     "widget_tweaks",
     "cloudinary",
     "cloudinary_storage",
-
     'ckeditor',
     'ckeditor_uploader',
-    "corsheaders",
 ]
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
-    "corsheaders.middleware.CorsMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -126,18 +123,7 @@ STORAGES = {
 }
 
 
-CORS_ALLOW_CREDENTIALS = True
 
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5173",
-    "http://localhost:3000",
-
-]
-
-
-CSRF_TRUSTED_ORIGINS = [
-    "http://localhost:3000",
-]
 
 
 AUTH_USER_MODEL = "accounts.User"

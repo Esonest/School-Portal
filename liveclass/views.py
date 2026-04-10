@@ -743,3 +743,8 @@ def translate(request):
             return JsonResponse({"translated": text, "error": str(e)})
 
     return JsonResponse({"error": "Invalid method"}, status=400)
+
+
+
+def liveclass_frontend(request):
+    return render(request, "frontend/index.html")    
