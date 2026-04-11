@@ -746,5 +746,5 @@ def translate(request):
 
 
 
-def liveclass_frontend(request):
+def liveclass_frontend(request, pk=None):
     return render(request, "frontend/index.html")    

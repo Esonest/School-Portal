@@ -22,5 +22,6 @@ urlpatterns = [
     path("api/translate/", views.translate, name="translate"),
 
     path("app/", views.liveclass_frontend, name="frontend"),
+    path("<int:pk>/", views.liveclass_frontend),
 
 ]
