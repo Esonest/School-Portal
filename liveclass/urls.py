@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from django.views.generic import TemplateView
 
 app_name = "liveclass"  
 
@@ -23,5 +24,7 @@ urlpatterns = [
 
     path("app/", views.liveclass_frontend, name="frontend"),
     path("<int:pk>/", views.liveclass_frontend),
+    path("app/<path:path>", TemplateView.as_view(template_name="index.html")),
 
 ]
+

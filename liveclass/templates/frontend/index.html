@@ -1,14 +1,20 @@
-{% load static %}
+{% load static vite %}
 <!doctype html>
 <html lang="en">
   <head>
+    {% load static vite %}
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+
+    <link rel="icon" href="{% static 'frontend/favicon.svg' %}" />
+
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>liveclass-frontend</title>
-<script type="module" src="{% static 'frontend/assets/index-BFcpEGF5.js' %}"></script>
   </head>
+
   <body>
     <div id="root"></div>
+
+   {% vite_asset 'index.html' as vite_js %}
+<script type="module" src="{% static vite_js %}"></script>
   </body>
 </html>
