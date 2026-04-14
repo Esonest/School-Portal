@@ -26,5 +26,12 @@ urlpatterns = [
     path("<int:pk>/", views.liveclass_frontend),
     path("app/<path:path>", TemplateView.as_view(template_name="index.html")),
 
+
+    path("api/liveclass/<int:pk>/waiting/", views.waiting_list, name="waiting_list"),
+    path("api/liveclass/<int:pk>/approve/", views.approve_student, name="approve_student"),
+    path("api/liveclass/<int:pk>/reject/", views.reject_student, name="reject_student"),
+    path("api/liveclass/<int:pk>/request/", views.request_join_liveclass, name="request_join"),
+    path("api/liveclass/<int:pk>/status/", views.check_waiting_status, name="check_status"),
+
 ]
 

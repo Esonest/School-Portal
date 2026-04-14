@@ -659,7 +659,7 @@ def liveclass_token_api(request, pk):
 
         # ❌ not requested yet or not approved
         if not waiting:
-            return JsonResponse({"status": "waiting", "message": "Join request required"}, status=403)
+            return JsonResponse({"status": "waiting"})
 
         if waiting.rejected:
             return JsonResponse({"status": "rejected"}, status=403)
