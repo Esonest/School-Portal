@@ -631,33 +631,66 @@ def generate_100ms_app_token(user_id, role, room_id):
 @login_required
 def liveclass_token_api(request, pk):
     user = request.user
-    live_class = get_object_or_404(LiveClass, pk=pk, school=getattr(user, "school", None))
 
-    # Determine role
+    live_class = get_object_or_404(
+        LiveClass,
+        pk=pk,
+        school=getattr(user, "school", None)
+    )
+
+    # =========================
+    # ROLE DETECTION
+    # =========================
     if getattr(user, "is_teacher_user", False) or getattr(user, "is_schooladmin", False) or getattr(user, "is_superadmin", False):
         role = "teacher"
     else:
         role = "student"
 
-    # Ensure room_id exists
-    # Ensure local room_id exists (temporary UUID)
+    # =========================
+    # WAITING ROOM CHECK (NEW)
+    # =========================
+    if role == "student":
+        from .models import LiveClassWaiting
+
+        waiting = LiveClassWaiting.objects.filter(
+            live_class=live_class,
+            student=user.student_profile
+        ).first()
+
+        # ❌ not requested yet or not approved
+        if not waiting:
+            return JsonResponse({"status": "waiting", "message": "Join request required"}, status=403)
+
+        if waiting.rejected:
+            return JsonResponse({"status": "rejected"}, status=403)
+
+        if not waiting.approved:
+            return JsonResponse({"status": "waiting"})
+
+    # =========================
+    # ENSURE ROOM EXISTS
+    # =========================
     if not live_class.room_id:
         live_class.room_id = str(uuid.uuid4())
         live_class.save()
 
-# ✅ Create / fetch REAL 100ms room ID
     real_room_id = create_100ms_room_if_missing(live_class.room_id)
 
     if not real_room_id:
         return JsonResponse({"error": "Room creation failed"}, status=500)
 
-# ✅ VERY IMPORTANT: store REAL 100ms room ID
     if live_class.room_id != real_room_id:
         live_class.room_id = real_room_id
         live_class.save()
 
-# Generate token with REAL room ID
-    token = generate_100ms_app_token(user.id, role, live_class.room_id)
+    # =========================
+    # GENERATE TOKEN
+    # =========================
+    token = generate_100ms_app_token(
+        user.id,
+        role,
+        live_class.room_id
+    )
 
     return JsonResponse({
         "token": token,
@@ -748,3 +781,113 @@ def translate(request):
 
 def liveclass_frontend(request, pk=None):
     return render(request, "frontend/index.html")    
+
+
+
+from django.utils import timezone
+from .models import LiveClass, LiveClassWaiting
+
+@login_required
+def request_join_liveclass(request, pk):
+    user = request.user
+
+    live_class = get_object_or_404(
+        LiveClass,
+        pk=pk,
+        school=user.school
+    )
+
+    if not user.is_student_user:
+        return JsonResponse({"error": "Only students allowed"}, status=403)
+
+    from .models import LiveClassWaiting
+
+    LiveClassWaiting.objects.get_or_create(
+        live_class=live_class,
+        student=user.student_profile
+    )
+
+    return JsonResponse({"status": "waiting"})   
+
+
+@login_required
+def approve_student(request, pk):
+    if not (request.user.is_teacher_user or request.user.is_schooladmin or request.user.is_superadmin):
+        return JsonResponse({"error": "Forbidden"}, status=403)
+
+    user_id = request.POST.get("user_id")
+
+    waiting = LiveClassWaiting.objects.get(
+        live_class_id=pk,
+        student__user_id=user_id
+    )
+
+    waiting.approved = True
+    waiting.rejected = False
+    waiting.approved_at = timezone.now()
+    waiting.save()
+
+    return JsonResponse({"status": "approved"})
+
+
+@login_required
+def reject_student(request, pk):
+    if not (request.user.is_teacher_user or request.user.is_schooladmin or request.user.is_superadmin):
+        return JsonResponse({"error": "Forbidden"}, status=403)
+
+    user_id = request.POST.get("user_id")
+
+    waiting = LiveClassWaiting.objects.get(
+        live_class_id=pk,
+        student__user_id=user_id
+    )
+
+    waiting.approved = False
+    waiting.rejected = True
+    waiting.save()
+
+    return JsonResponse({"status": "rejected"})
+
+
+@login_required
+def waiting_list(request, pk):
+    if not (request.user.is_teacher_user or request.user.is_schooladmin or request.user.is_superadmin):
+        return JsonResponse({"error": "Forbidden"}, status=403)
+
+    waiting = LiveClassWaiting.objects.filter(
+        live_class_id=pk,
+        approved=False,
+        rejected=False
+    ).select_related("student__user")
+
+    data = [
+        {
+            "id": w.student.user.id,
+            "name": w.student.user.get_full_name() or w.student.user.username
+        }
+        for w in waiting
+    ]
+
+    return JsonResponse(data, safe=False)
+
+
+@login_required
+def check_waiting_status(request, pk):
+    if not request.user.is_student_user:
+        return JsonResponse({"error": "Only students"}, status=403)
+
+    waiting = LiveClassWaiting.objects.filter(
+        live_class_id=pk,
+        student=request.user.student_profile
+    ).first()
+
+    if not waiting:
+        return JsonResponse({"status": "none"})
+
+    if waiting.rejected:
+        return JsonResponse({"status": "rejected"})
+
+    if waiting.approved:
+        return JsonResponse({"status": "approved"})
+
+    return JsonResponse({"status": "waiting"})

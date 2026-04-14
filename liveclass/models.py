@@ -96,3 +96,33 @@ class LiveClassAttendance(models.Model):
 
     def __str__(self):
         return f"{self.student} - {self.live_class.title}"
+
+
+# models.py
+
+class LiveClassWaiting(models.Model):
+    live_class = models.ForeignKey(
+        LiveClass,
+        on_delete=models.CASCADE,
+        related_name="waiting_list"
+    )
+
+    student = models.ForeignKey(
+        "students.Student",
+        on_delete=models.CASCADE,
+        related_name="waiting_classes"
+    )
+
+    approved = models.BooleanField(default=False)
+    rejected = models.BooleanField(default=False)
+
+    requested_at = models.DateTimeField(auto_now_add=True)
+    approved_at = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        unique_together = ("live_class", "student")
+        ordering = ["requested_at"]
+
+    def __str__(self):
+        status = "Approved" if self.approved else "Waiting"
+        return f"{self.student} → {self.live_class.title} ({status})"
