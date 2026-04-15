@@ -737,9 +737,52 @@ def start_recording_api(request, pk):
     if not (request.user.is_teacher_user or request.user.is_schooladmin or request.user.is_superadmin):
         return JsonResponse({"error": "Forbidden"}, status=403)
 
-    start_recording(live_class.room_id)
+    # ✅ ALWAYS ensure real 100ms room ID
+    real_room_id = create_100ms_room_if_missing(live_class.room_id)
 
-    return JsonResponse({"success": True})    
+    if not real_room_id:
+        return JsonResponse({"error": "Room creation failed"}, status=500)
+
+    # 🔥 SAVE REAL ROOM ID
+    if live_class.room_id != real_room_id:
+        live_class.room_id = real_room_id
+        live_class.save()
+
+    try:
+        start_recording(real_room_id)
+        return JsonResponse({"success": True})
+    except Exception as e:
+        print("❌ RECORDING ERROR:", str(e))
+        return JsonResponse({"error": str(e)}, status=500) 
+
+
+def start_recording(room_id):
+    payload = {
+        "access_key": settings.HMS_API_KEY,
+        "type": "management",
+        "version": 2,
+        "iat": int(time.time()),
+        "exp": int(time.time()) + 3600,
+        "jti": str(uuid.uuid4()),
+    }
+
+    management_token = jwt.encode(
+        payload,
+        settings.HMS_API_SECRET,
+        algorithm="HS256"
+    )
+
+    url = f"https://api.100ms.live/v2/recordings/room/{room_id}/start"
+
+    res = requests.post(
+        url,
+        headers={"Authorization": f"Bearer {management_token}"}
+    )
+
+    print("🎥 RECORDING RESPONSE:", res.status_code, res.text)
+
+    if res.status_code not in [200, 201]:
+        raise Exception(res.text)      
 
 
 from django.contrib.auth import get_user_model
@@ -906,17 +949,29 @@ def reject_student(request, pk):
 
     return JsonResponse({"status": "rejected"})
 
+from datetime import timedelta
+from django.utils import timezone
 
 @login_required
 def waiting_list(request, pk):
     if not is_staff_user(request.user):
         return JsonResponse({"error": "Forbidden"}, status=403)
 
+    # 🔥 REMOVE STALE USERS (inactive for 10 seconds)
+    timeout = timezone.now() - timedelta(seconds=10)
+
+    LiveClassWaiting.objects.filter(
+        live_class_id=pk,
+        approved=False,
+        rejected=False,
+        updated_at__lt=timeout   # 👈 IMPORTANT
+    ).delete()
+
     waiting = LiveClassWaiting.objects.filter(
         live_class_id=pk,
         approved=False,
         rejected=False,
-        live_class__school=request.user.school   # 🔥 IMPORTANT FIX
+        live_class__school=request.user.school
     ).select_related("student__user")
 
     data = [
@@ -953,3 +1008,48 @@ def check_waiting_status(request, pk):
         return JsonResponse({"status": "approved"})
 
     return JsonResponse({"status": "waiting"})
+
+
+@login_required
+def waiting_heartbeat(request, pk):
+    student = getattr(request.user, "student_profile", None)
+
+    if not student:
+        return JsonResponse({"error": "Only students"}, status=403)
+
+    LiveClassWaiting.objects.filter(
+        live_class_id=pk,
+        student=student
+    ).update(updated_at=timezone.now())
+
+    return JsonResponse({"status": "alive"})
+
+
+
+@login_required
+def approve_all_students(request, pk):
+    if not is_staff_user(request.user):
+        return JsonResponse({"error": "Forbidden"}, status=403)
+
+    LiveClassWaiting.objects.filter(
+        live_class_id=pk,
+        approved=False,
+        rejected=False
+    ).update(approved=True, rejected=False)
+
+    return JsonResponse({"status": "all approved"})
+
+
+@login_required
+def reject_all_students(request, pk):
+    if not is_staff_user(request.user):
+        return JsonResponse({"error": "Forbidden"}, status=403)
+
+    LiveClassWaiting.objects.filter(
+        live_class_id=pk,
+        approved=False,
+        rejected=False
+    ).update(approved=False, rejected=True)
+
+    return JsonResponse({"status": "all rejected"})
+    

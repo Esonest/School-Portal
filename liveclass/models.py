@@ -112,7 +112,7 @@ class LiveClassWaiting(models.Model):
         on_delete=models.CASCADE,
         related_name="waiting_classes"
     )
-
+    updated_at = models.DateTimeField(auto_now=True)
     approved = models.BooleanField(default=False)
     rejected = models.BooleanField(default=False)
 

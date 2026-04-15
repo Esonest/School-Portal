@@ -32,6 +32,10 @@ urlpatterns = [
     path("api/liveclass/<int:pk>/reject/", views.reject_student, name="reject_student"),
     path("api/liveclass/<int:pk>/request/", views.request_join_liveclass, name="request_join"),
     path("api/liveclass/<int:pk>/status/", views.check_waiting_status, name="check_status"),
+    path("liveclass/<int:pk>/waiting-heartbeat/", views.waiting_heartbeat),
+    path("liveclass/<int:pk>/approve-all/", views.approve_all_students),
+    path('liveclass/api/liveclass/<int:pk>/reject-all/', views.reject_all_students),
+    path('liveclass/<int:pk>/start-recording/', views.start_recording),
 
 ]
 
