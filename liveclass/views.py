@@ -7,7 +7,7 @@ from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 import json
-
+from django.http import HttpResponse
 from .models import LiveClass,LiveClassAttendance
 from .forms import LiveClassForm
 from django.shortcuts import get_object_or_404, redirect, render
@@ -472,6 +472,7 @@ def liveclass_leave(request, pk):
     Marks a student as leaving a live class.
     Called via JS sendBeacon on window unload.
     """
+
     live_class = get_object_or_404(
         LiveClass,
         pk=pk,
@@ -481,24 +482,35 @@ def liveclass_leave(request, pk):
     if not request.user.is_student_user:
         return HttpResponseForbidden("Only students can leave a class.")
 
+    # ✅ SAFE student retrieval
+    student = getattr(request.user, "student_profile", None)
+
+    if not student:
+        return HttpResponse(status=200)  # silently ignore
+
     try:
         attendance = LiveClassAttendance.objects.get(
             live_class=live_class,
-            student=request.user.student_profile,
-            left_at__isnull=True  # only update if currently "in class"
+            student=student,
+            left_at__isnull=True
         )
-        attendance.left_at = timezone.now()
+
+        now = timezone.now()
+
+        attendance.left_at = now
         attendance.total_duration += int(
-            (attendance.left_at - attendance.joined_at).total_seconds()
+            (now - attendance.joined_at).total_seconds()
         )
         attendance.save()
+
     except LiveClassAttendance.DoesNotExist:
-        # student never joined or already left
         pass
 
-    # sendBeacon doesn’t expect a redirect, just return 200 OK
-    from django.http import HttpResponse
     return HttpResponse(status=200)
+
+   
+    
+  
 
 
 # views.py
@@ -848,10 +860,19 @@ def approve_student(request, pk):
 
     user_id = request.POST.get("user_id")
 
-    waiting = LiveClassWaiting.objects.get(
+    waiting = LiveClassWaiting.objects.filter(
         live_class_id=pk,
         student__user_id=user_id
-    )
+    ).first()
+
+    if not waiting:
+        return JsonResponse({"error": "Not found"}, status=404)
+
+    # 🔥 REMOVE DUPLICATES
+    LiveClassWaiting.objects.filter(
+        live_class_id=pk,
+        student__user_id=user_id
+    ).exclude(id=waiting.id).delete()
 
     waiting.approved = True
     waiting.rejected = False
@@ -861,6 +882,7 @@ def approve_student(request, pk):
     return JsonResponse({"status": "approved"})
 
 
+
 @login_required
 def reject_student(request, pk):
     if not is_staff_user(request.user):
@@ -868,17 +890,19 @@ def reject_student(request, pk):
 
     user_id = request.POST.get("user_id")
 
-    try:
-        waiting = LiveClassWaiting.objects.get(
-            live_class_id=pk,
-            student__user_id=user_id
-        )
-    except LiveClassWaiting.DoesNotExist:
+    waiting = LiveClassWaiting.objects.filter(
+        live_class_id=pk,
+        student__user_id=user_id
+    ).first()
+
+    if not waiting:
         return JsonResponse({"error": "Not found"}, status=404)
 
     waiting.approved = False
     waiting.rejected = True
     waiting.save()
+
+    print(f"❌ REJECTED: {user_id}")  # DEBUG
 
     return JsonResponse({"status": "rejected"})
 
