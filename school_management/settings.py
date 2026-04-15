@@ -37,6 +37,9 @@ ALLOWED_HOSTS = [
     "localhost",
 ]
 
+CSRF_TRUSTED_ORIGINS = [
+    "https://techcenter-p2au.onrender.com",
+]
 
 CLOUDINARY_STORAGE = {
     'CLOUD_NAME': os.environ.get('CLOUDINARY_CLOUD_NAME'),
@@ -138,8 +141,15 @@ LOGOUT_REDIRECT_URL = reverse_lazy('accounts:login')
 CRISPY_TEMPLATE_PACK = "bootstrap5"
 CKEDITOR_UPLOAD_PATH = "uploads/"
 
-SESSION_COOKIE_AGE = 3600  # 1 hour
+SESSION_COOKIE_AGE = 7200  # 1 hour
 SESSION_SAVE_EVERY_REQUEST = True  # keeps session alive on activity
+
+
+CSRF_COOKIE_SECURE = True
+SESSION_COOKIE_SECURE = True
+
+CSRF_COOKIE_SAMESITE = "None"
+SESSION_COOKIE_SAMESITE = "None"
 
 MESSAGE_TAGS = {
     messages.ERROR: "error",

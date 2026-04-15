@@ -26,6 +26,13 @@ from django.contrib.auth import get_user_model
 
 User = get_user_model()
 
+def is_staff_user(user):
+    return (
+        user.is_teacher_user or
+        user.is_schooladmin or
+        user.is_superadmin
+    )
+
 
 def generate_100ms_token(payload):
     return jwt.encode({
@@ -509,12 +516,14 @@ def liveclass_enable_camera(request, pk):
 
     live_class = get_object_or_404(LiveClass, pk=pk, school=request.user.school)
     
-    if not request.user.is_student_user:
+    student = getattr(request.user, "student_profile", None)
+
+    if not student:
         return JsonResponse({"error": "Only students"}, status=403)
 
     attendance, _ = LiveClassAttendance.objects.get_or_create(
         live_class=live_class,
-        student=request.user.student_profile
+        student=student
     )
     attendance.camera_enabled = True
     attendance.save()
@@ -527,7 +536,10 @@ from django.http import JsonResponse
 @login_required
 def liveclass_peers(request, pk):
     live_class = get_object_or_404(LiveClass, pk=pk, school=request.user.school)
-    if not request.user.is_student_user:
+    
+    student = getattr(request.user, "student_profile", None)
+
+    if not student:
         return JsonResponse({"error": "Only students"}, status=403)
     
     # return list of student IDs currently in attendance
@@ -649,18 +661,25 @@ def liveclass_token_api(request, pk):
     # =========================
     # WAITING ROOM CHECK (NEW)
     # =========================
+    from students.models import Student  # adjust import
+
     if role == "student":
         from .models import LiveClassWaiting
 
-        waiting = LiveClassWaiting.objects.filter(
+        student = Student.objects.filter(user=user).first()
+
+        if not student:
+            return JsonResponse({"error": "Student profile not found"}, status=400)
+
+        waiting, created = LiveClassWaiting.objects.get_or_create(
             live_class=live_class,
-            student=user.student_profile
-        ).first()
-
-        # ❌ not requested yet or not approved
-        if not waiting:
-            return JsonResponse({"status": "waiting"})
-
+            student=student,
+            defaults={
+                "approved": False,
+                "rejected": False
+            }
+        )
+    
         if waiting.rejected:
             return JsonResponse({"status": "rejected"}, status=403)
 
@@ -789,7 +808,16 @@ from .models import LiveClass, LiveClassWaiting
 
 @login_required
 def request_join_liveclass(request, pk):
+
+    print("USER:", request.user)
+    print("HAS student_profile:", hasattr(request.user, "student_profile"))
+    print("VALUE:", getattr(request.user, "student_profile", None))
     user = request.user
+
+    student = getattr(user, "student_profile", None)
+
+    if not student:
+        return JsonResponse({"error": "Only students allowed"}, status=403)
 
     live_class = get_object_or_404(
         LiveClass,
@@ -797,17 +825,20 @@ def request_join_liveclass(request, pk):
         school=user.school
     )
 
-    if not user.is_student_user:
-        return JsonResponse({"error": "Only students allowed"}, status=403)
+    # 🔥 SAFE CHECK
+    student = getattr(user, "student_profile", None)
 
-    from .models import LiveClassWaiting
+    if not student:
+        return JsonResponse({"error": "Student profile missing"}, status=400)
 
-    LiveClassWaiting.objects.get_or_create(
+    obj, created = LiveClassWaiting.objects.get_or_create(
         live_class=live_class,
-        student=user.student_profile
+        student=student
     )
 
-    return JsonResponse({"status": "waiting"})   
+    print("🔥 WAITING CREATED:", created)
+
+    return JsonResponse({"status": "waiting", "created": created})  
 
 
 @login_required
@@ -832,15 +863,18 @@ def approve_student(request, pk):
 
 @login_required
 def reject_student(request, pk):
-    if not (request.user.is_teacher_user or request.user.is_schooladmin or request.user.is_superadmin):
+    if not is_staff_user(request.user):
         return JsonResponse({"error": "Forbidden"}, status=403)
 
     user_id = request.POST.get("user_id")
 
-    waiting = LiveClassWaiting.objects.get(
-        live_class_id=pk,
-        student__user_id=user_id
-    )
+    try:
+        waiting = LiveClassWaiting.objects.get(
+            live_class_id=pk,
+            student__user_id=user_id
+        )
+    except LiveClassWaiting.DoesNotExist:
+        return JsonResponse({"error": "Not found"}, status=404)
 
     waiting.approved = False
     waiting.rejected = True
@@ -851,13 +885,14 @@ def reject_student(request, pk):
 
 @login_required
 def waiting_list(request, pk):
-    if not (request.user.is_teacher_user or request.user.is_schooladmin or request.user.is_superadmin):
+    if not is_staff_user(request.user):
         return JsonResponse({"error": "Forbidden"}, status=403)
 
     waiting = LiveClassWaiting.objects.filter(
         live_class_id=pk,
         approved=False,
-        rejected=False
+        rejected=False,
+        live_class__school=request.user.school   # 🔥 IMPORTANT FIX
     ).select_related("student__user")
 
     data = [
@@ -873,12 +908,15 @@ def waiting_list(request, pk):
 
 @login_required
 def check_waiting_status(request, pk):
-    if not request.user.is_student_user:
+
+    student = getattr(request.user, "student_profile", None)
+
+    if not student:
         return JsonResponse({"error": "Only students"}, status=403)
 
     waiting = LiveClassWaiting.objects.filter(
         live_class_id=pk,
-        student=request.user.student_profile
+        student=student
     ).first()
 
     if not waiting:
