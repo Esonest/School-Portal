@@ -958,7 +958,7 @@ def waiting_list(request, pk):
         return JsonResponse({"error": "Forbidden"}, status=403)
 
     # 🔥 REMOVE STALE USERS (inactive for 10 seconds)
-    timeout = timezone.now() - timedelta(seconds=10)
+    timeout = timezone.now() - timedelta(seconds=30)
 
     LiveClassWaiting.objects.filter(
         live_class_id=pk,
