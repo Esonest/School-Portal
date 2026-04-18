@@ -13,6 +13,7 @@ from .forms import LiveClassForm
 from django.shortcuts import get_object_or_404, redirect, render
 from django.conf import settings
 import requests
+from .utils import is_student, is_teacher
 
 import jwt
 import time
@@ -869,6 +870,9 @@ def request_join_liveclass(request, pk):
     print("VALUE:", getattr(request.user, "student_profile", None))
     user = request.user
 
+    if getattr(request.user, "is_student_user", False) is not True:
+        return JsonResponse({"error": "Only students allowed"}, status=403)
+
     student = getattr(user, "student_profile", None)
 
     if not student:
@@ -890,6 +894,12 @@ def request_join_liveclass(request, pk):
         live_class=live_class,
         student=student
     )
+
+    # 🔥 RESET STATE
+    obj.approved = False
+    obj.rejected = False
+    obj.updated_at = timezone.now()
+    obj.save()
 
     print("🔥 WAITING CREATED:", created)
 
@@ -917,10 +927,17 @@ def approve_student(request, pk):
         student__user_id=user_id
     ).exclude(id=waiting.id).delete()
 
+    # ✅ APPROVE STUDENT
     waiting.approved = True
     waiting.rejected = False
     waiting.approved_at = timezone.now()
     waiting.save()
+
+    # 🔥🔥🔥 THIS IS WHERE IT GOES 🔥🔥🔥
+    LiveClassAttendance.objects.get_or_create(
+        live_class_id=pk,
+        student=waiting.student
+    )
 
     return JsonResponse({"status": "approved"})
 
@@ -958,7 +975,7 @@ def waiting_list(request, pk):
         return JsonResponse({"error": "Forbidden"}, status=403)
 
     # 🔥 REMOVE STALE USERS (inactive for 10 seconds)
-    timeout = timezone.now() - timedelta(seconds=30)
+    timeout = timezone.now() - timedelta(seconds=120)
 
     LiveClassWaiting.objects.filter(
         live_class_id=pk,
@@ -987,11 +1004,11 @@ def waiting_list(request, pk):
 
 @login_required
 def check_waiting_status(request, pk):
-
     student = getattr(request.user, "student_profile", None)
 
+    # 🔥 FIX: Don't crash for non-students
     if not student:
-        return JsonResponse({"error": "Only students"}, status=403)
+        return JsonResponse({"status": "not_student"})
 
     waiting = LiveClassWaiting.objects.filter(
         live_class_id=pk,
@@ -1031,11 +1048,22 @@ def approve_all_students(request, pk):
     if not is_staff_user(request.user):
         return JsonResponse({"error": "Forbidden"}, status=403)
 
-    LiveClassWaiting.objects.filter(
+    waiting_list = LiveClassWaiting.objects.filter(
         live_class_id=pk,
         approved=False,
         rejected=False
-    ).update(approved=True, rejected=False)
+    )
+
+    for waiting in waiting_list:
+        waiting.approved = True
+        waiting.rejected = False
+        waiting.save()
+
+        # 🔥 CREATE ATTENDANCE
+        LiveClassAttendance.objects.get_or_create(
+            live_class_id=pk,
+            student=waiting.student
+        )
 
     return JsonResponse({"status": "all approved"})
 

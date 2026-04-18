@@ -16,3 +16,13 @@ def create_100ms_room(title):
         }
     )
     return response.json()
+
+
+# liveclass/utils.py
+
+def is_student(user):
+    return hasattr(user, "student_profile") and user.student_profile is not None
+
+
+def is_teacher(user):
+    return hasattr(user, "teacher_profile") and user.teacher_profile is not None
