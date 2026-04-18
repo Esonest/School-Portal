@@ -5,170 +5,187 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}TECHCENTER School Portal{% endblock %}</title>
 
-    <!-- Tailwind CDN -->
+    <!-- Tailwind -->
     <script src="https://cdn.tailwindcss.com"></script>
 
-    <!-- Static Files -->
     {% load static %}
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
 
     {% block extra_head %}{% endblock %}
     {{ form.media }}
 
+    <!-- TECHCENTER BRAND COLORS -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        techPrimary: "#2563eb",   // blue
+                        techSecondary: "#7c3aed", // purple
+                        techDark: "#0f172a"
+                    }
+                }
+            }
+        }
+    </script>
 
-<!-- MathJax (for rendering) -->
-<script>
-window.MathJax = {
-  tex: {
-    inlineMath: [['$', '$'], ['\\(', '\\)']],
-    displayMath: [['$$', '$$']]
-  },
-  options: {
-    skipHtmlTags: ['script','noscript','style','textarea','pre','code']
-  }
-};
-</script>
+    <!-- MathJax -->
+    <script>
+    window.MathJax = {
+      tex: {
+        inlineMath: [['$', '$'], ['\\(', '\\)']],
+        displayMath: [['$$', '$$']]
+      },
+      options: {
+        skipHtmlTags: ['script','noscript','style','textarea','pre','code']
+      }
+    };
+    </script>
 
-<script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-
-
+    <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 </head>
 
 <body class="bg-gray-100 text-gray-800 flex flex-col min-h-screen">
 
-    <!-- FLASH MESSAGES -->
-    {% if messages %}
-    <div class="fixed top-4 inset-x-0 z-50 px-4">
-        <div class="max-w-xl mx-auto space-y-3">
-            {% for message in messages %}
-            <div class="px-4 py-3 rounded-lg text-sm font-medium text-center shadow-lg
-                {% if message.tags == 'error' %}
-                  bg-red-100 text-red-700 border border-red-300
-                {% elif message.tags == 'success' %}
-                  bg-green-100 text-green-700 border border-green-300
+<!-- FLASH -->
+{% if messages %}
+<div class="fixed top-4 inset-x-0 z-50 px-4">
+    <div class="max-w-xl mx-auto space-y-3">
+        {% for message in messages %}
+        <div class="px-4 py-3 rounded-lg text-sm font-medium text-center shadow-lg
+            {% if message.tags == 'error' %}
+              bg-red-100 text-red-700 border border-red-300
+            {% elif message.tags == 'success' %}
+              bg-green-100 text-green-700 border border-green-300
+            {% else %}
+              bg-gray-100 text-gray-700 border border-gray-300
+            {% endif %}
+        animate-fade-in">
+            {{ message }}
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+<!-- NAVBAR -->
+<nav class="bg-white shadow-md sticky top-0 z-40 border-b border-gray-200">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="flex justify-between items-center h-16">
+
+            <!-- LOGO + NAME -->
+            <a href="{% url 'accounts:home' %}" class="flex items-center space-x-3">
+                <img src="{% static 'images/techcenter-logo.png' %}"
+                     class="h-16 w-16 object-contain"/>
+
+                <span class="text-lg sm:text-xl font-extrabold bg-gradient-to-r from-techPrimary to-techSecondary bg-clip-text text-transparent">
+                    TECHCENTER Portal
+                </span>
+            </a>
+
+            <!-- DESKTOP -->
+            <div class="hidden md:flex items-center space-x-6">
+
+                <a href="{% url 'accounts:home' %}" class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}">Home</a>
+                <a href="{% url 'accounts:about' %}" class="nav-link {% if request.resolver_match.url_name == 'about' %}active{% endif %}">About</a>
+                <a href="{% url 'accounts:contact' %}" class="nav-link {% if request.resolver_match.url_name == 'contact' %}active{% endif %}">Contact</a>
+                <a href="{% url 'accounts:help' %}" class="nav-link {% if request.resolver_match.url_name == 'help' %}active{% endif %}">Help</a>
+
+                {% if user.is_authenticated %}
+                <a href="{% url 'accounts:logout' %}" class="px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition">
+                    Logout
+                </a>
                 {% else %}
-                  bg-gray-100 text-gray-700 border border-gray-300
+                <a href="{% url 'accounts:login' %}" class="px-4 py-2 rounded-lg bg-gradient-to-r from-techPrimary to-techSecondary text-white hover:opacity-90 transition">
+                    Login
+                </a>
                 {% endif %}
-            animate-fade-in">
-                {{ message }}
             </div>
-            {% endfor %}
+
+            <!-- MOBILE BTN -->
+            <button id="mobile-menu-button" class="md:hidden text-gray-700 text-2xl">
+                ☰
+            </button>
         </div>
     </div>
-    {% endif %}
 
-    <!-- NAVBAR -->
-    <nav class="bg-white shadow-md sticky top-0 z-40">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex justify-between items-center h-16">
+    <!-- MOBILE MENU -->
+    <div id="mobile-menu" class="hidden md:hidden bg-white border-t shadow-lg animate-slide-down">
 
-                <!-- LOGO -->
-                <a href="{% url 'accounts:home' %}"
-                   class="text-lg sm:text-xl font-bold text-blue-600 hover:text-blue-800 transition whitespace-nowrap">
-                    🏫 TECHCENTER School Portal
-                </a>
+        <a href="{% url 'accounts:home' %}" class="mobile-link">Home</a>
+        <a href="{% url 'accounts:about' %}" class="mobile-link">About</a>
+        <a href="{% url 'accounts:contact' %}" class="mobile-link">Contact</a>
+        <a href="{% url 'accounts:help' %}" class="mobile-link">Help</a>
 
-                <!-- DESKTOP LINKS -->
-                <div class="hidden md:flex items-center space-x-6">
-                    <a href="{% url 'accounts:home' %}" class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}">Home</a>
-                    <a href="{% url 'accounts:about' %}" class="nav-link {% if request.resolver_match.url_name == 'about' %}active{% endif %}">About</a>
-                    <a href="{% url 'accounts:contact' %}" class="nav-link {% if request.resolver_match.url_name == 'contact' %}active{% endif %}">Contact</a>
-                    <a href="{% url 'accounts:help' %}" class="nav-link {% if request.resolver_match.url_name == 'help' %}active{% endif %}">Help</a>
+        {% if user.is_authenticated %}
+        <a href="{% url 'accounts:logout' %}" class="mobile-link text-red-600">Logout</a>
+        {% else %}
+        <a href="{% url 'accounts:login' %}" class="mobile-link text-techPrimary font-semibold">Login</a>
+        {% endif %}
+    </div>
+</nav>
 
-                    {% if user.is_authenticated %}
-                    <a href="{% url 'accounts:logout' %}" class="text-red-500 font-medium hover:text-red-700">Logout</a>
-                    {% else %}
-                    <a href="{% url 'accounts:login' %}" class="text-green-600 font-medium hover:text-green-800">Login</a>
-                    {% endif %}
-                </div>
+<!-- CONTENT -->
+<main class="flex-grow max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
+    {% block content %}{% endblock %}
+</main>
 
-                <!-- MOBILE BUTTON -->
-                <button id="mobile-menu-button"
-                        class="md:hidden text-gray-700 text-2xl focus:outline-none">
-                    ☰
-                </button>
-            </div>
-        </div>
+<!-- FOOTER -->
+<footer class="bg-techDark text-white py-4">
+    <div class="text-center text-xs sm:text-sm opacity-90">
+        © {{ year|default:2025 }} TECHCENTER School Portal — All Rights Reserved.
+    </div>
+</footer>
 
-        <!-- MOBILE MENU -->
-        <div id="mobile-menu" class="hidden md:hidden bg-white border-t shadow-lg animate-slide-down">
-            <a href="{% url 'accounts:home' %}" class="mobile-link">Home</a>
-            <a href="{% url 'accounts:about' %}" class="mobile-link">About</a>
-            <a href="{% url 'accounts:contact' %}" class="mobile-link">Contact</a>
-            <a href="{% url 'accounts:help' %}" class="mobile-link">Help</a>
+<!-- STYLES -->
+<style>
+.nav-link {
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+.nav-link:hover {
+    color: #2563eb;
+}
+.active {
+    color: #2563eb;
+    font-weight: 700;
+    border-bottom: 2px solid #2563eb;
+}
+.mobile-link {
+    display: block;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #f1f5f9;
+}
+.mobile-link:hover {
+    background: #f8fafc;
+}
+.animate-slide-down {
+    animation: slideDown 0.3s ease;
+}
+.animate-fade-in {
+    animation: fadeIn 0.6s ease;
+}
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+</style>
 
-            {% if user.is_authenticated %}
-            <a href="{% url 'accounts:logout' %}" class="mobile-link text-red-600">Logout</a>
-            {% else %}
-            <a href="{% url 'accounts:login' %}" class="mobile-link text-green-600">Login</a>
-            {% endif %}
-        </div>
-    </nav>
+<!-- MOBILE SCRIPT -->
+<script>
+document.getElementById("mobile-menu-button").addEventListener("click", () => {
+    document.getElementById("mobile-menu").classList.toggle("hidden");
+});
+</script>
 
-    <!-- MAIN CONTENT -->
-    <main class="flex-grow max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
-        {% block content %}{% endblock %}
-    </main>
-
-    <!-- FOOTER -->
-    <footer class="bg-gray-800 text-white py-4">
-        <div class="text-center text-xs sm:text-sm opacity-90">
-            © {{ year|default:2025 }} TECHCENTER School Portal — All Rights Reserved.
-        </div>
-    </footer>
-    <div id="toast-container" class="fixed top-6 right-6 z-50 space-y-3"></div>
-
-    <!-- STYLES -->
-    <style>
-      .nav-link {
-        font-medium;
-        transition: color 0.3s;
-      }
-      .nav-link:hover {
-        color: #2563eb;
-      }
-      .active {
-        color: #2563eb;
-        text-decoration: underline;
-      }
-      .mobile-link {
-        display: block;
-        padding: 0.75rem 1rem;
-        border-bottom: 1px solid #f1f5f9;
-        transition: background 0.2s;
-      }
-      .mobile-link:hover {
-        background: #f8fafc;
-      }
-      .animate-slide-down {
-        animation: slideDown 0.3s ease;
-      }
-      .animate-fade-in {
-        animation: fadeIn 0.6s ease;
-      }
-      @keyframes slideDown {
-        from { opacity: 0; transform: translateY(-10px); }
-        to { opacity: 1; transform: translateY(0); }
-      }
-      @keyframes fadeIn {
-        from { opacity: 0; }
-        to { opacity: 1; }
-      }
-    </style>
-
-    <!-- MOBILE MENU SCRIPT -->
-    <script>
-      document.getElementById("mobile-menu-button").addEventListener("click", () => {
-        document.getElementById("mobile-menu").classList.toggle("hidden");
-      });
-    </script>
-    <script type="module">
-      import "https://unpkg.com/mathlive?module";
-    </script>
-    
-    <script>
-let timeout = 600000; // 10 minutes in ms
-let warningTime = 540000; // 9 minutes
+<!-- AUTO LOGOUT -->
+<script>
+let timeout = 600000;
+let warningTime = 540000;
 
 let logoutTimer;
 let warningTimer;
@@ -186,12 +203,12 @@ function resetTimers() {
     }, timeout);
 }
 
-// Reset on activity
-['click', 'mousemove', 'keypress', 'scroll'].forEach(event => {
-    window.addEventListener(event, resetTimers);
+['click','mousemove','keypress','scroll'].forEach(e => {
+    window.addEventListener(e, resetTimers);
 });
 
 resetTimers();
 </script>
+
 </body>
 </html>

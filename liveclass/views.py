@@ -784,13 +784,25 @@ def start_recording(room_id):
 
     res = requests.post(
         url,
-        headers={"Authorization": f"Bearer {management_token}"}
+        headers={
+            "Authorization": f"Bearer {management_token}",
+            "Content-Type": "application/json"
+        },
+        json={
+            "resolution": {
+                "width": 1280,
+                "height": 720
+            },
+            "recording_info": {
+                "destination": "rtmp",  # or "s3" if configured
+            }
+        }
     )
-
     print("🎥 RECORDING RESPONSE:", res.status_code, res.text)
 
     if res.status_code not in [200, 201]:
-        raise Exception(res.text)      
+        raise Exception(res.text)  
+         
 
 
 from django.contrib.auth import get_user_model
@@ -982,7 +994,7 @@ def waiting_list(request, pk):
         return JsonResponse({"error": "Forbidden"}, status=403)
 
     # 🔥 REMOVE STALE USERS (inactive for 10 seconds)
-    timeout = timezone.now() - timedelta(seconds=120)
+    timeout = timezone.now() - timedelta(seconds=600)
 
     LiveClassWaiting.objects.filter(
         live_class_id=pk,

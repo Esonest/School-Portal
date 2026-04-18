@@ -7,6 +7,11 @@ app_name = "liveclass"
 urlpatterns = [
     path("", views.liveclass_list, name="liveclass_list"),
     path("create/", views.liveclass_create, name="liveclass_create"),
+    path("api/translate/", views.translate, name="translate"),
+    path("app/", views.liveclass_frontend, name="frontend"),
+    path("app/<path:path>", TemplateView.as_view(template_name="index.html")),
+
+
     path("<int:pk>/edit/", views.liveclass_update, name="liveclass_update"),
     path("<int:pk>/delete/", views.liveclass_delete, name="liveclass_delete"),
     path("<int:pk>/join/", views.liveclass_join, name="liveclass_join"),
@@ -15,18 +20,7 @@ urlpatterns = [
     path('leave/<int:pk>/', views.liveclass_leave, name='liveclass_leave'),
     path("join/<int:pk>/enable-camera/", views.liveclass_enable_camera, name="liveclass_enable_camera"),
     path('liveclass/<int:pk>/peers/', views.liveclass_peers, name='liveclass_peers'),
-    
-  
     path('api/liveclass/<int:pk>/token/', views.liveclass_token_api, name='liveclass_token_api'),
-   
-    path("<int:pk>/start-recording/", views.start_recording_api),
-    path("api/translate/", views.translate, name="translate"),
-
-    path("app/", views.liveclass_frontend, name="frontend"),
-    path("<int:pk>/", views.liveclass_frontend),
-    path("app/<path:path>", TemplateView.as_view(template_name="index.html")),
-
-
     path("api/liveclass/<int:pk>/waiting/", views.waiting_list, name="waiting_list"),
     path("api/liveclass/<int:pk>/approve/", views.approve_student, name="approve_student"),
     path("api/liveclass/<int:pk>/reject/", views.reject_student, name="reject_student"),
@@ -35,7 +29,9 @@ urlpatterns = [
     path("api/liveclass/<int:pk>/waiting-heartbeat/", views.waiting_heartbeat),
     path("api/liveclass/<int:pk>/approve-all/", views.approve_all_students),
     path("api/liveclass/<int:pk>/reject-all/", views.reject_all_students),
-    path('liveclass/<int:pk>/start-recording/', views.start_recording),
+    path("<int:pk>/start-recording/", views.start_recording_api),
+    path("<int:pk>/", views.liveclass_frontend),
+
 
 ]
 
