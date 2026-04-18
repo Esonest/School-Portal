@@ -29,9 +29,11 @@ User = get_user_model()
 
 def is_staff_user(user):
     return (
-        user.is_teacher_user or
-        user.is_schooladmin or
-        user.is_superadmin
+        getattr(user, "is_teacher_user", False)
+        or getattr(user, "is_schooladmin", False)
+        or getattr(user, "is_superadmin", False)
+        or hasattr(user, "teacher_profile")
+        or hasattr(user, "school_admin_profile")
     )
 
 
@@ -908,7 +910,7 @@ def request_join_liveclass(request, pk):
 
 @login_required
 def approve_student(request, pk):
-    if not (request.user.is_teacher_user or request.user.is_schooladmin or request.user.is_superadmin):
+    if not is_staff_user(request.user):
         return JsonResponse({"error": "Forbidden"}, status=403)
 
     user_id = request.POST.get("user_id")
@@ -936,8 +938,13 @@ def approve_student(request, pk):
     # 🔥🔥🔥 THIS IS WHERE IT GOES 🔥🔥🔥
     LiveClassAttendance.objects.get_or_create(
         live_class_id=pk,
-        student=waiting.student
+        student_id=waiting.student.id
     )
+
+    LiveClassWaiting.objects.filter(
+        live_class_id=pk,
+        student__user_id=user_id
+    ).delete()
 
     return JsonResponse({"status": "approved"})
 
