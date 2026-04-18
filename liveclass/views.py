@@ -676,30 +676,35 @@ def liveclass_token_api(request, pk):
     # =========================
     # WAITING ROOM CHECK (NEW)
     # =========================
-    from students.models import Student  # adjust import
+    
+    from .models import LiveClassWaiting
+    from students.models import Student
 
     if role == "student":
-        from .models import LiveClassWaiting
-
         student = Student.objects.filter(user=user).first()
 
         if not student:
             return JsonResponse({"error": "Student profile not found"}, status=400)
 
-        waiting, created = LiveClassWaiting.objects.get_or_create(
+        waiting = LiveClassWaiting.objects.filter(
             live_class=live_class,
-            student=student,
-            defaults={
-                "approved": False,
-                "rejected": False
-            }
-        )
-    
+            student=student
+        ).first()
+
+        if not waiting:
+            return JsonResponse({"status": "none"}, status=403)
+
         if waiting.rejected:
             return JsonResponse({"status": "rejected"}, status=403)
 
         if not waiting.approved:
             return JsonResponse({"status": "waiting"})
+
+    # ✅ 🔥 THIS IS THE EXACT PLACE TO DELETE
+        LiveClassWaiting.objects.filter(
+            live_class=live_class,
+            student=student
+        ).delete()
 
     # =========================
     # ENSURE ROOM EXISTS
@@ -923,28 +928,23 @@ def approve_student(request, pk):
     if not waiting:
         return JsonResponse({"error": "Not found"}, status=404)
 
-    # 🔥 REMOVE DUPLICATES
+    # remove duplicates only
     LiveClassWaiting.objects.filter(
         live_class_id=pk,
         student__user_id=user_id
     ).exclude(id=waiting.id).delete()
 
-    # ✅ APPROVE STUDENT
+    # ✅ approve
     waiting.approved = True
     waiting.rejected = False
     waiting.approved_at = timezone.now()
     waiting.save()
 
-    # 🔥🔥🔥 THIS IS WHERE IT GOES 🔥🔥🔥
+    # ✅ attendance
     LiveClassAttendance.objects.get_or_create(
         live_class_id=pk,
-        student_id=waiting.student.id
+        student=waiting.student
     )
-
-    LiveClassWaiting.objects.filter(
-        live_class_id=pk,
-        student__user_id=user_id
-    ).delete()
 
     return JsonResponse({"status": "approved"})
 
