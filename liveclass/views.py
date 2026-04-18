@@ -864,46 +864,46 @@ from .models import LiveClass, LiveClassWaiting
 
 @login_required
 def request_join_liveclass(request, pk):
-
     print("USER:", request.user)
     print("HAS student_profile:", hasattr(request.user, "student_profile"))
     print("VALUE:", getattr(request.user, "student_profile", None))
+
     user = request.user
 
-    if getattr(request.user, "is_student_user", False) is not True:
+    # ✅ FIXED ROLE CHECK (clean)
+    if getattr(user, "is_student_user", False) is not True:
         return JsonResponse({"error": "Only students allowed"}, status=403)
 
+    # ✅ SAFE student profile
     student = getattr(user, "student_profile", None)
 
     if not student:
-        return JsonResponse({"error": "Only students allowed"}, status=403)
+        return JsonResponse({"error": "Student profile missing"}, status=400)
 
+    # ✅ GET CLASS
     live_class = get_object_or_404(
         LiveClass,
         pk=pk,
         school=user.school
     )
 
-    # 🔥 SAFE CHECK
-    student = getattr(user, "student_profile", None)
-
-    if not student:
-        return JsonResponse({"error": "Student profile missing"}, status=400)
-
-    obj, created = LiveClassWaiting.objects.get_or_create(
+    # ✅ SINGLE SOURCE OF TRUTH (NO DUPLICATES)
+    obj, created = LiveClassWaiting.objects.update_or_create(
         live_class=live_class,
-        student=student
+        student=student,
+        defaults={
+            "approved": False,
+            "rejected": False,
+            "updated_at": timezone.now()
+        }
     )
-
-    # 🔥 RESET STATE
-    obj.approved = False
-    obj.rejected = False
-    obj.updated_at = timezone.now()
-    obj.save()
 
     print("🔥 WAITING CREATED:", created)
 
-    return JsonResponse({"status": "waiting", "created": created})  
+    return JsonResponse({
+        "status": "waiting",
+        "created": created
+    })
 
 
 @login_required
