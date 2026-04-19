@@ -1,44 +1,68 @@
 {% extends 'accounts/base.html' %}
+{% load static %}
 
 {% block title %}Portal Selection - TECHCENTER School Portal{% endblock %}
 
 {% block content %}
 
 <!-- HERO SECTION -->
-<section class="relative h-56 sm:h-64 md:h-72 lg:h-80 bg-cover bg-center flex flex-col justify-center items-center"
-         style="background-image: url('https://images.unsplash.com/photo-1581091215366-8b39cfe55c19');">
-  <!-- Gradient overlay for readability -->
-  <div class="absolute inset-0 bg-gradient-to-b from-black/60 via-black/50 to-black/70 sm:from-black/70 sm:via-black/60 sm:to-black/80"></div>
+<section class="relative h-56 sm:h-64 md:h-72 lg:h-80 flex flex-col justify-center items-center overflow-hidden">
 
-  <div class="relative z-10 text-center px-4 sm:px-6 max-w-3xl">
-    <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl font-bold text-white drop-shadow-lg break-words leading-tight">
-      Welcome, {{ request.user.get_full_name }} 👋
-    </h2>
-    <p class="mt-2 sm:mt-3 text-sm sm:text-base md:text-lg text-gray-200 drop-shadow-md">
-      Select the portal you want to access below
-    </p>
+  <!-- BACKGROUND IMAGE -->
+  <div class="absolute inset-0 bg-cover bg-center"
+     style="background-image: url('{% static 'images/portals/result.png' %}');">
+</div>
+  <!-- LOGO WATERMARK -->
+  <div class="absolute inset-0 flex items-center justify-center opacity-10">
+    <img src="{% static 'images/techcenter-logo.png' %}" 
+         class="w-60 sm:w-72 md:w-80 lg:w-96">
   </div>
+
+  <!-- BRAND OVERLAY (BASED ON YOUR COLORS) -->
+  <!-- BRAND OVERLAY (FAINT) -->
+<div class="absolute inset-0 
+            bg-gradient-to-r 
+            from-indigo-900/40 
+            via-purple-900/30 
+            to-blue-900/40">
+</div>
+
+  <!-- TEXT -->
+ <div class="relative z-10 text-center px-4 sm:px-6 max-w-3xl
+            bg-black/40 backdrop-blur-sm rounded-xl py-4">
+
+  <h2 class="text-xl sm:text-2xl md:text-3xl lg:text-4xl xl:text-5xl 
+             font-bold text-white drop-shadow-2xl leading-tight">
+    Welcome, {{ request.user.get_full_name }} 👋
+  </h2>
+
+  <p class="mt-2 sm:mt-3 text-sm sm:text-base md:text-lg 
+            text-gray-200 drop-shadow-md">
+    Select the portal you want to access below
+  </p>
+
+</div>
+
 </section>
 
-
 <!-- STAT COUNTERS -->
-<section class="py-10 sm:py-12 bg-gray-50 dark:bg-gray-900 px-4">
+<section class="py-10 sm:py-12 bg-gradient-to-br from-indigo-50 via-purple-50 to-blue-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 px-4">
   <div class="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 text-center">
     {% comment %} Stat Cards {% endcomment %}
     <div class="bg-white dark:bg-gray-800 shadow-lg rounded-xl p-6">
-      <h3 class="text-3xl font-bold text-indigo-600" x-data="{ count: 0 }" x-init="setInterval(() => { if(count<1200) count += Math.ceil(1200/100); $el.innerText = count }, 20)">0</h3>
+    <h3 class="text-3xl font-bold text-indigo-600" data-count="650">0</h3>
       <p class="mt-2 text-gray-600 dark:text-gray-300">Active Students</p>
     </div>
     <div class="bg-white dark:bg-gray-800 shadow-lg rounded-xl p-6">
-      <h3 class="text-3xl font-bold text-green-600" x-data="{ count: 0 }" x-init="setInterval(() => { if(count<85) count += 1; $el.innerText = count }, 50)">0</h3>
+     <h3 class="text-3xl font-bold text-green-600" data-count="76">0</h3>
       <p class="mt-2 text-gray-600 dark:text-gray-300">Teachers Online</p>
     </div>
     <div class="bg-white dark:bg-gray-800 shadow-lg rounded-xl p-6">
-      <h3 class="text-3xl font-bold text-purple-600" x-data="{ count: 0 }" x-init="setInterval(() => { if(count<12) count += 1; $el.innerText = count }, 150)">0</h3>
+    <h3 class="text-3xl font-bold text-purple-600" data-count="20">0</h3>
       <p class="mt-2 text-gray-600 dark:text-gray-300">Exams Today</p>
     </div>
     <div class="bg-white dark:bg-gray-800 shadow-lg rounded-xl p-6">
-      <h3 class="text-3xl font-bold text-pink-600" x-data="{ count: 0 }" x-init="setInterval(() => { if(count<56) count += 1; $el.innerText = count }, 50)">0</h3>
+      <h3 class="text-3xl font-bold text-pink-600" data-count="94">0</h3>
       <p class="mt-2 text-gray-600 dark:text-gray-300">Assignments Pending</p>
     </div>
   </div>
@@ -234,5 +258,51 @@
 @media (min-width: 1024px) { .portal-card { padding: 3rem; font-size: 1.5rem; min-height: 200px; } }
 .portal-card:hover, .portal-card:active { transform: translateY(-6px) scale(1.02); box-shadow: 0 15px 25px rgba(0,0,0,0.2); }
 </style>
+
+
+<script>
+function animateSpill(el, target, duration = 2000) {
+  let start = 0;
+  let startTime = null;
+
+  function easeOut(t) {
+    return 1 - Math.pow(1 - t, 3); // smooth ease
+  }
+
+  function animate(currentTime) {
+    if (!startTime) startTime = currentTime;
+    let progress = (currentTime - startTime) / duration;
+
+    if (progress > 1) progress = 1;
+
+    let value = Math.floor(easeOut(progress) * target);
+
+    // 🔥 SPILL EFFECT (overshoot near the end)
+    if (progress > 0.85 && progress < 1) {
+      value = Math.floor(target + (Math.random() * target * 0.05)); // overshoot 5%
+    }
+
+    el.innerText = value.toLocaleString();
+
+    if (progress < 1) {
+      requestAnimationFrame(animate);
+    } else {
+      el.innerText = target.toLocaleString(); // settle
+    }
+  }
+
+  requestAnimationFrame(animate);
+}
+
+// AUTO APPLY TO YOUR STAT CARDS
+document.addEventListener("DOMContentLoaded", () => {
+  const counters = document.querySelectorAll("[data-count]");
+
+  counters.forEach(el => {
+    const target = parseInt(el.getAttribute("data-count"));
+    animateSpill(el, target);
+  });
+});
+</script>
 
 {% endblock %}
