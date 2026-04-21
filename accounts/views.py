@@ -45,14 +45,10 @@ def portal_selection(request):
     if user.role == 'accountant':
         roles.append('accountant')
 
-    # School objects for admin/accountant dashboards
-    school = getattr(user, 'school', None) if 'schooladmin' in roles else None
-    accountant_school = getattr(user, 'school', None) if 'accountant' in roles else None
 
     context = {
         'roles': roles,
-        'school': school,
-        'accountant_school': accountant_school,
+        
     }
 
     return render(request, 'accounts/portal_selection.html', context)
