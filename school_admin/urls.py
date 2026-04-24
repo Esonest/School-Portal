@@ -12,6 +12,8 @@ urlpatterns = [
     path("<int:school_id>/create/", views.student_create, name="admin_student_create"),
     path("<int:school_id>/edit/<int:student_id>/", views.student_edit, name="admin_student_edit"),
     path("<int:school_id>/delete/<int:student_id>/", views.student_delete, name="admin_student_delete"),
+    path("<int:school_id>/<int:student_id>/toggle-status/",views.toggle_student_status,name="toggle_student_status"),
+    path("<int:school_id>/<int:student_id>/change-class/",views.change_student_class,name="change_student_class"),
 
 
      # Admin

@@ -127,7 +127,11 @@
               <div>Total: {{ overall_total }}</div>
               <div>Best: {{ best_subject }}</div>
               <div>Weak: {{ weak_subject }}</div>
+
+              {% if show_position and position %}
               <div>Position: {{ position }}/{{ class_size }}</div>
+      {% endif %}
+             
             </td>
           </tr>
 

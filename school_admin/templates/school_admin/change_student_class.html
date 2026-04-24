@@ -1,0 +1,44 @@
+{% extends "accounts/base.html" %}
+
+{% block content %}
+<div class="max-w-xl mx-auto mt-10 bg-white shadow-lg rounded-xl p-6">
+    <h2 class="text-2xl font-bold mb-6">
+        Change Class - {{ student.full_name }}
+    </h2>
+
+    <form method="post">
+        {% csrf_token %}
+
+        <div class="mb-4">
+            <label class="block mb-2 font-semibold">
+                Current Class
+            </label>
+            <input type="text"
+                   value="{{ student.school_class }}"
+                   disabled
+                   class="w-full border rounded-lg p-3 bg-gray-100">
+        </div>
+
+        <div class="mb-6">
+            <label class="block mb-2 font-semibold">
+                New Class
+            </label>
+            <select name="new_class"
+                    required
+                    class="w-full border rounded-lg p-3">
+                {% for cls in classes %}
+                    <option value="{{ cls.id }}"
+                        {% if cls == student.school_class %}selected{% endif %}>
+                        {{ cls.name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+
+        <button type="submit"
+                class="w-full bg-purple-600 text-white py-3 rounded-lg hover:bg-purple-700">
+            Move Student
+        </button>
+    </form>
+</div>
+{% endblock %}

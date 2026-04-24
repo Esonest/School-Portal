@@ -1,7 +1,7 @@
 from django.db import models
 from django.conf import settings
 from django.utils import timezone
-from accounts.models import School  # already correct
+from accounts.models import School
 
 
 class SchoolClass(models.Model):
@@ -121,7 +121,14 @@ class Student(models.Model):
         blank=True,
         help_text="Paystack customer code"
     )
+    
 
+    # Access Control
+    # -----------------------------
+    is_active = models.BooleanField(
+        default=True,
+        help_text="Inactive students cannot login to the portal"
+    )
 
     # -----------------------------
     # Access Control

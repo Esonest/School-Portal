@@ -396,45 +396,64 @@ from .models import ClassScoreSetting
 @login_required
 def class_score_settings(request, school_id):
     school = get_object_or_404(School, id=school_id)
-    classes = SchoolClass.objects.filter(school=school).order_by('name')
 
-    # Ensure settings exist for every class
-    from django.db.models import Prefetch
-
-    classes = SchoolClass.objects.filter(school=school).select_related("score_setting")
+    # Keep ordering and eager loading
+    classes = (
+        SchoolClass.objects
+        .filter(school=school)
+        .order_by("name")
+        .select_related("score_setting")
+    )
 
     if request.method == "POST":
         for cls in classes:
-            setting, _ = ClassScoreSetting.objects.get_or_create(school_class=cls)
+            # Ensure a settings object exists
+            setting, _ = ClassScoreSetting.objects.get_or_create(
+                school_class=cls
+            )
 
-            # Get values from input – allow zero values
+            # Allow zero values
             ca_max = request.POST.get(f"ca_max_{cls.id}", "0")
             exam_max = request.POST.get(f"exam_max_{cls.id}", "0")
 
-            # Convert to int safely
+            # Position toggle
+            show_position = f"show_position_{cls.id}" in request.POST
+
+            # Safely convert values
             try:
-                setting.ca_max = max(0, float(ca_max))
-            except:
+                setting.ca_max = max(0, int(float(ca_max)))
+            except (ValueError, TypeError):
                 setting.ca_max = 0
 
             try:
-                setting.exam_max = max(0, float(exam_max))
-            except:
+                setting.exam_max = max(0, int(float(exam_max)))
+            except (ValueError, TypeError):
                 setting.exam_max = 0
+
+            # ✅ Save toggle
+            setting.show_position = show_position
+
+            # Save everything once
             setting.save()
 
-        messages.success(request, "Score settings updated.")
+        messages.success(request, "Score settings updated successfully.")
         return redirect(request.path)
 
-    class_score_settings = ClassScoreSetting.objects.filter(
-        school_class__school=school
-    ).select_related("school_class")
+    class_score_settings = (
+        ClassScoreSetting.objects
+        .filter(school_class__school=school)
+        .select_related("school_class")
+    )
 
-    return render(request, "results/class_score_settings.html", {
-        "school": school,
-        "classes": classes,
-        "class_score_settings": class_score_settings,
-    })
+    return render(
+        request,
+        "results/class_score_settings.html",
+        {
+            "school": school,
+            "classes": classes,
+            "class_score_settings": class_score_settings,
+        },
+    )
 
 
 
@@ -2757,6 +2776,45 @@ def build_student_result_context(student, term, session, exam_class):
     else:
         exam_class = student.school_class
 
+
+     # ✅ Get class score settings
+    score_setting = getattr(exam_class, "score_setting", None)
+    show_position = (
+        score_setting.show_position
+        if score_setting else True
+    )
+
+    # -------------------------------------------------
+    # Position Calculation
+    # -------------------------------------------------
+    position = None
+
+    if show_position:
+        class_qs = (
+            Score.objects
+            .filter(
+                term=term,
+                session=session,
+                school_class=exam_class
+            )
+            .values("student")
+            .annotate(total=Sum(F("ca") + F("exam")))
+        )
+
+        ranking = sorted(
+            class_qs,
+            key=lambda x: x["total"] or 0,
+            reverse=True
+        )
+
+        position = next(
+            (
+                i for i, r in enumerate(ranking, start=1)
+                if r["student"] == student.id
+            ),
+            None
+        )    
+
     base_class_size = (
         Score.objects
         .filter(session=session, school_class=exam_class)
@@ -2957,6 +3015,7 @@ def build_student_result_context(student, term, session, exam_class):
         "overall_total": overall_total,
         "avg": avg,
         "position": position,
+        "show_position": show_position,
         "class_size": class_size_at_session,
         "best_subject": best_subject,
         "least_subject": least_subject,

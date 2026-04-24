@@ -112,7 +112,9 @@
     <div class="bg-gray-50 p-4 rounded shadow-sm space-y-1 mt-4">
       <p><strong>Total:</strong> {{ overall_total }}</p>
       <p><strong>Average:</strong> {{ avg|floatformat:2 }}</p>
+      {% if show_position and position %}
       <p><strong>Position:</strong> {{ position }} of {{ class_size }}</p>
+      {% endif %}
       {% if best_subject %}
         <p><strong>Best Subject:</strong> {{ best_subject.subject }} ({{ best_subject.total }})</p>
       {% endif %}

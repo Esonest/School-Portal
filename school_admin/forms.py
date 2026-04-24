@@ -123,6 +123,7 @@ class StudentUpdateForm(forms.ModelForm):
             "last_name",
             "admission_no",
             "school_class",
+            "is_active",
             "dob",
             "gender",
             "photo",
@@ -148,6 +149,9 @@ class StudentUpdateForm(forms.ModelForm):
             self.fields["first_name"].initial = self.instance.user.first_name
             self.fields["last_name"].initial = self.instance.user.last_name
 
+        if self.instance:
+            self.fields["is_active"].initial = self.instance.is_active        
+
     def save(self, commit=True):
         student = super().save(commit=False)
         user = student.user
@@ -160,6 +164,8 @@ class StudentUpdateForm(forms.ModelForm):
         password = self.cleaned_data.get("password")
         if password:
             user.set_password(password)
+
+        student.is_active = self.cleaned_data["is_active"]    
 
         if commit:
             user.save()

@@ -168,18 +168,39 @@
             <td class="px-4 py-3 font-medium">{{ student.full_name }}</td>
             <td class="px-4 py-3">{{ student.admission_no }}</td>
             <td class="px-4 py-3">{{ student.school_class }}</td>
-            <td class="px-4 py-3 no-print">
-              <div class="flex gap-2">
-                <a href="{% url 'school_admin:admin_student_edit' school.id student.id %}"
-                   class="px-3 py-1 text-xs bg-yellow-500 text-white rounded">
-                  Edit
-                </a>
-                <a href="{% url 'school_admin:admin_student_delete' school.id student.id %}"
-                   class="px-3 py-1 text-xs bg-red-600 text-white rounded">
+
+            <td class="px-4 py-3 flex flex-wrap gap- no-print">
+    <!-- Edit -->
+    <a href="{% url 'school_admin:admin_student_edit' school.id student.id %}"
+       class="px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+        Edit
+    </a>
+
+    <!-- Activate / Deactivate -->
+    <a href="{% url 'school_admin:toggle_student_status' school.id student.id %}"
+       class="px-3 py-1 rounded-lg text-white
+              {% if student.is_active %}
+                  bg-red-600 hover:bg-red-700
+              {% else %}
+                  bg-green-600 hover:bg-green-700
+              {% endif %}">
+        {% if student.is_active %}
+            Deactivate
+        {% else %}
+            Activate
+        {% endif %}
+    </a>
+
+    <!-- Change Class -->
+    <a href="{% url 'school_admin:change_student_class' school.id student.id %}"
+       class="px-3 py-1 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
+        Change Class
+    </a>
+    <a href="{% url 'school_admin:admin_student_delete' school.id student.id %}"
+                   class="px-3 py-1 text-xs bg-yellow-600 text-white rounded">
                   Delete
                 </a>
-              </div>
-            </td>
+</td>
           </tr>
           {% empty %}
           <tr>

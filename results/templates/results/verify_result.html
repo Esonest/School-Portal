@@ -167,7 +167,9 @@
       <div class="summary-card">
         <p><strong>Total:</strong> {{ overall_total }}</p>
         <p><strong>Average:</strong> {{ avg_total|floatformat:2 }}</p>
-        <p><strong>Position:</strong> {{ position }} of {{ class_size }}</p>
+       {% if show_position and position %}
+      <p><strong>Position:</strong> {{ position }} of {{ class_size }}</p>
+      {% endif %}
         {% if best_subject %}<p><strong>Best Subject:</strong> {{ best_subject }}</p>{% endif %}
         {% if weak_subject %}<p><strong>Weakest Subject:</strong> {{ weak_subject }}</p>{% endif %}
       </div>

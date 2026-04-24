@@ -61,6 +61,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.urls import reverse
 from django.contrib.auth.decorators import login_required
+from students.models import Student
 
 
 
@@ -83,9 +84,29 @@ def login_view(request):
             if user.role == 'teacher' and not hasattr(user, 'teacher_profile'):
                 messages.error(request, "This account has been deleted. Contact admin.")
                 return redirect('accounts:login')
-            if user.role == 'student' and not hasattr(user, 'student_profile'):
-                messages.error(request, "This account has been deleted. Contact admin.")
-                return redirect('accounts:login')
+            
+            # Student profile check
+            # ---------------------------------------
+            if user.role == "student":
+                try:
+                    student = user.student_profile
+                except Student.DoesNotExist:
+                    messages.error(
+                        request,
+                        "Student profile is missing. Contact administrator."
+                    )
+                    return redirect("accounts:login")
+
+                # Block inactive students
+                if not student.is_active:
+                    messages.error(
+                        request,
+                        "Your account has been deactivated. Please contact your school administrator."
+                    )
+                    return redirect("accounts:login")
+
+            
+            
             if user.role == 'schooladmin' and not hasattr(user, 'school_admin_profile'):
                 messages.error(request, "This account has been deleted. Contact admin.")
                 return redirect('accounts:login')

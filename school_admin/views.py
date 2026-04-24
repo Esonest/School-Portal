@@ -239,6 +239,81 @@ def student_delete(request, school_id, student_id):
         "school": school
     })
 
+# views.py
+
+@login_required
+@user_passes_test(lambda u: is_schooladmin(u) or is_superadmin(u))
+def toggle_student_status(request, school_id, student_id):
+    school = request.user.school_admin_profile.school
+    student = get_object_or_404(
+        Student,
+        id=student_id,
+        school=school
+    )
+
+    student.is_active = not student.is_active
+    student.save()
+
+    status = "activated" if student.is_active else "deactivated"
+
+    messages.success(
+        request,
+        f"{student.full_name()} has been {status} successfully."
+    )
+
+    return redirect(
+        "school_admin:admin_student_list",
+        school_id=school.id
+    )
+
+@login_required
+@user_passes_test(lambda u: is_schooladmin(u) or is_superadmin(u))
+def change_student_class(request, school_id, student_id):
+    school = request.user.school_admin_profile.school
+
+    student = get_object_or_404(
+        Student,
+        id=student_id,
+        school=school
+    )
+
+    if request.method == "POST":
+        new_class_id = request.POST.get("new_class")
+
+        new_class = get_object_or_404(
+            SchoolClass,
+            id=new_class_id,
+            school=school
+        )
+
+        old_class = student.school_class
+
+        if old_class != new_class:
+            student.school_class = new_class
+            student.save()
+
+            messages.success(
+                request,
+                f"{student.full_name()} moved from "
+                f"{old_class} to {new_class} successfully."
+            )
+
+        return redirect(
+            "school_admin:admin_student_list",
+            school_id=school.id
+        )
+
+    classes = SchoolClass.objects.filter(school=school)
+
+    return render(
+        request,
+        "school_admin/change_student_class.html",
+        {
+            "student": student,
+            "classes": classes,
+            "school": school,
+        }
+    )    
 
 #CBT
 

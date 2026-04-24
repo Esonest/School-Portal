@@ -96,6 +96,7 @@ class ClassScoreSetting(models.Model):
     )
     ca_max = models.FloatField(default=40, help_text="Maximum score for CA")
     exam_max = models.FloatField(default=60, help_text="Maximum score for Exam")
+    show_position = models.BooleanField(default=True)
 
     class Meta:
         verbose_name = "Class Score Setting"
