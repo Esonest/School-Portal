@@ -1,8 +1,50 @@
 {
+  "_chunk-sbRso20c.js": {
+    "file": "assets/chunk-sbRso20c.js",
+    "name": "chunk"
+  },
+  "_typeof-DmQ5kzpc.js": {
+    "file": "assets/typeof-DmQ5kzpc.js",
+    "name": "typeof"
+  },
   "index.html": {
-    "file": "assets/index-C6u-4gcI.js",
+    "file": "assets/index-3H23IHmn.js",
     "name": "index",
     "src": "index.html",
-    "isEntry": true
+    "isEntry": true,
+    "imports": [
+      "_chunk-sbRso20c.js",
+      "_typeof-DmQ5kzpc.js"
+    ],
+    "dynamicImports": [
+      "node_modules/.pnpm/html2canvas@1.4.1/node_modules/html2canvas/dist/html2canvas.js",
+      "node_modules/.pnpm/dompurify@3.4.1/node_modules/dompurify/dist/purify.es.mjs",
+      "node_modules/.pnpm/canvg@3.0.11/node_modules/canvg/lib/index.es.js"
+    ]
+  },
+  "node_modules/.pnpm/canvg@3.0.11/node_modules/canvg/lib/index.es.js": {
+    "file": "assets/index.es-BU_dmxAD.js",
+    "name": "index.es",
+    "src": "node_modules/.pnpm/canvg@3.0.11/node_modules/canvg/lib/index.es.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-sbRso20c.js",
+      "_typeof-DmQ5kzpc.js"
+    ]
+  },
+  "node_modules/.pnpm/dompurify@3.4.1/node_modules/dompurify/dist/purify.es.mjs": {
+    "file": "assets/purify.es-mAzEB2DM.js",
+    "name": "purify.es",
+    "src": "node_modules/.pnpm/dompurify@3.4.1/node_modules/dompurify/dist/purify.es.mjs",
+    "isDynamicEntry": true
+  },
+  "node_modules/.pnpm/html2canvas@1.4.1/node_modules/html2canvas/dist/html2canvas.js": {
+    "file": "assets/html2canvas-D7fnOpHe.js",
+    "name": "html2canvas",
+    "src": "node_modules/.pnpm/html2canvas@1.4.1/node_modules/html2canvas/dist/html2canvas.js",
+    "isDynamicEntry": true,
+    "imports": [
+      "_chunk-sbRso20c.js"
+    ]
   }
 }
