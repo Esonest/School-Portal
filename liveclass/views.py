@@ -738,31 +738,79 @@ def liveclass_token_api(request, pk):
         "username": user.get_full_name() or user.username,
     })
 
+
+
 @login_required
 def start_recording_api(request, pk):
-    live_class = get_object_or_404(LiveClass, pk=pk, school=request.user.school)
+    if request.method != "POST":
+        return JsonResponse(
+            {"error": "POST request required"},
+            status=405
+        )
 
-    if not (request.user.is_teacher_user or request.user.is_schooladmin or request.user.is_superadmin):
-        return JsonResponse({"error": "Forbidden"}, status=403)
+    live_class = get_object_or_404(
+        LiveClass,
+        pk=pk,
+        school=request.user.school
+    )
 
-    # ✅ ALWAYS ensure real 100ms room ID
-    real_room_id = create_100ms_room_if_missing(live_class.room_id)
-
-    if not real_room_id:
-        return JsonResponse({"error": "Room creation failed"}, status=500)
-
-    # 🔥 SAVE REAL ROOM ID
-    if live_class.room_id != real_room_id:
-        live_class.room_id = real_room_id
-        live_class.save()
+    if not (
+        request.user.is_teacher_user
+        or request.user.is_schooladmin
+        or request.user.is_superadmin
+    ):
+        return JsonResponse(
+            {"error": "Only teachers can record"},
+            status=403
+        )
 
     try:
-        start_recording(real_room_id)
-        return JsonResponse({"success": True})
-    except Exception as e:
-        print("❌ RECORDING ERROR:", str(e))
-        return JsonResponse({"error": str(e)}, status=500) 
+        real_room_id = create_100ms_room_if_missing(
+            live_class.room_id
+        )
 
+        if not real_room_id:
+            return JsonResponse(
+                {"error": "Room not found"},
+                status=500
+            )
+
+        if live_class.room_id != real_room_id:
+            live_class.room_id = real_room_id
+            live_class.save(update_fields=["room_id"])
+
+        recording_data = start_recording(real_room_id)
+
+        # Save recording details
+        live_class.recording_id = (
+            recording_data.get("id")
+            or live_class.recording_id
+        )
+        live_class.recording_status = "recording"
+        live_class.save(
+            update_fields=[
+                "recording_id",
+                "recording_status",
+            ]
+        )
+
+        return JsonResponse({
+            "success": True,
+            "recording": recording_data,
+            "already_recording": recording_data.get(
+                "already_recording",
+                False
+            ),
+            "recording_id": live_class.recording_id,
+            "recording_status": live_class.recording_status,
+        })
+
+    except Exception as e:
+        print("❌ RECORDING ERROR:", e)
+        
+        return JsonResponse({
+            "error": str(e),
+        }, status=500)
 
 def start_recording(room_id):
     payload = {
@@ -774,35 +822,163 @@ def start_recording(room_id):
         "jti": str(uuid.uuid4()),
     }
 
-    management_token = jwt.encode(
+    token = jwt.encode(
         payload,
         settings.HMS_API_SECRET,
-        algorithm="HS256"
+        algorithm="HS256",
     )
 
-    url = f"https://api.100ms.live/v2/recordings/room/{room_id}/start"
+    url = (
+        f"https://api.100ms.live/"
+        f"v2/recordings/room/{room_id}/start"
+    )
 
-    res = requests.post(
+    response = requests.post(
         url,
         headers={
-            "Authorization": f"Bearer {management_token}",
-            "Content-Type": "application/json"
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
         },
         json={
             "resolution": {
                 "width": 1280,
-                "height": 720
-            },
-            "recording_info": {
-                "destination": "rtmp",  # or "s3" if configured
+                "height": 720,
             }
-        }
+        },
+        timeout=60,
     )
-    print("🎥 RECORDING RESPONSE:", res.status_code, res.text)
 
-    if res.status_code not in [200, 201]:
-        raise Exception(res.text)  
+    print("🎥 100ms:", response.status_code, response.text)
+
+    if response.status_code in (200, 201):
+        return response.json()
+
+    if response.status_code == 409:
+        data = response.json()
+        data["already_recording"] = True
+        return data
+    raise Exception(response.text) 
+
+@login_required
+def stop_recording_api(request, pk):
+    if request.method != "POST":
+        return JsonResponse(
+            {"error": "POST request required"},
+            status=405
+        )
+
+    live_class = get_object_or_404(
+        LiveClass,
+        pk=pk,
+        school=request.user.school
+    )
+
+    try:
+        result = stop_recording(live_class.room_id)
+
+        live_class.recording_status = "processing"
+        live_class.save(update_fields=[
+            "recording_status"
+        ])
+
+        return JsonResponse({
+            "success": True,
+            "recording": result,
+        })
+
+    except Exception as e:
+        return JsonResponse(
+            {"error": str(e)},
+            status=500
+        )    
          
+
+def stop_recording(room_id):
+    payload = {
+        "access_key": settings.HMS_API_KEY,
+        "type": "management",
+        "version": 2,
+        "iat": int(time.time()),
+        "exp": int(time.time()) + 3600,
+        "jti": str(uuid.uuid4()),
+    }
+
+    token = jwt.encode(
+        payload,
+        settings.HMS_API_SECRET,
+        algorithm="HS256",
+    )
+
+    url = (
+        f"https://api.100ms.live/"
+        f"v2/recordings/room/{room_id}/stop"
+    )
+
+    response = requests.post(
+        url,
+        headers={
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+        },
+        timeout=60,
+    )
+
+    print("🛑 100ms Stop:", response.status_code, response.text)
+
+    if response.status_code not in (200, 201):
+        raise Exception(response.text)
+
+    return response.json()
+
+
+
+from django.views.decorators.csrf import csrf_exempt
+import json
+
+@csrf_exempt
+def recording_webhook(request):
+    try:
+        payload = json.loads(request.body)
+    except Exception:
+        return JsonResponse({"error": "Invalid JSON"}, status=400)
+
+    event = payload.get("type")
+
+    if event == "beam.success":
+        recording = payload.get("data", {})
+        recording_id = recording.get("id")
+        recording_url = recording.get("url")
+
+        try:
+            live_class = LiveClass.objects.get(
+                recording_id=recording_id
+            )
+
+            live_class.recording_url = recording_url
+            live_class.recording_status = "completed"
+            live_class.save(update_fields=[
+                "recording_url",
+                "recording_status",
+            ])
+        except LiveClass.DoesNotExist:
+            pass
+
+    return JsonResponse({"success": True})
+
+
+@login_required
+def recording_status_api(request, pk):
+    live_class = get_object_or_404(
+        LiveClass,
+        pk=pk,
+        school=request.user.school
+    )
+
+    return JsonResponse({
+        "status": live_class.recording_status,
+        "url": live_class.recording_url,
+    })
+
 
 
 from django.contrib.auth import get_user_model
@@ -881,7 +1057,7 @@ def liveclass_frontend(request, pk=None):
 from django.utils import timezone
 from .models import LiveClass, LiveClassWaiting
 
-@login_required
+@login_required 
 def request_join_liveclass(request, pk):
     print("USER:", request.user)
     print("HAS student_profile:", hasattr(request.user, "student_profile"))

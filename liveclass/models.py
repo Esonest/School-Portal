@@ -2,14 +2,22 @@ from django.db import models
 from django.utils import timezone
 
 
+# models.py
+
 class LiveClass(models.Model):
     school = models.ForeignKey(
         "accounts.School",
         on_delete=models.CASCADE,
         related_name="live_classes"
     )
-    subject = models.ForeignKey("results.Subject", on_delete=models.CASCADE)
-    class_room = models.ForeignKey("students.SchoolClass", on_delete=models.CASCADE)
+    subject = models.ForeignKey(
+        "results.Subject",
+        on_delete=models.CASCADE
+    )
+    class_room = models.ForeignKey(
+        "students.SchoolClass",
+        on_delete=models.CASCADE
+    )
     teacher = models.ForeignKey(
         "accounts.Teacher",
         on_delete=models.CASCADE,
@@ -18,6 +26,7 @@ class LiveClass(models.Model):
 
     title = models.CharField(max_length=255)
     description = models.TextField(blank=True)
+
     camera_enabled = models.BooleanField(default=False)
 
     start_time = models.DateTimeField()
@@ -35,34 +44,60 @@ class LiveClass(models.Model):
         default="scheduled"
     )
 
+    room_id = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True
+    )
+
+    # ✅ NEW FIELDS
+    recording_id = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True
+    )
+
+    recording_url = models.URLField(
+        blank=True,
+        null=True
+    )
+
+    recording_status = models.CharField(
+        max_length=50,
+        default="idle"
+    )
+
     created_at = models.DateTimeField(auto_now_add=True)
 
-    room_id = models.CharField(max_length=255, blank=True, null=True)
-
-    
     class Meta:
         ordering = ["-start_time"]
 
-    # ✅ Properly indented clean method
     def clean(self):
         from django.core.exceptions import ValidationError
         if self.start_time >= self.end_time:
-            raise ValidationError("End time must be after start time.")
+            raise ValidationError(
+                "End time must be after start time."
+            )
 
     def update_status(self):
         now = timezone.now()
+
         new_status = (
-            "live" if self.start_time <= now <= self.end_time
-            else "ended" if now > self.end_time
+            "live"
+            if self.start_time <= now <= self.end_time
+            else "ended"
+            if now > self.end_time
             else "scheduled"
         )
+
         if self.status != new_status:
             self.status = new_status
-            super().save(update_fields=["status"])
+            super().save(
+                update_fields=["status"]
+            )
 
     def __str__(self):
         return f"{self.title} ({self.class_room})"
-
 
 
 class LiveClassAttendance(models.Model):

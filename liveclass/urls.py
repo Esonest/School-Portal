@@ -17,7 +17,7 @@ urlpatterns = [
     path("<int:pk>/join/", views.liveclass_join, name="liveclass_join"),
     path("<int:pk>/attendance/", views.attendance_dashboard, name="attendance_dashboard"),
     path("<int:pk>/start/", views.liveclass_start, name="liveclass_start"),
-    path('leave/<int:pk>/', views.liveclass_leave, name='liveclass_leave'),
+    path ('leave/<int:pk>/', views.liveclass_leave, name='liveclass_leave'),
     path("join/<int:pk>/enable-camera/", views.liveclass_enable_camera, name="liveclass_enable_camera"),
     path('liveclass/<int:pk>/peers/', views.liveclass_peers, name='liveclass_peers'),
     path('api/liveclass/<int:pk>/token/', views.liveclass_token_api, name='liveclass_token_api'),
@@ -29,9 +29,11 @@ urlpatterns = [
     path("api/liveclass/<int:pk>/waiting-heartbeat/", views.waiting_heartbeat),
     path("api/liveclass/<int:pk>/approve-all/", views.approve_all_students),
     path("api/liveclass/<int:pk>/reject-all/", views.reject_all_students),
-    path("<int:pk>/start-recording/", views.start_recording_api),
+    path("api/liveclass/<int:pk>/start-recording/",views.start_recording_api,name="start_recording_api"),
+    path("api/liveclass/<int:pk>/stop-recording/",views.stop_recording_api,name="stop_recording_api"),
+    path("webhooks/recording/",views.recording_webhook,name="recording_webhook"),
+    path("api/liveclass/<int:pk>/recording-status/",views.recording_status_api,name="recording_status_api"),
     path("<int:pk>/", views.liveclass_frontend),
-
 
 ]
 
