@@ -932,39 +932,79 @@ def stop_recording(room_id):
 
 
 
+from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
 
+
 @csrf_exempt
 def recording_webhook(request):
+    if request.method != "POST":
+        return JsonResponse(
+            {"error": "POST request required"},
+            status=405
+        )
+
     try:
-        payload = json.loads(request.body)
-    except Exception:
-        return JsonResponse({"error": "Invalid JSON"}, status=400)
+        body = request.body.decode("utf-8") or "{}"
+        payload = json.loads(body)
+    except json.JSONDecodeError:
+        return JsonResponse(
+            {"error": "Invalid JSON"},
+            status=400
+        )
+
+    print("📩 Recording Webhook Received:", payload)
 
     event = payload.get("type")
 
     if event == "beam.success":
         recording = payload.get("data", {})
+
         recording_id = recording.get("id")
         recording_url = recording.get("url")
 
-        try:
-            live_class = LiveClass.objects.get(
+        if recording_id:
+            try:
+                live_class = LiveClass.objects.get(
+                    recording_id=recording_id
+                )
+
+                live_class.recording_url = recording_url
+                live_class.recording_status = "completed"
+                live_class.save(update_fields=[
+                    "recording_url",
+                    "recording_status",
+                ])
+
+                print(
+                    f"✅ Recording completed: "
+                    f"{recording_id}"
+                )
+
+            except LiveClass.DoesNotExist:
+                print(
+                    f"⚠ LiveClass not found for "
+                    f"{recording_id}"
+                )
+
+    elif event == "beam.failed":
+        recording = payload.get("data", {})
+        recording_id = recording.get("id")
+
+        if recording_id:
+            LiveClass.objects.filter(
                 recording_id=recording_id
+            ).update(
+                recording_status="failed"
             )
 
-            live_class.recording_url = recording_url
-            live_class.recording_status = "completed"
-            live_class.save(update_fields=[
-                "recording_url",
-                "recording_status",
-            ])
-        except LiveClass.DoesNotExist:
-            pass
+            print(
+                f"❌ Recording failed: "
+                f"{recording_id}"
+            )
 
     return JsonResponse({"success": True})
-
 
 @login_required
 def recording_status_api(request, pk):
