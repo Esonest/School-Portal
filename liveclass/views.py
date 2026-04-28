@@ -873,8 +873,15 @@ def stop_recording_api(request, pk):
         school=request.user.school
     )
 
+    if not live_class.recording_id:
+        return JsonResponse({
+            "error": "No active recording found"
+        }, status=400)
+
     try:
-        result = stop_recording(live_class.room_id)
+        result = stop_recording(
+            live_class.recording_id
+        )
 
         live_class.recording_status = "processing"
         live_class.save(update_fields=[
@@ -887,13 +894,12 @@ def stop_recording_api(request, pk):
         })
 
     except Exception as e:
-        return JsonResponse(
-            {"error": str(e)},
-            status=500
-        )    
+        return JsonResponse({
+            "error": str(e)
+        }, status=500)
          
 
-def stop_recording(room_id):
+def stop_recording(recording_id):
     payload = {
         "access_key": settings.HMS_API_KEY,
         "type": "management",
@@ -911,7 +917,7 @@ def stop_recording(room_id):
 
     url = (
         f"https://api.100ms.live/"
-        f"v2/recordings/room/{room_id}/stop"
+        f"v2/recordings/{recording_id}/stop"
     )
 
     response = requests.post(
@@ -923,7 +929,11 @@ def stop_recording(room_id):
         timeout=60,
     )
 
-    print("🛑 100ms Stop:", response.status_code, response.text)
+    print(
+        "🛑 Recording Stop:",
+        response.status_code,
+        response.text
+    )
 
     if response.status_code not in (200, 201):
         raise Exception(response.text)
