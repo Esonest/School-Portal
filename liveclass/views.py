@@ -939,28 +939,32 @@ import json
 
 @csrf_exempt
 def recording_webhook(request):
+    # 100ms dashboard sometimes uses GET when testing
+    if request.method == "GET":
+        return JsonResponse({
+            "success": True,
+            "message": "Recording webhook is live."
+        })
+
     if request.method != "POST":
-        return JsonResponse(
-            {"error": "POST request required"},
-            status=405
-        )
+        return JsonResponse({
+            "error": "Method not allowed"
+        }, status=405)
 
     try:
         body = request.body.decode("utf-8") or "{}"
         payload = json.loads(body)
     except json.JSONDecodeError:
-        return JsonResponse(
-            {"error": "Invalid JSON"},
-            status=400
-        )
+        return JsonResponse({
+            "error": "Invalid JSON"
+        }, status=400)
 
-    print("📩 Recording Webhook Received:", payload)
+    print("📩 100ms Webhook:", payload)
 
     event = payload.get("type")
 
     if event == "beam.success":
         recording = payload.get("data", {})
-
         recording_id = recording.get("id")
         recording_url = recording.get("url")
 
@@ -970,22 +974,20 @@ def recording_webhook(request):
                     recording_id=recording_id
                 )
 
-                live_class.recording_url = recording_url
                 live_class.recording_status = "completed"
+                live_class.recording_url = recording_url
                 live_class.save(update_fields=[
-                    "recording_url",
                     "recording_status",
+                    "recording_url",
                 ])
 
                 print(
-                    f"✅ Recording completed: "
-                    f"{recording_id}"
+                    f"✅ Recording ready: {recording_id}"
                 )
 
             except LiveClass.DoesNotExist:
                 print(
-                    f"⚠ LiveClass not found for "
-                    f"{recording_id}"
+                    f"⚠ No LiveClass found for {recording_id}"
                 )
 
     elif event == "beam.failed":
@@ -1000,8 +1002,7 @@ def recording_webhook(request):
             )
 
             print(
-                f"❌ Recording failed: "
-                f"{recording_id}"
+                f"❌ Recording failed: {recording_id}"
             )
 
     return JsonResponse({"success": True})
