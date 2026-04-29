@@ -23,6 +23,7 @@ urlpatterns = [
     path("invoice/<int:pk>/", views.invoice_detail, name="invoice_detail"),
     path("generate-invoices", views.generate_invoices, name="generate_invoices"),
     path("invoice/delete/<int:pk>/", views.invoice_delete, name="invoice_delete"),
+    path("invoices/bulk-delete/",views.bulk_delete_invoices,name="bulk_delete_invoices"),
 
 
     path("payment/record/", views.record_payment, name="record_payment"),

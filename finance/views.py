@@ -735,21 +735,23 @@ from django.db.models import Prefetch, Q
 from django.shortcuts import render
 
 
+# views.py
+
+from django.core.paginator import Paginator
+from django.contrib import messages
+from django.db.models import Q, Prefetch
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+
 @login_required
 def invoice_list(request):
     school = request.user.school
 
-    # -----------------------------
-    # GET filters
-    # -----------------------------
     search = request.GET.get("search", "").strip()
-    current_class = request.GET.get("class")
-    current_session = request.GET.get("session")
-    current_term = request.GET.get("term")
+    current_class = request.GET.get("class", "")
+    current_session = request.GET.get("session", "")
+    current_term = request.GET.get("term", "")
 
-    # -----------------------------
-    # Base queryset
-    # -----------------------------
     invoices = (
         Invoice.objects
         .filter(school=school)
@@ -768,9 +770,6 @@ def invoice_list(request):
         .order_by("-created_at")
     )
 
-    # -----------------------------
-    # Name / Admission filtering
-    # -----------------------------
     if search:
         invoices = invoices.filter(
             Q(student__user__first_name__icontains=search) |
@@ -779,40 +778,60 @@ def invoice_list(request):
             Q(student__admission_no__icontains=search)
         ).distinct()
 
-    # -----------------------------
-    # Class filter
-    # -----------------------------
     if current_class:
         invoices = invoices.filter(school_class_id=current_class)
 
-    # -----------------------------
-    # Session filter
-    # -----------------------------
     if current_session:
         invoices = invoices.filter(session=current_session)
 
-    # -----------------------------
-    # Term filter
-    # -----------------------------
     if current_term:
         invoices = invoices.filter(term=current_term)
 
-    # -----------------------------
-    # Context
-    # -----------------------------
+    # ============================
+    # Pagination
+    # ============================
+    paginator = Paginator(invoices, 10)
+    page_number = request.GET.get("page")
+    invoices = paginator.get_page(page_number)
+
     context = {
         "invoices": invoices,
         "search": search,
         "current_class": current_class,
         "current_session": current_session,
         "current_term": current_term,
-        "classes": SchoolClass.objects.filter(school=school).order_by("name"),
+        "classes": SchoolClass.objects.filter(
+            school=school
+        ).order_by("name"),
         "sessions": SESSION_LIST,
-        # ⚡ Fix: use TERM_CHOICES from Score model (or Student)
         "term_choices": Score.TERM_CHOICES,
     }
 
     return render(request, "finance/invoice_list.html", context)
+
+
+@login_required
+def bulk_delete_invoices(request):
+    if request.method == "POST":
+        invoice_ids = request.POST.getlist("invoice_ids")
+
+        if invoice_ids:
+            deleted_count, _ = Invoice.objects.filter(
+                id__in=invoice_ids,
+                school=request.user.school
+            ).delete()
+
+            messages.success(
+                request,
+                f"{deleted_count} invoice(s) deleted successfully."
+            )
+        else:
+            messages.warning(
+                request,
+                "No invoices were selected."
+            )
+
+    return redirect("finance:invoice_list")
 
 
 
@@ -893,9 +912,6 @@ def invoice_create(request):
             "templates_by_class": templates_by_class,
         },
     )
-
-
-
 
 
 
