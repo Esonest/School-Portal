@@ -278,9 +278,12 @@ def payments_modal(request):
     # -----------------------------
     if search:
         payments_qs = payments_qs.filter(
-            Q(invoice__student__first_name__icontains=search) |
-            Q(invoice__student__last_name__icontains=search) |
-            Q(invoice__student__admission_no__icontains=search)
+            Q(invoice__student__user__first_name__icontains=search) |
+            Q(invoice__student__user__last_name__icontains=search) |
+            Q(invoice__student__admission_no__icontains=search) |
+            Q(student__user__first_name__icontains=search) |
+            Q(student__user__last_name__icontains=search) |
+            Q(student__admission_no__icontains=search)
         )
 
     # -----------------------------
@@ -1226,33 +1229,105 @@ from decimal import Decimal
 @login_required
 def financial_reports(request):
     school = request.user.school
+    start_date = timezone.now() - timedelta(days=365)
 
     selected_session = request.GET.get("session")
     selected_term = request.GET.get("term")
     selected_class = request.GET.get("school_class")
 
-    invoices = Invoice.objects.filter(school=school)
+    # ---------------------------------------------------
+    # INVOICES
+    # ---------------------------------------------------
+    invoices = Invoice.objects.filter(
+        school=school,
+        created_at__gte=start_date
+    )
 
     if selected_session:
         invoices = invoices.filter(session=selected_session)
+
     if selected_term:
         invoices = invoices.filter(term=selected_term)
+
     if selected_class:
         invoices = invoices.filter(school_class_id=selected_class)
 
-    invoices = invoices.annotate(balance=F('total_amount') - F('amount_paid'))
+    invoices = invoices.annotate(
+        balance=F("total_amount") - F("amount_paid")
+    )
 
-    total_invoiced = invoices.aggregate(total=Sum("total_amount"))["total"] or Decimal("0")
-    total_paid = invoices.aggregate(total=Sum("amount_paid"))["total"] or Decimal("0")
+    total_invoiced = invoices.aggregate(
+        total=Coalesce(Sum("total_amount"), Decimal("0"))
+    )["total"]
+
+    # ---------------------------------------------------
+    # PAYMENTS
+    # ---------------------------------------------------
+    student_ids_with_va = VirtualAccount.objects.filter(
+        student__school=school
+    ).values_list("student_id", flat=True)
+
+    payments = Payment.objects.filter(
+        school=school,
+        status="approved",
+        payment_date__gte=start_date
+    ).filter(
+        Q(invoice__isnull=False) |
+        Q(student_id__in=student_ids_with_va)
+    )
+
+    if selected_session:
+        payments = payments.filter(
+            Q(invoice__session=selected_session) |
+            Q(session=selected_session)
+        )
+
+    if selected_term:
+        payments = payments.filter(
+            Q(invoice__term=selected_term) |
+            Q(term=selected_term)
+        )
+
+    if selected_class:
+        payments = payments.filter(
+            Q(invoice__school_class_id=selected_class) |
+            Q(student__school_class_id=selected_class)
+        )
+
+    total_paid = payments.aggregate(
+        total=Coalesce(Sum("amount"), Decimal("0"))
+    )["total"]
+
+    # ---------------------------------------------------
+    # BALANCE
+    # ---------------------------------------------------
     total_balance = total_invoiced - total_paid
+
+    # ---------------------------------------------------
+    # DISPLAY VALUES (truncate decimals, don't round)
+    # ---------------------------------------------------
+    total_invoiced_display = int(total_invoiced)
+    total_paid_display = int(total_paid)
+    total_balance_display = int(total_balance)
 
     context = {
         "school": school,
         "invoices": invoices,
+
+        # Exact values
         "total_invoiced": total_invoiced,
         "total_paid": total_paid,
         "total_balance": total_balance,
-        "classes": SchoolClass.objects.filter(school=school),
+
+        # Display values
+        "total_invoiced_display": total_invoiced_display,
+        "total_paid_display": total_paid_display,
+        "total_balance_display": total_balance_display,
+
+        # Filters
+        "classes": SchoolClass.objects.filter(
+            school=school
+        ).order_by("name"),
         "sessions": SESSION_LIST,
         "terms": Score.TERM_CHOICES,
         "selected_session": selected_session,
@@ -1260,7 +1335,11 @@ def financial_reports(request):
         "selected_class": selected_class,
     }
 
-    return render(request, "finance/financial_report.html", context)
+    return render(
+        request,
+        "finance/financial_report.html",
+        context
+    )
 
 
 

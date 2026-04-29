@@ -1,5 +1,6 @@
 {% extends "accounts/base.html" %}
 {% load static %}
+{% load humanize %}
 {% block content %}
 
 <div class="max-w-7xl mx-auto px-4 sm:px-6 py-6 space-y-8">
@@ -73,15 +74,15 @@
   <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
     <div class="bg-blue-600 text-white rounded-lg p-4 shadow">
       <p class="text-sm opacity-90">Total Invoiced</p>
-      <p class="text-xl font-bold mt-1">₦{{ total_invoiced|floatformat:2 }}</p>
+      <p class="text-xl font-bold mt-1">₦{{ total_invoiced_display|intcomma }}.00</p>
     </div>
     <div class="bg-green-600 text-white rounded-lg p-4 shadow">
       <p class="text-sm opacity-90">Total Paid</p>
-      <p class="text-xl font-bold mt-1">₦{{ total_paid|floatformat:2 }}</p>
+      <p class="text-xl font-bold mt-1">₦{{ total_paid_display|intcomma }}.00</p>
     </div>
     <div class="bg-red-600 text-white rounded-lg p-4 shadow">
       <p class="text-sm opacity-90">Outstanding</p>
-      <p class="text-xl font-bold mt-1">₦{{ total_balance|floatformat:2 }}</p>
+      <p class="text-xl font-bold mt-1">₦{{ total_balance_display|intcomma }}.00</p>
     </div>
     <div class="bg-yellow-500 text-white rounded-lg p-4 shadow">
       <p class="text-sm opacity-90">Invoices Count</p>
