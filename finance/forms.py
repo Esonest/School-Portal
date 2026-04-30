@@ -37,25 +37,58 @@ from .models import Invoice, Payment, Expense
 TAILWIND = "w-full border rounded px-3 py-2"
 
 class InvoiceForm(forms.ModelForm):
+    students = forms.ModelMultipleChoiceField(
+        queryset=Student.objects.none(),
+        widget=forms.SelectMultiple(
+            attrs={
+                "class": TAILWIND,
+                "size": 10,
+            }
+        ),
+        required=True,
+    )
+
     fee_template = forms.ModelChoiceField(
-        queryset=FeeTemplate.objects.none(),  # initially empty
+        queryset=FeeTemplate.objects.none(),
         empty_label="Select Template",
-        widget=forms.Select(attrs={"class": TAILWIND}),
-        required=False
+        required=False,
+        widget=forms.Select(
+            attrs={
+                "class": TAILWIND,
+                "id": "fee-template-select",   # Important for JavaScript
+            }
+        ),
     )
 
     class Meta:
         model = Invoice
         fields = [
-            "school_class", "student", "fee_template",
-            "title", "total_amount", "due_date", "session", "term"
+            "school_class",
+            "students",
+            "fee_template",
+            "title",
+            "total_amount",
+            "due_date",
+            "session",
+            "term",
         ]
         widgets = {
             "title": forms.TextInput(attrs={"class": TAILWIND}),
             "total_amount": forms.NumberInput(attrs={"class": TAILWIND}),
-            "due_date": forms.DateInput(attrs={"class": TAILWIND, "type": "date"}),
-            "session": forms.Select(choices=[(s, s) for s in SESSION_LIST], attrs={"class": TAILWIND}),
-            "term": forms.Select(choices=Score.TERM_CHOICES, attrs={"class": TAILWIND}),
+            "due_date": forms.DateInput(
+                attrs={
+                    "class": TAILWIND,
+                    "type": "date",
+                }
+            ),
+            "session": forms.Select(
+                choices=[(s, s) for s in SESSION_LIST],
+                attrs={"class": TAILWIND},
+            ),
+            "term": forms.Select(
+                choices=Score.TERM_CHOICES,
+                attrs={"class": TAILWIND},
+            ),
         }
 
     def __init__(self, *args, **kwargs):
@@ -63,21 +96,32 @@ class InvoiceForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         if school:
-            # Filter school_class and student by school
-            self.fields["school_class"].queryset = SchoolClass.objects.filter(school=school)
-            self.fields["student"].queryset = Student.objects.filter(school=school)
-            self.fields["fee_template"].queryset = FeeTemplate.objects.filter(school=school)
+            # Classes
+            self.fields["school_class"].queryset = SchoolClass.objects.filter(
+                school=school
+            )
 
-            # Add data attributes to fee_template options for JS
-            for template in self.fields["fee_template"].queryset:
-                template.attrs = {
-                    "data-class": str(template.school_class.id),
-                    "data-amount": str(template.amount)
-                }
+            # Students
+            self.fields["students"].queryset = Student.objects.filter(school=school).select_related("user", "school_class")
+            # Add class data attribute to each student option
+            self.fields["students"].choices = [
+                (
+                    student.pk,
+                    student.full_name,
+                    {
+                        "data-class": str(student.school_class_id),
+                    },
+                )
+                for student in self.fields["students"].queryset
+            ]
 
+            # Fee Templates
+            self.fields["fee_template"].queryset = FeeTemplate.objects.filter(
+                school=school,
+                is_active=True,
+            ).select_related("school_class")
 
-
-
+            
 
 
 class PaymentForm(forms.ModelForm):

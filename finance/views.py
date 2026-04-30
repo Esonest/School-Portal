@@ -809,6 +809,7 @@ def invoice_list(request):
 
     return render(request, "finance/invoice_list.html", context)
 
+from django.db.models import F
 
 @login_required
 def bulk_delete_invoices(request):
@@ -818,13 +819,20 @@ def bulk_delete_invoices(request):
         if invoice_ids:
             deleted_count, _ = Invoice.objects.filter(
                 id__in=invoice_ids,
-                school=request.user.school
+                school=request.user.school,
+                amount_paid__lt=F("total_amount")  # Prevent deleting fully paid invoices
             ).delete()
 
-            messages.success(
-                request,
-                f"{deleted_count} invoice(s) deleted successfully."
-            )
+            if deleted_count:
+                messages.success(
+                    request,
+                    f"{deleted_count} invoice(s) deleted successfully."
+                )
+            else:
+                messages.warning(
+                    request,
+                    "Selected invoices are fully paid and cannot be deleted."
+                )
         else:
             messages.warning(
                 request,
@@ -878,22 +886,44 @@ def invoice_create(request):
 
     # Fetch classes and active fee templates
     classes = school.classes.prefetch_related("students").all()
-    templates = FeeTemplate.objects.filter(school=school, is_active=True).select_related("school_class")
+    templates = FeeTemplate.objects.filter(
+        school=school,
+        is_active=True
+    ).select_related("school_class")
 
-    # Group templates by class for JS filtering
+    # Group templates by class for JavaScript filtering
     templates_by_class = defaultdict(list)
     for template in templates:
         templates_by_class[template.school_class.id].append(template)
 
     if request.method == "POST":
         form = InvoiceForm(request.POST, school=school)
+
         if form.is_valid():
-            invoice = form.save(commit=False)
-            invoice.school = school
-            invoice.save()
+            students = form.cleaned_data["students"]
+
+            for student in students:
+                Invoice.objects.create(
+                    school=school,
+                    school_class=form.cleaned_data["school_class"],
+                    student=student,
+                    fee_template=form.cleaned_data["fee_template"],
+                    title=form.cleaned_data["title"],
+                    total_amount=form.cleaned_data["total_amount"],
+                    due_date=form.cleaned_data["due_date"],
+                    session=form.cleaned_data["session"],
+                    term=form.cleaned_data["term"],
+                )
+
+            messages.success(
+                request,
+                f"{students.count()} invoice(s) created successfully."
+            )
             return redirect("finance:invoice_list")
+
         else:
             print(form.errors)
+
     else:
         form = InvoiceForm(
             school=school,
@@ -912,9 +942,6 @@ def invoice_create(request):
             "templates_by_class": templates_by_class,
         },
     )
-
-
-
 
 
 

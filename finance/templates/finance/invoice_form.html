@@ -25,19 +25,60 @@
     </div>
 
     <!-- Student Dropdown -->
-    <div class="space-y-1">
-      <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200">Student</label>
-      {{ form.student }}
-      {% if form.student.errors %}
-        <p class="text-red-600 text-sm">{{ form.student.errors|striptags }}</p>
-      {% endif %}
+    <!-- Student Dropdown -->
+<div class="space-y-2">
+    <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200">
+        Students
+    </label>
+
+    <div id="students-container" class="space-y-2 border rounded p-3 max-h-64 overflow-y-auto">
+        {% for student in form.students.field.queryset %}
+            <label class="student-item flex items-center gap-2"
+                   data-class="{{ student.school_class_id }}">
+                <input type="checkbox"
+                       name="students"
+                       value="{{ student.id }}"
+                       class="student-checkbox">
+                <span>{{ student.user.get_full_name }}</span>
+            </label>
+        {% endfor %}
     </div>
 
-    <!-- Fee Template Dropdown -->
+    <div class="mt-2 flex flex-wrap gap-2">
+        <button type="button"
+                id="select-all-students"
+                class="px-4 py-2 bg-indigo-600 text-white rounded text-sm">
+            Select All in Class
+        </button>
+
+        <button type="button"
+                id="clear-students"
+                class="px-4 py-2 bg-gray-500 text-white rounded text-sm">
+            Clear
+        </button>
+    </div>
+
+    <p class="text-xs text-gray-500 mt-1">
+        Tick students individually or use “Select All in Class”.
+    </p>
+</div>
+
+
     <!-- Fee Template Dropdown -->
 <div class="space-y-1">
     <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200">Fee Template</label>
-    {{ form.fee_template }}
+
+   <select id="fee-template-select" name="fee_template" class="form-input w-full">
+    <option value="">Select Template</option>
+
+    {% for t in form.fee_template.field.queryset %}
+        <option value="{{ t.id }}"
+                data-class="{{ t.school_class_id }}"
+                data-amount="{{ t.amount }}">
+            {{ t.name }}
+        </option>
+    {% endfor %}
+</select>
 </div>
 
 
@@ -87,35 +128,39 @@
 
 <script>
 const classSelect = document.getElementById("class-select");
-const studentSelect = document.getElementById("id_student");
-const templateSelect = document.getElementById("fee-template-select");
-const totalInput = document.getElementById("id_total_amount");
+const studentItems = document.querySelectorAll(".student-item");
+const checkboxes = document.querySelectorAll(".student-checkbox");
 
-// Filter students & templates by class
+// FILTER by class (HIDE / SHOW only)
 classSelect.addEventListener("change", () => {
     const selectedClass = classSelect.value;
 
-    // Filter templates
-    [...templateSelect.options].forEach(opt => {
-        if (!opt.value) return;
-        opt.style.display = opt.dataset.class === selectedClass ? "block" : "none";
-    });
-    templateSelect.value = "";
+    studentItems.forEach(item => {
+        const match = item.dataset.class === selectedClass;
 
-    // Filter students
-    [...studentSelect.options].forEach(opt => {
-        if (!opt.value) return;
-        opt.style.display = opt.dataset.class === selectedClass ? "block" : "none";
+        item.style.display = match ? "flex" : "none";
     });
-    studentSelect.value = "";
+
+    // optional: clear selection when class changes
+    checkboxes.forEach(cb => cb.checked = false);
 });
 
-// Auto-fill total amount
-templateSelect.addEventListener("change", () => {
-    const selectedOption = templateSelect.selectedOptions[0];
-    if (selectedOption) {
-        totalInput.value = selectedOption.dataset.amount;
-    }
+// SELECT ALL IN CLASS
+document.getElementById("select-all-students").addEventListener("click", () => {
+    const selectedClass = classSelect.value;
+
+    checkboxes.forEach(cb => {
+        const parent = cb.closest(".student-item");
+
+        if (parent.dataset.class === selectedClass) {
+            cb.checked = true;
+        }
+    });
+});
+
+// CLEAR ALL
+document.getElementById("clear-students").addEventListener("click", () => {
+    checkboxes.forEach(cb => cb.checked = false);
 });
 </script>
 {% endblock %}
