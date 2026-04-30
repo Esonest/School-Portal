@@ -125,7 +125,7 @@ class InvoiceForm(forms.ModelForm):
 
 
 class PaymentForm(forms.ModelForm):
-    # Used ONLY for filtering invoices, not saved on Payment
+    # Filter-only field (not saved to Payment)
     school_class = forms.ModelChoiceField(
         queryset=SchoolClass.objects.none(),
         required=False,
@@ -147,24 +147,33 @@ class PaymentForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
 
         if school:
-            # Limit classes and invoices to the user's school
             self.fields["school_class"].queryset = SchoolClass.objects.filter(
                 school=school
             )
+
+            # IMPORTANT: restrict invoices to this school only
             self.fields["invoice"].queryset = Invoice.objects.filter(
                 school=school
             )
 
-        # Dynamically filter invoices by selected class
-        if self.data.get("school_class"):
+        # POST filtering
+        class_id = self.data.get("school_class")
+
+        # GET/initial filtering
+        if not class_id and self.initial.get("school_class"):
+            class_id = self.initial.get("school_class")
+
+        if class_id:
             try:
-                class_id = int(self.data.get("school_class"))
-                self.fields["invoice"].queryset = Invoice.objects.filter(
-                    school_class_id=class_id
+                queryset = Invoice.objects.filter(
+                    school=school,
+                    school_class_id=int(class_id)
                 )
+
+                self.fields["invoice"].queryset = queryset
+
             except (ValueError, TypeError):
                 pass
-
 
 
 # finance/forms.py

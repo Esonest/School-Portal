@@ -1208,36 +1208,65 @@ from decimal import Decimal
 @login_required
 def record_payment(request):
     school = request.user.school
-    current_session = request.GET.get("session", SESSION_LIST[0])
-    current_term = request.GET.get("term", "1")  # default to first term
 
-    # Materialize invoices as list to avoid cursor issues
-    invoices_qs = Invoice.objects.filter(school=school)
-    invoices = list(invoices_qs)  # <- fixes psycopg2 cursor errors
+    # Preserve filters across GET and POST
+    current_session = (
+        request.POST.get("session")
+        or request.GET.get("session")
+        or SESSION_LIST[0]
+    )
+
+    current_term = (
+        request.POST.get("term")
+        or request.GET.get("term")
+        or "1"
+    )
+
+    current_class = (
+        request.POST.get("school_class")
+        or request.GET.get("class")
+        or ""
+    )
+
+    # Base querysets
+    invoices = Invoice.objects.filter(
+        school=school,
+        session=current_session,
+        term=current_term,
+    ).select_related("student", "school_class")
+
+    students = Student.objects.filter(school=school)
+
+    if current_class:
+        invoices = invoices.filter(school_class_id=current_class)
+        students = students.filter(school_class_id=current_class)
 
     if request.method == "POST":
-        form = PaymentForm(request.POST, school=school)
-        # Pass already evaluated queryset to form
-        form.fields['invoice'].queryset = invoices_qs
+        form = PaymentForm(
+            request.POST,
+            school=school,
+            initial={"school_class": current_class},
+        )
 
         if form.is_valid():
             payment = form.save(commit=False)
-
-            # 🔒 Controlled fields
             payment.school = school
             payment.recorded_by = request.user
-            payment.session = form.cleaned_data.get("session", current_session)
-            payment.term = form.cleaned_data.get("term", current_term)
+            payment.session = current_session
+            payment.term = current_term
 
-            # ⚡ Prevent double payments
             invoice = payment.invoice
             outstanding = invoice.total_amount - invoice.amount_paid
-            if payment.amount > outstanding:
-                form.add_error("amount", f"Payment exceeds outstanding balance ({outstanding:.2f})")
-            else:
-                payment.save()  # Invoice.amount_paid auto-synced via model
 
-                # Create receipt
+            if payment.amount > outstanding:
+                form.add_error(
+                    "amount",
+                    f"Payment exceeds outstanding balance "
+                    f"(₦{outstanding:,.2f})"
+                )
+            else:
+                payment.save()
+
                 Receipt.objects.create(
                     student=invoice.student,
                     school_class=invoice.school_class,
@@ -1248,22 +1277,41 @@ def record_payment(request):
                     school=school,
                 )
 
-                messages.success(request, "Payment recorded successfully")
-                return redirect("finance:invoice_list")
+                messages.success(
+                    request,
+                    "Payment recorded successfully."
+                )
+
+                return redirect(
+                    f"{reverse('finance:record_payment')}"
+                    f"?class={current_class}"
+                    f"&session={current_session}"
+                    f"&term={current_term}"
+                )
     else:
-        form = PaymentForm(school=school)
-        form.fields['invoice'].queryset = invoices_qs  # force queryset
+        form = PaymentForm(
+            school=school,
+            initial={
+                "school_class": current_class,
+            },
+        )
 
-    return render(request, "finance/record_payment.html", {
-        "form": form,
-        "school": school,
-        "session": current_session,
-        "term": current_term,
-        "sessions": SESSION_LIST,
-        "term_choices": Score.TERM_CHOICES,
-    })
-
-
+    return render(
+        request,
+        "finance/record_payment.html",
+        {
+            "form": form,
+            "students": students,
+            "invoices": invoices,
+            "school": school,
+            "session": current_session,
+            "term": current_term,
+            "current_class": current_class,
+            "sessions": SESSION_LIST,
+            "term_choices": Score.TERM_CHOICES,
+            "selected_students": request.POST.getlist("students"),
+        },
+    )
 
 
 from django.db.models import Sum, F
