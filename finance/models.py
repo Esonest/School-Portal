@@ -89,6 +89,7 @@ class Invoice(models.Model):
     title = models.CharField(max_length=255)
     total_amount = models.DecimalField(max_digits=20, decimal_places=2)
     amount_paid = models.DecimalField(max_digits=20, decimal_places=2, default=0)
+    
 
     session = models.CharField(max_length=150)
     term = models.CharField(max_length=10, choices=Score.TERM_CHOICES)

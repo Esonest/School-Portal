@@ -907,7 +907,6 @@ def invoice_create(request):
                     school=school,
                     school_class=form.cleaned_data["school_class"],
                     student=student,
-                    fee_template=form.cleaned_data["fee_template"],
                     title=form.cleaned_data["title"],
                     total_amount=form.cleaned_data["total_amount"],
                     due_date=form.cleaned_data["due_date"],
