@@ -3,124 +3,177 @@
 
 {% block title %}Expense{% endblock %}
 
-{% block content %}
-<div class="min-h-screen bg-gray-100 dark:bg-gray-950 py-12">
-  <div class="max-w-3xl mx-auto px-4">
+{% block body %}
+<div class="min-h-screen bg-gradient-to-br from-slate-50 via-indigo-50 to-blue-100 py-10 px-4">
+    <div class="max-w-4xl mx-auto">
 
-    <!-- Header -->
-    <div class="mb-10 text-center">
-      <h1 class="text-3xl font-bold text-indigo-600 dark:text-indigo-400">
-        {{ form.instance.pk|yesno:"Edit Expense,Create Expense" }}
-      </h1>
-      <p class="text-gray-500 dark:text-gray-400 mt-2">
-        Record and manage school expenses
-      </p>
+        <!-- Header -->
+        <div class="text-center mb-10">
+            <div class="inline-flex items-center justify-center w-20 h-20 rounded-full bg-indigo-600 text-white shadow-2xl mb-5">
+                <svg class="w-10 h-10" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round"
+                          stroke-linejoin="round"
+                          stroke-width="2"
+                          d="M9 14l2-2 4 4m6-2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+            </div>
+
+            <h1 class="text-4xl font-extrabold text-gray-900 mb-3">
+                {{ form.instance.pk|yesno:"Edit Expense,Create Expense" }}
+            </h1>
+
+            <p class="text-lg text-gray-600 max-w-2xl mx-auto">
+                Record, update and manage your school's financial expenses efficiently.
+            </p>
+        </div>
+
+        <!-- Form Card -->
+        <div class="bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden">
+
+            <!-- Top Banner -->
+            <div class="bg-gradient-to-r from-indigo-600 via-purple-600 to-blue-600 px-8 py-6">
+                <h2 class="text-2xl font-bold text-white">
+                    Expense Information
+                </h2>
+                <p class="text-indigo-100 mt-1">
+                    Fill in all required expense details below
+                </p>
+            </div>
+
+            <form method="POST" class="p-8 lg:p-10 space-y-8">
+                {% csrf_token %}
+
+                <!-- Session & Term -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+                    <!-- Session -->
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-3">
+                            Academic Session
+                        </label>
+
+                        <select name="session"
+                                class="w-full rounded-2xl border-gray-300 shadow-sm
+                                       focus:border-indigo-500 focus:ring-4
+                                       focus:ring-indigo-100 px-5 py-4
+                                       transition duration-200">
+                            <option value="">Select Session</option>
+                            {% for sess in sessions %}
+                                <option value="{{ sess }}"
+                                        {% if sess == current_session %}selected{% endif %}>
+                                    {{ sess }}
+                                </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <!-- Term -->
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-3">
+                            {{ form.term.label }}
+                        </label>
+
+                        {{ form.term|add_class:"w-full rounded-2xl border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 px-5 py-4 transition duration-200" }}
+
+                        {% if form.term.errors %}
+                            <p class="mt-2 text-sm text-red-600">
+                                {{ form.term.errors }}
+                            </p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Expense Details -->
+                <div class="space-y-8">
+
+                    <!-- Title -->
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-3">
+                            {{ form.title.label }}
+                        </label>
+
+                        {{ form.title|add_class:"w-full rounded-2xl border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 px-5 py-4 transition duration-200" }}
+
+                        {% if form.title.errors %}
+                            <p class="mt-2 text-sm text-red-600">
+                                {{ form.title.errors }}
+                            </p>
+                        {% endif %}
+                    </div>
+
+                    <!-- Amount & Date -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-3">
+                                {{ form.amount.label }}
+                            </label>
+
+                            {{ form.amount|add_class:"w-full rounded-2xl border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 px-5 py-4 transition duration-200" }}
+
+                            {% if form.amount.errors %}
+                                <p class="mt-2 text-sm text-red-600">
+                                    {{ form.amount.errors }}
+                                </p>
+                            {% endif %}
+                        </div>
+
+                        <div>
+                            <label class="block text-sm font-bold text-gray-700 mb-3">
+                                {{ form.date.label }}
+                            </label>
+
+                            {{ form.date|add_class:"w-full rounded-2xl border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 px-5 py-4 transition duration-200" }}
+
+                            {% if form.date.errors %}
+                                <p class="mt-2 text-sm text-red-600">
+                                    {{ form.date.errors }}
+                                </p>
+                            {% endif %}
+                        </div>
+
+                    </div>
+
+                    <!-- Description -->
+                    <div>
+                        <label class="block text-sm font-bold text-gray-700 mb-3">
+                            {{ form.description.label }}
+                        </label>
+
+                        {{ form.description|add_class:"w-full rounded-2xl border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-4 focus:ring-indigo-100 px-5 py-4 min-h-[150px] transition duration-200" }}
+
+                        {% if form.description.errors %}
+                            <p class="mt-2 text-sm text-red-600">
+                                {{ form.description.errors }}
+                            </p>
+                        {% endif %}
+                    </div>
+
+                </div>
+
+                <!-- Buttons -->
+                <div class="flex flex-col sm:flex-row justify-between items-center gap-4 pt-8 border-t border-gray-200">
+
+                    <a href="{% url 'finance:expense_list' %}"
+                       class="w-full sm:w-auto px-8 py-4 rounded-2xl
+                              bg-gray-100 text-gray-700 font-semibold
+                              hover:bg-gray-200 transition text-center">
+                        ← Back to Expenses
+                    </a>
+
+                    <button type="submit"
+                            class="w-full sm:w-auto px-10 py-4 rounded-2xl
+                                   bg-gradient-to-r from-indigo-600 to-purple-600
+                                   text-white font-bold shadow-xl
+                                   hover:from-indigo-700 hover:to-purple-700
+                                   hover:shadow-2xl transform hover:-translate-y-0.5
+                                   transition duration-300">
+                        Save Expense
+                    </button>
+
+                </div>
+            </form>
+        </div>
     </div>
-
-    <!-- Form Card -->
-    <form method="POST"
-          class="bg-white dark:bg-gray-900 shadow-xl rounded-xl p-8 space-y-8">
-      {% csrf_token %}
-
-      <!-- ================= SESSION / TERM ================= -->
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-
-        <!-- Session -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            Session
-          </label>
-          <select name="session"
-                  class="w-full rounded-lg border-gray-300 dark:border-gray-700 shadow-sm
-                         bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100
-                         focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500
-                         px-3 py-2">
-            <option value="">All Sessions</option>
-            {% for sess in sessions %}
-              <option value="{{ sess }}" {% if sess == current_session %}selected{% endif %}>
-                {{ sess }}
-              </option>
-            {% endfor %}
-          </select>
-        </div>
-
-        <!-- Term -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            {{ form.term.label }}
-          </label>
-          {{ form.term|add_class:"w-full rounded-lg border-gray-300 dark:border-gray-700 shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 px-3 py-2" }}
-          {% if form.term.errors %}
-            <p class="text-red-500 text-sm mt-1">{{ form.term.errors }}</p>
-          {% endif %}
-        </div>
-
-      </div>
-
-      <!-- ================= EXPENSE DETAILS ================= -->
-      <div class="grid grid-cols-1 gap-6">
-
-        <!-- Title -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            {{ form.title.label }}
-          </label>
-          {{ form.title|add_class:"w-full rounded-lg border-gray-300 dark:border-gray-700 shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 px-3 py-2" }}
-          {% if form.title.errors %}
-            <p class="text-red-500 text-sm mt-1">{{ form.title.errors }}</p>
-          {% endif %}
-        </div>
-
-        <!-- Amount -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            {{ form.amount.label }}
-          </label>
-          {{ form.amount|add_class:"w-full rounded-lg border-gray-300 dark:border-gray-700 shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 px-3 py-2" }}
-          {% if form.amount.errors %}
-            <p class="text-red-500 text-sm mt-1">{{ form.amount.errors }}</p>
-          {% endif %}
-        </div>
-
-        <!-- Date -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            {{ form.date.label }}
-          </label>
-          {{ form.date|add_class:"w-full rounded-lg border-gray-300 dark:border-gray-700 shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 px-3 py-2" }}
-          {% if form.date.errors %}
-            <p class="text-red-500 text-sm mt-1">{{ form.date.errors }}</p>
-          {% endif %}
-        </div>
-
-        <!-- Description -->
-        <div>
-          <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-            {{ form.description.label }}
-          </label>
-          {{ form.description|add_class:"w-full rounded-lg border-gray-300 dark:border-gray-700 shadow-sm bg-white dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 px-3 py-2" }}
-          {% if form.description.errors %}
-            <p class="text-red-500 text-sm mt-1">{{ form.description.errors }}</p>
-          {% endif %}
-        </div>
-
-      </div>
-
-      <!-- ================= ACTIONS ================= -->
-      <div class="flex justify-between items-center pt-6 border-t border-gray-200 dark:border-gray-700">
-        <a href="{% url 'finance:expense_list' %}"
-           class="text-gray-600 dark:text-gray-300 hover:text-gray-800 dark:hover:text-white font-medium">
-          ← Cancel
-        </a>
-
-        <button type="submit"
-                class="px-6 py-2 rounded-lg bg-indigo-600 text-white font-semibold
-                       hover:bg-indigo-700 transition">
-          Save Expense
-        </button>
-      </div>
-
-    </form>
-  </div>
 </div>
 {% endblock %}

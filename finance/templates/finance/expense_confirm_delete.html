@@ -1,14 +1,94 @@
-<!-- finance/templates/finance/expense_confirm_delete.html -->
 {% extends "finance/base_finance.html" %}
 {% block title %}Delete Expense{% endblock %}
 
-<div class="max-w-md mx-auto bg-white p-6 rounded shadow">
-    <h2 class="text-xl font-bold mb-4">Confirm Delete</h2>
-    <p>Are you sure you want to delete <strong>{{ expense.title }}</strong>?</p>
+{% block body %}
+<div class="min-h-screen flex items-center justify-center py-12 px-4">
+    <div class="w-full max-w-lg">
 
-    <form method="POST" class="mt-4 flex gap-2">
-        {% csrf_token %}
-        <button type="submit" class="bg-red-600 text-white px-4 py-2 rounded hover:bg-red-700">Delete</button>
-        <a href="{% url 'finance:expense_list' %}" class="bg-gray-300 px-4 py-2 rounded hover:bg-gray-400">Cancel</a>
-    </form>
+        <div class="bg-white rounded-2xl shadow-2xl border border-red-100 overflow-hidden">
+
+            <!-- Header -->
+            <div class="bg-gradient-to-r from-red-600 to-red-700 px-8 py-6 text-white">
+                <h1 class="text-2xl font-bold">
+                    Delete Expense
+                </h1>
+                <p class="text-red-100 mt-1">
+                    This action cannot be undone.
+                </p>
+            </div>
+
+            <!-- Content -->
+            <div class="p-8">
+                <div class="flex items-center justify-center w-20 h-20 mx-auto mb-6 rounded-full bg-red-100">
+                    <svg class="w-10 h-10 text-red-600"
+                         fill="none"
+                         stroke="currentColor"
+                         viewBox="0 0 24 24">
+                        <path stroke-linecap="round"
+                              stroke-linejoin="round"
+                              stroke-width="2"
+                              d="M12 9v2m0 4h.01M5.07 19h13.86c1.54 0 2.5-1.67 1.73-3L13.73 4c-.77-1.33-2.69-1.33-3.46 0L3.34 16c-.77 1.33.19 3 1.73 3z"/>
+                    </svg>
+                </div>
+
+                <h2 class="text-xl font-bold text-center text-gray-900 mb-3">
+                    Confirm Deletion
+                </h2>
+
+                <p class="text-center text-gray-600 mb-6">
+                    Are you sure you want to permanently delete this expense?
+                </p>
+
+                <!-- Expense Details -->
+                <div class="bg-gray-50 rounded-xl p-5 mb-8 border border-gray-200">
+                    <h3 class="font-bold text-gray-900 text-lg">
+                        {{ expense.title }}
+                    </h3>
+
+                    {% if expense.description %}
+                    <p class="text-gray-600 mt-2">
+                        {{ expense.description }}
+                    </p>
+                    {% endif %}
+
+                    <div class="mt-4 grid grid-cols-2 gap-4 text-sm">
+                        <div>
+                            <span class="text-gray-500">Amount</span>
+                            <p class="font-semibold text-green-600">
+                                ₦{{ expense.amount|floatformat:2 }}
+                            </p>
+                        </div>
+
+                        <div>
+                            <span class="text-gray-500">Date</span>
+                            <p class="font-semibold text-gray-800">
+                                {{ expense.date|date:"M d, Y" }}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Actions -->
+                <form method="post" class="flex flex-col sm:flex-row gap-4">
+                    {% csrf_token %}
+
+                    <button type="submit"
+                            class="flex-1 bg-red-600 hover:bg-red-700 text-white
+                                   font-semibold py-3 px-6 rounded-xl
+                                   shadow-lg hover:shadow-xl transition duration-200">
+                        Yes, Delete Expense
+                    </button>
+
+                    <a href="{% url 'finance:expense_list' %}"
+                       class="flex-1 text-center bg-gray-200 hover:bg-gray-300
+                              text-gray-800 font-semibold py-3 px-6 rounded-xl
+                              transition duration-200">
+                        Cancel
+                    </a>
+                </form>
+            </div>
+        </div>
+
+    </div>
 </div>
+{% endblock %}

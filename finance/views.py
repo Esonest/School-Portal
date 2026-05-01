@@ -1712,9 +1712,45 @@ from .forms import ExpenseForm
 
 @login_required
 def expense_list(request):
-    school = getattr(request.user, "school", None)
-    expenses = Expense.objects.filter(school=school).order_by("-date")
-    return render(request, "finance/expense_list.html", {"expenses": expenses})
+    school = request.user.school
+
+    selected_session = request.GET.get("session", "")
+    selected_term = request.GET.get("term", "")
+    search = request.GET.get("q", "")
+
+    expenses = Expense.objects.filter(school=school)
+
+    if selected_session:
+        expenses = expenses.filter(session=selected_session)
+
+    if selected_term:
+        expenses = expenses.filter(term=selected_term)
+
+    if search:
+        expenses = expenses.filter(title__icontains=search)
+
+    expenses = expenses.order_by("-date", "-id")
+
+    context = {
+        "expenses": expenses,
+        "sessions": (
+            Expense.objects.filter(school=school)
+            .values_list("session", flat=True)
+            .distinct()
+            .order_by("session")
+        ),
+        # Use the choices from the model field itself
+        "term_choices": Expense._meta.get_field("term").choices,
+        "selected_session": selected_session,
+        "selected_term": selected_term,
+        "search": search,
+    }
+
+    return render(
+        request,
+        "finance/expense_list.html",
+        context,
+    )
 
 
 @login_required
@@ -1743,16 +1779,46 @@ def expense_create(request):
 @login_required
 def expense_update(request, pk):
     school = getattr(request.user, "school", None)
-    expense = get_object_or_404(Expense, pk=pk, school=school)
+    expense = get_object_or_404(
+        Expense,
+        pk=pk,
+        school=school
+    )
+
+    # Get all available sessions for dropdown
+    sessions = (
+        Expense.objects.filter(school=school)
+        .values_list("session", flat=True)
+        .distinct()
+        .order_by("session")
+    )
+
     if request.method == "POST":
-        form = ExpenseForm(request.POST, instance=expense)
+        form = ExpenseForm(
+            request.POST,
+            instance=expense
+        )
+
         if form.is_valid():
             form.save()
             return redirect("finance:expense_list")
+
     else:
         form = ExpenseForm(instance=expense)
-    return render(request, "finance/expense_form.html", {"form": form})
 
+    context = {
+        "form": form,
+        "sessions": sessions,
+        "current_session": expense.session,
+    }
+
+    return render(
+        request,
+        "finance/expense_form.html",
+        context
+    )
+
+    
 @login_required
 def expense_delete(request, pk):
     school = getattr(request.user, "school", None)
