@@ -1,408 +1,577 @@
 {% extends "accounts/base.html" %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-100 p-4 sm:p-6">
-    <div class="max-w-7xl mx-auto">
 
-        <!-- Page Header -->
-        <h1 class="text-3xl sm:text-4xl font-bold text-{{ school.theme_color }}-800 mb-6">
-            {{ school.name }} Admin Dashboard
-        </h1>
+
+<style>
+/* ================= MODERN CARD SYSTEM ================= */
+
+.dashboard-card {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px;
+    border-radius: 20px;
+    transition: all 0.35s ease;
+    cursor: pointer;
+    overflow: hidden;
+    color: #111;
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+    border: 1px solid rgba(255,255,255,0.25);
+}
+
+/* hover lift + glow */
+.dashboard-card:hover {
+    transform: translateY(-6px) scale(1.02);
+    box-shadow: 0 20px 45px rgba(0,0,0,0.15);
+}
+
+/* animated gradient glow overlay */
+.dashboard-card::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    opacity: 0;
+    transition: 0.4s;
+    background: radial-gradient(circle at top left, rgba(255,255,255,0.4), transparent 60%);
+}
+
+.dashboard-card:hover::before {
+    opacity: 1;
+}
+
+/* ICON WRAPPER */
+.card-icon {
+    width: 52px;
+    height: 52px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    color: white;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.2);
+}
+
+/* TEXT */
+.card-title {
+    font-weight: 700;
+    font-size: 14px;
+    opacity: 0.9;
+}
+
+.card-value {
+    font-size: 20px;
+    font-weight: 800;
+}
+
+/* ========== UNIQUE COLOR PALETTE (IMPORTANT) ========== */
+
+/* Students */
+.card-students {
+    background: linear-gradient(135deg, #dbeafe, #eff6ff);
+}
+.card-students .card-icon {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+}
+
+/* Teachers */
+.card-teachers {
+    background: linear-gradient(135deg, #dcfce7, #ecfdf5);
+}
+.card-teachers .card-icon {
+    background: linear-gradient(135deg, #16a34a, #15803d);
+}
+
+/* Classes */
+.card-classes {
+    background: linear-gradient(135deg, #ede9fe, #f5f3ff);
+}
+.card-classes .card-icon {
+    background: linear-gradient(135deg, #7c3aed, #5b21b6);
+}
+
+/* Subjects */
+.card-subjects {
+    background: linear-gradient(135deg, #fff7ed, #ffedd5);
+}
+.card-subjects .card-icon {
+    background: linear-gradient(135deg, #f97316, #ea580c);
+}
+
+/* Accountants */
+.card-accountants {
+    background: linear-gradient(135deg, #ecfdf5, #d1fae5);
+}
+.card-accountants .card-icon {
+    background: linear-gradient(135deg, #10b981, #059669);
+}
+
+/* Results */
+.card-results {
+    background: linear-gradient(135deg, #fef9c3, #fef08a);
+}
+.card-results .card-icon {
+    background: linear-gradient(135deg, #eab308, #ca8a04);
+}
+
+/* Lesson Notes */
+.card-lessons {
+    background: linear-gradient(135deg, #e0e7ff, #c7d2fe);
+}
+.card-lessons .card-icon {
+    background: linear-gradient(135deg, #6366f1, #4338ca);
+}
+
+/* Assignments */
+.card-assignments {
+    background: linear-gradient(135deg, #fce7f3, #fbcfe8);
+}
+.card-assignments .card-icon {
+    background: linear-gradient(135deg, #ec4899, #db2777);
+}
+
+/* Attendance */
+.card-attendance {
+    background: linear-gradient(135deg, #ccfbf1, #99f6e4);
+}
+.card-attendance .card-icon {
+    background: linear-gradient(135deg, #14b8a6, #0f766e);
+}
+
+/* CBT */
+.card-cbt {
+    background: linear-gradient(135deg, #ede9fe, #ddd6fe);
+}
+.card-cbt .card-icon {
+    background: linear-gradient(135deg, #8b5cf6, #6d28d9);
+}
+
+/* Grade */
+.card-grade {
+    background: linear-gradient(135deg, #dbeafe, #bfdbfe);
+}
+.card-grade .card-icon {
+    background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+}
+
+/* Download */
+.card-download {
+    background: linear-gradient(135deg, #dcfce7, #bbf7d0);
+}
+.card-download .card-icon {
+    background: linear-gradient(135deg, #22c55e, #16a34a);
+}
+
+/* Announcements */
+.card-announcement {
+    background: linear-gradient(135deg, #fef3c7, #fde68a);
+}
+.card-announcement .card-icon {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+}
+</style>
+
+<style>
+/* ================= GLASS + SAAS SYSTEM ================= */
+.glass {
+    background: rgba(255,255,255,0.6);
+    backdrop-filter: blur(18px);
+    border: 1px solid rgba(255,255,255,0.3);
+    border-radius: 18px;
+}
+
+/* DASHBOARD WRAPPER */
+.dashboard-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+    gap: 16px;
+}
+
+/* CARD */
+.dashboard-card {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 16px;
+    border-radius: 18px;
+    transition: 0.25s ease;
+    cursor: grab;
+    user-select: none;
+    overflow: hidden;
+}
+
+.dashboard-card:hover {
+    transform: translateY(-5px) scale(1.01);
+}
+
+/* ICON */
+.card-icon {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 20px;
+}
+
+/* COUNTER */
+.counter {
+    font-size: 22px;
+    font-weight: 800;
+}
+
+/* SECTION */
+.section {
+    margin-top: 30px;
+}
+
+.section-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    cursor: pointer;
+    padding: 10px 0;
+}
+
+/* COLLAPSE */
+.collapsed {
+    display: none;
+}
+
+/* MOBILE */
+@media (max-width: 640px) {
+    .dashboard-grid {
+        grid-template-columns: 1fr;
+    }
+}
+</style>
+
+<div class="min-h-screen p-4 sm:p-6 bg-gray-100">
+
+<div class="max-w-7xl mx-auto">
+
+<h1 class="text-3xl font-bold mb-6">
+    {{ school.name }} Admin Dashboard
+</h1>
+
+<!-- ================= QUICK STATS ================= -->
+<div class="dashboard-grid mb-8">
+
+    <div class="glass dashboard-card draggable bg-blue-50">
+        <div class="card-icon bg-blue-600">👨‍🎓</div>
+        <div>
+            <p>Students</p>
+            <div class="counter" data-count="{{ student_count }}">{{ student_count }}</div>
+        </div>
+    </div>
+
+    <div class="glass dashboard-card draggable bg-green-50">
+        <div class="card-icon bg-green-600">👨‍🏫</div>
+        <div>
+            <p>Teachers</p>
+            <div class="counter" data-count="{{ teacher_count }}">{{ teacher_count }}</div>
+        </div>
+    </div>
+
+    <div class="glass dashboard-card draggable bg-purple-50">
+        <div class="card-icon bg-purple-600">🏫</div>
+        <div>
+            <p>Classes</p>
+            <div class="counter" data-count="{{ class_count }}">{{ class_count }}</div>
+        </div>
+    </div>
+
+    <div class="glass dashboard-card draggable bg-orange-50">
+        <div class="card-icon bg-orange-600">📚</div>
+        <div>
+            <p>Subjects</p>
+            <div class="counter" data-count="{{ subject_count }}">{{ subject_count }}</div>
+        </div>
+    </div>
+
+</div>
+
+<!-- ================= COLLAPSIBLE SECTIONS ================= -->
+
+<!-- STUDENTS SECTION -->
+<div class="section">
+    <div class="section-header" onclick="toggleSection('students')">
+        <h2 class="font-bold text-lg">👨‍🎓 Students & Academic</h2>
+    </div>
+
+    <div id="students" class="dashboard-grid">
+
+        <!-- 1 Students -->
+<a href="{% url 'school_admin:admin_student_list' school.id %}" class="dashboard-card card-students">
+    <div class="card-icon">👨‍🎓</div>
+    <div>
+        <div class="card-title">Students</div>
+        <div class="card-value counter" data-count="{{ student_count }}">{{ student_count }}</div>
+    </div>
+</a>
+
+<!-- 2 Teachers -->
+<a href="{% url 'school_admin:teacher_list' school.id %}" class="dashboard-card card-teachers">
+    <div class="card-icon">👨‍🏫</div>
+    <div>
+        <div class="card-title">Teachers</div>
+        <div class="card-value counter" data-count="{{ teacher_count }}">{{ teacher_count }}</div>
+    </div>
+</a>
+
+<!-- 3 Class Subject Teachers -->
+<a href="{% url 'school_admin:class_subject_teacher_list' school.id %}" class="dashboard-card card-subjects">
+    <div class="card-icon">📘</div>
+    <div>
+        <div class="card-title">Subject Teachers</div>
+        <div class="card-value counter" data-count="{{ class_subject_teacher_count }}">{{ class_subject_teacher_count }}</div>
+    </div>
+</a>
+
+<!-- 4 Classes -->
+<a href="{% url 'school_admin:class_list' school.id %}" class="dashboard-card card-classes">
+    <div class="card-icon">🏫</div>
+    <div>
+        <div class="card-title">Classes</div>
+        <div class="card-value counter" data-count="{{ class_count }}">{{ class_count }}</div>
+    </div>
+</a>
+
+<!-- 5 Class List -->
+<a href="{% url 'school_admin:admin-class-list' %}" class="dashboard-card card-classes">
+    <div class="card-icon">📋</div>
+    <div>
+        <div class="card-title">Class List</div>
+        <div class="card-value">{{ class_count }}</div>
+    </div>
+</a>
+
+<!-- 6 Subjects -->
+<a href="{% url 'school_admin:subject_list' school.id %}" class="dashboard-card card-subjects">
+    <div class="card-icon">📚</div>
+    <div>
+        <div class="card-title">Subjects</div>
+        <div class="card-value counter" data-count="{{ subject_count }}">{{ subject_count }}</div>
+    </div>
+</a>
+
+<!-- 7 Accountants -->
+<a href="{% url 'school_admin:accountant_list' school.id %}" class="dashboard-card card-accountants">
+    <div class="card-icon">💰</div>
+    <div>
+        <div class="card-title">Accountants</div>
+        <div class="card-value">Manage</div>
+    </div>
+</a>
+
+<!-- 10 CBT -->
+<a href="{% url 'school_admin:admin_dashboard' school.id %}" class="dashboard-card card-cbt">
+    <div class="card-icon">💻</div>
+    <div>
+        <div class="card-title">CBT</div>
+        <div class="card-value counter" data-count="{{ cbt_count }}">{{ cbt_count }}</div>
+    </div>
+</a>
+    </div>
+</div>
+
+<!-- RESULTS SECTION -->
+<div class="section">
+    <div class="section-header" onclick="toggleSection('results')">
+        <h2 class="font-bold text-lg">📊 Results System</h2>
+    </div>
+
+    <div id="results" class="dashboard-grid">
+
         
-           <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
-
-    <!-- Students -->
-    <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-blue-500">
-        <p class="text-gray-500 text-sm">Total Students</p>
-        <h2 class="text-3xl font-bold text-gray-800">{{ student_count }}</h2>
-    </div>
-
-    <!-- Teachers -->
-    <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-green-500">
-        <p class="text-gray-500 text-sm">Total Teachers</p>
-        <h2 class="text-3xl font-bold text-gray-800">{{ teacher_count }}</h2>
-    </div>
-
-    <!-- Classes -->
-    <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-purple-500">
-        <p class="text-gray-500 text-sm">Total Classes</p>
-        <h2 class="text-3xl font-bold text-gray-800">{{ class_count }}</h2>
-    </div>
-
-    <!-- Subjects -->
-    <div class="bg-white p-6 rounded-xl shadow-md border-l-4 border-orange-500">
-        <p class="text-gray-500 text-sm">Subjects</p>
-        <h2 class="text-3xl font-bold text-gray-800">{{ subject_count }}</h2>
-    </div>
-
-</div>
-
-
-<div class="grid grid-cols-1 md:grid-cols-2 gap-8 mt-10">
-
-    <!-- Students Per Class -->
-    <div class="bg-white p-6 rounded-xl shadow">
-        <h2 class="text-lg font-semibold mb-4">Students Per Class</h2>
-        <canvas id="classChart"></canvas>
-    </div>
-
-    <!-- Subjects Chart -->
-    <div class="bg-white p-6 rounded-xl shadow">
-        <h2 class="text-lg font-semibold mb-4">Subjects Offered</h2>
-        <canvas id="subjectChart"></canvas>
-    </div>
-
-</div>
-
-        <!-- Dashboard Grid -->
-        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
-
-            <!-- Students -->
-            <a href="{% url 'school_admin:admin_student_list' school.id %}" 
-               class="group flex items-center justify-between p-5 bg-blue-50 rounded-xl shadow-lg border-2 border-transparent hover:border-gradient-to-r hover:from-blue-400 hover:to-blue-600 transition duration-300">
-                <div class="flex items-center gap-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-9 w-9 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5.121 17.804A13.937 13.937 0 0112 15c2.386 0 4.607.606 6.879 1.804M12 3a4 4 0 100 8 4 4 0 000-8z" />
-                    </svg>
-                    <p class="text-lg font-semibold text-gray-800">Students</p>
-                </div>
-                <span class="bg-blue-100 text-blue-800 text-sm font-semibold px-3 py-1 rounded-full">
-                    {{ student_count }}
-                </span>
-            </a>
-
-            <!-- Teachers -->
-            <a href="{% url 'school_admin:teacher_list' school.id %}" 
-               class="group flex items-center justify-between p-5 bg-green-50 rounded-xl shadow-lg border-2 border-transparent hover:border-gradient-to-r hover:from-green-400 hover:to-green-600 transition duration-300">
-                <div class="flex items-center gap-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-9 w-9 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14l9-5-9-5-9 5 9 5zM12 14l6.16-3.422M12 14l-6.16-3.422M12 14v7" />
-                    </svg>
-                    <p class="text-lg font-semibold text-gray-800">Teachers</p>
-                </div>
-                <span class="bg-green-100 text-green-800 text-sm font-semibold px-3 py-1 rounded-full">
-                    {{ teacher_count }}
-                </span>
-            </a>
-
-            <!-- Class Subject Teachers -->
-            <a href="{% url 'school_admin:class_subject_teacher_list' school.id %}" 
-               class="group flex items-center justify-between p-5 bg-cyan-50 rounded-xl shadow-lg border-2 border-transparent hover:border-gradient-to-r hover:from-cyan-400 hover:to-cyan-600 transition duration-300">
-                <div class="flex items-center gap-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-9 w-9 text-cyan-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3M4 11h16M6 19h12a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                    </svg>
-                    <p class="text-lg font-semibold text-gray-800">Class Subject Teachers</p>
-                </div>
-                <span class="bg-cyan-100 text-cyan-800 text-sm font-semibold px-3 py-1 rounded-full">
-                    {{ class_subject_teacher_count }}
-                </span>
-            </a>
-
-            <!-- Class List -->
-            <a href="{% url 'school_admin:admin-class-list' %}" 
-               class="group flex items-center justify-between p-5 bg-orange-50 rounded-xl shadow-lg border-2 border-transparent hover:border-gradient-to-r hover:from-orange-400 hover:to-orange-600 transition duration-300">
-                <div class="flex items-center gap-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-9 w-9 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-                    </svg>
-                    <p class="text-lg font-semibold text-gray-800">Class List</p>
-                </div>
-                <span class="bg-orange-100 text-orange-800 text-sm font-semibold px-3 py-1 rounded-full">
-                    {{ class_count }}
-                </span>
-            </a>
-            
-            <!-- Classes Card -->
-<a href="{% url 'school_admin:class_list' school.id %}"
-   class="group flex items-center justify-between p-5 bg-indigo-50 rounded-xl shadow-lg hover:shadow-xl transition duration-300">
-
-    <div class="flex items-center gap-4">
-        <i class="fas fa-chalkboard text-indigo-600 text-2xl"></i>
-        <p class="text-lg font-semibold text-gray-800">Classes</p>
-    </div>
-
-    <span class="bg-indigo-100 text-indigo-800 text-sm font-semibold px-3 py-1 rounded-full">
-        {{ class_count }}
-    </span>
-</a>
-
-
-<!-- Subjects Card -->
-<a href="{% url 'school_admin:subject_list' school.id %}"
-   class="group flex items-center justify-between p-5 bg-violet-50 rounded-xl shadow-lg hover:shadow-xl transition duration-300">
-
-    <div class="flex items-center gap-4">
-        <i class="fas fa-book text-violet-600 text-2xl"></i>
-        <p class="text-lg font-semibold text-gray-800">Subjects</p>
-    </div>
-
-    <span class="bg-violet-100 text-violet-800 text-sm font-semibold px-3 py-1 rounded-full">
-        {{ subject_count }}
-    </span>
-</a>
-             
-            <!-- Accountants -->
-            <a href="{% url 'school_admin:accountant_list' school.id %}" 
-               class="group flex items-center justify-between p-5 bg-emerald-50 rounded-xl shadow-lg border-2 border-transparent hover:border-gradient-to-r hover:from-emerald-400 hover:to-emerald-600 transition duration-300">
-                <div class="flex items-center gap-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-9 w-9 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 1.343-3 3s1.343 3 3 3 3-1.343 3-3-1.343-3-3-3zM4 20h16v-2a6 6 0 00-12 0v2z" />
-                    </svg>
-                    <p class="text-lg font-semibold text-gray-800">Accountants</p>
-                </div>
-                <span class="bg-emerald-100 text-emerald-800 text-sm font-semibold px-3 py-1 rounded-full">
-                    Manage
-                </span>
-            </a>
-
-            <!-- Results -->
-            <a href="{% url 'school_admin:admin-class-list' %}" 
-               class="group flex items-center justify-between p-5 bg-yellow-50 rounded-xl shadow-lg border-2 border-transparent hover:border-gradient-to-r hover:from-yellow-400 hover:to-yellow-600 transition duration-300">
-                <div class="flex items-center gap-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-9 w-9 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-3-3v6m2 4h4a2 2 0 002-2V7a2 2 0 00-2-2h-4l-2-2-2 2H7a2 2 0 00-2 2v11a2 2 0 002 2h4" />
-                    </svg>
-                    <p class="text-lg font-semibold text-gray-800">Results</p>
-                </div>
-                <span class="bg-yellow-100 text-yellow-800 text-sm font-semibold px-3 py-1 rounded-full">
-                    {{ result_count }}
-                </span>
-            </a>
-       <!-- Bulk Score Entry (Admin) -->
-<a href="{% url 'results:bulk_score_entry' school.id %}" 
-   class="group flex items-center justify-between p-5 bg-yellow-50 rounded-xl shadow-lg border-2 border-transparent hover:border-gradient-to-r hover:from-yellow-400 hover:to-yellow-600 transition duration-300">
-    <div class="flex items-center gap-4">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-9 w-9 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-3-3v6m-7 4h12a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-        </svg>
-        <p class="text-lg font-semibold text-gray-800">Bulk Score Entry</p>
-    </div>
-    <span class="bg-yellow-100 text-yellow-800 text-sm font-semibold px-3 py-1 rounded-full">
-        Enter Scores
-    </span>
-</a>
-
-<!-- Bulk Psychomotor & Affective -->
-<a href="{% url 'results:bulk_psycho_affective' school.id %}" 
-   class="group flex items-center justify-between p-5 bg-rose-50 rounded-xl shadow-lg border-2 border-transparent hover:border-gradient-to-r hover:from-rose-400 hover:to-rose-600 transition duration-300">
-
-    <div class="flex items-center gap-4">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-9 w-9 text-rose-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                  d="M12 8c-3.866 0-7 3.134-7 7h14c0-3.866-3.134-7-7-7zm0-4a2 2 0 110 4 2 2 0 010-4z"/>
-        </svg>
-
-        <p class="text-lg font-semibold text-gray-800">
-            Bulk Psychomotor & Affective
-        </p>
-    </div>
-
-    <span class="bg-rose-100 text-rose-800 text-sm font-semibold px-3 py-1 rounded-full">
-        Enter Domains
-    </span>
-
-</a>
-            <!-- CBT -->
-            <a href="{% url 'school_admin:admin_dashboard' school.id %}" 
-               class="group flex items-center justify-between p-5 bg-purple-50 rounded-xl shadow-lg border-2 border-transparent hover:border-gradient-to-r hover:from-purple-400 hover:to-purple-600 transition duration-300">
-                <div class="flex items-center gap-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-9 w-9 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-3-3v6m-7 4h12a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                    </svg>
-                    <p class="text-lg font-semibold text-gray-800">CBT</p>
-                </div>
-                <span class="bg-purple-100 text-purple-800 text-sm font-semibold px-3 py-1 rounded-full">
-                    {{ cbt_count }}
-                </span>
-            </a>
-
-            <!-- Lesson Note -->
-            <a href="{% url 'school_admin:lessonnote_dashboard' school.id %}" 
-               class="group flex items-center justify-between p-5 bg-indigo-50 rounded-xl shadow-lg border-2 border-transparent hover:border-gradient-to-r hover:from-indigo-400 hover:to-indigo-600 transition duration-300">
-                <div class="flex items-center gap-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-9 w-9 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m-4 4h10M5 4h14a2 2 0 012 2v14a2 2 0 01-2 2H5a2 2 0 01-2-2V6a2 2 0 012-2z" />
-                    </svg>
-                    <p class="text-lg font-semibold text-gray-800">Lesson Note</p>
-                </div>
-                <span class="bg-indigo-100 text-indigo-800 text-sm font-semibold px-3 py-1 rounded-full">
-                    {{ lesson_count }}
-                </span>
-            </a>
-
-            <!-- Assignments -->
-            <a href="{% url 'school_admin:assignment_list' school.id %}" 
-               class="group flex items-center justify-between p-5 bg-pink-50 rounded-xl shadow-lg border-2 border-transparent hover:border-gradient-to-r hover:from-pink-400 hover:to-pink-600 transition duration-300">
-                <div class="flex items-center gap-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-9 w-9 text-pink-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-3-3v6m-7 4h12a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                    </svg>
-                    <p class="text-lg font-semibold text-gray-800">Assignments</p>
-                </div>
-                <span class="bg-pink-100 text-pink-800 text-sm font-semibold px-3 py-1 rounded-full">
-                    {{ assignment_count }}
-                </span>
-            </a>
-
-            <!-- Attendance -->
-            <a href="{% url 'school_admin:admin_attendance_list' school.id %}" 
-               class="group flex items-center justify-between p-5 bg-teal-50 rounded-xl shadow-lg border-2 border-transparent hover:border-gradient-to-r hover:from-teal-400 hover:to-teal-600 transition duration-300">
-                <div class="flex items-center gap-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-9 w-9 text-teal-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-3-3v6M12 3v3m0 12v3m6-6h3M3 12h3" />
-                    </svg>
-                    <p class="text-lg font-semibold text-gray-800">Attendance</p>
-                </div>
-                <span class="bg-teal-100 text-teal-800 text-sm font-semibold px-3 py-1 rounded-full">
-                    {{ attendance_count }}
-                </span>
-            </a>
-
-            <!-- Result Access Control -->
-            <a href="{% url 'school_admin:block_unblock_students' school.id %}" 
-               class="group flex items-center justify-between p-5 bg-red-50 rounded-xl shadow-lg border-2 border-transparent hover:border-gradient-to-r hover:from-red-400 hover:to-red-600 transition duration-300">
-                <div class="flex items-center gap-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-9 w-9 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 7.292M6 20h12a2 2 0 002-2v-5a2 2 0 00-2-2H6a2 2 0 00-2 2v5a2 2 0 002 2z" />
-                    </svg>
-                    <p class="text-lg font-semibold text-gray-800">Result Access Control</p>
-                </div>
-                <span class="bg-red-100 text-red-800 text-sm font-semibold px-3 py-1 rounded-full">
-                    Manage
-                </span>
-            </a>
-
-            <!-- Grade Settings -->
-            <a href="{% url 'results:grade_settings' school.id %}" 
-               class="group flex items-center justify-between p-5 bg-blue-50 rounded-xl shadow-lg border-2 border-transparent hover:border-gradient-to-r hover:from-blue-400 hover:to-blue-600 transition duration-300">
-                <div class="flex items-center gap-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-9 w-9 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c1.657 0 3-1.343 3-3S13.657 2 12 2 9 3.343 9 5s1.343 3 3 3zM12 14c2.21 0 4-1.79 4-4H8c0 2.21 1.79 4 4 4zM4 20h16v-2H4v2z" />
-                    </svg>
-                    <p class="text-lg font-semibold text-gray-800">Grade Settings</p>
-                </div>
-                <span class="bg-blue-100 text-blue-800 text-sm font-semibold px-3 py-1 rounded-full">
-                    Manage
-                </span>
-            </a>
-
-            <!-- Academic Term Settings -->
-            <a href="{% url 'school_admin:school_term_settings' %}" 
-               class="group flex items-center justify-between p-5 bg-slate-50 rounded-xl shadow-lg border-2 border-transparent hover:border-gradient-to-r hover:from-slate-400 hover:to-slate-600 transition duration-300">
-                <div class="flex items-center gap-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-9 w-9 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3M4 11h16M6 19h12a2 2 0 002-2V7a2 2 0 00-2-2H6a2 2 0 00-2 2v10a2 2 0 002 2z" />
-                    </svg>
-                    <p class="text-lg font-semibold text-gray-800">Academic Term Settings</p>
-                </div>
-                <span class="bg-slate-100 text-slate-800 text-sm font-semibold px-3 py-1 rounded-full">
-                    Manage
-                </span>
-            </a>
-
-            <!-- Grade Summary -->
-            <a href="{% url 'results:grade_settings_overview' school.id %}" 
-               class="group flex items-center justify-between p-5 bg-indigo-50 rounded-xl shadow-lg border-2 border-transparent hover:border-gradient-to-r hover:from-indigo-400 hover:to-indigo-600 transition duration-300">
-                <div class="flex items-center gap-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-9 w-9 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h10M4 18h10" />
-                    </svg>
-                    <p class="text-lg font-semibold text-gray-800">Grade Summary</p>
-                </div>
-                <span class="bg-indigo-100 text-indigo-800 text-sm font-semibold px-3 py-1 rounded-full">
-                    View
-                </span>
-            </a>
-
-            <!-- Class Score Settings -->
-            <a href="{% url 'results:class_score_settings' school.id %}" 
-               class="group flex items-center justify-between p-5 bg-blue-50 rounded-xl shadow-lg border-2 border-transparent hover:border-gradient-to-r hover:from-blue-400 hover:to-blue-600 transition duration-300">
-                <div class="flex items-center gap-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" class="h-9 w-9 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c1.657 0 3-1.343 3-3S13.657 2 12 2 9 3.343 9 5s1.343 3 3 3zM12 14c2.21 0 4-1.79 4-4H8c0 2.21 1.79 4 4 4zM4 20h16v-2H4v2z" />
-                    </svg>
-                    <p class="text-lg font-semibold text-gray-800">Class Score Settings</p>
-                </div>
-                <span class="bg-blue-100 text-blue-800 text-sm font-semibold px-3 py-1 rounded-full">
-                    Manage
-                </span>
-            </a>
-
-          <!-- Bulk Generate & Download All Results -->
-<a href="{% url 'results:bulk_class_select' school.id %}" 
-   class="relative flex flex-col justify-between p-5 pt-10 pr-16 bg-green-50 rounded-xl shadow-lg hover:bg-green-100 transition duration-300">
-
-    <!-- Floating Download badge -->
-    <span class="absolute top-4 right-4 bg-green-100 text-green-800 text-xs font-semibold px-2 py-1 rounded-full">
-        Download
-    </span>
-
-    <div class="flex items-center gap-4">
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-10 w-10 text-green-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-        </svg>
-        <div class="flex flex-col">
-            <p class="text-lg font-semibold text-gray-800">Generate & Download All Results</p>
-            <p class="text-sm text-gray-600">Bulk results per class, non-editable</p>
-        </div>
+<!-- 12 Results -->
+<a href="{% url 'school_admin:admin-class-list' %}" class="dashboard-card card-results">
+    <div class="card-icon">📈</div>
+    <div>
+        <div class="card-title">Results</div>
+        <div class="card-value counter" data-count="{{ result_count }}">{{ result_count }}</div>
     </div>
 </a>
 
-        </div>
+<!-- 13 Bulk Score Entry -->
+<a href="{% url 'results:bulk_score_entry' school.id %}" class="dashboard-card card-results">
+    <div class="card-icon">✏️</div>
+    <div>
+        <div class="card-title">Bulk Scores</div>
+        <div class="card-value">Enter</div>
+    </div>
+</a>
+
+<!-- 14 Psychomotor -->
+<a href="{% url 'results:bulk_psycho_affective' school.id %}" class="dashboard-card card-results">
+    <div class="card-icon">🧠</div>
+    <div>
+        <div class="card-title">Psychomotor</div>
+        <div class="card-value">Affective</div>
+    </div>
+</a>
+
+<!-- 15 Grade Settings -->
+<a href="{% url 'results:grade_settings' school.id %}" class="dashboard-card card-grade">
+    <div class="card-icon">🎯</div>
+    <div>
+        <div class="card-title">Grade Settings</div>
+        <div class="card-value">Manage</div>
+    </div>
+</a>
+
+<!-- 16 Class Score Settings -->
+<a href="{% url 'results:class_score_settings' school.id %}" class="dashboard-card card-grade">
+    <div class="card-icon">⚙️</div>
+    <div>
+        <div class="card-title">Class Settings</div>
+        <div class="card-value">Scores</div>
+    </div>
+</a>
+
+<!-- 17 Grade Summary -->
+<a href="{% url 'results:grade_settings_overview' school.id %}" class="dashboard-card card-grade">
+    <div class="card-icon">📊</div>
+    <div>
+        <div class="card-title">Grade Summary</div>
+        <div class="card-value">View</div>
+    </div>
+</a>
+
+<!-- 18 Result Access Control -->
+<a href="{% url 'school_admin:block_unblock_students' school.id %}" class="dashboard-card card-results">
+    <div class="card-icon">🔐</div>
+    <div>
+        <div class="card-title">Result Control</div>
+        <div class="card-value">Access</div>
+    </div>
+</a>
+
+
+<!-- 20 Download Results -->
+<a href="{% url 'results:bulk_class_select' school.id %}" class="dashboard-card card-download">
+    <div class="card-icon">⬇️</div>
+    <div>
+        <div class="card-title">Download Results</div>
+        <div class="card-value">Bulk</div>
+    </div>
+</a>
+
     </div>
 </div>
 
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<!-- TOOLS SECTION -->
+<div class="section">
+    <div class="section-header" onclick="toggleSection('tools')">
+        <h2 class="font-bold text-lg">🛠 Tools & Communication</h2>
+    </div>
+
+    <div id="tools" class="dashboard-grid">
+
+       <!-- 8 Lesson Notes -->
+<a href="{% url 'school_admin:lessonnote_dashboard' school.id %}" class="dashboard-card card-lessons">
+    <div class="card-icon">📝</div>
+    <div>
+        <div class="card-title">Lesson Notes</div>
+        <div class="card-value counter" data-count="{{ lesson_count }}">{{ lesson_count }}</div>
+    </div>
+</a>
+
+<!-- 9 Assignments -->
+<a href="{% url 'school_admin:assignment_list' school.id %}" class="dashboard-card card-assignments">
+    <div class="card-icon">📌</div>
+    <div>
+        <div class="card-title">Assignments</div>
+        <div class="card-value counter" data-count="{{ assignment_count }}">{{ assignment_count }}</div>
+    </div>
+</a>
+
+       <!-- 11 Attendance -->
+<a href="{% url 'school_admin:admin_attendance_list' school.id %}" class="dashboard-card card-attendance">
+    <div class="card-icon">📊</div>
+    <div>
+        <div class="card-title">Attendance</div>
+        <div class="card-value counter" data-count="{{ attendance_count }}">{{ attendance_count }}</div>
+    </div>
+</a>
+
+
+       <!-- 19 Term Settings -->
+<a href="{% url 'school_admin:school_term_settings' %}" class="dashboard-card card-classes">
+    <div class="card-icon">📅</div>
+    <div>
+        <div class="card-title">Term Settings</div>
+        <div class="card-value">Manage</div>
+    </div>
+</a>
+
+       
+<!-- 21 Announcements -->
+<a href="{% url 'students:announcement_list' %}" class="dashboard-card card-announcement">
+    <div class="card-icon">📢</div>
+    <div>
+        <div class="card-title">Announcements</div>
+        <div class="card-value">Manage</div>
+    </div>
+</a>
+
+
+    </div>
+</div>
+
+</div>
+</div>
+
+<!-- ================= SCRIPTS ================= -->
 
 <script>
+function animateCounter(el) {
+    let target = +el.dataset.count;
+    let start = 0;
+    let step = target / 60;
 
-const classLabels = {{ class_names|safe }};
-const classCounts = {{ class_student_counts|safe }};
-const subjectLabels = {{ subject_names|safe }};
-
-// Students per class
-new Chart(document.getElementById("classChart"), {
-    type: "bar",
-    data: {
-        labels: classLabels,
-        datasets: [{
-            label: "Students",
-            data: classCounts,
-            backgroundColor: "rgba(54, 162, 235, 0.7)"
-        }]
-    },
-    options: {
-        responsive: true,
-        plugins: {
-            legend: { display: false }
+    let interval = setInterval(() => {
+        start += step;
+        if (start >= target) {
+            el.innerText = target;
+            clearInterval(interval);
+        } else {
+            el.innerText = Math.floor(start);
         }
-    }
+    }, 20);
+}
+
+document.querySelectorAll(".counter").forEach(animateCounter);
+
+/* COLLAPSE */
+function toggleSection(id){
+    const el = document.getElementById(id);
+    el.classList.toggle("collapsed");
+}
+
+/* DRAG (simple swap feel) */
+let dragged;
+
+document.querySelectorAll(".draggable").forEach(card => {
+    card.draggable = true;
+
+    card.addEventListener("dragstart", () => dragged = card);
+
+    card.addEventListener("dragover", e => e.preventDefault());
+
+    card.addEventListener("drop", function() {
+        if (dragged && dragged !== this) {
+            let parent = this.parentNode;
+            parent.insertBefore(dragged, this);
+        }
+    });
 });
-
-
-// Subjects chart
-new Chart(document.getElementById("subjectChart"), {
-    type: "pie",
-    data: {
-        labels: subjectLabels,
-        datasets: [{
-            data: subjectLabels.map(() => 1),
-            backgroundColor: [
-                "#3b82f6",
-                "#22c55e",
-                "#f59e0b",
-                "#ef4444",
-                "#8b5cf6",
-                "#14b8a6",
-                "#e11d48"
-            ]
-        }]
-    },
-    options: {
-        responsive: true
-    }
-});
-
 </script>
+
 {% endblock %}

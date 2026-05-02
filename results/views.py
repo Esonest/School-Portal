@@ -169,10 +169,7 @@ def is_teacher(user):
 
 @login_required
 def bulk_score_entry(request, school_id):
-    """
-    Smart view: Admin sees all classes and subjects.
-    Teacher sees only their classes and subjects.
-    """
+    
     user = request.user
     teacher = getattr(user, 'teacher_profile', None)
     admin = getattr(user, 'admin_profile', None)
@@ -2687,33 +2684,32 @@ def grade_settings(request, school_id):
         "formset": formset,
         "school": school
     })
+
+
 @login_required
 def grade_settings_overview(request, school_id):
-    # Ensure admin belongs to the school
     if request.user.school.id != school_id:
         messages.error(request, "Access denied.")
         return redirect("school_admin:admin_dashboard")
 
     school = request.user.school
-    GradeSetting.objects.filter(school=school)
 
-    # Existing dictionaries
-    grades = settings.grades or {}
-    principal_comments = getattr(settings, "principal_comments", {})
-    teacher_comments = getattr(settings, "teacher_comments", {})
+    grade_qs = GradeSetting.objects.filter(school=school).order_by("min_score")
 
-    # Add grade interpretations from settings
-    grade_interpretations = getattr(settings, "grade_interpretations", {})  # New field
+    # Build structure for template
+    grades = {}
+    grade_interpretations = {}
+
+    for g in grade_qs:
+        grades[g.grade] = g.min_score
+        grade_interpretations[g.grade] = g.interpretation
 
     return render(request, "results/grade_settings_overview.html", {
         "school": school,
-        "settings": settings,
         "grades": grades,
-        "principal_comments": principal_comments,
-        "teacher_comments": teacher_comments,
-        "grade_interpretations": grade_interpretations,  # <-- Pass to template
+        "grade_settings": grade_qs,
+        "grade_interpretations": grade_interpretations,
     })
-
 
 
 # ---------- helper: choose and save comments ----------

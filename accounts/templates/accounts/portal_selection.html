@@ -96,6 +96,105 @@
 
    <!-- STUDENT PORTALS -->
 {% if 'student' in roles %}
+
+
+{% if 'student' in roles and announcements %}
+<!-- BEAUTIFUL MARQUEE ANNOUNCEMENTS -->
+<section class="mb-10 mt-4">
+    <div class="relative overflow-hidden rounded-2xl shadow-2xl border border-blue-200 bg-gradient-to-r from-blue-700 via-indigo-700 to-purple-700">
+
+        <!-- Glow Effects -->
+        <div class="absolute -left-10 top-0 w-32 h-full bg-white/10 blur-2xl"></div>
+        <div class="absolute right-0 top-0 w-32 h-full bg-purple-300/10 blur-2xl"></div>
+
+        <div class="flex items-center h-20">
+            <!-- Fixed Icon Section -->
+            <div class="flex items-center gap-3 px-6 h-full bg-black/15 backdrop-blur-md border-r border-white/10 z-10 shrink-0">
+                <div class="w-12 h-12 rounded-2xl bg-white/20 flex items-center justify-center text-3xl animate-bounce">
+                    📢
+                </div>
+
+                <div class="hidden sm:block">
+                    <h3 class="text-white font-bold text-lg">
+                        Announcements
+                    </h3>
+                    <p class="text-blue-100 text-xs">
+                        Latest Updates
+                    </p>
+                </div>
+            </div>
+
+            <!-- Moving Content -->
+            <div class="relative flex-1 overflow-hidden">
+                <div class="announcement-marquee flex items-center whitespace-nowrap">
+                    {% for announcement in announcements %}
+                        <div class="inline-flex items-center mx-12 text-white">
+                            <span class="text-yellow-300 text-2xl mr-4">✦</span>
+
+                            <span class="font-bold text-lg mr-3">
+                                {{ announcement.title }}:
+                            </span>
+
+                            <span class="text-blue-100 text-base">
+                                {{ announcement.message|striptags|truncatechars:180 }}
+                            </span>
+
+                            <span class="ml-6 px-4 py-1 rounded-full bg-white/20 text-sm font-medium">
+                                {{ announcement.publish_date|date:"M d, Y" }}
+                            </span>
+                        </div>
+                    {% endfor %}
+
+                    <!-- Duplicate for seamless infinite scroll -->
+                    {% for announcement in announcements %}
+                        <div class="inline-flex items-center mx-12 text-white">
+                            <span class="text-yellow-300 text-2xl mr-4">✦</span>
+
+                            <span class="font-bold text-lg mr-3">
+                                {{ announcement.title }}:
+                            </span>
+
+                            <span class="text-blue-100 text-base">
+                                {{ announcement.message|striptags|truncatechars:180 }}
+                            </span>
+
+                            <span class="ml-6 px-4 py-1 rounded-full bg-white/20 text-sm font-medium">
+                                {{ announcement.publish_date|date:"M d, Y" }}
+                            </span>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</section>
+
+<style>
+    @keyframes marqueeScroll {
+        from {
+            transform: translateX(0);
+        }
+        to {
+            transform: translateX(-50%);
+        }
+    }
+
+    .announcement-marquee {
+        width: max-content;
+        animation: marqueeScroll 45s linear infinite;
+    }
+
+    .announcement-marquee:hover {
+        animation-play-state: paused;
+    }
+
+    @media (max-width: 768px) {
+        .announcement-marquee {
+            animation-duration: 30s;
+        }
+    }
+</style>
+{% endif %}
 <div>
   <h3 class="text-xl sm:text-2xl font-bold text-indigo-700 mb-6 flex items-center gap-2">
     🎓 Student Portals

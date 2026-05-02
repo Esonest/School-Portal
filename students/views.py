@@ -33,6 +33,7 @@ from django.contrib import messages
 from results.utils import portal_required
 
 
+
 @login_required
 @student_required
 def student_dashboard(request):
@@ -71,6 +72,7 @@ def student_dashboard(request):
         student=student,
         completed_on__isnull=False
     ).order_by('-completed_on')[:5]
+    
 
     context = {
         'student': student,
@@ -305,3 +307,141 @@ def student_result_dashboard(request):
     results = student.cbtresult_set.all()  
     context = {'student': student, 'results': results}
     return render(request, 'accounts/student_result_dashboard.html', context)
+
+
+
+
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
+from django.utils import timezone
+
+from .models import Announcement
+from .forms import AnnouncementForm
+
+
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render
+from django.utils import timezone
+
+@login_required
+def announcement_list(request):
+    school = request.user.school
+    now = timezone.now()
+
+    announcements = (
+        Announcement.objects
+        .filter(school=school)
+        .order_by("-publish_date")
+    )
+
+    # Total active announcements
+    active_count = announcements.filter(
+        is_active=True
+    ).filter(
+        expiry_date__isnull=True
+    ).count() + announcements.filter(
+        is_active=True,
+        expiry_date__gte=now
+    ).count()
+
+    # Total expired announcements
+    expired_count = announcements.filter(
+        expiry_date__lt=now
+    ).count()
+
+    context = {
+        "announcements": announcements,
+        "active_count": active_count,
+        "expired_count": expired_count,
+    }
+
+    return render(
+        request,
+        "announcements/announcement_list.html",
+        context,
+    )
+
+
+@login_required
+def announcement_create(request):
+    school = request.user.school
+
+    if request.method == "POST":
+        form = AnnouncementForm(request.POST)
+        if form.is_valid():
+            announcement = form.save(commit=False)
+            announcement.school = school
+            announcement.created_by = request.user
+            announcement.save()
+
+            messages.success(
+                request,
+                "Announcement created successfully."
+            )
+            return redirect("students:announcement_list")
+    else:
+        form = AnnouncementForm()
+
+    return render(
+        request,
+        "announcements/announcement_form.html",
+        {"form": form}
+    )
+
+
+@login_required
+def announcement_update(request, pk):
+    school = request.user.school
+
+    announcement = get_object_or_404(
+        Announcement,
+        pk=pk,
+        school=school
+    )
+
+    if request.method == "POST":
+        form = AnnouncementForm(
+            request.POST,
+            instance=announcement
+        )
+        if form.is_valid():
+            form.save()
+            messages.success(
+                request,
+                "Announcement updated successfully."
+            )
+            return redirect("students:announcement_list")
+    else:
+        form = AnnouncementForm(instance=announcement)
+
+    return render(
+        request,
+        "announcements/announcement_form.html",
+        {"form": form}
+    )
+
+
+@login_required
+def announcement_delete(request, pk):
+    school = request.user.school
+
+    announcement = get_object_or_404(
+        Announcement,
+        pk=pk,
+        school=school
+    )
+
+    if request.method == "POST":
+        announcement.delete()
+        messages.success(
+            request,
+            "Announcement deleted successfully."
+        )
+        return redirect("students:announcement_list")
+
+    return render(
+        request,
+        "announcements/announcement_confirm_delete.html",
+        {"announcement": announcement}
+    )

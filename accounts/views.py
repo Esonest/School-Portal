@@ -9,6 +9,8 @@ from django.contrib import messages
 
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
+from django.utils import timezone
+from students.models import Announcement
 
 @login_required
 def portal_selection(request):
@@ -45,9 +47,18 @@ def portal_selection(request):
     if user.role == 'accountant':
         roles.append('accountant')
 
+    active_announcements = Announcement.objects.filter(
+        school=request.user.school,
+        is_active=True,
+        publish_date__lte=timezone.now()
+    ).exclude(
+        expiry_date__lt=timezone.now()
+    ).order_by("-publish_date")    
+
 
     context = {
         'roles': roles,
+        "announcements": active_announcements,
         
     }
 

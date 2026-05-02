@@ -269,3 +269,35 @@ class PromotionHistory(models.Model):
     def __str__(self):
         return f"{self.student.full_name()} | {self.old_class} → {self.new_class} ({self.session})"
 
+
+
+# models.py
+from django.db import models
+from django.conf import settings
+from django.utils import timezone
+
+
+class Announcement(models.Model):
+    school = models.ForeignKey(School,on_delete=models.CASCADE,related_name="announcements")
+    title = models.CharField(max_length=255)
+    message = models.TextField()
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+    is_active = models.BooleanField(default=True)
+    publish_date = models.DateTimeField(default=timezone.now)
+    expiry_date = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        ordering = ["-publish_date"]
+
+    def __str__(self):
+        return self.title
+
+    @property
+    def is_expired(self):
+        return self.expiry_date and timezone.now() > self.expiry_date

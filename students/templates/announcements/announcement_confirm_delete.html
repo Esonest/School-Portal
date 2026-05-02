@@ -1,0 +1,32 @@
+{% extends "accounts/base.html" %}
+
+{% block content %}
+<div class="max-w-xl mx-auto py-12 px-4">
+    <div class="bg-white shadow-xl rounded-2xl p-8 text-center">
+        <h1 class="text-2xl font-bold text-red-600 mb-4">
+            Delete Announcement
+        </h1>
+
+        <p class="mb-6">
+            Are you sure you want to delete
+            <strong>{{ announcement.title }}</strong>?
+        </p>
+
+        <form method="post">
+            {% csrf_token %}
+
+            <div class="flex justify-center gap-4">
+                <button type="submit"
+                        class="bg-red-600 text-white px-6 py-2 rounded-lg">
+                    Delete
+                </button>
+
+                <a href="{% url 'students:announcement_list' %}"
+                   class="bg-gray-300 px-6 py-2 rounded-lg">
+                    Cancel
+                </a>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

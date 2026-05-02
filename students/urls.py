@@ -15,9 +15,12 @@ urlpatterns = [
     path('results/', views.student_result_dashboard, name='student_result_dashboard'),
     path('notes/', views.notes_list, name='notes_list'),
     path('notes/<int:pk>/', views.note_detail, name='note_detail'),
+    path( "announcements/",views.announcement_list,name="announcement_list"),
+    path("announcements/create/",views.announcement_create,name="announcement_create"),
+    path("announcements/<int:pk>/edit/",views.announcement_update,name="announcement_update"),
+    path("announcements/<int:pk>/delete/",views.announcement_delete,name="announcement_delete"
+    ),
 
-
-    
 ]
 
 
