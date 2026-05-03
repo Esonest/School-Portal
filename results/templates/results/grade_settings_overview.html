@@ -1,103 +1,208 @@
 {% extends "accounts/base.html" %}
-{% load custom_filters %}
 
 {% block content %}
-<div class="max-w-5xl mx-auto py-10">
+<div class="max-w-7xl mx-auto py-10 px-4">
 
-    <h1 class="text-3xl font-bold mb-6 text-{{ school.theme_color }}-600">
-        {{ school.name }} — Grade & Comment Settings Overview
-    </h1>
+    <!-- Header -->
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 mb-8">
+        <div>
+            <h1 class="text-4xl font-extrabold text-{{ school.theme_color }}-600">
+                Grade Settings Overview
+            </h1>
+            <p class="text-gray-500 mt-2">
+                View grade scales, principal comments, and teacher comments by class
+            </p>
+        </div>
 
-    <!-- Grades Table -->
-    <div class="bg-white p-6 shadow rounded mb-10">
-        <h2 class="text-2xl font-semibold mb-4 text-blue-700">Grades</h2>
-
-        <table class="w-full border border-gray-300 rounded overflow-hidden">
-            <thead class="bg-gray-100">
-                <tr>
-                    <th class="border px-4 py-2 text-left">Grade</th>
-                    <th class="border px-4 py-2 text-left">Minimum Score</th>
-                    <th class="border px-4 py-2 text-left">Grade Interpretation</th> <!-- NEW -->
-                </tr>
-            </thead>
-            <tbody>
-                {% for grade, score in grades.items %}
-                <tr class="hover:bg-gray-50">
-                    <td class="border px-4 py-2 font-semibold">{{ grade }}</td>
-                    <td class="border px-4 py-2">{{ score }}</td>
-                    <td class="border px-4 py-2">
-                        {% if grade_interpretations %}
-                            {{ grade_interpretations|get_item:grade }}
-                        {% else %}
-                            N/A
-                        {% endif %}
-                    </td>
-                </tr>
+        <!-- Filter -->
+        <div class="w-full lg:w-80">
+            <label class="block text-sm font-semibold text-gray-700 mb-2">
+                Filter by Class
+            </label>
+            <select id="classFilter"
+                    class="w-full rounded-2xl border-gray-300 shadow-lg
+                           focus:ring-4 focus:ring-blue-500/30
+                           focus:border-blue-500 px-4 py-3">
+                <option value="">All Classes</option>
+                {% for cls in classes %}
+                    <option value="{{ cls.id }}"
+                        {% if selected_class_id == cls.id|stringformat:"s" %}selected{% endif %}>
+                        {{ cls.name }}
+                    </option>
                 {% endfor %}
-            </tbody>
-        </table>
+            </select>
+        </div>
     </div>
 
-    <!-- Principal Comments -->
-    <div class="bg-white p-6 shadow rounded mb-10">
-        <h2 class="text-2xl font-semibold mb-4 text-green-700">Principal Comments</h2>
+    <!-- Main Card -->
+    <div class="bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden">
+        <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-700 px-8 py-6">
+            <h2 class="text-3xl font-bold text-white">
+                Grade Configuration Matrix
+            </h2>
+            <p class="text-blue-100 mt-2">
+                Real-time grade settings per class
+            </p>
+        </div>
 
-        {% if principal_comments %}
-        <table class="w-full border border-gray-300 rounded overflow-hidden">
-            <thead class="bg-gray-100">
-                <tr>
-                    <th class="border px-4 py-2">Grade</th>
-                    <th class="border px-4 py-2">Comment</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for grade, comment in principal_comments.items %}
-                <tr class="hover:bg-gray-50">
-                    <td class="border px-4 py-2 font-semibold">{{ grade }}</td>
-                    <td class="border px-4 py-2">{{ comment }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        {% else %}
-            <p class="text-gray-600 italic">No principal comments added.</p>
-        {% endif %}
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-slate-50">
+                    <tr>
+                        <th class="px-6 py-5 text-left font-bold text-slate-700">Class</th>
+                        <th class="px-6 py-5 text-left font-bold text-slate-700">Grade</th>
+                        <th class="px-6 py-5 text-left font-bold text-slate-700">Minimum Score</th>
+                        <th class="px-6 py-5 text-left font-bold text-slate-700">Interpretation</th>
+                        <th class="px-6 py-5 text-left font-bold text-green-700">Principal Comment</th>
+                        <th class="px-6 py-5 text-left font-bold text-amber-700">Teacher Comment</th>
+                    </tr>
+                </thead>
+
+                <tbody id="gradesTableBody">
+                    {% for grade in grade_settings %}
+                    <tr class="border-t border-slate-100 hover:bg-blue-50 transition-all duration-300">
+                        <td class="px-6 py-5 font-semibold text-slate-800">
+                            {{ grade.SchoolClass.name }}
+                        </td>
+
+                        <td class="px-6 py-5">
+                            <span class="inline-flex items-center px-4 py-1.5 rounded-full
+                                         bg-gradient-to-r from-blue-100 to-indigo-100
+                                         text-blue-700 font-bold shadow-sm">
+                                {{ grade.grade }}
+                            </span>
+                        </td>
+
+                        <td class="px-6 py-5 font-bold text-slate-700">
+                            {{ grade.min_score }}
+                        </td>
+
+                        <td class="px-6 py-5 text-slate-600">
+                            {{ grade.interpretation|default:"N/A" }}
+                        </td>
+
+                        <td class="px-6 py-5">
+                            <div class="max-w-xs rounded-xl bg-green-50 text-green-800 px-4 py-3 text-sm">
+                                {{ grade.principal_comment|default:"No principal comment" }}
+                            </div>
+                        </td>
+
+                        <td class="px-6 py-5">
+                            <div class="max-w-xs rounded-xl bg-amber-50 text-amber-800 px-4 py-3 text-sm">
+                                {{ grade.teacher_comment|default:"No teacher comment" }}
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="text-center py-16">
+                            <div class="text-slate-400 text-lg">
+                                No grade settings found.
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
     </div>
 
-    <!-- Teacher Comments -->
-    <div class="bg-white p-6 shadow rounded">
-        <h2 class="text-2xl font-semibold mb-4 text-yellow-700">Teacher Comments</h2>
-
-        {% if teacher_comments %}
-        <table class="w-full border border-gray-300 rounded overflow-hidden">
-            <thead class="bg-gray-100">
-                <tr>
-                    <th class="border px-4 py-2">Grade</th>
-                    <th class="border px-4 py-2">Comment</th>
-                </tr>
-            </thead>
-            <tbody>
-                {% for grade, comment in teacher_comments.items %}
-                <tr class="hover:bg-gray-50">
-                    <td class="border px-4 py-2 font-semibold">{{ grade }}</td>
-                    <td class="border px-4 py-2">{{ comment }}</td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
-        {% else %}
-            <p class="text-gray-600 italic">No teacher comments added.</p>
-        {% endif %}
-    </div>
-
-    <!-- Back & Edit Buttons -->
-    <div class="mt-8 flex gap-4">
+    <!-- Action Buttons -->
+    <div class="mt-10 flex flex-wrap gap-4">
         <a href="{% url 'results:grade_settings' school.id %}"
-           class="bg-blue-600 text-white px-6 py-3 rounded shadow hover:bg-blue-700">Edit Settings</a>
+           class="px-8 py-4 rounded-2xl bg-gradient-to-r
+                  from-blue-600 to-indigo-700 text-white
+                  font-bold shadow-xl hover:scale-105
+                  transition-all duration-300">
+            Edit Settings
+        </a>
 
         <a href="{% url 'school_admin:school_admin_dashboard' school.id %}"
-           class="bg-gray-500 text-white px-6 py-3 rounded shadow hover:bg-gray-600">Back</a>
+           class="px-8 py-4 rounded-2xl bg-gradient-to-r
+                  from-slate-600 to-slate-800 text-white
+                  font-bold shadow-xl hover:scale-105
+                  transition-all duration-300">
+            Back Dashboard
+        </a>
     </div>
 
 </div>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const classFilter = document.getElementById("classFilter");
+    const tableBody = document.getElementById("gradesTableBody");
+
+    classFilter.addEventListener("change", async function () {
+        const classId = this.value;
+        const url = new URL(window.location.href);
+
+        if (classId) {
+            url.searchParams.set("class", classId);
+        } else {
+            url.searchParams.delete("class");
+        }
+
+        const response = await fetch(url, {
+            headers: {
+                "X-Requested-With": "XMLHttpRequest"
+            }
+        });
+
+        const data = await response.json();
+
+        let html = "";
+
+        if (data.grades.length === 0) {
+            html = `
+                <tr>
+                    <td colspan="6" class="text-center py-16 text-slate-400 text-lg">
+                        No grade settings found for this class.
+                    </td>
+                </tr>
+            `;
+        } else {
+            data.grades.forEach(item => {
+                html += `
+                    <tr class="border-t border-slate-100 hover:bg-blue-50 transition-all duration-300">
+                        <td class="px-6 py-5 font-semibold text-slate-800">
+                            ${item.class_name}
+                        </td>
+
+                        <td class="px-6 py-5">
+                            <span class="inline-flex items-center px-4 py-1.5 rounded-full
+                                         bg-gradient-to-r from-blue-100 to-indigo-100
+                                         text-blue-700 font-bold shadow-sm">
+                                ${item.grade}
+                            </span>
+                        </td>
+
+                        <td class="px-6 py-5 font-bold text-slate-700">
+                            ${item.min_score}
+                        </td>
+
+                        <td class="px-6 py-5 text-slate-600">
+                            ${item.interpretation}
+                        </td>
+
+                        <td class="px-6 py-5">
+                            <div class="max-w-xs rounded-xl bg-green-50 text-green-800 px-4 py-3 text-sm">
+                                ${item.principal_comment}
+                            </div>
+                        </td>
+
+                        <td class="px-6 py-5">
+                            <div class="max-w-xs rounded-xl bg-amber-50 text-amber-800 px-4 py-3 text-sm">
+                                ${item.teacher_comment}
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+        }
+
+        tableBody.innerHTML = html;
+    });
+});
+</script>
 {% endblock %}

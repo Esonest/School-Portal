@@ -2686,6 +2686,8 @@ def grade_settings(request, school_id):
     })
 
 
+
+
 @login_required
 def grade_settings_overview(request, school_id):
     if request.user.school.id != school_id:
@@ -2694,21 +2696,57 @@ def grade_settings_overview(request, school_id):
 
     school = request.user.school
 
-    grade_qs = GradeSetting.objects.filter(school=school).order_by("min_score")
+    classes = SchoolClass.objects.filter(
+        school=school
+    ).order_by("name")
 
-    # Build structure for template
-    grades = {}
-    grade_interpretations = {}
+    selected_class_id = request.GET.get("class")
 
-    for g in grade_qs:
-        grades[g.grade] = g.min_score
-        grade_interpretations[g.grade] = g.interpretation
+    grade_qs = GradeSetting.objects.filter(
+        school=school
+    ).select_related(
+        "SchoolClass"
+    ).order_by(
+        "SchoolClass__name",
+        "-min_score"
+    )
+
+    if selected_class_id:
+        grade_qs = grade_qs.filter(
+            SchoolClass_id=selected_class_id
+        )
+
+    # AJAX request
+    if request.headers.get("x-requested-with") == "XMLHttpRequest":
+        grades_data = []
+
+        for grade in grade_qs:
+            grades_data.append({
+                "class_name": grade.SchoolClass.name,
+                "grade": grade.grade,
+                "min_score": grade.min_score,
+                "interpretation": grade.interpretation or "N/A",
+                "principal_comment": getattr(
+                    grade,
+                    "principal_comment",
+                    ""
+                ) or "No principal comment",
+                "teacher_comment": getattr(
+                    grade,
+                    "teacher_comment",
+                    ""
+                ) or "No teacher comment",
+            })
+
+        return JsonResponse({
+            "grades": grades_data
+        })
 
     return render(request, "results/grade_settings_overview.html", {
         "school": school,
-        "grades": grades,
+        "classes": classes,
+        "selected_class_id": selected_class_id,
         "grade_settings": grade_qs,
-        "grade_interpretations": grade_interpretations,
     })
 
 

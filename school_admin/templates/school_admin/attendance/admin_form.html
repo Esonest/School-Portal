@@ -1,13 +1,173 @@
 {% extends "accounts/base.html" %}
 {% block content %}
 
-<h2 class="text-2xl font-bold text-{{ school.theme_color }}-600">Attendance Form – {{ school.name }}</h2>
+<div class="max-w-5xl mx-auto py-10 px-4">
+    <div class="bg-white rounded-3xl shadow-2xl overflow-hidden">
 
-<form method="POST" class="space-y-4">
-    {% csrf_token %}
-    {{ form.as_p }}
+        <!-- Header -->
+        <div class="bg-gradient-to-r from-{{ school.theme_color }}-600 to-{{ school.theme_color }}-800 px-8 py-6">
+            <h1 class="text-3xl font-bold text-white">
+                Attendance Form
+            </h1>
+            <p class="text-white/80 mt-2">
+                {{ school.name }}
+            </p>
+        </div>
 
-    <button class="bg-green-600 text-white px-4 py-2 rounded">Save</button>
-</form>
+        <!-- Form -->
+        <form method="POST" class="p-8 space-y-8">
+            {% csrf_token %}
 
+            <!-- Date -->
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-2">
+                    Attendance Date
+                </label>
+                {{ form.date }}
+            </div>
+
+            <!-- Status -->
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-2">
+                    Status
+                </label>
+                {{ form.status }}
+            </div>
+
+           <!-- CLASS -->
+<div>
+    <label class="block text-sm font-bold text-gray-700 mb-2">
+        Select Class
+    </label>
+    {{ form.school_class }}
+</div>
+
+<!-- Select All Button -->
+<div class="flex items-center justify-between">
+    <label class="text-lg font-bold text-gray-800">
+        Select Students
+    </label>
+
+    <button type="button"
+            id="selectAllBtn"
+            class="px-5 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition">
+        Select All
+    </button>
+</div>
+
+<!-- Students -->
+<div class="border rounded-2xl p-6 max-h-[500px] overflow-y-auto bg-gray-50">
+    <div id="studentList"
+         class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+
+        {% for checkbox in form.students %}
+        <label class="student-item flex items-center gap-3 p-4 rounded-2xl bg-white border border-gray-200 hover:border-blue-500 hover:bg-blue-50 cursor-pointer transition"
+               data-class="{{ checkbox.data.value.instance.school_class.id }}">
+            {{ checkbox.tag }}
+            <span class="font-medium text-gray-700">
+                {{ checkbox.choice_label }}
+            </span>
+        </label>
+        {% endfor %}
+
+    </div>
+</div>
+
+            <!-- Remarks -->
+            <div>
+                <label class="block text-sm font-bold text-gray-700 mb-2">
+                    Remarks
+                </label>
+                {{ form.remarks }}
+            </div>
+
+            <!-- Submit -->
+            <div class="pt-4">
+                <button type="submit"
+                        class="w-full py-4 rounded-2xl bg-gradient-to-r from-green-600 to-emerald-700 text-white text-lg font-bold shadow-lg hover:scale-[1.02] transition">
+                    Save Attendance
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const classSelect = document.getElementById("id_school_class");
+    const selectAllBtn = document.getElementById("selectAllBtn");
+
+    function getVisibleCheckboxes() {
+        return document.querySelectorAll(
+            '.student-item:not(.hidden) input[name="students"]'
+        );
+    }
+
+    function filterStudents() {
+        const selectedClass = classSelect.value;
+        const studentItems = document.querySelectorAll(".student-item");
+
+        studentItems.forEach(item => {
+            const studentClass = item.dataset.class;
+
+            if (!selectedClass || studentClass === selectedClass) {
+                item.classList.remove("hidden");
+            } else {
+                item.classList.add("hidden");
+                item.querySelector("input").checked = false;
+            }
+        });
+
+        selectAllBtn.textContent = "Select All";
+    }
+
+    classSelect.addEventListener("change", filterStudents);
+
+    selectAllBtn.addEventListener("click", function () {
+        const visibleCheckboxes = getVisibleCheckboxes();
+
+        const allChecked = Array.from(visibleCheckboxes)
+            .every(cb => cb.checked);
+
+        visibleCheckboxes.forEach(cb => {
+            cb.checked = !allChecked;
+        });
+
+        selectAllBtn.textContent = allChecked
+            ? "Select All"
+            : "Deselect All";
+    });
+
+    filterStudents();
+});
+</script>
+
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    const classSelect = document.querySelector("select[name='school_class']");
+    const studentContainer = document.querySelector("#studentList");
+
+    classSelect.addEventListener("change", async function () {
+        const classId = this.value;
+
+        const res = await fetch(`/school_admin/load-students/${classId}/`);
+        const data = await res.json();
+
+        studentContainer.innerHTML = "";
+
+        data.students.forEach(s => {
+            studentContainer.innerHTML += `
+                <label class="flex items-center gap-2 p-2 bg-white rounded border">
+                    <input type="checkbox" name="students" value="${s.id}">
+                    ${s.name}
+                </label>
+            `;
+        });
+    });
+
+});
+</script>
 {% endblock %}

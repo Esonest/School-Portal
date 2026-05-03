@@ -152,6 +152,26 @@
       </ul>
     </div>
 
+
+    <div class="card bg-white p-4 sm:p-6 rounded-xl shadow border flex flex-col justify-between">
+
+  <div>
+    <h2 class="font-semibold mb-2" style="color:var(--theme)">
+      Attendance
+    </h2>
+    <p class="text-sm muted">
+      View your daily attendance records
+    </p>
+  </div>
+
+ <a href="{% url 'attendance:dashboard' %}"
+   class="no-print mt-4 px-4 py-2 text-sm text-white rounded text-center"
+   style="background:var(--theme)">
+    View Attendance
+</a>
+
+</div>
+
     <!-- RESULTS -->
     <div class="card bg-white p-4 sm:p-6 rounded-xl shadow border flex flex-col gap-3">
       <h2 class="font-semibold mb-2" style="color:var(--theme)">Recent Results</h2>

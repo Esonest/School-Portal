@@ -1,26 +1,104 @@
 {% extends 'accounts/base.html' %}
 {% block content %}
-<div class="max-w-4xl mx-auto p-6 bg-white rounded shadow">
-  <h1 class="text-2xl font-bold">My Attendance</h1>
-  <table class="w-full mt-4">
-    <thead class="bg-gray-100">
-      <tr>
-        <th class="p-2">Date</th>
-        <th class="p-2">Status</th>
-        <th class="p-2">Remarks</th>
-      </tr>
-    </thead>
-    <tbody>
-      {% for a in attendances %}
-      <tr class="border-b">
-        <td class="p-2">{{ a.date }}</td>
-        <td class="p-2">{{ a.status }}</td>
-        <td class="p-2">{{ a.remarks }}</td>
-      </tr>
-      {% empty %}
-      <tr><td colspan="3" class="p-4 text-gray-600">No attendance records found.</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
+
+<div class="max-w-5xl mx-auto px-4 py-10">
+
+    <!-- HEADER CARD -->
+    <div class="bg-gradient-to-r from-indigo-600 to-blue-700 text-white p-6 rounded-3xl shadow-lg mb-8">
+        <h1 class="text-3xl font-bold">My Attendance</h1>
+        <p class="text-white/80 mt-1">Track your daily school attendance record</p>
+    </div>
+
+    <!-- SUMMARY CARD -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
+
+        <div class="bg-white rounded-2xl shadow p-5 text-center border">
+            <p class="text-gray-500 text-sm">Total Records</p>
+            <h2 class="text-2xl font-bold text-indigo-600">{{ attendances|length }}</h2>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow p-5 text-center border">
+            <p class="text-gray-500 text-sm">Present</p>
+            <h2 class="text-2xl font-bold text-green-600">
+                {{ attendances|dictsort:"status"|length }}
+            </h2>
+        </div>
+
+        <div class="bg-white rounded-2xl shadow p-5 text-center border">
+            <p class="text-gray-500 text-sm">Attendance Status</p>
+            <h2 class="text-2xl font-bold text-blue-600">Active</h2>
+        </div>
+
+    </div>
+
+    <!-- TABLE CARD -->
+    <div class="bg-white rounded-3xl shadow-xl overflow-hidden border">
+
+        <!-- TABLE HEADER -->
+        <div class="bg-gray-50 px-6 py-4 border-b">
+            <h2 class="font-semibold text-gray-700">Attendance Records</h2>
+        </div>
+
+        <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+
+                <thead class="bg-gray-100 text-gray-700 uppercase text-xs">
+                    <tr>
+                        <th class="p-4 text-left">Date</th>
+                        <th class="p-4 text-left">Status</th>
+                        <th class="p-4 text-left">Remarks</th>
+                    </tr>
+                </thead>
+
+                <tbody class="divide-y">
+
+                    {% for a in attendances %}
+                    <tr class="hover:bg-gray-50 transition">
+
+                        <td class="p-4 font-medium text-gray-700">
+                            {{ a.date }}
+                        </td>
+
+                        <!-- STATUS BADGE -->
+                        <td class="p-4">
+                            {% if a.status == "Present" %}
+                                <span class="px-3 py-1 text-xs font-bold rounded-full bg-green-100 text-green-700">
+                                    Present
+                                </span>
+                            {% elif a.status == "Absent" %}
+                                <span class="px-3 py-1 text-xs font-bold rounded-full bg-red-100 text-red-700">
+                                    Absent
+                                </span>
+                            {% elif a.status == "Late" %}
+                                <span class="px-3 py-1 text-xs font-bold rounded-full bg-yellow-100 text-yellow-700">
+                                    Late
+                                </span>
+                            {% else %}
+                                <span class="px-3 py-1 text-xs font-bold rounded-full bg-gray-100 text-gray-700">
+                                    {{ a.status }}
+                                </span>
+                            {% endif %}
+                        </td>
+
+                        <td class="p-4 text-gray-600">
+                            {{ a.remarks|default:"—" }}
+                        </td>
+
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="3" class="p-8 text-center text-gray-500">
+                            No attendance records found.
+                        </td>
+                    </tr>
+                    {% endfor %}
+
+                </tbody>
+            </table>
+        </div>
+
+    </div>
+
 </div>
+
 {% endblock %}

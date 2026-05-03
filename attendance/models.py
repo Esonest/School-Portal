@@ -19,11 +19,11 @@ class Attendance(models.Model):
     status = models.CharField(max_length=10, choices=STATUS_CHOICES, default='present')
     remarks = models.TextField(blank=True, null=True)
     marked_by = models.ForeignKey(
-        Teacher,
+        settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True,
-        related_name='attendances_marked'
+        related_name="attendance_marked"
     )
 
     class Meta:

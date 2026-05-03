@@ -423,22 +423,6 @@ class LessonNoteForm(forms.ModelForm):
         }
 
 
-
-from django import forms
-from attendance.models import Attendance
-
-class AttendanceForm(forms.ModelForm):
-    class Meta:
-        model = Attendance
-        fields = ["student", "date", "status", "remarks"]
-        widgets = {
-            "date": forms.DateInput(attrs={"type": "date"}),
-            "remarks": forms.Textarea(attrs={"rows": 2}),
-        }
-
-
-
-
 from django import forms
 from accounts.models import User, Teacher
 from students.models import SchoolClass

@@ -2104,14 +2104,18 @@ from attendance.forms import AttendanceForm
 
 
 # ---------------------------------------------------------
-# Correct Admin Permission Checker
-# ---------------------------------------------------------
-
-
-
-# ---------------------------------------------------------
 # CREATE ATTENDANCE
 # ---------------------------------------------------------
+from django.shortcuts import get_object_or_404, redirect, render
+from django.contrib import messages
+from django.core.exceptions import PermissionDenied
+from django.contrib.auth.decorators import login_required
+
+from attendance.models import Attendance
+from students.models import Student, SchoolClass
+from attendance.forms import AttendanceForm
+
+
 @login_required
 def attendance_create(request, school_id):
     if not school_admin_required(request.user):
@@ -2119,36 +2123,49 @@ def attendance_create(request, school_id):
 
     school = get_object_or_404(School, id=school_id)
 
+    form = AttendanceForm(request.POST or None, school=school)
+
     if request.method == "POST":
-        form = AttendanceForm(request.POST)
-
         if form.is_valid():
-            attendance = form.save(commit=False)
+            school_class = form.cleaned_data["school_class"]
+            students = form.cleaned_data["students"]
+            date = form.cleaned_data["date"]
+            status = form.cleaned_data["status"]
+            remarks = form.cleaned_data["remarks"]
 
-            # ensure record belongs to admin's school
-            if attendance.student.school_id != school.id:
-                messages.error(request, "This student does not belong to this school.")
-                return redirect("school_admin:admin_attendance_list", school_id=school.id)
+            for student in students:
+                Attendance.objects.create(
+                    student=student,
+                    date=date,
+                    status=status,
+                    remarks=remarks,
+                    school=school,
+                    marked_by=None,   # admin has no teacher profile
+                )
 
-            attendance.school = school
-            attendance.marked_by = None  # admin created, not teacher
-            attendance.save()
-
-            messages.success(request, "Attendance created successfully.")
+            messages.success(request, "Attendance saved successfully.")
             return redirect("school_admin:admin_attendance_list", school_id=school.id)
-    else:
-        # limit students to school
-        form = AttendanceForm()
-        form.fields["student"].queryset = Student.objects.filter(school=school)
 
-    context = {
+    return render(request, "school_admin/attendance/admin_form.html", {
         "form": form,
         "school": school,
-        "is_create": True,
+    })
+
+
+from django.http import JsonResponse
+
+@login_required
+def load_students(request, class_id):
+    students = Student.objects.filter(school_class_id=class_id)
+
+    data = {
+        "students": [
+            {"id": s.id, "name": s.user.get_full_name() or s.admission_no}
+            for s in students
+        ]
     }
 
-    return render(request, "school_admin/attendance/admin_form.html", context)
-
+    return JsonResponse(data)
 
 # ---------------------------------------------------------
 # EDIT ATTENDANCE
