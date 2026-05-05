@@ -1987,12 +1987,15 @@ from django.core.exceptions import PermissionDenied
 from django.contrib import messages
 from django.db.models import Count
 from django.utils.dateparse import parse_date
+import json
 
 from accounts.models import School
 from students.models import Student, SchoolClass
 from attendance.models import Attendance
 from django.db.models import Count
 from django.http import JsonResponse
+from results.utils import SESSION_CHOICES
+from results.models import Score
 
 # -------------------------
 # Correct permission check
@@ -2015,6 +2018,8 @@ def attendance_list(request, school_id):
     # Filters
     # --------------------------------
     selected_class = request.GET.get("class") or ""
+    selected_session = request.GET.get("session") or ""
+    selected_term = request.GET.get("term") or ""
     selected_student = request.GET.get("student") or ""
     selected_status = request.GET.get("status") or ""
     start_date = request.GET.get("start_date") or ""
@@ -2025,6 +2030,12 @@ def attendance_list(request, school_id):
     # Filter: class
     if selected_class:
         records = records.filter(student__school_class_id=selected_class)
+
+    if selected_session:
+        records = records.filter(session=selected_session)
+
+    if selected_term:
+        records = records.filter(term=selected_term)    
 
     # Filter: student
     if selected_student:
@@ -2046,6 +2057,8 @@ def attendance_list(request, school_id):
     # --------------------------------
     classes = SchoolClass.objects.filter(school=school)
     students = Student.objects.filter(school=school)
+    sessions = SESSION_LIST
+    terms = [t[0] for t in Score.TERM_CHOICES]  # ['1','2','3']
 
     # --------------------------------
     # Chart Data
@@ -2076,17 +2089,20 @@ def attendance_list(request, school_id):
         "classes": classes,
         "students": students,
 
-        # Filter memory
+        "sessions": sessions,
+        "terms": terms,
         "selected_class": selected_class,
+        "selected_session": selected_session,
+        "selected_term": selected_term,
         "selected_student": selected_student,
         "selected_status": selected_status,
         "start_date": start_date,
         "end_date": end_date,
 
         # Chart datasets
-        "daily_chart": list(daily_chart),
-        "status_chart": list(status_chart),
-        "class_chart": list(class_chart),
+        "daily_chart": json.dumps(list(daily_chart), default=str),
+        "status_chart": json.dumps(list(status_chart)),
+        "class_chart": json.dumps(list(class_chart)),
     }
 
     return render(request, "school_admin/attendance/admin_list.html", context)
@@ -2128,6 +2144,8 @@ def attendance_create(request, school_id):
     if request.method == "POST":
         if form.is_valid():
             school_class = form.cleaned_data["school_class"]
+            session = form.cleaned_data["session"]
+            term = form.cleaned_data["term"]
             students = form.cleaned_data["students"]
             date = form.cleaned_data["date"]
             status = form.cleaned_data["status"]
@@ -2140,6 +2158,8 @@ def attendance_create(request, school_id):
                     status=status,
                     remarks=remarks,
                     school=school,
+                    session=session,
+                    term=term,
                     marked_by=None,   # admin has no teacher profile
                 )
 

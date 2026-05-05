@@ -6,7 +6,11 @@ from django.contrib import messages
 from attendance.models import Attendance
 from attendance.forms import AttendanceForm, BulkAttendanceForm
 from students.models import Student, SchoolClass
-from results.utils import portal_required
+from results.utils import portal_required, SESSION_LIST
+from results.models import Score
+from django.db.models import Count, Q
+import json    
+
 
 
 # -------------------------------------------------------
@@ -51,11 +55,73 @@ def dashboard(request):
     if not student:
         raise Http404("Student profile required")
 
-    attendances = Attendance.objects.filter(student=student).order_by("-date")
+ 
+    selected_session = request.GET.get("session") or ""
+    selected_term = request.GET.get("term") or ""
+
+    attendances = Attendance.objects.filter(student=student)
+
+    if selected_session:
+        attendances = attendances.filter(session=selected_session)
+
+    if selected_term:
+        attendances = attendances.filter(term=selected_term)
+
+    attendances = attendances.order_by("-date")
+    present_count = attendances.filter(status="present").count()
+
+
+    total = attendances.count()
+    present = attendances.filter(status="present").count()
+
+    attendance_percent = 0
+    if total > 0:
+        attendance_percent = round((present / total) * 100, 1)
+
+
+    term_stats = (
+        attendances.values("term")
+        .annotate(
+            total=Count("id"),
+            present=Count("id", filter=Q(status="present"))
+        )
+    )
+
+# calculate percentage per term
+    term_stats_list = []
+    for t in term_stats:
+        percent = 0
+        if t["total"] > 0:
+            percent = round((t["present"] / t["total"]) * 100, 1)
+
+        term_stats_list.append({
+            "term": t["term"],
+            "percent": percent,
+            "total": t["total"],
+        }) 
+    
+  
+    daily_trend = (
+        attendances.values("date")
+        .annotate(total=Count("id"))
+        .order_by("date")
+    )
+
+    daily_trend_json = json.dumps(list(daily_trend), default=str)
+
 
     return render(request, "attendance/student_attendance.html", {
         "attendances": attendances,
         "student": student,
+        "sessions": SESSION_LIST,
+        "terms": [t[0] for t in Score.TERM_CHOICES],
+        "selected_session": selected_session,
+        "selected_term": selected_term,
+        "present_count": present_count,
+        "attendance_percent": attendance_percent,
+        "term_stats": term_stats_list,
+        "daily_trend": daily_trend_json,
+
     })
 
 
@@ -91,6 +157,8 @@ def mark_attendance(request, class_id):
             date = form.cleaned_data["date"]
             status = form.cleaned_data["status"]
             selected_students = form.cleaned_data["students"]
+            session = form.cleaned_data["session"]
+            term = form.cleaned_data["term"]
 
             for student in selected_students:
                 record, created = Attendance.objects.get_or_create(
@@ -98,14 +166,18 @@ def mark_attendance(request, class_id):
                     date=date,
                     defaults={
                         "status": status,
-                        "marked_by": teacher,  # FIXED HERE ✔
+                        "marked_by": teacher,  
                         "school": student.school,
+                        "session": session,   
+                        "term": term,   
                     }
                 )
 
                 if not created:
                     record.status = status
-                    record.marked_by = teacher   # FIXED HERE ✔
+                    record.session = session   
+                    record.term = term  
+                    record.marked_by = teacher  
                     record.save()
 
             messages.success(

@@ -13,7 +13,28 @@
 </div>
 
 <!-- FILTER BAR -->
-<form method="GET" class="grid grid-cols-1 md:grid-cols-5 gap-4 mb-8 bg-white p-4 rounded-lg shadow">
+<form method="GET" class="grid grid-cols-1 md:grid-cols-7 gap-4 mb-8 bg-white p-4 rounded-lg shadow">
+
+  <select name="session" class="border p-2 rounded">
+    <option value="">All Sessions</option>
+    {% for s in sessions %}
+        <option value="{{ s }}"
+            {% if s == selected_session %}selected{% endif %}>
+            {{ s }}
+        </option>
+    {% endfor %}
+</select>
+
+
+<select name="term" class="border p-2 rounded">
+    <option value="">All Terms</option>
+    {% for t in terms %}
+        <option value="{{ t }}"
+            {% if t == selected_term %}selected{% endif %}>
+            Term {{ t }}
+        </option>
+    {% endfor %}
+</select>
 
     <!-- Class Filter -->
     <select name="class" class="border p-2 rounded">

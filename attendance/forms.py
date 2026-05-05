@@ -2,12 +2,24 @@ from django import forms
 from .models import Attendance
 from students.models import Student
 from students.models import SchoolClass
+from results.utils import SESSION_CHOICES
+from results.models import Score
 
 
 INPUT_CLASS = "w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white"
 TEXTAREA_CLASS = "w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white"
 
 class AttendanceForm(forms.Form):
+    
+    session = forms.ChoiceField(
+        choices=SESSION_CHOICES,
+        widget=forms.Select(attrs={"class": INPUT_CLASS})
+    )
+
+    term = forms.ChoiceField(
+        choices=Score.TERM_CHOICES,
+        widget=forms.Select(attrs={"class": INPUT_CLASS})
+    )
 
     school_class = forms.ModelChoiceField(
         queryset=SchoolClass.objects.none(),
@@ -49,9 +61,31 @@ class AttendanceForm(forms.Form):
             self.fields["students"].queryset = Student.objects.filter(school=school)
 
 
+from results.utils import SESSION_CHOICES
+from results.models import Score
+
 class BulkAttendanceForm(forms.Form):
-    date = forms.DateField(widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-input'}))
-    status = forms.ChoiceField(choices=Attendance.STATUS_CHOICES, widget=forms.Select(attrs={'class': 'form-select'}))
+    date = forms.DateField(
+        widget=forms.DateInput(attrs={'type': 'date', 'class': 'form-input'})
+    )
+
+    status = forms.ChoiceField(
+        choices=Attendance.STATUS_CHOICES,
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+
+    # ✅ NEW
+    session = forms.ChoiceField(
+        choices=SESSION_CHOICES,
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+
+    # ✅ NEW
+    term = forms.ChoiceField(
+        choices=Score.TERM_CHOICES,
+        widget=forms.Select(attrs={'class': 'form-select'})
+    )
+
     students = forms.ModelMultipleChoiceField(
         queryset=Student.objects.none(),
         widget=forms.CheckboxSelectMultiple
@@ -61,4 +95,3 @@ class BulkAttendanceForm(forms.Form):
         super().__init__(*args, **kwargs)
         if class_queryset is not None:
             self.fields['students'].queryset = class_queryset
-

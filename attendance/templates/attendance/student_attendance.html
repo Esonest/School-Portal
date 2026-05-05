@@ -9,6 +9,35 @@
         <p class="text-white/80 mt-1">Track your daily school attendance record</p>
     </div>
 
+    <form method="GET" class="bg-white p-4 rounded-2xl shadow mb-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+
+    <!-- SESSION -->
+    <select name="session" class="border p-2 rounded">
+        <option value="">All Sessions</option>
+        {% for s in sessions %}
+            <option value="{{ s }}" {% if s == selected_session %}selected{% endif %}>
+                {{ s }}
+            </option>
+        {% endfor %}
+    </select>
+
+    <!-- TERM -->
+    <select name="term" class="border p-2 rounded">
+        <option value="">All Terms</option>
+        {% for t in terms %}
+            <option value="{{ t }}" {% if t == selected_term %}selected{% endif %}>
+                Term {{ t }}
+            </option>
+        {% endfor %}
+    </select>
+
+    <!-- BUTTON -->
+    <button class="bg-indigo-600 text-white rounded px-4 py-2 hover:bg-indigo-700">
+        Apply Filter
+    </button>
+
+</form>
+
     <!-- SUMMARY CARD -->
     <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-6">
 
@@ -20,9 +49,19 @@
         <div class="bg-white rounded-2xl shadow p-5 text-center border">
             <p class="text-gray-500 text-sm">Present</p>
             <h2 class="text-2xl font-bold text-green-600">
-                {{ attendances|dictsort:"status"|length }}
-            </h2>
+    {{ present_count }}
+</h2>
         </div>
+
+        <div class="bg-white rounded-2xl shadow p-5 text-center border">
+    <p class="text-gray-500 text-sm">Attendance Rate</p>
+    <h2 class="text-2xl font-bold text-indigo-600">
+        {{ attendance_percent }}%
+    </h2>
+    <p class="text-xs text-gray-400 mt-1">
+        You attended {{ attendance_percent }}% of classes
+    </p>
+</div>
 
         <div class="bg-white rounded-2xl shadow p-5 text-center border">
             <p class="text-gray-500 text-sm">Attendance Status</p>
@@ -31,6 +70,32 @@
 
     </div>
 
+    <div class="bg-white rounded-2xl shadow p-6 mb-6">
+    <h2 class="font-semibold text-gray-700 mb-4">Attendance by Term</h2>
+
+    <div class="space-y-3">
+        {% for t in term_stats %}
+        <div>
+            <div class="flex justify-between text-sm mb-1">
+                <span>Term {{ t.term }}</span>
+                <span>{{ t.percent }}%</span>
+            </div>
+
+            <div class="w-full bg-gray-200 rounded-full h-2">
+                <div class="bg-indigo-600 h-2 rounded-full"
+                     style="width: {{ t.percent }}%"></div>
+            </div>
+        </div>
+        {% empty %}
+        <p class="text-gray-400 text-sm">No data available</p>
+        {% endfor %}
+    </div>
+</div>
+
+<div class="bg-white rounded-2xl shadow p-6 mb-6">
+    <h2 class="font-semibold text-gray-700 mb-4">Attendance Trend</h2>
+    <canvas id="trendChart" height="100"></canvas>
+</div>
     <!-- TABLE CARD -->
     <div class="bg-white rounded-3xl shadow-xl overflow-hidden border">
 
@@ -44,6 +109,8 @@
 
                 <thead class="bg-gray-100 text-gray-700 uppercase text-xs">
                     <tr>
+                        <th class="p-4 text-left">Session</th>
+                        <th class="p-4 text-left">Term</th>
                         <th class="p-4 text-left">Date</th>
                         <th class="p-4 text-left">Status</th>
                         <th class="p-4 text-left">Remarks</th>
@@ -54,6 +121,14 @@
 
                     {% for a in attendances %}
                     <tr class="hover:bg-gray-50 transition">
+
+                        <td class="p-4 text-gray-700">
+    {{ a.session }}
+</td>
+
+<td class="p-4 text-gray-700">
+    Term {{ a.term }}
+</td>
 
                         <td class="p-4 font-medium text-gray-700">
                             {{ a.date }}
@@ -100,5 +175,32 @@
     </div>
 
 </div>
+
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<script>
+const trendData = JSON.parse('{{ daily_trend|escapejs }}');
+
+if (trendData.length) {
+    new Chart(document.getElementById("trendChart"), {
+        type: "line",
+        data: {
+            labels: trendData.map(d => d.date),
+            datasets: [{
+                label: "Attendance",
+                data: trendData.map(d => d.total),
+                borderColor: "#6366f1",
+                backgroundColor: "rgba(99,102,241,0.2)",
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true
+        }
+    });
+}
+</script>
 
 {% endblock %}
