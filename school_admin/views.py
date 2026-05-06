@@ -2430,6 +2430,7 @@ def teacher_delete(request, school_id, teacher_id):
 
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.db.models import Q
 
 @login_required
 def block_unblock_students(request, school_id):
@@ -2443,15 +2444,61 @@ def block_unblock_students(request, school_id):
     # -----------------------------
     all_classes = SchoolClass.objects.filter(school=school).order_by("name")
 
+    
+
     class_filter = request.GET.get("class")
     name_filter = request.GET.get("search")
+    session_filter = request.GET.get("session")
+    term_filter = request.GET.get("term")
+    result_type = request.GET.get("type", "term")
 
+# 🔹 Class filter
     if class_filter:
         students = students.filter(school_class_id=class_filter)
 
+# 🔹 Name filter (FIXED PROPERLY)
     if name_filter:
-        students = students.filter(user__first_name__icontains=name_filter) | \
-                   students.filter(user__last_name__icontains=name_filter)
+        students = students.filter(
+            Q(user__first_name__icontains=name_filter) |
+            Q(user__last_name__icontains=name_filter)
+        )
+
+    result_type = request.GET.get("type", "term")
+    session_filter = request.GET.get("session")
+    term_filter = request.GET.get("term")
+
+# 🔹 TERM FILTERING
+    if result_type == "term":
+        if session_filter and term_filter:
+            students = students.filter(
+                scores__session=session_filter,
+                scores__term=term_filter
+            )
+
+        elif session_filter:
+            students = students.filter(
+                scores__session=session_filter
+            )
+
+        elif term_filter:
+            students = students.filter(
+                scores__term=term_filter
+            )
+
+# 🔹 CUMULATIVE FILTERING
+    elif result_type == "cumulative":
+        if session_filter:
+            students = students.filter(
+                scores__session=session_filter
+            )
+        else:
+        
+            students = students.filter(
+                scores__isnull=False
+            )
+
+# 🔹 VERY IMPORTANT (avoid duplicates)
+    students = students.distinct()
     # -----------------------------
 
     if request.method == "POST":
@@ -2479,14 +2526,24 @@ def block_unblock_students(request, school_id):
                 student.save()
                 messages.success(request, f"{student.user.get_full_name()} is now unblocked.")
 
-        return redirect("school_admin:block_unblock_students", school_id=school.id)
+        return redirect(
+            request.path +
+            f"?class={class_filter or ''}"
+            f"&search={name_filter or ''}"
+            f"&session={session_filter or ''}"
+            f"&term={term_filter or ''}"
+            f"&type={result_type or 'term'}"
+        )
 
     context = {
         "school": school,
         "students": students,
         "all_classes": all_classes,         # ADDED
         "selected_class": class_filter,     # ADDED
-        "search_value": name_filter,        # ADDED
+        "search_value": name_filter, 
+        "sessions": SESSION_LIST,
+        "selected_session": session_filter,
+        "selected_term": term_filter,      
     }
     return render(request, "school_admin/block_unblock_students.html", context)
 
@@ -2772,6 +2829,19 @@ def admin_student_results(request, student_id):
     result_comment = ResultComment.objects.filter(
         student=student, term=term, session=session).first()
 
+    attendance_qs = Attendance.objects.filter(
+        student=student,
+        term=term,
+        session=session
+    )
+
+    attendance_total = attendance_qs.count()
+    attendance_present = attendance_qs.filter(status="present").count()
+
+    attendance_percent = 0
+    if attendance_total > 0:
+        attendance_percent = round((attendance_present / attendance_total) * 100, 1)    
+
     context = {
         "student": student,
         "school": school,
@@ -2809,6 +2879,9 @@ def admin_student_results(request, student_id):
         "is_ca_enabled": is_ca_enabled,
 
         "formset": formset,
+        "attendance_total": attendance_total,
+        "attendance_present": attendance_present,
+        "attendance_percent": attendance_percent,
     }
 
     return render(request, "school_admin/admin/student_results.html", context)

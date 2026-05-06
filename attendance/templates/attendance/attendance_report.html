@@ -3,10 +3,40 @@
 <div class="max-w-6xl mx-auto p-6 bg-white rounded-2xl shadow-md">
   <h1 class="text-3xl font-bold text-gray-800 mb-6 text-center">📊 Attendance Report</h1>
 
+
+  <form method="GET" class="mb-6 flex flex-wrap gap-4">
+
+  <!-- SESSION -->
+  <select name="session" class="border p-2 rounded">
+    <option value="">All Sessions</option>
+    {% for s in sessions %}
+      <option value="{{ s }}" {% if s == selected_session %}selected{% endif %}>
+        {{ s }}
+      </option>
+    {% endfor %}
+  </select>
+
+  <!-- TERM -->
+  <select name="term" class="border p-2 rounded">
+    <option value="">All Terms</option>
+    {% for t in terms %}
+      <option value="{{ t }}" {% if t == selected_term %}selected{% endif %}>
+        Term {{ t }}
+      </option>
+    {% endfor %}
+  </select>
+
+  <button class="bg-indigo-600 text-white px-4 py-2 rounded">
+    Apply
+  </button>
+
+</form>
+
   <table class="w-full border-collapse">
     <thead class="bg-indigo-600 text-white">
       <tr>
         <th class="p-3 text-left rounded-tl-lg">Class</th>
+        <th class="p-3 text-left">Session / Term</th>
         <th class="p-3 text-left">Total Students</th>
         <th class="p-3 text-center">Attendance Summary</th>
         <th class="p-3 text-right rounded-tr-lg">Attendance Rate</th>
@@ -15,10 +45,19 @@
     <tbody>
       {% for row in report_data %}
       <tr class="border-b hover:bg-gray-50 transition">
+
         <td class="p-3 font-semibold text-indigo-600 hover:underline">
   <a href="{% url 'attendance:class_attendance_detail' row.class.id %}">
     {{ row.class.name }}
   </a>
+</td>
+
+<td class="p-3 text-gray-600">
+  {% if row.session %}
+    {{ row.session }} / Term {{ row.term }}
+  {% else %}
+    <span class="text-gray-400 italic">No data</span>
+  {% endif %}
 </td>
 
         <td class="p-3 text-gray-600">{{ row.total }}</td>
@@ -31,16 +70,17 @@
           </span>
         </td>
         <td class="p-3 text-right">
-          {% if row.total > 0 %}
-            {% with percent=row.present|divisibleby:row.total %}
-            <span class="text-gray-700 font-medium">
-              {{ row.present|floatformat:2 }} / {{ row.total }}
-            </span>
-            {% endwith %}
-          {% else %}
-            <span class="text-gray-400 italic">No data</span>
-          {% endif %}
-        </td>
+  {% if row.total > 0 %}
+    <span class="font-bold text-indigo-600">
+      {{ row.percentage }}%
+    </span>
+    <div class="text-xs text-gray-500">
+      {{ row.present }} / {{ row.present|add:row.absent }}
+    </div>
+  {% else %}
+    <span class="text-gray-400 italic">No data</span>
+  {% endif %}
+</td>
       </tr>
       {% empty %}
       <tr>

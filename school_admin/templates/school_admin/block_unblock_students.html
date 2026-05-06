@@ -11,6 +11,41 @@
 
         <!-- FILTER SECTION -->
         <form method="get" class="bg-white p-4 rounded-lg shadow flex flex-col md:flex-row gap-4">
+
+            <div class="flex-1">
+    <label class="block text-sm font-semibold mb-1">Session</label>
+    <select name="session" class="border rounded px-3 py-2 w-full">
+        <option value="">All Sessions</option>
+        {% for s in sessions %}
+            <option value="{{ s }}"
+                {% if s == request.GET.session %}selected{% endif %}>
+                {{ s }}
+            </option>
+        {% endfor %}
+    </select>
+</div>
+
+<div class="flex-1">
+    <label class="block text-sm font-semibold mb-1">Result Type</label>
+    <select name="type" class="border rounded px-3 py-2 w-full">
+        <option value="term" {% if request.GET.type == "term" %}selected{% endif %}>
+            Termly
+        </option>
+        <option value="cumulative" {% if request.GET.type == "cumulative" %}selected{% endif %}>
+            Cumulative
+        </option>
+    </select>
+</div>
+
+<div class="flex-1">
+    <label class="block text-sm font-semibold mb-1">Term</label>
+    <select name="term" class="border rounded px-3 py-2 w-full">
+        <option value="">All Terms</option>
+        <option value="1" {% if request.GET.term == "1" %}selected{% endif %}>First</option>
+        <option value="2" {% if request.GET.term == "2" %}selected{% endif %}>Second</option>
+        <option value="3" {% if request.GET.term == "3" %}selected{% endif %}>Third</option>
+    </select>
+</div>
             <!-- Filter by Class -->
             <div class="flex-1">
                 <label class="block text-sm font-semibold mb-1">Class</label>
@@ -140,4 +175,23 @@
 
     </div>
 </div>
+
+
+<script>
+const typeSelect = document.querySelector('[name="type"]');
+const termSelect = document.querySelector('[name="term"]');
+
+function toggleTerm() {
+    if (typeSelect.value === "cumulative") {
+        termSelect.disabled = true;
+        termSelect.classList.add("bg-gray-100");
+    } else {
+        termSelect.disabled = false;
+        termSelect.classList.remove("bg-gray-100");
+    }
+}
+
+typeSelect.addEventListener("change", toggleTerm);
+window.addEventListener("load", toggleTerm);
+</script>
 {% endblock %}

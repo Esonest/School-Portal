@@ -2546,6 +2546,7 @@ from .models import SchoolGradeComment
 from .comments import PRINCIPAL_COMMENTS, TEACHER_COMMENTS
 from .utils import get_pronouns
 from itertools import cycle
+from attendance.models import Attendance
 
 # Store rotation state globally (memory-safe)
 COMMENT_ROTATION_CACHE = {}
@@ -3039,7 +3040,20 @@ def build_student_result_context(student, term, session, exam_class):
         if school and school.logo
         else None
     )
+    
 
+    attendance_qs = Attendance.objects.filter(
+        student=student,
+        term=term,
+        session=session
+    )
+
+    total_days = attendance_qs.count()
+    present_days = attendance_qs.filter(status="present").count()
+
+    attendance_percent = 0
+    if total_days > 0:
+        attendance_percent = round((present_days / total_days) * 100, 1)
 
     return {
         "student": student,
@@ -3073,7 +3087,10 @@ def build_student_result_context(student, term, session, exam_class):
         "selected_session": session,
         "selected_term": term,
         "exam_class": exam_class,
-        "class_has_ca": class_has_ca,  # <- template logic
+        "class_has_ca": class_has_ca,
+        "attendance_total": total_days,
+        "attendance_present": present_days,
+        "attendance_percent": attendance_percent,
     }
 
 
@@ -3337,7 +3354,16 @@ def build_cumulative_result_context(student, session=None):
     last_term_context = None
     exam_class = None
     class_size_at_session = 0
-    position = None
+    position = None 
+
+    attendance_map = {
+        "First": {"total": 0, "present": 0, "percent": 0},
+        "Second": {"total": 0, "present": 0, "percent": 0},
+        "Third": {"total": 0, "present": 0, "percent": 0},
+    }
+
+    attendance_overall_total = 0
+    attendance_overall_present = 0
 
     for term in terms:
         term_code = TERM_MAP[term]
@@ -3348,6 +3374,29 @@ def build_cumulative_result_context(student, session=None):
             current_session,
             None   # let the function resolve class by session
         )
+
+        attendance_qs = Attendance.objects.filter(
+            student=student,
+            session=current_session,
+            term=term_code
+        )
+
+        total_days = attendance_qs.count()
+        present_days = attendance_qs.filter(status="present").count()
+
+        percent = 0
+        if total_days > 0:
+            percent = round((present_days / total_days) * 100, 1)
+
+        attendance_map[term] = {
+            "total": total_days,
+            "present": present_days,
+            "percent": percent,
+        }
+
+
+        attendance_overall_total += total_days
+        attendance_overall_present += present_days
 
         # ✅ THIS IS WHERE IT GOES
         if term_context.get("scores"):
@@ -3399,6 +3448,12 @@ def build_cumulative_result_context(student, session=None):
 
         collected_comments[term_code]["principal"] = term_context.get("principal_comment") or ""
         collected_comments[term_code]["teacher"] = term_context.get("teacher_comment") or ""
+
+        attendance_overall_percent = 0
+        if attendance_overall_total > 0:
+            attendance_overall_percent = round(
+                (attendance_overall_present / attendance_overall_total) * 100, 1
+            )
 
     # ---------- COMPUTE SUBJECT AVERAGES ----------
     for subj, data in subject_map.items():
@@ -3528,7 +3583,11 @@ def build_cumulative_result_context(student, session=None):
         "show_ca": show_ca,
         "promotion_history": promotion_history,
         "exam_class": exam_class,
-        "is_cumulative": True,  # <-- useful for watermark/badge
+        "is_cumulative": True, 
+        "attendance_map": attendance_map,
+        "attendance_overall_total": attendance_overall_total,
+        "attendance_overall_present": attendance_overall_present,
+        "attendance_overall_percent": attendance_overall_percent,
     }
 
 
@@ -4020,6 +4079,23 @@ def bulk_class_results_view(request, school_id, class_id):
         exam_class = promotion.old_class if promotion else student.school_class
 
         ctx = build_student_result_context(student, term, session, exam_class)
+
+        attendance_qs = Attendance.objects.filter(
+            student=student,
+            term=term,
+            session=session
+        )
+
+        total_days = attendance_qs.count()
+        present_days = attendance_qs.filter(status="present").count()
+
+        attendance_percent = 0
+        if total_days > 0:
+            attendance_percent = round((present_days / total_days) * 100, 1)
+
+        ctx["attendance_total"] = total_days
+        ctx["attendance_present"] = present_days
+        ctx["attendance_percent"] = attendance_percent
 
         # ONLY metadata — DO NOT OVERRIDE HISTORY
         ctx["term"] = term

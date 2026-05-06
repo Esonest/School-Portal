@@ -166,7 +166,7 @@ def mark_attendance(request, class_id):
                     date=date,
                     defaults={
                         "status": status,
-                        "marked_by": teacher,  
+                        "marked_by": request.user,  
                         "school": student.school,
                         "session": session,   
                         "term": term,   
@@ -177,7 +177,7 @@ def mark_attendance(request, class_id):
                     record.status = status
                     record.session = session   
                     record.term = term  
-                    record.marked_by = teacher  
+                    record.marked_by = request.user,
                     record.save()
 
             messages.success(
@@ -196,45 +196,60 @@ def mark_attendance(request, class_id):
     })
 
 
-# -------------------------------------------------------
-# TEACHER CLASS REPORT SUMMARY
-# -------------------------------------------------------
 @portal_required("attendance")
 @login_required
 def attendance_report(request):
     teacher = get_teacher(request.user)
 
+    selected_session = request.GET.get("session") or ""
+    selected_term = request.GET.get("term") or ""
+
     classes = teacher.classes.all()
     report_data = []
 
     for cls in classes:
-        total_students = cls.students.count()
 
-        present_count = Attendance.objects.filter(
-            student__school_class=cls,
-            status="present"
-        ).count()
+        records = Attendance.objects.filter(student__school_class=cls)
 
-        absent_count = Attendance.objects.filter(
-            student__school_class=cls,
-            status="absent"
-        ).count()
+        # ✅ FILTER BY SESSION
+        if selected_session:
+            records = records.filter(session=selected_session)
+
+        # ✅ FILTER BY TERM
+        if selected_term:
+            records = records.filter(term=selected_term)
+
+        total_records = records.count()
+
+        present_count = records.filter(status="present").count()
+        absent_count = records.filter(status="absent").count()
+
+        # ✅ CALCULATE PERCENTAGE
+        percentage = 0
+        if total_records > 0:
+            percentage = round((present_count / total_records) * 100, 1)
+
+        latest = records.order_by("-date").first()    
 
         report_data.append({
             "class": cls,
-            "total": total_students,
+            "total": cls.students.count(),
             "present": present_count,
             "absent": absent_count,
+            "percentage": percentage,
+            "session": latest.session if latest else None,
+            "term": latest.term if latest else None,
         })
 
     return render(request, "attendance/attendance_report.html", {
-        "report_data": report_data
+        "report_data": report_data,
+        "sessions": SESSION_LIST,
+        "terms": [t[0] for t in Score.TERM_CHOICES],
+        "selected_session": selected_session,
+        "selected_term": selected_term,
     })
 
 
-# -------------------------------------------------------
-# CLASS ATTENDANCE DETAIL VIEW
-# -------------------------------------------------------
 @portal_required("attendance")
 @login_required
 def class_attendance_detail(request, class_id):

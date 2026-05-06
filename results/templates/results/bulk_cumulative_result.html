@@ -287,6 +287,47 @@
     <div class="legend-row"><span class="legend-stars"><span class="gold">★</span>☆☆☆☆</span><span>Poor</span></div>
   </div>
 
+  <!-- 🔹 CUMULATIVE ATTENDANCE -->
+<h2 class="font-bold mt-3 uppercase text-center border border-black py-1 text-xs">
+  Attendance Summary
+</h2>
+
+<div class="mt-2 border border-black px-2 py-1 text-xs flex flex-wrap justify-between gap-2">
+
+  <span>
+    <strong>1st:</strong>
+    {{ attendance_map|get_item:"First"|get_item:"present" }}/{{ attendance_map|get_item:"First"|get_item:"total" }}
+    (<span class="{{ attendance_map|get_item:'First'|get_item:'percent'|attendance_color }}">
+      {{ attendance_map|get_item:"First"|get_item:"percent" }}%
+    </span>)
+  </span>
+
+  <span>
+    <strong>2nd:</strong>
+    {{ attendance_map|get_item:"Second"|get_item:"present" }}/{{ attendance_map|get_item:"Second"|get_item:"total" }}
+    (<span class="{{ attendance_map|get_item:'Second'|get_item:'percent'|attendance_color }}">
+      {{ attendance_map|get_item:"Second"|get_item:"percent" }}%
+    </span>)
+  </span>
+
+  <span>
+    <strong>3rd:</strong>
+    {{ attendance_map|get_item:"Third"|get_item:"present" }}/{{ attendance_map|get_item:"Third"|get_item:"total" }}
+    (<span class="{{ attendance_map|get_item:'Third'|get_item:'percent'|attendance_color }}">
+      {{ attendance_map|get_item:"Third"|get_item:"percent" }}%
+    </span>)
+  </span>
+
+  <span class="font-bold">
+    Total:
+    {{ attendance_overall_present }}/{{ attendance_overall_total }}
+    (<span class="{{ attendance_overall_percent|attendance_color }}">
+      {{ attendance_overall_percent }}%
+    </span>)
+  </span>
+
+</div>
+
   <!-- COMMENTS -->
   <div class="mt-4 border border-black p-2 text-sm">
     <p><strong>Principal’s Comment:</strong> {{ r.principal_comment }}</p>

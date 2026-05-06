@@ -356,3 +356,18 @@ def letter_to_index(letter):
     """Convert 'A', 'B', 'C', 'D' to 0,1,2,3 for template indexing"""
     mapping = {'A': 0, 'B': 1, 'C': 2, 'D': 3}
     return mapping.get(letter, 0)
+
+
+@register.filter
+def attendance_color(percent):
+    try:
+        p = float(percent)
+    except:
+        return "text-gray-600"
+
+    if p >= 75:
+        return "text-green-700"
+    elif p >= 50:
+        return "text-yellow-600"
+    else:
+        return "text-red-600"

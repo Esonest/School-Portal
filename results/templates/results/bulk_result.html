@@ -192,6 +192,15 @@
       </div>
     </div>
 
+    <div class="mt-2 border border-black p-2 text-sm">
+  <p>
+    <strong>Attendance:</strong>
+    {{ r.attendance_present }} / {{ r.attendance_total }} days
+    (<span class="font-bold text-green-700">
+      {{ r.attendance_percent }}%
+    </span>)
+  </p>
+</div>
     <!-- PSYCHOMOTOR & AFFECTIVE -->
     <h2 class="font-bold mt-4 uppercase text-center border border-black py-1">
       Psychomotor & Affective Domain

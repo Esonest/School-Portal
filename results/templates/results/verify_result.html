@@ -204,7 +204,16 @@
         </div>
       </div>
     </div>
-
+    
+    <div class="mt-2 border border-black p-2 text-sm">
+  <p>
+    <strong>Attendance:</strong>
+    {{ attendance_present }} / {{ attendance_total }} days
+    (<span class="font-bold text-green-700">
+      {{ attendance_percent }}%
+    </span>)
+  </p>
+</div>
     <!-- Comments -->
     <div class="mt-6">
       <h3 class="font-semibold">Principal's Comment</h3>
