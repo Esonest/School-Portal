@@ -3055,6 +3055,12 @@ def build_student_result_context(student, term, session, exam_class):
     if total_days > 0:
         attendance_percent = round((present_days / total_days) * 100, 1)
 
+
+    grade_legend = GradeSetting.objects.filter(
+        school=school,
+        SchoolClass=exam_class
+    ).order_by("-min_score")    
+
     return {
         "student": student,
         "school": school,
@@ -3091,6 +3097,7 @@ def build_student_result_context(student, term, session, exam_class):
         "attendance_total": total_days,
         "attendance_present": present_days,
         "attendance_percent": attendance_percent,
+        "grade_legend": grade_legend,
     }
 
 
@@ -3381,8 +3388,8 @@ def build_cumulative_result_context(student, session=None):
             term=term_code
         )
 
-        total_days = attendance_qs.count()
-        present_days = attendance_qs.filter(status="present").count()
+        total_days = attendance_qs.values("date").distinct().count()
+        present_days = attendance_qs.filter(status="present").values("date").distinct().count()
 
         percent = 0
         if total_days > 0:
@@ -3398,6 +3405,16 @@ def build_cumulative_result_context(student, session=None):
         attendance_overall_total += total_days
         attendance_overall_present += present_days
 
+        attendance_overall_percent = 0
+        if attendance_overall_total > 0:
+            attendance_overall_percent = round(
+                (attendance_overall_present / attendance_overall_total) * 100, 1
+            )
+        
+        grade_legend = GradeSetting.objects.filter(
+            school=school,
+            SchoolClass=exam_class
+        ).order_by("-min_score") 
         # ✅ THIS IS WHERE IT GOES
         if term_context.get("scores"):
             last_term_context = term_context
@@ -3449,11 +3466,7 @@ def build_cumulative_result_context(student, session=None):
         collected_comments[term_code]["principal"] = term_context.get("principal_comment") or ""
         collected_comments[term_code]["teacher"] = term_context.get("teacher_comment") or ""
 
-        attendance_overall_percent = 0
-        if attendance_overall_total > 0:
-            attendance_overall_percent = round(
-                (attendance_overall_present / attendance_overall_total) * 100, 1
-            )
+        
 
     # ---------- COMPUTE SUBJECT AVERAGES ----------
     for subj, data in subject_map.items():
@@ -3588,6 +3601,7 @@ def build_cumulative_result_context(student, session=None):
         "attendance_overall_total": attendance_overall_total,
         "attendance_overall_present": attendance_overall_present,
         "attendance_overall_percent": attendance_overall_percent,
+        "grade_legend": grade_legend,
     }
 
 
@@ -4097,6 +4111,11 @@ def bulk_class_results_view(request, school_id, class_id):
         ctx["attendance_present"] = present_days
         ctx["attendance_percent"] = attendance_percent
 
+        grade_legend = GradeSetting.objects.filter(
+            school=school,
+            SchoolClass=exam_class
+        ).order_by("-min_score") 
+
         # ONLY metadata — DO NOT OVERRIDE HISTORY
         ctx["term"] = term
         ctx["session"] = session
@@ -4114,6 +4133,7 @@ def bulk_class_results_view(request, school_id, class_id):
         "school": school,
         "results": results,
         "result_type": "term",
+        "grade_legend": grade_legend,
     })
 
 
@@ -4263,6 +4283,60 @@ def bulk_class_cumulative_results_view(request, school_id, class_id):
     # Ensure exam_class in context matches historical/current class
         ctx["exam_class"] = exam_class
 
+        attendance_map = {
+            "First": {"total": 0, "present": 0, "percent": 0},
+            "Second": {"total": 0, "present": 0, "percent": 0},
+            "Third": {"total": 0, "present": 0, "percent": 0},
+        }
+
+        attendance_overall_total = 0
+        attendance_overall_present = 0
+
+        for term in ["First", "Second", "Third"]:
+            terms = ["First", "Second", "Third"]
+
+            TERM_MAP = {
+                "First": "1",
+                "Second": "2",
+                "Third": "3",
+            }
+            term_code = TERM_MAP[term]
+
+            qs = Attendance.objects.filter(
+                student=student,
+                session=session,
+                term=term_code
+            )
+
+            total = qs.count()
+            present = qs.filter(status="present").count()
+
+            percent = round((present / total) * 100, 1) if total else 0
+
+            attendance_map[term] = {
+                "total": total,
+                "present": present,
+                "percent": percent
+            }
+
+            attendance_overall_total += total
+            attendance_overall_present += present
+
+        attendance_overall_percent = round(
+            (attendance_overall_present / attendance_overall_total) * 100, 1
+        ) if attendance_overall_total else 0
+
+
+        ctx["attendance_map"] = attendance_map
+        ctx["attendance_overall_total"] = attendance_overall_total
+        ctx["attendance_overall_present"] = attendance_overall_present
+        ctx["attendance_overall_percent"] = attendance_overall_percent
+
+        grade_legend = GradeSetting.objects.filter(
+            school=school,
+            SchoolClass=exam_class
+        ).order_by("-min_score") 
+
         results.append(ctx)
 
 
@@ -4279,6 +4353,7 @@ def bulk_class_cumulative_results_view(request, school_id, class_id):
         "results": results,
         "session": session,
         "result_type": "cumulative",
+        "grade_legend":grade_legend,
     })
 
 

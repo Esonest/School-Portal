@@ -269,34 +269,92 @@
       </ul>
     </div>
   </div>
-   <!-- STAR RATING LEGEND -->
-<div class="legend-box">
-  <div class="legend-title">Legend</div>
 
-  <div class="legend-row">
-    <span class="legend-stars"><span class="gold">★★★★★</span></span>
-    <span>Excellent</span>
+   <!-- COMBINED LEGEND + GRADING KEY -->
+<div class="mt-3 border border-black p-2 text-xs">
+
+  <div class="grid grid-cols-2 gap-3">
+
+    <!-- DOMAIN LEGEND -->
+    <div>
+      <h3 class="font-bold uppercase border-b border-black mb-1 pb-1">
+        Domain Legend
+      </h3>
+
+      <div class="space-y-1">
+
+        <div class="flex justify-between">
+          <span class="legend-stars text-yellow-700">★★★★★</span>
+          <span>Excellent</span>
+        </div>
+
+        <div class="flex justify-between">
+          <span class="legend-stars text-yellow-700">★★★★☆</span>
+          <span>Very Good</span>
+        </div>
+
+        <div class="flex justify-between">
+          <span class="legend-stars text-yellow-700">★★★☆☆</span>
+          <span>Good</span>
+        </div>
+
+        <div class="flex justify-between">
+          <span class="legend-stars text-yellow-700">★★☆☆☆</span>
+          <span>Fair</span>
+        </div>
+
+        <div class="flex justify-between">
+          <span class="legend-stars text-yellow-700">★☆☆☆☆</span>
+          <span>Poor</span>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- GRADING KEY -->
+    <div>
+      <h3 class="font-bold uppercase border-b border-black mb-1 pb-1">
+        Grading Key
+      </h3>
+
+      <table class="w-full border border-black border-collapse text-[11px]">
+        <thead>
+          <tr class="bg-gray-200">
+            <th class="border border-black p-1">Grade</th>
+            <th class="border border-black p-1">Score</th>
+            <th class="border border-black p-1">Interpretation</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {% for g in grade_legend %}
+          <tr>
+            <td class="border border-black p-1 text-center font-bold">
+              {{ g.grade }}
+            </td>
+
+            <td class="border border-black p-1 text-center">
+              {{ g.min_score }}+
+            </td>
+
+            <td class="border border-black p-1 text-center">
+              {{ g.interpretation }}
+            </td>
+          </tr>
+          {% empty %}
+          <tr>
+            <td colspan="3" class="border border-black p-1 text-center text-red-600">
+              No grading key
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+    </div>
+
   </div>
 
-  <div class="legend-row">
-    <span class="legend-stars"><span class="gold">★★★★</span>☆</span>
-    <span>Very Good</span>
-  </div>
-
-  <div class="legend-row">
-    <span class="legend-stars"><span class="gold">★★★</span>☆☆</span>
-    <span>Good</span>
-  </div>
-
-  <div class="legend-row">
-    <span class="legend-stars"><span class="gold">★★</span>☆☆☆</span>
-    <span>Fair</span>
-  </div>
-
-  <div class="legend-row">
-    <span class="legend-stars"><span class="gold">★</span>☆☆☆☆</span>
-    <span>Poor</span>
-  </div>
 </div>
 
 <!-- 🔹 CUMULATIVE ATTENDANCE -->

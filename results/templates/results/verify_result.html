@@ -204,6 +204,100 @@
         </div>
       </div>
     </div>
+
+   <!-- COMBINED LEGEND + GRADING KEY -->
+<div class="mt-4 border border-black">
+
+  <!-- TITLE -->
+  <div class="bg-gray-200 border-b border-black text-center py-1 font-bold uppercase text-sm">
+    Legend & Grading Key
+  </div>
+
+  <div class="grid grid-cols-1 md:grid-cols-2">
+
+    <!-- STAR LEGEND -->
+    <div class="p-2 border-b md:border-b-0 md:border-r border-black text-xs">
+
+      <h3 class="font-bold mb-2 uppercase text-center">
+        Psychomotor And Affective Legend
+      </h3>
+
+      <div class="space-y-1">
+
+        <div class="flex justify-between">
+          <span class="text-yellow-600 font-bold">★★★★★</span>
+          <span>Excellent</span>
+        </div>
+
+        <div class="flex justify-between">
+          <span class="text-yellow-600 font-bold">★★★★☆</span>
+          <span>Very Good</span>
+        </div>
+
+        <div class="flex justify-between">
+          <span class="text-yellow-600 font-bold">★★★☆☆</span>
+          <span>Good</span>
+        </div>
+
+        <div class="flex justify-between">
+          <span class="text-yellow-600 font-bold">★★☆☆☆</span>
+          <span>Fair</span>
+        </div>
+
+        <div class="flex justify-between">
+          <span class="text-yellow-600 font-bold">★☆☆☆☆</span>
+          <span>Poor</span>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- GRADE LEGEND -->
+    <div class="p-2 text-xs overflow-x-auto">
+
+      <h3 class="font-bold mb-2 uppercase text-center">
+        Grading Key
+      </h3>
+
+      <table class="w-full border border-black border-collapse">
+        <thead>
+          <tr class="bg-gray-100">
+            <th class="border border-black p-1">Grade</th>
+            <th class="border border-black p-1">Min</th>
+            <th class="border border-black p-1">Interpretation</th>
+          </tr>
+        </thead>
+
+        <tbody>
+          {% for g in grade_legend %}
+          <tr>
+            <td class="border border-black p-1 text-center font-bold">
+              {{ g.grade }}
+            </td>
+
+            <td class="border border-black p-1 text-center">
+              {{ g.min_score }}+
+            </td>
+
+            <td class="border border-black p-1 text-center">
+              {{ g.interpretation }}
+            </td>
+          </tr>
+
+          {% empty %}
+          <tr>
+            <td colspan="3" class="border border-black p-2 text-center text-red-600">
+              No grading key configured
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+    </div>
+
+  </div>
+</div>
     
     <div class="mt-2 border border-black p-2 text-sm">
   <p>

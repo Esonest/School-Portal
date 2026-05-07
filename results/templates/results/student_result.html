@@ -214,117 +214,209 @@
     </span>)
   </p>
 </div>
-  <!-- PSYCHOMOTOR & AFFECTIVE (STARS PRESERVED) -->
-  <h2 class="font-bold mt-4 uppercase text-center border border-black py-1">
-    Psychomotor & Affective Domain
-  </h2>
+ <!-- COMBINED DOMAIN + LEGEND SECTION -->
+<h2 class="font-bold mt-3 uppercase text-center border border-black py-1 text-xs">
+  Domains & Grading Guide
+</h2>
 
-  <div class="grid grid-cols-2 gap-4 mt-2 border border-black p-3 text-xs">
+<div class="border border-t-0 border-black p-2 text-[10px]">
 
-    <!-- Psychomotor -->
+  <div class="grid grid-cols-4 gap-2">
+
+    <!-- PSYCHOMOTOR -->
     <div>
-      <p class="font-semibold mb-2">Psychomotor</p>
+      <h3 class="font-bold border-b mb-1">Psychomotor</h3>
+
       {% if psychomotor %}
-        <ul class="space-y-1">
-          <li class="flex justify-between"><span>Neatness</span>
-            <span class="text-yellow-600">
-              {% for i in "12345" %}{% if i|add:"0" <= psychomotor.neatness %}★{% else %}☆{% endif %}{% endfor %}
-            </span>
-          </li>
-          <li class="flex justify-between"><span>Agility</span>
-            <span class="text-yellow-600">
-              {% for i in "12345" %}{% if i|add:"0" <= psychomotor.agility %}★{% else %}☆{% endif %}{% endfor %}
-            </span>
-          </li>
-          <li class="flex justify-between"><span>Creativity</span>
-            <span class="text-yellow-600">
-              {% for i in "12345" %}{% if i|add:"0" <= psychomotor.creativity %}★{% else %}☆{% endif %}{% endfor %}
-            </span>
-          </li>
-          <li class="flex justify-between"><span>Sports</span>
-            <span class="text-yellow-600">
-              {% for i in "12345" %}{% if i|add:"0" <= psychomotor.sports %}★{% else %}☆{% endif %}{% endfor %}
-            </span>
-          </li>
-          <li class="flex justify-between"><span>Handwriting</span>
-            <span class="text-yellow-600">
-              {% for i in "12345" %}{% if i|add:"0" <= psychomotor.handwriting %}★{% else %}☆{% endif %}{% endfor %}
-            </span>
-          </li>
-        </ul>
-      {% else %}
-        <p class="text-gray-500">Not recorded</p>
+      <ul class="space-y-[2px]">
+
+        <li class="flex justify-between">
+          <span>Neatness</span>
+          <span class="text-yellow-600">
+            {% for i in "12345" %}
+              {% if i|add:"0" <= psychomotor.neatness %}
+                ★
+              {% else %}
+                ☆
+              {% endif %}
+            {% endfor %}
+          </span>
+        </li>
+
+        <li class="flex justify-between">
+          <span>Agility</span>
+          <span class="text-yellow-600">
+            {% for i in "12345" %}
+              {% if i|add:"0" <= psychomotor.agility %}
+                ★
+              {% else %}
+                ☆
+              {% endif %}
+            {% endfor %}
+          </span>
+        </li>
+
+        <li class="flex justify-between">
+          <span>Creativity</span>
+          <span class="text-yellow-600">
+            {% for i in "12345" %}
+              {% if i|add:"0" <= psychomotor.creativity %}
+                ★
+              {% else %}
+                ☆
+              {% endif %}
+            {% endfor %}
+          </span>
+        </li>
+
+        <li class="flex justify-between">
+          <span>Sports</span>
+          <span class="text-yellow-600">
+            {% for i in "12345" %}
+              {% if i|add:"0" <= psychomotor.sports %}
+                ★
+              {% else %}
+                ☆
+              {% endif %}
+            {% endfor %}
+          </span>
+        </li>
+
+        <li class="flex justify-between">
+          <span>Handwriting</span>
+          <span class="text-yellow-600">
+            {% for i in "12345" %}
+              {% if i|add:"0" <= psychomotor.handwriting %}
+                ★
+              {% else %}
+                ☆
+              {% endif %}
+            {% endfor %}
+          </span>
+        </li>
+
+      </ul>
       {% endif %}
     </div>
 
-    <!-- Affective -->
+    <!-- AFFECTIVE -->
     <div>
-      <p class="font-semibold mb-2">Affective</p>
+      <h3 class="font-bold border-b mb-1">Affective</h3>
+
       {% if affective %}
-        <ul class="space-y-1">
-          <li class="flex justify-between"><span>Punctuality</span>
-            <span class="text-yellow-600">
-              {% for i in "12345" %}{% if i|add:"0" <= affective.punctuality %}★{% else %}☆{% endif %}{% endfor %}
-            </span>
-          </li>
-          <li class="flex justify-between"><span>Cooperation</span>
-            <span class="text-yellow-600">
-              {% for i in "12345" %}{% if i|add:"0" <= affective.cooperation %}★{% else %}☆{% endif %}{% endfor %}
-            </span>
-          </li>
-          <li class="flex justify-between"><span>Behavior</span>
-            <span class="text-yellow-600">
-              {% for i in "12345" %}{% if i|add:"0" <= affective.behavior %}★{% else %}☆{% endif %}{% endfor %}
-            </span>
-          </li>
-          <li class="flex justify-between"><span>Attentiveness</span>
-            <span class="text-yellow-600">
-              {% for i in "12345" %}{% if i|add:"0" <= affective.attentiveness %}★{% else %}☆{% endif %}{% endfor %}
-            </span>
-          </li>
-          <li class="flex justify-between"><span>Perseverance</span>
-            <span class="text-yellow-600">
-              {% for i in "12345" %}{% if i|add:"0" <= affective.perseverance %}★{% else %}☆{% endif %}{% endfor %}
-            </span>
-          </li>
-        </ul>
-      {% else %}
-        <p class="text-gray-500">Not recorded</p>
+      <ul class="space-y-[2px]">
+
+        <li class="flex justify-between">
+          <span>Punctuality</span>
+          <span class="text-yellow-600">
+            {% for i in "12345" %}
+              {% if i|add:"0" <= affective.punctuality %}
+                ★
+              {% else %}
+                ☆
+              {% endif %}
+            {% endfor %}
+          </span>
+        </li>
+
+        <li class="flex justify-between">
+          <span>Cooperation</span>
+          <span class="text-yellow-600">
+            {% for i in "12345" %}
+              {% if i|add:"0" <= affective.cooperation %}
+                ★
+              {% else %}
+                ☆
+              {% endif %}
+            {% endfor %}
+          </span>
+        </li>
+
+        <li class="flex justify-between">
+          <span>Behavior</span>
+          <span class="text-yellow-600">
+            {% for i in "12345" %}
+              {% if i|add:"0" <= affective.behavior %}
+                ★
+              {% else %}
+                ☆
+              {% endif %}
+            {% endfor %}
+          </span>
+        </li>
+
+        <li class="flex justify-between">
+          <span>Attentiveness</span>
+          <span class="text-yellow-600">
+            {% for i in "12345" %}
+              {% if i|add:"0" <= affective.attentiveness %}
+                ★
+              {% else %}
+                ☆
+              {% endif %}
+            {% endfor %}
+          </span>
+        </li>
+
+        <li class="flex justify-between">
+          <span>Perseverance</span>
+          <span class="text-yellow-600">
+            {% for i in "12345" %}
+              {% if i|add:"0" <= affective.perseverance %}
+                ★
+              {% else %}
+                ☆
+              {% endif %}
+            {% endfor %}
+          </span>
+        </li>
+
+      </ul>
       {% endif %}
     </div>
-  </div>
 
-  <!-- STAR RATING LEGEND -->
-<div class="legend-box">
-  <div class="legend-title">Legend</div>
+    <!-- STAR LEGEND -->
+    <div>
+      <h3 class="font-bold border-b mb-1">Star Guide</h3>
 
-  <div class="legend-row">
-    <span class="legend-stars"><span class="gold">★★★★★</span></span>
-    <span>Excellent</span>
-  </div>
+      <div class="space-y-[2px]">
+        <div>★★★★★ - Excellent</div>
+        <div>★★★★☆ - Very Good</div>
+        <div>★★★☆☆ - Good</div>
+        <div>★★☆☆☆ - Fair</div>
+        <div>★☆☆☆☆ - Poor</div>
+      </div>
+    </div>
 
-  <div class="legend-row">
-    <span class="legend-stars"><span class="gold">★★★★</span>☆</span>
-    <span>Very Good</span>
-  </div>
+    <!-- GRADE LEGEND -->
+    <div>
+      <h3 class="font-bold border-b mb-1">Grading Key</h3>
 
-  <div class="legend-row">
-    <span class="legend-stars"><span class="gold">★★★</span>☆☆</span>
-    <span>Good</span>
-  </div>
+      <table class="w-full text-[9px] border-collapse">
+        <tbody>
 
-  <div class="legend-row">
-    <span class="legend-stars"><span class="gold">★★</span>☆☆☆</span>
-    <span>Fair</span>
-  </div>
+          {% for g in grade_legend %}
+          <tr>
+            <td class="border px-1 font-bold text-center">
+              {{ g.grade }}
+            </td>
 
-  <div class="legend-row">
-    <span class="legend-stars"><span class="gold">★</span>☆☆☆☆</span>
-    <span>Poor</span>
+            <td class="border px-1 text-center">
+              {{ g.min_score }}+
+            </td>
+
+            <td class="border px-1">
+              {{ g.interpretation }}
+            </td>
+          </tr>
+          {% endfor %}
+
+        </tbody>
+      </table>
+    </div>
+
   </div>
 </div>
-
-
   <!-- COMMENTS -->
   <div class="mt-4 border border-black p-2 text-sm">
     <p><strong>Teacher’s Comment:</strong> {{ teacher_comment }}</p>
