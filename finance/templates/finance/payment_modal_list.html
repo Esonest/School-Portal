@@ -84,6 +84,7 @@
     });
 
     const activeTab = document.getElementById(`tab-${method}`);
+
     if (activeTab) {
       activeTab.classList.remove('bg-gray-100', 'text-gray-700');
       activeTab.classList.add('bg-indigo-100', 'text-indigo-700');
@@ -101,7 +102,11 @@
     const paymentsList = document.getElementById('payments-list');
     const pagination = document.getElementById('payments-pagination');
 
-    paymentsList.innerHTML = `<li class="text-gray-500">Loading...</li>`;
+    paymentsList.innerHTML = `
+      <li class="text-gray-500 text-center py-4">
+        Loading...
+      </li>
+    `;
 
     const params = new URLSearchParams({
       page,
@@ -115,28 +120,61 @@
     fetch(`/finance/payments/modal/?${params.toString()}`)
       .then(res => res.json())
       .then(data => {
+
         paymentsList.innerHTML = data.html;
 
         let paginationHtml = '';
+
         paginationHtml += data.has_prev
-          ? `<button onclick="loadPayments(${data.page - 1})" class="text-indigo-600 hover:underline">← Prev</button>`
+          ? `<button onclick="loadPayments(${data.page - 1})"
+               class="text-indigo-600 hover:underline">
+               ← Prev
+             </button>`
           : `<span class="text-gray-400">← Prev</span>`;
 
-        paginationHtml += ` <span>Page ${data.page} of ${data.num_pages}</span> `;
+        paginationHtml += `
+          <span>
+            Page ${data.page} of ${data.num_pages}
+          </span>
+        `;
 
         paginationHtml += data.has_next
-          ? `<button onclick="loadPayments(${data.page + 1})" class="text-indigo-600 hover:underline">Next →</button>`
+          ? `<button onclick="loadPayments(${data.page + 1})"
+               class="text-indigo-600 hover:underline">
+               Next →
+             </button>`
           : `<span class="text-gray-400">Next →</span>`;
 
         pagination.innerHTML = paginationHtml;
       })
       .catch(err => {
-        paymentsList.innerHTML = `<li class="text-red-500">Error loading payments.</li>`;
+        paymentsList.innerHTML = `
+          <li class="text-red-500 text-center py-4">
+            Error loading payments.
+          </li>
+        `;
         console.error(err);
       });
   }
 
   document.addEventListener('DOMContentLoaded', () => {
+
     selectTab(currentMethod);
+
+    // SEARCH INPUT
+    document.getElementById('filter-search')
+      .addEventListener('input', () => {
+        loadPayments(1);
+      });
+
+    // SELECT FILTERS
+    ['filter-class', 'filter-term', 'filter-session']
+      .forEach(id => {
+        document.getElementById(id)
+          .addEventListener('change', () => {
+            loadPayments(1);
+          });
+      });
+
   });
 </script>
