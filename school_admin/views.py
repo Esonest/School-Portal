@@ -2190,33 +2190,68 @@ def load_students(request, class_id):
 # ---------------------------------------------------------
 # EDIT ATTENDANCE
 # ---------------------------------------------------------
+from attendance.forms import AttendanceEditForm
+
+
 @login_required
 def attendance_edit(request, school_id, record_id):
+
     if not school_admin_required(request.user):
         raise PermissionDenied
 
     school = get_object_or_404(School, id=school_id)
-    record = get_object_or_404(Attendance, id=record_id, school=school)
+
+    record = get_object_or_404(
+        Attendance,
+        id=record_id,
+        school=school
+    )
 
     if request.method == "POST":
-        form = AttendanceForm(request.POST, instance=record)
+
+        form = AttendanceEditForm(
+            request.POST,
+            instance=record,
+            school=school
+        )
 
         if form.is_valid():
+
             updated_record = form.save(commit=False)
 
-            # again: protect school boundary
+            # Security check
             if updated_record.student.school_id != school.id:
-                messages.error(request, "Invalid student for this school.")
-                return redirect("school_admin:admin_attendance_list", school_id=school.id)
 
-            updated_record.marked_by = record.marked_by  # keep original teacher if any
+                messages.error(
+                    request,
+                    "Invalid student for this school."
+                )
+
+                return redirect(
+                    "school_admin:admin_attendance_list",
+                    school_id=school.id
+                )
+
+            updated_record.marked_by = record.marked_by
+
             updated_record.save()
 
-            messages.success(request, "Attendance updated successfully.")
-            return redirect("school_admin:admin_attendance_list", school_id=school.id)
+            messages.success(
+                request,
+                "Attendance updated successfully."
+            )
+
+            return redirect(
+                "school_admin:admin_attendance_list",
+                school_id=school.id
+            )
+
     else:
-        form = AttendanceForm(instance=record)
-        form.fields["student"].queryset = Student.objects.filter(school=school)
+
+        form = AttendanceEditForm(
+            instance=record,
+            school=school
+        )
 
     context = {
         "form": form,
@@ -2225,7 +2260,11 @@ def attendance_edit(request, school_id, record_id):
         "is_edit": True,
     }
 
-    return render(request, "school_admin/attendance/admin_form.html", context)
+    return render(
+        request,
+        "school_admin/attendance/admin_form.html",
+        context
+    )
 
 
 # ---------------------------------------------------------

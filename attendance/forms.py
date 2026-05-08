@@ -95,3 +95,53 @@ class BulkAttendanceForm(forms.Form):
         super().__init__(*args, **kwargs)
         if class_queryset is not None:
             self.fields['students'].queryset = class_queryset
+
+
+class AttendanceEditForm(forms.ModelForm):
+
+    class Meta:
+        model = Attendance
+        fields = [
+            "student",
+            "session",
+            "term",
+            "date",
+            "status",
+            "remarks",
+        ]
+
+        widgets = {
+            "student": forms.Select(attrs={
+                "class": INPUT_CLASS
+            }),
+
+            "session": forms.Select(attrs={
+                "class": INPUT_CLASS
+            }),
+
+            "term": forms.Select(attrs={
+                "class": INPUT_CLASS
+            }),
+
+            "date": forms.DateInput(attrs={
+                "type": "date",
+                "class": INPUT_CLASS
+            }),
+
+            "status": forms.Select(attrs={
+                "class": INPUT_CLASS
+            }),
+
+            "remarks": forms.Textarea(attrs={
+                "rows": 3,
+                "class": TEXTAREA_CLASS
+            }),
+        }
+
+    def __init__(self, *args, school=None, **kwargs):
+        super().__init__(*args, **kwargs)
+
+        if school:
+            self.fields["student"].queryset = Student.objects.filter(
+                school=school
+            )

@@ -15,101 +15,148 @@
         </div>
 
         <!-- Form -->
-        <form method="POST" class="p-8 space-y-8">
-            {% csrf_token %}
+       <form method="POST" class="p-8 space-y-8">
+    {% csrf_token %}
 
-            <!-- Date -->
-            <div>
-                <label class="block text-sm font-bold text-gray-700 mb-2">
-                    Attendance Date
-                </label>
-                {{ form.date }}
-            </div>
-
-            <!-- Status -->
-            <div>
-                <label class="block text-sm font-bold text-gray-700 mb-2">
-                    Status
-                </label>
-                {{ form.status }}
-            </div>
-
-<div>
-    <label class="block text-sm font-bold text-gray-700 mb-2">
-        Academic Session
-    </label>
-    {{ form.session }}
-</div>
-
-
-<div>
-    <label class="block text-sm font-bold text-gray-700 mb-2">   
-        Term
-    </label>
-    {{ form.term }}
-</div>
-           <!-- CLASS -->
-<div>
-    <label class="block text-sm font-bold text-gray-700 mb-2">
-        Select Class
-    </label>
-    {{ form.school_class }}
-</div>
-
-<!-- Select All Button -->
-<div class="flex items-center justify-between">
-    <label class="text-lg font-bold text-gray-800">
-        Select Students
-    </label>
-
-    <button type="button"
-            id="selectAllBtn"
-            class="px-5 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition">
-        Select All
-    </button>
-</div>
-
-<!-- Students -->
-<div class="border rounded-2xl p-6 max-h-[500px] overflow-y-auto bg-gray-50">
-    <div id="studentList"
-         class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-
-        {% for checkbox in form.students %}
-        <label class="student-item flex items-center gap-3 p-4 rounded-2xl bg-white border border-gray-200 hover:border-blue-500 hover:bg-blue-50 cursor-pointer transition"
-               data-class="{{ checkbox.data.value.instance.school_class.id }}">
-            {{ checkbox.tag }}
-            <span class="font-medium text-gray-700">
-                {{ checkbox.choice_label }}
-            </span>
-        </label>
-        {% endfor %}
-
+    {% if form.errors %}
+    <div class="bg-red-100 border border-red-300 text-red-700 p-4 rounded-xl">
+        {{ form.errors }}
     </div>
-</div>
+    {% endif %}
 
-            <!-- Remarks -->
-            <div>
-                <label class="block text-sm font-bold text-gray-700 mb-2">
-                    Remarks
+    <!-- Date -->
+    <div>
+        <label class="block text-sm font-bold text-gray-700 mb-2">
+            Attendance Date
+        </label>
+        {{ form.date }}
+    </div>
+
+    <!-- Status -->
+    <div>
+        <label class="block text-sm font-bold text-gray-700 mb-2">
+            Status
+        </label>
+        {{ form.status }}
+    </div>
+
+    <!-- Session -->
+    <div>
+        <label class="block text-sm font-bold text-gray-700 mb-2">
+            Academic Session
+        </label>
+        {{ form.session }}
+    </div>
+
+    <!-- Term -->
+    <div>
+        <label class="block text-sm font-bold text-gray-700 mb-2">
+            Term
+        </label>
+        {{ form.term }}
+    </div>
+
+    <!-- ========================= -->
+    <!-- CREATE MODE -->
+    <!-- ========================= -->
+    {% if not is_edit %}
+
+        <!-- CLASS -->
+        <div>
+            <label class="block text-sm font-bold text-gray-700 mb-2">
+                Select Class
+            </label>
+            {{ form.school_class }}
+        </div>
+
+        <!-- Select All -->
+        <div class="flex items-center justify-between">
+            <label class="text-lg font-bold text-gray-800">
+                Select Students
+            </label>
+
+            <button type="button"
+                    id="selectAllBtn"
+                    class="px-5 py-2 rounded-xl bg-blue-600 text-white hover:bg-blue-700 transition">
+                Select All
+            </button>
+        </div>
+
+        <!-- Students -->
+        <div class="border rounded-2xl p-6 max-h-[500px] overflow-y-auto bg-gray-50">
+            <div id="studentList"
+                 class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+
+                {% for checkbox in form.students %}
+                <label class="student-item flex items-center gap-3 p-4 rounded-2xl bg-white border border-gray-200 hover:border-blue-500 hover:bg-blue-50 cursor-pointer transition"
+                       data-class="{{ checkbox.data.value.instance.school_class.id }}">
+
+                    {{ checkbox.tag }}
+
+                    <span class="font-medium text-gray-700">
+                        {{ checkbox.choice_label }}
+                    </span>
+
                 </label>
-                {{ form.remarks }}
-            </div>
+                {% endfor %}
 
-            <!-- Submit -->
-            <div class="pt-4">
-                <button type="submit"
-                        class="w-full py-4 rounded-2xl bg-gradient-to-r from-green-600 to-emerald-700 text-white text-lg font-bold shadow-lg hover:scale-[1.02] transition">
-                    Save Attendance
-                </button>
             </div>
-        </form>
+        </div>
+
+    {% endif %}
+
+    <!-- ========================= -->
+    <!-- EDIT MODE -->
+    <!-- ========================= -->
+    {% if is_edit %}
+
+        <div>
+            <label class="block text-sm font-bold text-gray-700 mb-2">
+                Student
+            </label>
+
+            {{ form.student }}
+        </div>
+
+    {% endif %}
+
+    <!-- Remarks -->
+    <div>
+        <label class="block text-sm font-bold text-gray-700 mb-2">
+            Remarks
+        </label>
+
+        {{ form.remarks }}
+    </div>
+
+    <!-- Submit -->
+    <div class="pt-4">
+        <button type="submit"
+                class="w-full py-4 rounded-2xl bg-gradient-to-r from-green-600 to-emerald-700 text-white text-lg font-bold shadow-lg hover:scale-[1.02] transition">
+
+            {% if is_edit %}
+                Update Attendance
+            {% else %}
+                Save Attendance
+            {% endif %}
+
+        </button>
+    </div>
+
+</form>
+
+
     </div>
 </div>
 
 
 <script>
 document.addEventListener("DOMContentLoaded", function () {
+
     const classSelect = document.getElementById("id_school_class");
+
+    if (!classSelect) return;
+
     const selectAllBtn = document.getElementById("selectAllBtn");
 
     function getVisibleCheckboxes() {
@@ -162,10 +209,19 @@ document.addEventListener("DOMContentLoaded", function () {
 document.addEventListener("DOMContentLoaded", function () {
 
     const classSelect = document.querySelector("select[name='school_class']");
+
+    if (!classSelect) return;
+
     const studentContainer = document.querySelector("#studentList");
 
     classSelect.addEventListener("change", async function () {
+
         const classId = this.value;
+
+        if (!classId) {
+            studentContainer.innerHTML = "";
+            return;
+        }
 
         const res = await fetch(`/school_admin/load-students/${classId}/`);
         const data = await res.json();
@@ -180,6 +236,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 </label>
             `;
         });
+
     });
 
 });
