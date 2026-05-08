@@ -1710,10 +1710,17 @@ def verify_result(request, admission_no):
     # Media / Common fields
     # ---------------------------
     
+
+    def safe_file_url(field):
+        try:
+            return field.url if field else None
+        except Exception:
+            return None
+        
     context.update({
-        "principal_signature_url": getattr(school.principal_signature, "url", None) if school else None,
-        "student_photo_url": student.photo.url if student.photo else None,
-        "school_logo_url": getattr(school.logo, "url", None) if school else None,
+        "principal_signature_url": safe_file_url(school.principal_signature),
+        "student_photo_url": safe_file_url(student.photo),
+        "school_logo_url": safe_file_url(school.logo),
     })
 
     return render(request, "results/verify_result.html", context)
