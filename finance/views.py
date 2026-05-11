@@ -86,23 +86,17 @@ def dashboard(request):
     if current_term:
         invoices = invoices.filter(term=current_term)
 
-    invoice_totals = invoices.aggregate(
-        total_expected=Coalesce(Sum("total_amount"), Decimal("0")),
-        
-    )
-    total_expected = invoice_totals["total_expected"]
 
-
-    # -----------------------------
+# Search filter
+   # -----------------------------
 # Invoice Analytics By Template
 # -----------------------------
-    invoice_breakdown = invoices
 
 # Search filter
     search = request.GET.get("search")
 
-    if search:
-        invoice_breakdown = invoice_breakdown.filter(
+    if search and search != "None":
+        invoices = invoices.filter(
             Q(student__user__first_name__icontains=search) |
             Q(student__user__last_name__icontains=search) |
             Q(student__admission_no__icontains=search)
@@ -112,12 +106,27 @@ def dashboard(request):
     selected_class = request.GET.get("class")
 
     if selected_class:
-        invoice_breakdown = invoice_breakdown.filter(
-            school_class_id=selected_class
+        invoices = invoices.filter(
+            school_class__id=selected_class
         )
 
+# -----------------------------
+# Totals AFTER filters
+# -----------------------------
+    invoice_totals = invoices.aggregate(
+        total_expected=Coalesce(
+            Sum("total_amount"),
+            Decimal("0")
+        ),
+    )
+
+    total_expected = invoice_totals["total_expected"]
+
+# -----------------------------
+# Invoice Breakdown
+# -----------------------------
     invoice_breakdown = (
-        invoice_breakdown
+        invoices
         .values(
             "title",
             "school_class__name"
@@ -164,8 +173,6 @@ def dashboard(request):
             "-total_invoice_amount"
         )
     )
-    
-
     # -----------------------------
     # Payments (include all student VA payments)
     # -----------------------------
@@ -179,20 +186,56 @@ def dashboard(request):
         payment_date__gte=start_date
     ).filter(
         Q(invoice__isnull=False) | Q(student_id__in=student_ids_with_va)
-    ).select_related("invoice", "invoice__student", "student")
+    ).select_related("invoice", "invoice__student", "student", "invoice__school_class")
+
+
+    # -----------------------------
+# APPLY FILTERS TO PAYMENTS
+# -----------------------------
+
+# Session filter
+    if current_session:
+        payments_base = payments_base.filter(
+            Q(invoice__session=current_session)
+        )
+
+# Term filter
+    if current_term:
+        payments_base = payments_base.filter(
+            Q(invoice__term=current_term)
+        )
+
+# Class filter
+    selected_class = request.GET.get("class")
+
+    if selected_class:
+        payments_base = payments_base.filter(
+            Q(school_class__id=selected_class) |
+            Q(invoice__school_class__id=selected_class)
+        )
+
+# Search filter
+    search = request.GET.get("search")
+
+    if search:
+        payments_base = payments_base.filter(
+            Q(invoice__student__user__first_name__icontains=search) |
+            Q(invoice__student__user__last_name__icontains=search) |
+            Q(invoice__student__admission_no__icontains=search)
+        )
 
     # -----------------------------
     # Manual / Offline Payments
     # -----------------------------
     recent_payments = payments_base.exclude(
-        payment_method__in=["online", "bank_transfer"]
+        payment_method__in=["online", "bank"]
     ).order_by("-payment_date")[:5]
 
     # -----------------------------
     # Paystack Payments
     # -----------------------------
     paystack_online_qs = payments_base.filter(payment_method="online")
-    paystack_bank_qs = payments_base.filter(payment_method="bank_transfer")
+    paystack_bank_qs = payments_base.filter(payment_method="bank")
 
     paystack_online_total = paystack_online_qs.aggregate(
         total=Coalesce(Sum("amount"), Decimal("0"))
@@ -205,7 +248,7 @@ def dashboard(request):
     paystack_total = paystack_online_total + paystack_bank_total
 
     manual_total = payments_base.exclude(
-        payment_method__in=["online", "bank_transfer"]
+        payment_method__in=["online", "bank"]
     ).aggregate(
         total=Coalesce(Sum("amount"), Decimal("0"))
     )["total"]
@@ -220,7 +263,7 @@ def dashboard(request):
     recent_paystack_online = paystack_online_qs.order_by("-payment_date")[:5]
     recent_paystack_bank = paystack_bank_qs.order_by("-payment_date")[:5]
     recent_paystack = payments_base.filter(
-        payment_method__in=["online", "bank_transfer"]
+        payment_method__in=["online", "bank"]
     ).order_by("-payment_date")[:5]
 
     # -----------------------------
@@ -271,6 +314,8 @@ def dashboard(request):
         "current_term": current_term,
         "term_choices": Score.TERM_CHOICES,
         "classes": classes,
+        "selected_class": selected_class,
+        "search": search,
     }
 
     return render(request, "finance/dashboard.html", context)
@@ -327,9 +372,9 @@ def payments_modal(request):
     # -----------------------------
     if method == "manual":
         payments_qs = payments_qs.exclude(
-            payment_method__in=["online", "bank_transfer"]
+            payment_method__in=["online", "bank"]
         )
-    elif method in ["online", "bank_transfer"]:
+    elif method in ["online", "bank"]:
         payments_qs = payments_qs.filter(payment_method=method)
 
 
@@ -338,7 +383,8 @@ def payments_modal(request):
     # -----------------------------
     if class_id:
         payments_qs = payments_qs.filter(
-            invoice__student__school_class_id=class_id
+            Q(school_class__id=class_id) |
+            Q(invoice__school_class__id=class_id)
         )
 
     # -----------------------------

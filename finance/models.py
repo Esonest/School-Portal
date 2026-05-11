@@ -318,8 +318,10 @@ class Payment(models.Model):
             )
 
     def save(self, *args, **kwargs):
-        # Capture previous status BEFORE saving
+
+    # Capture previous status BEFORE saving
         old_status = None
+
         if self.pk:
             old_status = (
                 Payment.objects
@@ -328,18 +330,38 @@ class Payment(models.Model):
                 .first()
             )
 
-        # Ensure reference exists (manual payments)
-        if not self.reference:
-            self.reference = f"MAN-{uuid.uuid4().hex[:12].upper()}"
+    # -----------------------------
+    # Auto-normalize from invoice
+    # -----------------------------
+        if self.invoice:
+            self.student = self.invoice.student
+            self.school_class = self.invoice.school_class
+            self.term = self.invoice.term
+            self.session = self.invoice.session
+            self.school = self.invoice.school
 
-        # Run validations (calls clean())
+    # -----------------------------
+    # Generate manual reference
+    # -----------------------------
+        if not self.reference:
+            self.reference = (
+                f"MAN-{uuid.uuid4().hex[:12].upper()}"
+            )
+
+    # -----------------------------
+    # Run validations
+    # -----------------------------
         self.full_clean()
 
-        # Save payment
+    # -----------------------------
+    # Save payment
+    # -----------------------------
         super().save(*args, **kwargs)
 
-        # Recalculate invoice ONLY if status changed
-        if self.invoice and old_status != self.status:
+    # -----------------------------
+    # Recalculate invoice
+    # -----------------------------
+        if self.invoice:
             self.invoice.recalc_amount_paid()
 
     # -----------------------------
