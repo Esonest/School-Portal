@@ -19,6 +19,16 @@ from django.db.models import Q
 from .utils import calculate_paystack_fee
 
 
+from django.db.models import (
+    Sum,
+    Count,
+    DecimalField,
+    Value,
+    F,
+)
+from django.db.models.functions import Coalesce
+
+
 
 
 
@@ -81,6 +91,79 @@ def dashboard(request):
         
     )
     total_expected = invoice_totals["total_expected"]
+
+
+    # -----------------------------
+# Invoice Analytics By Template
+# -----------------------------
+    invoice_breakdown = invoices
+
+# Search filter
+    search = request.GET.get("search")
+
+    if search:
+        invoice_breakdown = invoice_breakdown.filter(
+            Q(student__user__first_name__icontains=search) |
+            Q(student__user__last_name__icontains=search) |
+            Q(student__admission_no__icontains=search)
+        )
+
+# Class filter
+    selected_class = request.GET.get("class")
+
+    if selected_class:
+        invoice_breakdown = invoice_breakdown.filter(
+            school_class_id=selected_class
+        )
+
+    invoice_breakdown = (
+        invoice_breakdown
+        .values(
+            "title",
+            "school_class__name"
+        )
+        .annotate(
+        # Total students invoiced
+            total_students=Count(
+                "student",
+                distinct=True
+            ),
+
+        # Students owing
+            balance_students=Count(
+                "student",
+                filter=Q(amount_paid__lt=F("total_amount")),
+                distinct=True
+            ),
+
+        # Total invoice generated
+            total_invoice_amount=Coalesce(
+                Sum("total_amount"),
+                Value(0),
+                output_field=DecimalField(
+                    max_digits=20,
+                    decimal_places=2
+                )
+            ),
+
+        # Total income received
+            total_paid_amount=Coalesce(
+                Sum("amount_paid"),
+                Value(0),
+                output_field=DecimalField(
+                    max_digits=20,
+                    decimal_places=2
+                )
+            ),
+        )
+        .annotate(
+            balance=F("total_invoice_amount") - F("total_paid_amount")
+        )
+        .order_by(
+            "school_class__name",
+            "-total_invoice_amount"
+        )
+    )
     
 
     # -----------------------------
@@ -162,6 +245,7 @@ def dashboard(request):
         # Invoice summary
         "total_expected": total_expected,
         "outstanding": outstanding,
+        "invoice_breakdown": invoice_breakdown,
 
         # Paid
         "total_paid": total_paid,
