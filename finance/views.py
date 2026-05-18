@@ -16,7 +16,7 @@ from .models import Invoice, Receipt
 from .forms import FeeTemplate, FeeTemplateForm
 from collections import defaultdict
 from django.db.models import Q
-from .utils import calculate_paystack_fee
+from .utils import calculate_paystack_fee, send_school_payment_notification
 
 
 from django.db.models import (
@@ -2065,7 +2065,11 @@ def pay_invoice(request, invoice_id):
     # -----------------------------
     # Ensure email exists
     # -----------------------------
-    email = invoice.student.user.email or "techcenter652@gmail.com"
+    email = (
+        invoice.student.user.email
+        or school.notification_email
+        or "techcenter652@gmail.com"
+    )
 
     # -----------------------------
     # Build callback URL (optional, used only for redirection)
@@ -2518,7 +2522,8 @@ def paystack_webhook(request):
                 term=invoice.term,
                 school=school,
             )
-
+            send_school_payment_notification(payment)
+            
     return HttpResponse(status=200)
 
 
