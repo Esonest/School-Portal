@@ -258,34 +258,35 @@
 
 /* ================= RESPONSIVE DASHBOARD ================= */
 
+/* ================= LAYOUT ================= */
+
 .dashboard-shell{
     display:flex;
     gap:24px;
     min-height:100vh;
 }
 
-/* MAIN */
 .dashboard-main{
     flex:1;
     min-width:0;
 }
 
-/* ================= MOBILE MENU BUTTON ================= */
+/* ================= MOBILE BUTTON ================= */
 
 .mobile-menu-btn{
     display:none;
-    background:linear-gradient(
-        135deg,
-        #6366f1,
-        #4338ca
-    );
+    position:fixed;
+    top:16px;
+    left:16px;
+    z-index:120;
+    background:linear-gradient(135deg,#6366f1,#4338ca);
     color:white;
     border:none;
-    padding:12px 18px;
-    border-radius:14px;
-    font-weight:700;
-    box-shadow:
-        0 10px 25px rgba(99,102,241,.3);
+    width:52px;
+    height:52px;
+    border-radius:16px;
+    font-size:22px;
+    box-shadow:0 10px 25px rgba(99,102,241,.35);
 }
 
 /* ================= OVERLAY ================= */
@@ -294,11 +295,11 @@
     position:fixed;
     inset:0;
     background:rgba(0,0,0,.45);
-    backdrop-filter:blur(3px);
-    z-index:90;
+    backdrop-filter:blur(4px);
+    z-index:110;
     opacity:0;
     visibility:hidden;
-    transition:.3s;
+    transition:.35s;
 }
 
 .sidebar-overlay.show{
@@ -314,19 +315,18 @@
     background:linear-gradient(
         180deg,
         #0f172a 0%,
-        #111827 50%,
+        #111827 55%,
         #1e293b 100%
     );
     color:white;
     border-radius:28px;
     padding:22px;
-    box-shadow:
-        0 18px 45px rgba(15,23,42,.3);
+    box-shadow:0 18px 45px rgba(15,23,42,.3);
     position:sticky;
     top:16px;
-    max-height:calc(100vh - 32px);
+    height:calc(100vh - 32px);
     overflow-y:auto;
-    z-index:100;
+    z-index:115;
 }
 
 .sidebar::-webkit-scrollbar{
@@ -338,64 +338,16 @@
     border-radius:10px;
 }
 
-.sidebar-brand{
-    font-size:1.2rem;
-    font-weight:800;
-    text-align:center;
-    margin-bottom:24px;
-    padding-bottom:16px;
-    border-bottom:1px solid rgba(255,255,255,.12);
-}
-
-.sidebar-menu{
-    display:flex;
-    flex-direction:column;
-    gap:10px;
-}
-
-.sidebar-link{
-    display:flex;
-    align-items:center;
-    gap:12px;
-    padding:14px 16px;
-    border-radius:16px;
-    text-decoration:none;
-    color:#e5e7eb;
-    font-weight:600;
-    transition:.3s;
-    background:rgba(255,255,255,.04);
-    border:1px solid rgba(255,255,255,.05);
-}
-
-.sidebar-link:hover{
-    background:rgba(255,255,255,.12);
-    color:white;
-    transform:translateX(5px);
-}
-
-.sidebar-link.active{
-    background:
-        linear-gradient(
-            135deg,
-            #6366f1,
-            #4338ca
-        );
-    color:white;
-}
-
 /* ================= TABLET ================= */
 
 @media(max-width:1024px){
 
     .dashboard-shell{
-        flex-direction:column;
+        gap:18px;
     }
 
     .sidebar{
-        width:100%;
-        position:relative;
-        top:0;
-        max-height:none;
+        width:260px;
     }
 }
 
@@ -403,27 +355,39 @@
 
 @media(max-width:768px){
 
-    .mobile-menu-btn{
-        display:inline-flex;
-        align-items:center;
-        gap:8px;
+    .dashboard-shell{
+        display:block;
     }
 
+    .mobile-menu-btn{
+        display:flex;
+        align-items:center;
+        justify-content:center;
+    }
+
+    /* sidebar becomes true drawer */
     .sidebar{
         position:fixed;
-        left:-320px;
         top:0;
-        bottom:0;
+        left:-100%;
         width:300px;
+        max-width:85%;
         height:100vh;
         border-radius:0 28px 28px 0;
-        max-height:none;
-        transition:.35s ease;
-        z-index:100;
+        overflow-y:auto;
+        transition:left .35s ease;
+        z-index:115;
+        margin:0;
     }
 
     .sidebar.show{
         left:0;
+    }
+
+    /* main occupies full screen */
+    .dashboard-main{
+        width:100%;
+        padding-top:72px;
     }
 }
 
@@ -738,9 +702,8 @@
     <!-- MAIN -->
 
     <div class="dashboard-main">
-         <button id="menuToggle"
-    class="mobile-menu-btn lg:hidden mb-4">
-    ☰ Menu
+        <button id="menuToggle" class="mobile-menu-btn">
+    ☰
 </button>
 
 
@@ -962,37 +925,31 @@ new Chart(chartCanvas,{
 </script>
 
 <script>
-const menuToggle =
-document.getElementById('menuToggle');
+const menuToggle = document.getElementById('menuToggle');
+const sidebar = document.getElementById('sidebar');
+const overlay = document.getElementById('sidebarOverlay');
 
-const sidebar =
-document.getElementById('sidebar');
-
-const overlay =
-document.getElementById('sidebarOverlay');
-
-if(menuToggle){
-
-    menuToggle.addEventListener(
-        'click',
-        function(){
-
-            sidebar.classList.toggle('show');
-            overlay.classList.toggle('show');
-
-        }
-    );
-
-    overlay.addEventListener(
-        'click',
-        function(){
-
-            sidebar.classList.remove('show');
-            overlay.classList.remove('show');
-
-        }
-    );
+function closeSidebar(){
+    sidebar.classList.remove('show');
+    overlay.classList.remove('show');
 }
+
+function openSidebar(){
+    sidebar.classList.add('show');
+    overlay.classList.add('show');
+}
+
+menuToggle.addEventListener('click', function(e){
+    e.stopPropagation();
+
+    if(sidebar.classList.contains('show')){
+        closeSidebar();
+    } else {
+        openSidebar();
+    }
+});
+
+overlay.addEventListener('click', closeSidebar);
 </script>
 
 {% endblock %}
