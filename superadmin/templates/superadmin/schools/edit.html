@@ -66,7 +66,37 @@
             {{ form.logo.label_tag }}
             {{ form.logo }}
         </div>
+           
 
+        <!-- Notification Email -->
+<div>
+    {{ form.notification_email.label_tag }}
+    {{ form.notification_email }}
+    <p class="text-xs text-gray-500 mt-1">
+        Email used for sending school notifications.
+    </p>
+</div>
+
+<!-- WhatsApp Number -->
+<div>
+    {{ form.whatsapp_number.label_tag }}
+    {{ form.whatsapp_number }}
+    <p class="text-xs text-gray-500 mt-1">
+        School WhatsApp number for messaging.
+    </p>
+</div>
+
+<!-- Email Enabled -->
+<div class="flex items-center gap-2">
+    {{ form.email_enabled }}
+    {{ form.email_enabled.label_tag }}
+</div>
+
+<!-- WhatsApp Enabled -->
+<div class="flex items-center gap-2">
+    {{ form.whatsapp_enabled }}
+    {{ form.whatsapp_enabled.label_tag }}
+</div>
         <div>
             {{ form.principal_signature.label_tag }}
             {{ form.principal_signature }}

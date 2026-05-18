@@ -112,6 +112,28 @@ class Student(models.Model):
         blank=True
     )
 
+
+    parent_name = models.CharField(
+        max_length=255,
+        blank=True
+    )
+
+    parent_email = models.EmailField(
+        blank=True,
+        null=True
+    )
+
+    parent_phone = models.CharField(
+        max_length=20,
+        blank=True,
+        null=True
+    )
+
+    student_email = models.EmailField(
+        blank=True,
+        null=True
+    )
+
     # -----------------------------
     # Paystack Virtual Account
     # -----------------------------
@@ -278,18 +300,70 @@ from django.utils import timezone
 
 
 class Announcement(models.Model):
-    school = models.ForeignKey(School,on_delete=models.CASCADE,related_name="announcements")
+
+    CHANNEL_CHOICES = (
+        ("portal", "Portal Only"),
+        ("email", "Email"),
+        ("whatsapp", "WhatsApp"),
+        ("both", "Email & WhatsApp"),
+    )
+
+    TARGET_CHOICES = (
+        ("all", "Entire School"),
+        ("class", "Specific Class"),
+        ("student", "Specific Student"),
+        ("teachers", "Teachers"),
+    )
+
+    school = models.ForeignKey(
+        School,
+        on_delete=models.CASCADE,
+        related_name="announcements"
+    )
+
     title = models.CharField(max_length=255)
+
     message = models.TextField()
+
+    targets = models.JSONField(
+        default=list,
+        blank=True
+    )
+
+    school_classes = models.ManyToManyField(
+        SchoolClass,
+        blank=True,
+        related_name="announcement_classes"
+    )
+
+    students = models.ManyToManyField(
+        Student,
+        blank=True,
+        related_name="announcement_students"
+    )
+
+    send_channels = models.JSONField(
+        default=list,
+        blank=True
+    )
+
+    send_email = models.BooleanField(default=False)
+
+    send_whatsapp = models.BooleanField(default=False)
+
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
         on_delete=models.SET_NULL,
         null=True,
         blank=True
     )
+
     is_active = models.BooleanField(default=True)
+
     publish_date = models.DateTimeField(default=timezone.now)
+
     expiry_date = models.DateTimeField(null=True, blank=True)
+
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
@@ -298,6 +372,196 @@ class Announcement(models.Model):
     def __str__(self):
         return self.title
 
-    @property
-    def is_expired(self):
-        return self.expiry_date and timezone.now() > self.expiry_date
+
+
+
+# notifications/models.py
+
+from django.db import models
+from django.conf import settings
+from django.utils import timezone
+
+
+class Notification(models.Model):
+
+    CHANNEL_CHOICES = [
+        ("email", "Email"),
+        ("whatsapp", "WhatsApp"),
+        ("portal", "Portal"),
+    ]
+
+    AUDIENCE_CHOICES = [
+        ("all_students", "All Students"),
+        ("all_parents", "All Parents"),
+        ("class_students", "Class Students"),
+        ("class_parents", "Class Parents"),
+        ("single_student", "Single Student"),
+    ]
+
+    STATUS_CHOICES = [
+        ("pending", "Pending"),
+        ("processing", "Processing"),
+        ("sent", "Sent"),
+        ("failed", "Failed"),
+    ]
+
+    school = models.ForeignKey(
+        School,
+        on_delete=models.CASCADE,
+        related_name="notifications"
+    )
+
+    created_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True
+    )
+
+    title = models.CharField(max_length=255)
+
+    message = models.TextField()
+
+    channel = models.CharField(
+        max_length=20,
+        choices=CHANNEL_CHOICES
+    )
+
+    audience = models.CharField(
+        max_length=30,
+        choices=AUDIENCE_CHOICES
+    )
+
+    school_class = models.ForeignKey(
+        SchoolClass,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+
+    student = models.ForeignKey(
+        Student,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default="pending"
+    )
+
+    total_recipients = models.PositiveIntegerField(default=0)
+
+    successful_sent = models.PositiveIntegerField(default=0)
+
+    failed_sent = models.PositiveIntegerField(default=0)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    sent_at = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return f"{self.title} ({self.channel})"
+
+
+class NotificationRecipient(models.Model):
+
+    notification = models.ForeignKey(
+        Notification,
+        on_delete=models.CASCADE,
+        related_name="recipients"
+    )
+
+    student = models.ForeignKey(
+        Student,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True
+    )
+
+    recipient = models.CharField(max_length=255)
+
+    status = models.CharField(
+        max_length=20,
+        default="pending"
+    )
+
+    response = models.TextField(blank=True)
+
+    sent_at = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+
+
+class SchoolCommunicationSetting(models.Model):
+    school = models.OneToOneField(
+        School,
+        on_delete=models.CASCADE
+    )
+
+    # Email
+    email_enabled = models.BooleanField(default=False)
+
+    smtp_sender_name = models.CharField(
+        max_length=255,
+        blank=True
+    )
+
+    smtp_sender_email = models.EmailField(blank=True)
+
+    brevo_api_key = models.CharField(
+        max_length=255,
+        blank=True
+    )
+
+    # WhatsApp
+    whatsapp_enabled = models.BooleanField(default=False)
+
+    whatsapp_token = models.TextField(blank=True)
+
+    whatsapp_phone_id = models.CharField(
+        max_length=255,
+        blank=True
+    )
+
+    whatsapp_business_number = models.CharField(
+        max_length=50,
+        blank=True
+    )
+
+
+class MessageLog(models.Model):
+
+    CHANNELS = (
+        ("email", "Email"),
+        ("whatsapp", "WhatsApp"),
+    )
+
+    STATUS = (
+        ("pending", "Pending"),
+        ("sent", "Sent"),
+        ("failed", "Failed"),
+    )
+
+    school = models.ForeignKey(School, on_delete=models.CASCADE)
+
+    announcement = models.ForeignKey(
+        Announcement,
+        on_delete=models.CASCADE
+    )
+
+    recipient = models.CharField(max_length=255)
+
+    channel = models.CharField(max_length=20, choices=CHANNELS)
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS,
+        default="pending"
+    )
+
+    response = models.TextField(blank=True)
+
+    sent_at = models.DateTimeField(null=True, blank=True)

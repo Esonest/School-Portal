@@ -53,14 +53,48 @@
                 <form method="post" class="space-y-6">
                     {% csrf_token %}
 
-                    {% for field in form %}
-                    <div>
+                   {% for field in form %}
+<div {% if field.name == "send_channel" or field.name == "target" or field.name == "school_class" %}class="bg-blue-50 border border-blue-200 rounded-2xl p-5"{% endif %}>
+
                         <label for="{{ field.id_for_label }}"
                                class="block text-sm font-semibold text-gray-700 mb-2">
                             {{ field.label }}
                         </label>
 
                         {{ field }}
+
+                        {% if field.name == "send_channels" %}
+<div class="mt-3 grid grid-cols-1 md:grid-cols-3 gap-3">
+
+    <div class="bg-white border rounded-xl p-4">
+        <h4 class="font-bold text-green-700 mb-1">
+            WhatsApp
+        </h4>
+        <p class="text-sm text-gray-500">
+            Send announcement to parents/students via WhatsApp.
+        </p>
+    </div>
+
+    <div class="bg-white border rounded-xl p-4">
+        <h4 class="font-bold text-blue-700 mb-1">
+            Email
+        </h4>
+        <p class="text-sm text-gray-500">
+            Deliver directly to parent/student email inbox.
+        </p>
+    </div>
+
+    <div class="bg-white border rounded-xl p-4">
+        <h4 class="font-bold text-purple-700 mb-1">
+            Portal
+        </h4>
+        <p class="text-sm text-gray-500">
+            Show announcement inside student dashboard.
+        </p>
+    </div>
+
+</div>
+{% endif %}
 
                         {% if field.help_text %}
                         <p class="mt-2 text-sm text-gray-500">
@@ -75,6 +109,38 @@
                         {% endfor %}
                     </div>
                     {% endfor %}
+
+                    <!-- Preview Card -->
+<div class="bg-gradient-to-r from-indigo-50 to-blue-50 border border-indigo-100 rounded-2xl p-5">
+
+    <h3 class="text-lg font-bold text-indigo-900 mb-3">
+        Delivery Preview
+    </h3>
+
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+
+        <div class="bg-white rounded-xl p-4 border">
+            <p class="font-semibold text-gray-700 mb-1">
+                Target Audience
+            </p>
+
+            <p class="text-gray-500">
+                Selected students/classes/school users will receive this announcement.
+            </p>
+        </div>
+
+        <div class="bg-white rounded-xl p-4 border">
+            <p class="font-semibold text-gray-700 mb-1">
+                Delivery Channels
+            </p>
+
+            <p class="text-gray-500">
+                WhatsApp, Email, and Portal notification supported.
+            </p>
+        </div>
+
+    </div>
+</div>
 
                     <!-- Buttons -->
                     <div class="flex flex-col sm:flex-row gap-4 pt-6 border-t border-gray-200">
@@ -138,4 +204,161 @@
         resize: vertical;
     }
 </style>
+ 
+<style>
+input, textarea, select {
+    width: 100%;
+    padding: 14px 18px;
+    border: 2px solid #E5E7EB;
+    border-radius: 1rem;
+    background: #F9FAFB;
+}
+
+input[type="radio"],
+input[type="checkbox"]{
+    width:auto;
+    margin-right:10px;
+}
+
+#id_target,
+#id_send_channel{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+}
+</style>
+
+<script>
+document.addEventListener(
+"DOMContentLoaded",
+function(){
+
+    const classField =
+        document.getElementById(
+            "id_school_classes"
+        );
+
+    const studentField =
+        document.getElementById(
+            "id_students"
+        );
+
+    const classWrapper =
+        classField.closest("div");
+
+    const studentWrapper =
+        studentField.closest("div");
+
+    function toggleFields(){
+
+        const checkedTargets =
+            Array.from(
+                document.querySelectorAll(
+                    'input[name="targets"]:checked'
+                )
+            ).map(
+                el => el.value
+            );
+
+        // hide first
+        classWrapper.style.display =
+            "none";
+
+        studentWrapper.style.display =
+            "none";
+
+        // show class
+        if(
+            checkedTargets.includes(
+                "class"
+            ) ||
+            checkedTargets.includes(
+                "student"
+            )
+        ){
+            classWrapper.style.display =
+                "block";
+        }
+
+        // show students only
+        if(
+            checkedTargets.includes(
+                "student"
+            )
+        ){
+            studentWrapper.style.display =
+                "block";
+        }
+    }
+
+    // target checkbox change
+    document
+        .querySelectorAll(
+            'input[name="targets"]'
+        )
+        .forEach(cb=>{
+
+            cb.addEventListener(
+                "change",
+                toggleFields
+            );
+
+        });
+
+    toggleFields();
+
+
+    // LOAD STUDENTS BY CLASS
+
+    classField.addEventListener(
+        "change",
+        function(){
+
+            let selectedClasses =
+                Array.from(
+                    this.selectedOptions
+                )
+                .map(
+                    o=>o.value
+                );
+
+            if(
+                !selectedClasses.length
+            ){
+                studentField.innerHTML =
+                    "";
+
+                return;
+            }
+
+            fetch(
+                `{% url 'students:load_students_by_class' %}?class_ids=${selectedClasses.join(',')}`
+            )
+            .then(
+                r=>r.json()
+            )
+            .then(data=>{
+
+                studentField.innerHTML =
+                    "";
+
+                data.students.forEach(
+                    s=>{
+
+                        studentField.innerHTML +=
+                            `
+                            <option value="${s.id}">
+                                ${s.name}
+                            </option>
+                            `;
+                    }
+                );
+
+            });
+
+        }
+    );
+
+});
+</script>
 {% endblock %}

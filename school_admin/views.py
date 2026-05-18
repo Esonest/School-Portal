@@ -2,6 +2,7 @@ from django.shortcuts import render
 from django.contrib.auth.decorators import login_required, user_passes_test
 from accounts.models import School, User
 from attendance.models import Attendance
+from students.models import Announcement
 from results.models import ClassScoreSetting, ClassSubjectTeacher, Subject
 from finance.models import SchoolTermSetting
 from django.shortcuts import get_object_or_404
@@ -64,7 +65,16 @@ def school_admin_dashboard(request, school_id):
     cbt_count = CBTExam.objects.filter(school=school).count()
     lesson_count = LessonNote.objects.filter(school=school).count()
     assignment_count = Assignment.objects.filter(school=school).count()
-    attendance_count = Attendance.objects.filter(school=school).count()
+    attendance_records = Attendance.objects.filter(school=school,session=current_session)
+    attendance_count = attendance_records.count()
+    present_count = attendance_records.filter(status='present').count()
+    attendance_percent = 0
+    if attendance_count > 0:
+        attendance_percent = round(
+            (present_count / attendance_count) * 100,
+            1
+        )
+    announcement_count = Announcement.objects.filter(school=school).count()
     subject_count = Subject.objects.filter(school=school).count()
     classes = SchoolClass.objects.filter(school=school).prefetch_related('students')
     class_subject_teacher_count = ClassSubjectTeacher.objects.filter(school_class__school=school).count()
@@ -93,6 +103,8 @@ def school_admin_dashboard(request, school_id):
         'lesson_count': lesson_count,
         'assignment_count': assignment_count,
         'attendance_count': attendance_count,
+        'attendance_percent': attendance_percent,
+        'announcement_count': announcement_count,
         'subject_count': subject_count,
         "classes": classes,
         'current_session': current_session,

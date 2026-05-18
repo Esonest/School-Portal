@@ -252,7 +252,378 @@
 }
 </style>
 
-<div class="min-h-screen p-4 sm:p-6 bg-gray-100">
+<style>
+
+/* ================= SIDEBAR DASHBOARD LAYOUT ================= */
+
+.dashboard-shell{
+    display:flex;
+    min-height:100vh;
+    gap:22px;
+}
+
+
+.sidebar-menu{
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+}
+
+
+
+.dashboard-main{
+    flex:1;
+}
+
+
+
+/* ================= PREMIUM SIDEBAR ================= */
+
+.sidebar{
+    width:280px;
+    background:linear-gradient(
+        180deg,
+        #1e293b 0%,
+        #0f172a 55%,
+        #111827 100%
+    );
+    color:white;
+    border-radius:28px;
+    padding:22px;
+    box-shadow:
+        0 18px 50px rgba(15,23,42,.35);
+    position:sticky;
+    top:16px;
+    height:calc(100vh - 32px);
+    overflow-y:auto;
+}
+
+/* nice scrollbar */
+
+.sidebar::-webkit-scrollbar{
+    width:6px;
+}
+
+.sidebar::-webkit-scrollbar-thumb{
+    background:rgba(255,255,255,.2);
+    border-radius:10px;
+}
+
+.sidebar-brand{
+    font-size:22px;
+    font-weight:800;
+    margin-bottom:28px;
+    color:white;
+    text-align:center;
+    padding-bottom:18px;
+    border-bottom:1px solid rgba(255,255,255,.12);
+}
+
+/* sidebar links */
+
+.sidebar-link{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:14px 16px;
+    border-radius:16px;
+    text-decoration:none;
+    color:#e5e7eb;
+    font-weight:600;
+    transition:.3s;
+    background:rgba(255,255,255,.04);
+    border:1px solid rgba(255,255,255,.05);
+    backdrop-filter:blur(10px);
+}
+
+.sidebar-link:hover{
+    background:rgba(255,255,255,.12);
+    color:white;
+    transform:translateX(5px);
+    box-shadow:
+        0 8px 22px rgba(0,0,0,.18);
+}
+
+.sidebar-link.active{
+    background:linear-gradient(
+        135deg,
+        #6366f1,
+        #4338ca
+    );
+    color:white;
+    box-shadow:
+        0 10px 28px rgba(99,102,241,.4);
+}
+
+/* ================= QUICK ACCESS ================= */
+
+.quick-card{
+    border-radius:22px;
+    padding:20px;
+    display:flex;
+    align-items:center;
+    gap:15px;
+    box-shadow:
+        0 10px 30px rgba(0,0,0,.08);
+    transition:.35s;
+    text-decoration:none;
+    color:#111827;
+    overflow:hidden;
+    position:relative;
+}
+
+.quick-card:hover{
+    transform:translateY(-6px) scale(1.02);
+    box-shadow:
+        0 18px 35px rgba(0,0,0,.12);
+}
+
+/* subtle glow */
+
+.quick-card::before{
+    content:"";
+    position:absolute;
+    inset:0;
+    background:
+        radial-gradient(
+            circle at top left,
+            rgba(255,255,255,.35),
+            transparent 60%
+        );
+    opacity:0;
+    transition:.3s;
+}
+
+.quick-card:hover::before{
+    opacity:1;
+}
+
+/* ICON */
+
+.quick-icon{
+    width:56px;
+    height:56px;
+    border-radius:18px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:white;
+    font-size:24px;
+    box-shadow:
+        0 8px 20px rgba(0,0,0,.15);
+}
+
+/* ================= QUICK ACCESS COLORS ================= */
+
+/* Attendance */
+
+.quick-grid a:nth-child(1){
+    background:
+    linear-gradient(135deg,#ccfbf1,#99f6e4);
+}
+
+/* CBT */
+
+.quick-grid a:nth-child(2){
+    background:
+    linear-gradient(135deg,#ede9fe,#ddd6fe);
+}
+
+/* Announcement */
+
+.quick-grid a:nth-child(3){
+    background:
+    linear-gradient(135deg,#fef3c7,#fde68a);
+}
+
+/* Results */
+
+.quick-grid a:nth-child(4){
+    background:
+    linear-gradient(135deg,#dcfce7,#bbf7d0);
+}
+
+/* ================= CHART ================= */
+
+.chart-box{
+    background:
+        linear-gradient(
+            135deg,
+            #ffffff,
+            #f8fafc
+        );
+    border-radius:28px;
+    padding:28px;
+    box-shadow:
+        0 14px 40px rgba(0,0,0,.08);
+    margin-top:30px;
+    border:1px solid #eef2f7;
+}
+
+/* HERO STATS */
+
+.hero-grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(220px,1fr));
+    gap:16px;
+    margin-bottom:25px;
+}
+
+
+
+
+
+
+
+
+@media(max-width:900px){
+
+    .dashboard-shell{
+        flex-direction:column;
+    }
+
+    .sidebar{
+        width:100%;
+        position:relative;
+        top:0;
+        height:auto;
+    }
+
+}
+
+</style>
+
+<div class="min-h-screen p-4 sm:p-6 bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100">
+
+<div class="dashboard-shell">
+
+    <!-- SIDEBAR -->
+
+   <aside class="sidebar">
+
+<div class="sidebar-brand text-{{ school.theme_color }}-600">
+    🏫 {{ school.name }}
+</div>
+
+<div class="sidebar-menu">
+
+<a href="{% url 'school_admin:school_admin_dashboard' school.id %}" 
+   class="sidebar-link active">
+    🏠 Dashboard
+</a>
+
+<!-- 1 -->
+<a href="{% url 'school_admin:admin_student_list' school.id %}" class="sidebar-link">
+👨‍🎓 Students
+</a>
+
+<!-- 2 -->
+<a href="{% url 'school_admin:teacher_list' school.id %}" class="sidebar-link">
+👨‍🏫 Teachers
+</a>
+
+<!-- 3 -->
+<a href="{% url 'school_admin:class_subject_teacher_list' school.id %}" class="sidebar-link">
+📘 Subject Teachers
+</a>
+
+<!-- 4 -->
+<a href="{% url 'school_admin:class_list' school.id %}" class="sidebar-link">
+🏫 Classes
+</a>
+
+<!-- 5 -->
+<a href="{% url 'school_admin:admin-class-list' %}" class="sidebar-link">
+📋 Class List
+</a>
+
+<!-- 6 -->
+<a href="{% url 'school_admin:subject_list' school.id %}" class="sidebar-link">
+📚 Subjects
+</a>
+
+<!-- 7 -->
+<a href="{% url 'school_admin:accountant_list' school.id %}" class="sidebar-link">
+💰 Accountants
+</a>
+
+<!-- 8 -->
+<a href="{% url 'school_admin:lessonnote_dashboard' school.id %}" class="sidebar-link">
+📝 Lesson Notes
+</a>
+
+<!-- 9 -->
+<a href="{% url 'school_admin:assignment_list' school.id %}" class="sidebar-link">
+📌 Assignments
+</a>
+
+<!-- 10 -->
+<a href="{% url 'school_admin:admin_dashboard' school.id %}" class="sidebar-link">
+💻 CBT
+</a>
+
+<!-- 11 -->
+<a href="{% url 'school_admin:admin_attendance_list' school.id %}" class="sidebar-link">
+📊 Attendance
+</a>
+
+<!-- 12 -->
+<a href="{% url 'school_admin:admin-class-list' %}" class="sidebar-link">
+📈 Results
+</a>
+
+<!-- 13 -->
+<a href="{% url 'results:bulk_score_entry' school.id %}" class="sidebar-link">
+✏️ Bulk Scores
+</a>
+
+<!-- 14 -->
+<a href="{% url 'results:bulk_psycho_affective' school.id %}" class="sidebar-link">
+🧠 Psychomotor
+</a>
+
+<!-- 15 -->
+<a href="{% url 'results:grade_settings' school.id %}" class="sidebar-link">
+🎯 Grade Settings
+</a>
+
+<!-- 16 -->
+<a href="{% url 'results:class_score_settings' school.id %}" class="sidebar-link">
+⚙️ Class Settings
+</a>
+
+<!-- 17 -->
+<a href="{% url 'results:grade_settings_overview' school.id %}" class="sidebar-link">
+📊 Grade Summary
+</a>
+
+<!-- 18 -->
+<a href="{% url 'school_admin:block_unblock_students' school.id %}" class="sidebar-link">
+🔐 Result Control
+</a>
+
+<!-- 19 -->
+<a href="{% url 'school_admin:school_term_settings' %}" class="sidebar-link">
+📅 Term Settings
+</a>
+
+<!-- 20 -->
+<a href="{% url 'results:bulk_class_select' school.id %}" class="sidebar-link">
+⬇️ Download Results
+</a>
+
+<!-- 21 -->
+<a href="{% url 'students:announcement_list' %}" class="sidebar-link">
+📢 Announcements
+</a>
+
+</div>
+
+</aside>
+
+    <!-- MAIN -->
+
+    <div class="dashboard-main">
 
 <div class="max-w-7xl mx-auto">
 
@@ -261,274 +632,117 @@
 </h1>
 
 <!-- ================= QUICK STATS ================= -->
-<div class="dashboard-grid mb-8">
+<!-- ================= HERO DASHBOARD ================= -->
 
-    <div class="glass dashboard-card draggable bg-blue-50">
-        <div class="card-icon bg-blue-600">👨‍🎓</div>
-        <div>
-            <p>Students</p>
-            <div class="counter" data-count="{{ student_count }}">{{ student_count }}</div>
-        </div>
+<!-- ================= QUICK ACCESS ================= -->
+
+<!-- ================= QUICK ACCESS ================= -->
+
+<div class="section">
+
+<h2 class="font-bold text-lg mb-4">
+⚡ Quick Access
+</h2>
+
+<div class="quick-grid">
+
+<!-- Take Attendance -->
+<a href="{% url 'school_admin:admin_attendance_list' school.id %}"
+   class="quick-card">
+
+    <div class="quick-icon bg-teal-600">
+        📊
     </div>
 
-    <div class="glass dashboard-card draggable bg-green-50">
-        <div class="card-icon bg-green-600">👨‍🏫</div>
-        <div>
-            <p>Teachers</p>
-            <div class="counter" data-count="{{ teacher_count }}">{{ teacher_count }}</div>
+    <div>
+        <div class="font-semibold">
+            Take Attendance
         </div>
+        <small class="text-gray-500">
+            Attendance records
+        </small>
     </div>
 
-    <div class="glass dashboard-card draggable bg-purple-50">
-        <div class="card-icon bg-purple-600">🏫</div>
-        <div>
-            <p>Classes</p>
-            <div class="counter" data-count="{{ class_count }}">{{ class_count }}</div>
-        </div>
+</a>
+
+<!-- CBT -->
+<a href="{% url 'school_admin:admin_dashboard' school.id %}"
+   class="quick-card">
+
+    <div class="quick-icon bg-purple-600">
+        💻
     </div>
 
-    <div class="glass dashboard-card draggable bg-orange-50">
-        <div class="card-icon bg-orange-600">📚</div>
-        <div>
-            <p>Subjects</p>
-            <div class="counter" data-count="{{ subject_count }}">{{ subject_count }}</div>
+    <div>
+        <div class="font-semibold">
+            CBT
         </div>
+        <small class="text-gray-500">
+            Exams & tests
+        </small>
     </div>
+
+</a>
+
+<!-- Announcement -->
+<a href="{% url 'students:announcement_list' %}"
+   class="quick-card">
+
+    <div class="quick-icon bg-yellow-500">
+        📢
+    </div>
+
+    <div>
+        <div class="font-semibold">
+            Announcement
+        </div>
+        <small class="text-gray-500">
+            School updates
+        </small>
+    </div>
+
+</a>
+
+<!-- Results -->
+<a href="{% url 'results:bulk_class_select' school.id %}"
+   class="quick-card">
+
+    <div class="quick-icon bg-green-600">
+        📈
+    </div>
+
+    <div>
+        <div class="font-semibold">
+            Results
+        </div>
+        <small class="text-gray-500">
+            View reports
+        </small>
+    </div>
+
+</a>
 
 </div>
 
-<!-- ================= COLLAPSIBLE SECTIONS ================= -->
-
-<!-- STUDENTS SECTION -->
-<div class="section">
-    <div class="section-header" onclick="toggleSection('students')">
-        <h2 class="font-bold text-lg">👨‍🎓 Students & Academic</h2>
-    </div>
-
-    <div id="students" class="dashboard-grid">
-
-        <!-- 1 Students -->
-<a href="{% url 'school_admin:admin_student_list' school.id %}" class="dashboard-card card-students">
-    <div class="card-icon">👨‍🎓</div>
-    <div>
-        <div class="card-title">Students</div>
-        <div class="card-value counter" data-count="{{ student_count }}">{{ student_count }}</div>
-    </div>
-</a>
-
-<!-- 2 Teachers -->
-<a href="{% url 'school_admin:teacher_list' school.id %}" class="dashboard-card card-teachers">
-    <div class="card-icon">👨‍🏫</div>
-    <div>
-        <div class="card-title">Teachers</div>
-        <div class="card-value counter" data-count="{{ teacher_count }}">{{ teacher_count }}</div>
-    </div>
-</a>
-
-<!-- 3 Class Subject Teachers -->
-<a href="{% url 'school_admin:class_subject_teacher_list' school.id %}" class="dashboard-card card-subjects">
-    <div class="card-icon">📘</div>
-    <div>
-        <div class="card-title">Subject Teachers</div>
-        <div class="card-value counter" data-count="{{ class_subject_teacher_count }}">{{ class_subject_teacher_count }}</div>
-    </div>
-</a>
-
-<!-- 4 Classes -->
-<a href="{% url 'school_admin:class_list' school.id %}" class="dashboard-card card-classes">
-    <div class="card-icon">🏫</div>
-    <div>
-        <div class="card-title">Classes</div>
-        <div class="card-value counter" data-count="{{ class_count }}">{{ class_count }}</div>
-    </div>
-</a>
-
-<!-- 5 Class List -->
-<a href="{% url 'school_admin:admin-class-list' %}" class="dashboard-card card-classes">
-    <div class="card-icon">📋</div>
-    <div>
-        <div class="card-title">Class List</div>
-        <div class="card-value">{{ class_count }}</div>
-    </div>
-</a>
-
-<!-- 6 Subjects -->
-<a href="{% url 'school_admin:subject_list' school.id %}" class="dashboard-card card-subjects">
-    <div class="card-icon">📚</div>
-    <div>
-        <div class="card-title">Subjects</div>
-        <div class="card-value counter" data-count="{{ subject_count }}">{{ subject_count }}</div>
-    </div>
-</a>
-
-<!-- 7 Accountants -->
-<a href="{% url 'school_admin:accountant_list' school.id %}" class="dashboard-card card-accountants">
-    <div class="card-icon">💰</div>
-    <div>
-        <div class="card-title">Accountants</div>
-        <div class="card-value">Manage</div>
-    </div>
-</a>
-
-<!-- 10 CBT -->
-<a href="{% url 'school_admin:admin_dashboard' school.id %}" class="dashboard-card card-cbt">
-    <div class="card-icon">💻</div>
-    <div>
-        <div class="card-title">CBT</div>
-        <div class="card-value counter" data-count="{{ cbt_count }}">{{ cbt_count }}</div>
-    </div>
-</a>
-    </div>
 </div>
+<!-- ================= PERFORMANCE OVERVIEW ================= -->
 
-<!-- RESULTS SECTION -->
-<div class="section">
-    <div class="section-header" onclick="toggleSection('results')">
-        <h2 class="font-bold text-lg">📊 Results System</h2>
-    </div>
+<div class="chart-box">
 
-    <div id="results" class="dashboard-grid">
+<h2 class="font-bold text-lg mb-4">
+📈 Performance Overview
+</h2>
 
-        
-<!-- 12 Results -->
-<a href="{% url 'school_admin:admin-class-list' %}" class="dashboard-card card-results">
-    <div class="card-icon">📈</div>
-    <div>
-        <div class="card-title">Results</div>
-        <div class="card-value counter" data-count="{{ result_count }}">{{ result_count }}</div>
-    </div>
-</a>
+<canvas id="performanceChart"></canvas>
 
-<!-- 13 Bulk Score Entry -->
-<a href="{% url 'results:bulk_score_entry' school.id %}" class="dashboard-card card-results">
-    <div class="card-icon">✏️</div>
-    <div>
-        <div class="card-title">Bulk Scores</div>
-        <div class="card-value">Enter</div>
-    </div>
-</a>
-
-<!-- 14 Psychomotor -->
-<a href="{% url 'results:bulk_psycho_affective' school.id %}" class="dashboard-card card-results">
-    <div class="card-icon">🧠</div>
-    <div>
-        <div class="card-title">Psychomotor</div>
-        <div class="card-value">Affective</div>
-    </div>
-</a>
-
-<!-- 15 Grade Settings -->
-<a href="{% url 'results:grade_settings' school.id %}" class="dashboard-card card-grade">
-    <div class="card-icon">🎯</div>
-    <div>
-        <div class="card-title">Grade Settings</div>
-        <div class="card-value">Manage</div>
-    </div>
-</a>
-
-<!-- 16 Class Score Settings -->
-<a href="{% url 'results:class_score_settings' school.id %}" class="dashboard-card card-grade">
-    <div class="card-icon">⚙️</div>
-    <div>
-        <div class="card-title">Class Settings</div>
-        <div class="card-value">Scores</div>
-    </div>
-</a>
-
-<!-- 17 Grade Summary -->
-<a href="{% url 'results:grade_settings_overview' school.id %}" class="dashboard-card card-grade">
-    <div class="card-icon">📊</div>
-    <div>
-        <div class="card-title">Grade Summary</div>
-        <div class="card-value">View</div>
-    </div>
-</a>
-
-<!-- 18 Result Access Control -->
-<a href="{% url 'school_admin:block_unblock_students' school.id %}" class="dashboard-card card-results">
-    <div class="card-icon">🔐</div>
-    <div>
-        <div class="card-title">Result Control</div>
-        <div class="card-value">Access</div>
-    </div>
-</a>
-
-
-<!-- 20 Download Results -->
-<a href="{% url 'results:bulk_class_select' school.id %}" class="dashboard-card card-download">
-    <div class="card-icon">⬇️</div>
-    <div>
-        <div class="card-title">Download Results</div>
-        <div class="card-value">Bulk</div>
-    </div>
-</a>
-
-    </div>
-</div>
-
-<!-- TOOLS SECTION -->
-<div class="section">
-    <div class="section-header" onclick="toggleSection('tools')">
-        <h2 class="font-bold text-lg">🛠 Tools & Communication</h2>
-    </div>
-
-    <div id="tools" class="dashboard-grid">
-
-       <!-- 8 Lesson Notes -->
-<a href="{% url 'school_admin:lessonnote_dashboard' school.id %}" class="dashboard-card card-lessons">
-    <div class="card-icon">📝</div>
-    <div>
-        <div class="card-title">Lesson Notes</div>
-        <div class="card-value counter" data-count="{{ lesson_count }}">{{ lesson_count }}</div>
-    </div>
-</a>
-
-<!-- 9 Assignments -->
-<a href="{% url 'school_admin:assignment_list' school.id %}" class="dashboard-card card-assignments">
-    <div class="card-icon">📌</div>
-    <div>
-        <div class="card-title">Assignments</div>
-        <div class="card-value counter" data-count="{{ assignment_count }}">{{ assignment_count }}</div>
-    </div>
-</a>
-
-       <!-- 11 Attendance -->
-<a href="{% url 'school_admin:admin_attendance_list' school.id %}" class="dashboard-card card-attendance">
-    <div class="card-icon">📊</div>
-    <div>
-        <div class="card-title">Attendance</div>
-        <div class="card-value counter" data-count="{{ attendance_count }}">{{ attendance_count }}</div>
-    </div>
-</a>
-
-
-       <!-- 19 Term Settings -->
-<a href="{% url 'school_admin:school_term_settings' %}" class="dashboard-card card-classes">
-    <div class="card-icon">📅</div>
-    <div>
-        <div class="card-title">Term Settings</div>
-        <div class="card-value">Manage</div>
-    </div>
-</a>
-
-       
-<!-- 21 Announcements -->
-<a href="{% url 'students:announcement_list' %}" class="dashboard-card card-announcement">
-    <div class="card-icon">📢</div>
-    <div>
-        <div class="card-title">Announcements</div>
-        <div class="card-value">Manage</div>
-    </div>
-</a>
-
-
-    </div>
 </div>
 
 </div>
 </div>
 
 <!-- ================= SCRIPTS ================= -->
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
 function animateCounter(el) {
@@ -572,6 +786,56 @@ document.querySelectorAll(".draggable").forEach(card => {
         }
     });
 });
+
+/* PERFORMANCE CHART */
+
+const chartCanvas =
+document.getElementById('performanceChart');
+
+if(chartCanvas){
+
+new Chart(chartCanvas,{
+
+    type:'bar',
+
+    data:{
+        labels:[
+            'Students',
+            'Teachers',
+            'Classes',
+            'Attendance'
+        ],
+
+        datasets:[{
+
+            data:[
+                {{ student_count|default:0 }},
+                {{ teacher_count|default:0 }},
+                {{ class_count|default:0 }},
+                {{ attendance_percent|default:0 }}
+            ],
+
+            borderRadius:12
+        }]
+    },
+
+    options:{
+        responsive:true,
+        plugins:{
+            legend:{
+                display:false
+            }
+        },
+        scales:{
+            y:{
+                beginAtZero:true
+            }
+        }
+    }
+
+});
+
+}
 </script>
 
 {% endblock %}

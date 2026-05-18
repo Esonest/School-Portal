@@ -44,6 +44,21 @@ class School(models.Model):
         choices=COLOR_CHOICES,
         default="indigo",
     )
+    
+    notification_email = models.EmailField(
+        blank=True,
+        null=True
+    )
+
+    whatsapp_number = models.CharField(
+        max_length=20,
+        blank=True,
+        null=True
+    )
+
+    email_enabled = models.BooleanField(default=True)
+
+    whatsapp_enabled = models.BooleanField(default=False)
 
     paystack_public_key = models.CharField(max_length=255, blank=True, null=True)
     paystack_secret_key = models.CharField(max_length=255, blank=True, null=True)

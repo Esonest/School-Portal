@@ -81,19 +81,68 @@ class SchoolForm(forms.ModelForm):
             "logo",
             "theme_color",
             "principal_signature",
+
+            # NEW
+            "notification_email",
+            "whatsapp_number",
+            "email_enabled",
+            "whatsapp_enabled",
+
             "paystack_public_key",
             "paystack_secret_key",
         ]
-        widgets = {
-            "name": forms.TextInput(attrs={"class": "form-input", "id": "school-name-input"}),
-            "address": forms.TextInput(attrs={"class": "form-input"}),
-            "motto": forms.TextInput(attrs={"class": "form-input"}),
-            "theme_color": forms.Select(attrs={"class": "form-input", "id": "theme-color-select"}),
-            "principal_signature": forms.ClearableFileInput(attrs={"class": "form-input"}),
 
-            # --- Add Paystack key input fields ---
-            "paystack_public_key": forms.TextInput(attrs={"class": "form-input", "placeholder": "Paystack Public Key"}),
-            "paystack_secret_key": forms.TextInput(attrs={"class": "form-input", "placeholder": "Paystack Secret Key"}),
+        widgets = {
+            "name": forms.TextInput(attrs={
+                "class": "form-input",
+                "id": "school-name-input"
+            }),
+
+            "address": forms.TextInput(attrs={
+                "class": "form-input"
+            }),
+
+            "motto": forms.TextInput(attrs={
+                "class": "form-input"
+            }),
+
+            "theme_color": forms.Select(attrs={
+                "class": "form-input",
+                "id": "theme-color-select"
+            }),
+
+            "principal_signature": forms.ClearableFileInput(attrs={
+                "class": "form-input"
+            }),
+
+            # NEW
+            "notification_email": forms.EmailInput(attrs={
+                "class": "form-input",
+                "placeholder": "Notification Email"
+            }),
+
+            "whatsapp_number": forms.TextInput(attrs={
+                "class": "form-input",
+                "placeholder": "WhatsApp Number"
+            }),
+
+            "email_enabled": forms.CheckboxInput(attrs={
+                "class": "h-4 w-4"
+            }),
+
+            "whatsapp_enabled": forms.CheckboxInput(attrs={
+                "class": "h-4 w-4"
+            }),
+
+            "paystack_public_key": forms.TextInput(attrs={
+                "class": "form-input",
+                "placeholder": "Paystack Public Key"
+            }),
+
+            "paystack_secret_key": forms.TextInput(attrs={
+                "class": "form-input",
+                "placeholder": "Paystack Secret Key"
+            }),
         }
 
 

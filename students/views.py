@@ -324,28 +324,36 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render
 from django.utils import timezone
 
+from django.db.models import Q
+
+
 @login_required
 def announcement_list(request):
+
     school = request.user.school
+
     now = timezone.now()
 
     announcements = (
         Announcement.objects
         .filter(school=school)
+        .select_related(
+            "created_by"
+        )
+        .prefetch_related(
+            "school_classes",
+            "students"
+        )
         .order_by("-publish_date")
     )
 
-    # Total active announcements
     active_count = announcements.filter(
         is_active=True
     ).filter(
-        expiry_date__isnull=True
-    ).count() + announcements.filter(
-        is_active=True,
-        expiry_date__gte=now
+        Q(expiry_date__isnull=True) |
+        Q(expiry_date__gte=now)
     ).count()
 
-    # Total expired announcements
     expired_count = announcements.filter(
         expiry_date__lt=now
     ).count()
@@ -363,35 +371,72 @@ def announcement_list(request):
     )
 
 
+from django.contrib import messages
+from django.shortcuts import render, redirect
+from django.contrib.auth.decorators import login_required
+
+from .forms import AnnouncementForm
+from .models import Announcement
+
+from students.services.tasks import process_announcement
+from students.services.async_runner import run_async
+
+
+
 @login_required
 def announcement_create(request):
+
     school = request.user.school
 
     if request.method == "POST":
-        form = AnnouncementForm(request.POST)
+
+        form = AnnouncementForm(
+            request.POST,
+            school=school
+        )
+
         if form.is_valid():
+
             announcement = form.save(commit=False)
+
             announcement.school = school
+
             announcement.created_by = request.user
+
             announcement.save()
+            form.save_m2m()
+
+            
+
+            run_async(process_announcement, announcement)
 
             messages.success(
                 request,
-                "Announcement created successfully."
+                "Announcement created and is being sent..."
             )
-            return redirect("students:announcement_list")
+
+            return redirect(
+                "students:announcement_list"
+            )
+
     else:
-        form = AnnouncementForm()
+
+        form = AnnouncementForm(
+            school=school
+        )
 
     return render(
         request,
         "announcements/announcement_form.html",
-        {"form": form}
+        {
+            "form": form
+        }
     )
 
 
 @login_required
 def announcement_update(request, pk):
+
     school = request.user.school
 
     announcement = get_object_or_404(
@@ -401,24 +446,39 @@ def announcement_update(request, pk):
     )
 
     if request.method == "POST":
+
         form = AnnouncementForm(
             request.POST,
-            instance=announcement
+            instance=announcement,
+            school=school
         )
+
         if form.is_valid():
+
             form.save()
+
             messages.success(
                 request,
                 "Announcement updated successfully."
             )
-            return redirect("students:announcement_list")
+
+            return redirect(
+                "students:announcement_list"
+            )
+
     else:
-        form = AnnouncementForm(instance=announcement)
+
+        form = AnnouncementForm(
+            instance=announcement,
+            school=school
+        )
 
     return render(
         request,
         "announcements/announcement_form.html",
-        {"form": form}
+        {
+            "form": form
+        }
     )
 
 
@@ -445,3 +505,36 @@ def announcement_delete(request, pk):
         "announcements/announcement_confirm_delete.html",
         {"announcement": announcement}
     )
+
+
+from django.http import JsonResponse
+
+
+@login_required
+def load_students_by_class(
+    request
+):
+
+    class_ids = request.GET.get(
+        "class_ids",
+        ""
+    ).split(",")
+
+    students = Student.objects.filter(
+        school_class_id__in=class_ids
+    ).select_related(
+        "user"
+    )
+
+    data = []
+
+    for s in students:
+
+        data.append({
+            "id": s.id,
+            "name": s.full_name()
+        })
+
+    return JsonResponse({
+        "students": data
+    })

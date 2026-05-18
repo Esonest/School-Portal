@@ -45,6 +45,10 @@ class StudentCreateForm(forms.ModelForm):
             "dob",
             "gender",
             "photo",
+            "parent_name",
+            "parent_email",
+            "parent_phone",
+            "student_email",
         ]
         widgets = {
             "admission_no": forms.TextInput(attrs={"class": tailwind_input}),
@@ -52,6 +56,25 @@ class StudentCreateForm(forms.ModelForm):
             "dob": forms.DateInput(attrs={"type": "date", "class": tailwind_input}),
             "gender": forms.Select(attrs={"class": tailwind_select}),
             "photo": forms.FileInput(attrs={"class": tailwind_file}),
+            "parent_name": forms.TextInput(attrs={
+                "class": tailwind_input,
+                "placeholder": "Parent Name"
+            }),
+
+            "parent_email": forms.EmailInput(attrs={
+                "class": tailwind_input,
+                "placeholder": "Parent Email"
+            }),
+
+            "parent_phone": forms.TextInput(attrs={
+                "class": tailwind_input,
+                "placeholder": "Parent Phone"
+            }),
+
+            "student_email": forms.EmailInput(attrs={
+                "class": tailwind_input,
+                "placeholder": "Student Email"
+            }),
         }
 
     def __init__(self, *args, **kwargs):
@@ -70,6 +93,10 @@ class StudentCreateForm(forms.ModelForm):
             last_name=data["last_name"],
             email=data["email"],  # email saved here
             password=data["password"],
+            parent_name=data["parent_name"],
+            parent_email=data["parent_email"],
+            parent_phone=data["parent_phone"],
+            student_email=data["student_email"],
             role="student",
             is_student=True,
             school=self.school
@@ -127,6 +154,10 @@ class StudentUpdateForm(forms.ModelForm):
             "dob",
             "gender",
             "photo",
+            "parent_name",
+            "parent_email",
+            "parent_phone",
+            "student_email",
         ]
         widgets = {
             "admission_no": forms.TextInput(attrs={"class": tailwind_input}),
@@ -134,6 +165,26 @@ class StudentUpdateForm(forms.ModelForm):
             "dob": forms.DateInput(attrs={"type": "date", "class": tailwind_input}),
             "gender": forms.Select(attrs={"class": tailwind_select}),
             "photo": forms.FileInput(attrs={"class": tailwind_file}),
+            "parent_name": forms.TextInput(attrs={
+                "class": tailwind_input,
+                "placeholder": "Parent Name"
+            }),
+
+            "parent_email": forms.EmailInput(attrs={
+                "class": tailwind_input,
+                "placeholder": "Parent Email"
+            }),
+
+            "parent_phone": forms.TextInput(attrs={
+                "class": tailwind_input,
+                "placeholder": "Parent Phone"
+            }),
+
+            "student_email": forms.EmailInput(attrs={
+                "class": tailwind_input,
+                "placeholder": "Student Email"
+            }),
+
         }
 
     def __init__(self, *args, **kwargs):
@@ -144,10 +195,17 @@ class StudentUpdateForm(forms.ModelForm):
             self.fields["school_class"].queryset = self.fields["school_class"].queryset.filter(school=self.school)
 
         if self.instance and self.instance.user:
+
+    # USER fields
             self.fields["username"].initial = self.instance.user.username
             self.fields["email"].initial = self.instance.user.email
             self.fields["first_name"].initial = self.instance.user.first_name
             self.fields["last_name"].initial = self.instance.user.last_name
+
+    # STUDENT fields (FIXED)
+            self.fields["parent_phone"].initial = self.instance.parent_phone
+            self.fields["parent_email"].initial = self.instance.parent_email
+            self.fields["student_email"].initial = self.instance.student_email
 
         if self.instance:
             self.fields["is_active"].initial = self.instance.is_active        
@@ -156,8 +214,9 @@ class StudentUpdateForm(forms.ModelForm):
         student = super().save(commit=False)
         user = student.user
 
+    # USER
         user.username = self.cleaned_data["username"]
-        user.email = self.cleaned_data["email"]  # update email
+        user.email = self.cleaned_data["email"]
         user.first_name = self.cleaned_data["first_name"]
         user.last_name = self.cleaned_data["last_name"]
 
@@ -165,7 +224,12 @@ class StudentUpdateForm(forms.ModelForm):
         if password:
             user.set_password(password)
 
-        student.is_active = self.cleaned_data["is_active"]    
+    # STUDENT (FIXED)
+        student.parent_phone = self.cleaned_data["parent_phone"]
+        student.parent_email = self.cleaned_data["parent_email"]
+        student.student_email = self.cleaned_data["student_email"]
+
+        student.is_active = self.cleaned_data["is_active"]
 
         if commit:
             user.save()

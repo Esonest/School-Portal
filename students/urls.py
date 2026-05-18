@@ -18,8 +18,8 @@ urlpatterns = [
     path( "announcements/",views.announcement_list,name="announcement_list"),
     path("announcements/create/",views.announcement_create,name="announcement_create"),
     path("announcements/<int:pk>/edit/",views.announcement_update,name="announcement_update"),
-    path("announcements/<int:pk>/delete/",views.announcement_delete,name="announcement_delete"
-    ),
+    path("announcements/<int:pk>/delete/",views.announcement_delete,name="announcement_delete"),
+    path("ajax/load-students/",views.load_students_by_class,name="load_students_by_class"),
 
 ]
 
