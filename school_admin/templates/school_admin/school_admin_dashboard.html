@@ -256,45 +256,49 @@
 
 /* ================= PREMIUM RESPONSIVE DASHBOARD ================= */
 
-/* ================= RESPONSIVE DASHBOARD ================= */
+/* ================= RESPONSIVE DASHBOARD FIXED ================= */
+
+html,body{
+    overflow-x:hidden;
+    margin:0;
+    padding:0;
+}
+
+/* PAGE WRAPPER */
 
 .dashboard-shell{
     display:flex;
-    gap:24px;
-    min-height:100vh;
+    gap:20px;
+    align-items:flex-start;
+    min-height:auto;
 }
 
 /* MAIN */
+
 .dashboard-main{
     flex:1;
     min-width:0;
 }
 
-/* ================= MOBILE MENU BUTTON ================= */
+/* MOBILE BUTTON */
 
 .mobile-menu-btn{
     display:none;
-    background:linear-gradient(
-        135deg,
-        #6366f1,
-        #4338ca
-    );
+    background:linear-gradient(135deg,#6366f1,#4338ca);
     color:white;
     border:none;
-    padding:12px 18px;
+    padding:12px 16px;
     border-radius:14px;
     font-weight:700;
-    box-shadow:
-        0 10px 25px rgba(99,102,241,.3);
+    box-shadow:0 10px 25px rgba(99,102,241,.25);
 }
 
-/* ================= OVERLAY ================= */
+/* OVERLAY (NO BLUR) */
 
 .sidebar-overlay{
     position:fixed;
     inset:0;
-    background:rgba(0,0,0,.45);
-    backdrop-filter:blur(3px);
+    background:rgba(0,0,0,.35);
     z-index:90;
     opacity:0;
     visibility:hidden;
@@ -306,46 +310,54 @@
     visibility:visible;
 }
 
-/* ================= SIDEBAR ================= */
+/* SIDEBAR */
 
 .sidebar{
-    width:290px;
+    width:280px;
     flex-shrink:0;
-    background:linear-gradient(
-        180deg,
-        #0f172a 0%,
-        #111827 50%,
-        #1e293b 100%
-    );
+    background:
+        linear-gradient(
+            180deg,
+            #0f172a,
+            #111827,
+            #1e293b
+        );
     color:white;
-    border-radius:28px;
-    padding:22px;
-    box-shadow:
-        0 18px 45px rgba(15,23,42,.3);
+    border-radius:24px;
+    padding:20px;
+    box-shadow:0 15px 40px rgba(0,0,0,.18);
+
     position:sticky;
-    top:16px;
-    max-height:calc(100vh - 32px);
+    top:12px;
+
+    max-height:calc(100vh - 24px);
     overflow-y:auto;
+    overflow-x:hidden;
+
     z-index:100;
 }
 
 .sidebar::-webkit-scrollbar{
-    width:6px;
+    width:5px;
 }
 
 .sidebar::-webkit-scrollbar-thumb{
-    background:rgba(255,255,255,.2);
+    background:rgba(255,255,255,.25);
     border-radius:10px;
 }
 
+/* BRAND */
+
 .sidebar-brand{
-    font-size:1.2rem;
+    font-size:1.1rem;
     font-weight:800;
     text-align:center;
-    margin-bottom:24px;
-    padding-bottom:16px;
-    border-bottom:1px solid rgba(255,255,255,.12);
+    margin-bottom:20px;
+    padding-bottom:14px;
+    border-bottom:1px solid rgba(255,255,255,.1);
 }
+
+/* MENU */
 
 .sidebar-menu{
     display:flex;
@@ -357,29 +369,23 @@
     display:flex;
     align-items:center;
     gap:12px;
-    padding:14px 16px;
-    border-radius:16px;
+    padding:14px;
+    border-radius:14px;
     text-decoration:none;
     color:#e5e7eb;
     font-weight:600;
     transition:.3s;
     background:rgba(255,255,255,.04);
-    border:1px solid rgba(255,255,255,.05);
 }
 
 .sidebar-link:hover{
-    background:rgba(255,255,255,.12);
+    background:rgba(255,255,255,.1);
+    transform:translateX(4px);
     color:white;
-    transform:translateX(5px);
 }
 
 .sidebar-link.active{
-    background:
-        linear-gradient(
-            135deg,
-            #6366f1,
-            #4338ca
-        );
+    background:linear-gradient(135deg,#6366f1,#4338ca);
     color:white;
 }
 
@@ -388,14 +394,17 @@
 @media(max-width:1024px){
 
     .dashboard-shell{
-        flex-direction:column;
+        gap:16px;
     }
 
     .sidebar{
-        width:100%;
-        position:relative;
-        top:0;
-        max-height:none;
+        width:240px;
+        padding:18px;
+    }
+
+    .quick-grid{
+        grid-template-columns:
+            repeat(2,minmax(0,1fr));
     }
 }
 
@@ -403,27 +412,49 @@
 
 @media(max-width:768px){
 
+    .dashboard-shell{
+        display:block;
+    }
+
     .mobile-menu-btn{
         display:inline-flex;
         align-items:center;
         gap:8px;
+        margin-bottom:16px;
     }
 
     .sidebar{
         position:fixed;
-        left:-320px;
+        left:-300px;
         top:0;
         bottom:0;
-        width:300px;
+        width:280px;
         height:100vh;
-        border-radius:0 28px 28px 0;
-        max-height:none;
-        transition:.35s ease;
+        max-height:100vh;
+        border-radius:0 22px 22px 0;
+        transition:left .35s ease;
         z-index:100;
     }
 
     .sidebar.show{
         left:0;
+    }
+
+    .quick-grid{
+        grid-template-columns:1fr;
+    }
+}
+
+/* SMALL PHONES */
+
+@media(max-width:480px){
+
+    .sidebar{
+        width:260px;
+    }
+
+    .chart-box{
+        padding:16px;
     }
 }
 
@@ -605,7 +636,7 @@
 
 </style>
 
-<div class="min-h-screen p-4 sm:p-6 bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100">
+<div class="p-3 sm:p-5 bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100">
    
 <div class="dashboard-shell">
 
