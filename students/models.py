@@ -490,45 +490,7 @@ class NotificationRecipient(models.Model):
         null=True,
         blank=True
     )
-
-
-class SchoolCommunicationSetting(models.Model):
-    school = models.OneToOneField(
-        School,
-        on_delete=models.CASCADE
-    )
-
-    # Email
-    email_enabled = models.BooleanField(default=False)
-
-    smtp_sender_name = models.CharField(
-        max_length=255,
-        blank=True
-    )
-
-    smtp_sender_email = models.EmailField(blank=True)
-
-    brevo_api_key = models.CharField(
-        max_length=255,
-        blank=True
-    )
-
-    # WhatsApp
-    whatsapp_enabled = models.BooleanField(default=False)
-
-    whatsapp_token = models.TextField(blank=True)
-
-    whatsapp_phone_id = models.CharField(
-        max_length=255,
-        blank=True
-    )
-
-    whatsapp_business_number = models.CharField(
-        max_length=50,
-        blank=True
-    )
-
-
+    
 class MessageLog(models.Model):
 
     CHANNELS = (
@@ -562,3 +524,24 @@ class MessageLog(models.Model):
     response = models.TextField(blank=True)
 
     sent_at = models.DateTimeField(null=True, blank=True)
+
+
+class GlobalCommunicationSetting(models.Model):
+    email_enabled = models.BooleanField(default=True)
+
+    smtp_sender_name = models.CharField(max_length=255, blank=True)
+    smtp_sender_email = models.EmailField(blank=True)
+
+    brevo_api_key = models.CharField(max_length=255)
+
+    whatsapp_enabled = models.BooleanField(default=True)
+
+    whatsapp_token = models.TextField(blank=True)
+    whatsapp_phone_id = models.CharField(max_length=255, blank=True)
+
+    is_active = models.BooleanField(default=True)
+
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return "Global Communication Settings"    

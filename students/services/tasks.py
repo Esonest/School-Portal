@@ -8,10 +8,14 @@ from .whatsapp_service import send_whatsapp_message
 
 
 def process_announcement(announcement):
+    print("🚀 PROCESS ANNOUNCEMENT STARTED")
+    print("PROCESSING:", announcement.id)
+    
 
     students = get_announcement_recipients(announcement)
 
     for student in students:
+        print(student.parent_email)
 
         school_name = announcement.school.name
 

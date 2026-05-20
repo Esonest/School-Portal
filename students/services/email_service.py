@@ -1,7 +1,7 @@
-import sib_api_v3_sdk
-from sib_api_v3_sdk.rest import ApiException
+import requests
 from django.conf import settings
 from .branding import get_sender_name
+from students.models import GlobalCommunicationSetting
 
 
 def send_brevo_email(
@@ -9,44 +9,55 @@ def send_brevo_email(
     to_name,
     subject,
     html_content,
-    school
+    school=None  # kept for compatibility, but NOT used for config
 ):
-    configuration = sib_api_v3_sdk.Configuration()
+    # ✅ GLOBAL CONFIG (ONE FOR ALL SCHOOLS)
+    comm = GlobalCommunicationSetting.objects.filter(is_active=True).first()
 
-    comm = school.schoolcommunicationsetting
+    if not comm:
+        return False, "Global Brevo configuration not found"
 
-    configuration.api_key['api-key'] = (
-        comm.brevo_api_key
-    )
+    if not comm.brevo_api_key:
+        return False, "Brevo API key missing in global settings"
 
-    api_instance = sib_api_v3_sdk.TransactionalEmailsApi(
-        sib_api_v3_sdk.ApiClient(configuration)
-    )
+    if not comm.smtp_sender_email:
+        return False, "Sender email missing in global settings"
 
-    sender = {
-        "name": get_sender_name(school),
-        "email": comm.smtp_sender_email
+    url = "https://api.brevo.com/v3/smtp/email"
+
+    payload = {
+        "sender": {
+            "name": comm.smtp_sender_name or get_sender_name(school),
+            "email": comm.smtp_sender_email
+        },
+        "to": [
+            {
+                "email": to_email,
+                "name": to_name
+            }
+        ],
+        "subject": subject,
+        "htmlContent": html_content
     }
 
-    to = [{
-        "email": to_email,
-        "name": to_name
-    }]
-
-    send_smtp_email = sib_api_v3_sdk.SendSmtpEmail(
-        to=to,
-        sender=sender,
-        subject=subject,
-        html_content=html_content
-    )
+    headers = {
+        "accept": "application/json",
+        "content-type": "application/json",
+        "api-key": comm.brevo_api_key
+    }
 
     try:
-        response = api_instance.send_transac_email(
-            send_smtp_email
+        response = requests.post(
+            url,
+            json=payload,
+            headers=headers,
+            timeout=10
         )
 
-        return True, str(response)
+        if response.status_code in [200, 201]:
+            return True, response.json()
 
-    except ApiException as e:
+        return False, response.text
+
+    except Exception as e:
         return False, str(e)
-    
