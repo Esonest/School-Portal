@@ -50,7 +50,8 @@ def portal_selection(request):
     active_announcements = Announcement.objects.filter(
         school=request.user.school,
         is_active=True,
-        publish_date__lte=timezone.now()
+        publish_date__lte=timezone.now(),
+        send_channels__contains=["portal"]
     ).exclude(
         expiry_date__lt=timezone.now()
     ).order_by("-publish_date")    

@@ -538,3 +538,4 @@ def load_students_by_class(
     return JsonResponse({
         "students": data
     })
+

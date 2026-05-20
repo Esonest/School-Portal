@@ -13,7 +13,11 @@ def send_brevo_email(
 ):
     configuration = sib_api_v3_sdk.Configuration()
 
-    configuration.api_key['api-key'] = settings.BREVO_API_KEY
+    comm = school.schoolcommunicationsetting
+
+    configuration.api_key['api-key'] = (
+        comm.brevo_api_key
+    )
 
     api_instance = sib_api_v3_sdk.TransactionalEmailsApi(
         sib_api_v3_sdk.ApiClient(configuration)
@@ -21,7 +25,7 @@ def send_brevo_email(
 
     sender = {
         "name": get_sender_name(school),
-        "email": "techcenter652@gmail.com"
+        "email": comm.smtp_sender_email
     }
 
     to = [{
@@ -45,3 +49,4 @@ def send_brevo_email(
 
     except ApiException as e:
         return False, str(e)
+    

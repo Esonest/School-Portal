@@ -2,6 +2,8 @@ import requests
 from django.conf import settings
 
 
+
+
 def format_phone(phone):
 
     phone = str(phone).strip()
@@ -15,21 +17,39 @@ def format_phone(phone):
     return phone
 
 
-def send_whatsapp_message(phone, message):
+def send_whatsapp_message(
+    phone,
+    message,
+    school
+):
+
+    comm = school.schoolcommunicationsetting
 
     phone = format_phone(phone)
 
-    url = f"https://graph.facebook.com/v22.0/{settings.WHATSAPP_PHONE_ID}/messages"
+    url = (
+        f"https://graph.facebook.com/v22.0/"
+        f"{comm.whatsapp_phone_id}/messages"
+    )
 
     headers = {
-        "Authorization": f"Bearer {settings.WHATSAPP_TOKEN}",
-        "Content-Type": "application/json",
+        "Authorization":
+            f"Bearer {comm.whatsapp_token}",
+
+        "Content-Type":
+            "application/json",
     }
 
     payload = {
-        "messaging_product": "whatsapp",
-        "to": phone,
-        "type": "text",
+        "messaging_product":
+            "whatsapp",
+
+        "to":
+            phone,
+
+        "type":
+            "text",
+
         "text": {
             "body": message
         }
@@ -39,6 +59,16 @@ def send_whatsapp_message(phone, message):
         url,
         json=payload,
         headers=headers
+    )
+
+    print(
+        "WHATSAPP STATUS:",
+        response.status_code
+    )
+
+    print(
+        "WHATSAPP RESPONSE:",
+        response.text
     )
 
     if response.status_code == 200:

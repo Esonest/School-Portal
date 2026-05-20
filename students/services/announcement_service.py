@@ -1,6 +1,9 @@
 from students.models import Student
 
 
+from django.db.models import Q
+
+
 def get_announcement_recipients(
     announcement
 ):
@@ -10,21 +13,27 @@ def get_announcement_recipients(
         is_active=True
     )
 
-    if "class" in announcement.targets:
+    if "all" in announcement.targets:
+        return students.distinct()
 
-        students = students.filter(
+    filters = Q()
+
+    if "class" in announcement.targets:
+        filters |= Q(
             school_class__in=
             announcement.school_classes.all()
         )
 
     if "student" in announcement.targets:
-
-        students = students.filter(
+        filters |= Q(
             id__in=
             announcement.students.values_list(
                 "id",
                 flat=True
             )
         )
+
+    if filters:
+        students = students.filter(filters)
 
     return students.distinct()

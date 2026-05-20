@@ -69,31 +69,27 @@ class AnnouncementForm(forms.ModelForm):
             "is_active",
         ]
 
+        widgets = {
+            "publish_date": forms.DateTimeInput(
+                attrs={"type": "datetime-local"}
+            ),
+            "expiry_date": forms.DateTimeInput(
+                attrs={"type": "datetime-local"}
+            ),
+        }
+
     def __init__(self,*args,**kwargs):
 
-        school = kwargs.pop(
-            "school",
-            None
-        )
+        school = kwargs.pop("school", None)
 
-        super().__init__(
-            *args,
-            **kwargs
-        )
+        super().__init__(*args, **kwargs)
 
         if school:
-
-            self.fields[
-                "school_classes"
-            ].queryset = (
-                SchoolClass.objects.filter(
-                    school=school
-                )
+            self.fields["school_classes"].queryset = (
+                SchoolClass.objects.filter(school=school)
             )
 
-            self.fields[
-                "students"
-            ].queryset = (
+            self.fields["students"].queryset = (
                 Student.objects.filter(
                     school=school
                 ).select_related("user")

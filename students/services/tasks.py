@@ -1,5 +1,5 @@
 from celery import shared_task
-from students.models import Announcement
+from students.models import Announcement, MessageLog
 from .announcement_service import get_announcement_recipients
 from .email_service import send_brevo_email
 from .whatsapp_service import send_whatsapp_message
@@ -34,9 +34,13 @@ via TECHCENTER School Portal
         """
 
         # EMAIL
-        if announcement.send_email and student.parent_email:
+        if (
+            "email" in announcement.send_channels
+            and student.parent_email
+            and announcement.school.email_enabled
+        ):
 
-            send_brevo_email(
+            success, response = send_brevo_email(
                 student.parent_email,
                 student.parent_name or "Parent",
                 subject,
@@ -44,10 +48,43 @@ via TECHCENTER School Portal
                 announcement.school
             )
 
-        # WHATSAPP
-        if announcement.send_whatsapp and student.parent_phone:
+            print(
+                "EMAIL:",
+                success,
+                response
+            )
+            MessageLog.objects.create(
+                school=announcement.school,
+                announcement=announcement,
+                recipient=student.parent_email,
+                channel="email",
+                status="sent" if success else "failed",
+                response=str(response)
+            )
 
-            send_whatsapp_message(
+        # WHATSAPP
+        if (
+            "whatsapp" in announcement.send_channels
+            and student.parent_phone
+            and announcement.school.whatsapp_enabled
+        ):
+
+            success, response = send_whatsapp_message(
                 student.parent_phone,
-                message
+                message,
+                announcement.school
+            )
+
+            print(
+                "WHATSAPP:",
+                success,
+                response
+            )
+            MessageLog.objects.create(
+                school=announcement.school,
+                announcement=announcement,
+                recipient=student.parent_email,
+                channel="email",
+                status="sent" if success else "failed",
+                response=str(response)
             )    

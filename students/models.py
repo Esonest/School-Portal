@@ -305,7 +305,6 @@ class Announcement(models.Model):
         ("portal", "Portal Only"),
         ("email", "Email"),
         ("whatsapp", "WhatsApp"),
-        ("both", "Email & WhatsApp"),
     )
 
     TARGET_CHOICES = (
@@ -347,9 +346,7 @@ class Announcement(models.Model):
         blank=True
     )
 
-    send_email = models.BooleanField(default=False)
 
-    send_whatsapp = models.BooleanField(default=False)
 
     created_by = models.ForeignKey(
         settings.AUTH_USER_MODEL,
