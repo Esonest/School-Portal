@@ -34,13 +34,15 @@
     </p>
 
     <div class="mt-6 flex flex-col sm:flex-row gap-4 justify-center">
-      <a href="#" class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-lg transition">
-        Get Started
-      </a>
+      <a href="{% url 'accounts:subscribe' %}"
+   class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-lg transition">
+  Get Started
+</a>
 
-      <a href="#" class="px-6 py-3 bg-white/10 backdrop-blur border border-white/30 text-white rounded-lg hover:bg-white/20 transition">
-        Request Demo
-      </a>
+      <a href="{% url 'accounts:book_demo' %}"
+   class="px-6 py-3 bg-white/10 backdrop-blur border border-white/30 text-white rounded-lg hover:bg-white/20 transition">
+  Request Demo
+</a>
     </div>
   </div>
 </section>
@@ -178,10 +180,10 @@
       </p>
 
       <div class="mt-6">
-        <a href="https://techcenter-p2au.onrender.com"
-           class="px-8 py-3 bg-white text-blue-600 font-semibold rounded-lg shadow-lg hover:scale-105 transition">
-          Visit Portal
-        </a>
+        <a href="{% url 'accounts:book_demo' %}"
+   class="px-8 py-3 bg-white text-blue-600 font-semibold rounded-lg shadow-lg hover:scale-105 transition">
+  Visit Portal
+</a>
       </div>
     </div>
 

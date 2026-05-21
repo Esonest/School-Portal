@@ -219,4 +219,69 @@ class ContactMessage(models.Model):
 
 
 
+
+class DemoBooking(models.Model):
+
+    STATUS_CHOICES = (
+        ("new", "New"),
+        ("contacted", "Contacted"),
+        ("completed", "Completed"),
+    )
+
+    school_name = models.CharField(
+        max_length=255
+    )
+
+    contact_person = models.CharField(
+        max_length=255
+    )
+
+    email = models.EmailField()
+
+    phone = models.CharField(
+        max_length=20
+    )
+
+    student_population = models.CharField(
+        max_length=100,
+        blank=True
+    )
+
+    message = models.TextField(
+        blank=True
+    )
+
+    status = models.CharField(
+        max_length=20,
+        choices=STATUS_CHOICES,
+        default="new"
+    )
+
+    email_sent = models.BooleanField(
+        default=False
+    )
+
+    created_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    def __str__(self):
+        return f"{self.school_name} - {self.contact_person}"
    
+
+class Subscriber(models.Model):
+
+    email = models.EmailField(
+        unique=True
+    )
+
+    subscribed_at = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    active = models.BooleanField(
+        default=True
+    )
+
+    def __str__(self):
+        return self.email

@@ -316,4 +316,106 @@ def keep_alive(request):
         request.session['last_activity'] = time.time()
     return JsonResponse({"status": "ok"})
 
-    
+
+from .models import DemoBooking
+from .demo_email import send_demo_notification
+
+
+def book_demo(request):
+
+    if request.method == "POST":
+
+        school_name = request.POST.get(
+            "school_name"
+        )
+
+        contact_person = request.POST.get(
+            "contact_person"
+        )
+
+        email = request.POST.get(
+            "email"
+        )
+
+        phone = request.POST.get(
+            "phone"
+        )
+
+        population = request.POST.get(
+            "student_population"
+        )
+
+        message = request.POST.get(
+            "message"
+        )
+
+        demo = DemoBooking.objects.create(
+            school_name=school_name,
+            contact_person=contact_person,
+            email=email,
+            phone=phone,
+            student_population=population,
+            message=message,
+        )
+
+        success, response = send_demo_notification(
+            school_name,
+            contact_person,
+            email,
+            phone,
+            population,
+            message
+        )
+
+        demo.email_sent = success
+        demo.save()
+
+        if success:
+            messages.success(
+                request,
+                "Demo request submitted."
+            )
+        else:
+            messages.warning(
+                request,
+                "Request saved but email failed."
+            )
+
+        return redirect(
+            "accounts:book_demo"
+        )
+
+    return render(
+        request,
+        "accounts/book_demo.html"
+    )    
+
+
+from .models import Subscriber
+
+
+def subscribe(request):
+
+    if request.method == "POST":
+
+        email = request.POST.get(
+            "email"
+        ).strip()
+
+        Subscriber.objects.get_or_create(
+            email=email
+        )
+
+        messages.success(
+            request,
+            "Subscription successful."
+        )
+
+        return redirect(
+            "accounts:subscribe"
+        )
+
+    return render(
+        request,
+        "accounts/subscribe.html"
+    )
