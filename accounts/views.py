@@ -225,74 +225,86 @@ from django.contrib import messages
 from .models import ContactMessage
 
 
-def contact_us(request):
-    if request.method == "POST":
-        name = request.POST.get("name", "").strip()
-        email = request.POST.get("email", "").strip()
-        subject = request.POST.get("subject", "").strip()
-        message_text = request.POST.get("message", "").strip()
+from django.shortcuts import render, redirect
+from django.contrib import messages
 
-        # -------------------------
-        # Save to database
-        # -------------------------
-        ContactMessage.objects.create(
+from .models import ContactMessage
+from .contact_email import send_contact_email
+
+
+def contact_us(request):
+
+    if request.method == "POST":
+
+        name = request.POST.get(
+            "name",
+            ""
+        ).strip()
+
+        email = request.POST.get(
+            "email",
+            ""
+        ).strip()
+
+        subject = request.POST.get(
+            "subject",
+            ""
+        ).strip()
+
+        message_text = request.POST.get(
+            "message",
+            ""
+        ).strip()
+
+        # Save first
+        msg = ContactMessage.objects.create(
             name=name,
             email=email,
             subject=subject,
             message=message_text,
         )
 
-        # -------------------------
-        # Email content
-        # -------------------------
-        admin_message = (
-            "New Contact Message from TECHCENTER Website\n\n"
-            f"Name: {name}\n"
-            f"Email: {email}\n"
-            f"Subject: {subject}\n\n"
-            "Message:\n"
-            f"{message_text}"
+        # Send via Brevo
+        success, response = send_contact_email(
+            name,
+            email,
+            subject,
+            message_text
         )
 
-        try:
-            # Send email to TECHCENTER
-            send_mail(
-                subject=f"[TECHCENTER Contact] {subject}",
-                message=admin_message,
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=["techcenter652@gmail.com"],
-            )
+        # Track result
+        msg.email_sent = success
+        msg.email_response = str(response)
+        msg.save()
 
-            # Auto-reply to sender (non-blocking)
-            send_mail(
-                subject="Thank you for contacting TECHCENTER",
-                message=(
-                    f"Hi {name},\n\n"
-                    "We received your message and will get back to you shortly.\n\n"
-                    "Regards,\n"
-                    "TECHCENTER Team"
-                ),
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[email],
-                fail_silently=True,
-            )
+        print(
+            "CONTACT EMAIL:",
+            success,
+            response
+        )
+
+        if success:
 
             messages.success(
                 request,
                 "Your message has been sent successfully."
             )
 
-        except Exception:
-            messages.error(
+        else:
+
+            messages.warning(
                 request,
-                "Failed to send message. Please try again later."
+                "Message received but email delivery failed."
             )
 
-        # 🔑 POST → REDIRECT → GET (prevents freeze)
-        return redirect("accounts:contact_us")
+        return redirect(
+            "accounts:contact_us"
+        )
 
-    # GET request
-    return render(request, "accounts/contact.html")
+    return render(
+        request,
+        "accounts/contact.html"
+    )
 
 
 
