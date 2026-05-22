@@ -285,3 +285,11 @@ class Subscriber(models.Model):
 
     def __str__(self):
         return self.email
+
+
+class Subscribe(models.Model):
+    email = models.EmailField(unique=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return self.email

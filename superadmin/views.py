@@ -3,6 +3,8 @@ from django.contrib import messages
 from accounts.decorators import superadmin_required, superadmin_or_schooladmin_required
 from accounts.models import User, School, Teacher, SchoolAdmin
 
+from accounts.models import Subscribe
+
 
 
 # super_admin/views.py
@@ -37,6 +39,8 @@ def super_admin_dashboard(request):
     total_messages = ContactMessage.objects.count()
     unread_messages = ContactMessage.objects.filter(is_handled=False).count()
 
+    subscriber_count = Subscribe.objects.count()
+
     # --- Recent entries ---
     recent_schools = School.objects.order_by('-id')[:5]
     recent_teachers = Teacher.objects.select_related('user').order_by('-id')[:5]
@@ -70,6 +74,7 @@ def super_admin_dashboard(request):
         'student_count': total_students,
         "total_messages": total_messages,
         "unread_messages": unread_messages,
+        "subscriber_count": subscriber_count,
     }
 
     return render(request, 'superadmin/dashboard.html', context)
@@ -1058,3 +1063,22 @@ def delete_contact_message(request, message_id):
     return render(request, "superadmin/contact_message_confirm_delete.html", {
         "message": msg
     })
+
+
+from accounts.models import Subscribe
+
+
+@superadmin_required
+def subscribers_view(request):
+
+    subscribers = Subscribe.objects.order_by(
+        "-created_at"
+    )
+
+    return render(
+        request,
+        "superadmin/subscribers.html",
+        {
+            "subscribers": subscribers
+        }
+    )

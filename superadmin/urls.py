@@ -62,5 +62,7 @@ urlpatterns = [
     path("contact-messages/delete/<int:message_id>/", views.delete_contact_message, name="delete_contact_message"),
     path("super-admin/portals/",views.school_portal_setting_list, name="superadmin_portal_list"),
     path("super-admin/portals/<int:school_id>/edit/",views.school_portal_setting_update,name="superadmin_portal_update"),
+    
 
+    path("subscribers/",views.subscribers_view,name="subscribers"),
 ]
