@@ -14,6 +14,7 @@ from django.shortcuts import get_object_or_404, redirect, render
 from django.conf import settings
 import requests
 from .utils import is_student, is_teacher
+from results.utils import portal_required
 
 import jwt
 import time
@@ -73,6 +74,7 @@ from django.utils import timezone
 from django.db.models import Count, Q
 
 
+@portal_required("liveclass")
 @login_required
 def liveclass_list(request):
     user = request.user
@@ -155,7 +157,7 @@ def liveclass_list(request):
 # ========================
 
 import os
-
+@portal_required("liveclass")
 @login_required
 def liveclass_create(request):
 

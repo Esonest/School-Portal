@@ -13,48 +13,96 @@ from results.utils import portal_required
 
 @login_required
 def teacher_notes_list(request):
-    teacher_profile = getattr(request.user, 'teacher_profile', None)
-    if not teacher_profile:
-        raise Http404("No teacher profile found.")
+    user = request.user
+    teacher_profile = getattr(user, 'teacher_profile', None)
+    school = getattr(user, 'school', None)
 
-    notes = LessonNote.objects.filter(teacher=teacher_profile).order_by('-publish_date')
-    return render(request, 'notes/teacher_notes_list.html', {'notes': notes})
+    # Superadmin → all notes
+    if user.is_superadmin:
+        notes = LessonNote.objects.all()
 
+    # School admin → all notes in school
+    elif school:
+        notes = LessonNote.objects.filter(
+            school=school
+        ).order_by('-publish_date')
+
+    # Teacher → only their own notes
+    elif teacher_profile:
+        notes = LessonNote.objects.filter(
+            teacher=teacher_profile
+        ).order_by('-publish_date')
+
+    else:
+        raise Http404("Not allowed")
+
+    return render(
+        request,
+        'notes/teacher_notes_list.html',
+        {'notes': notes}
+    )
 
 # ------------------------
 # Teacher: upload/edit note
 @login_required
 def teacher_upload_note(request, pk=None):
-    teacher_profile = getattr(request.user, 'teacher_profile', None)
-    if not teacher_profile:
-        raise Http404("No teacher profile found.")
+    user = request.user
+    teacher_profile = getattr(user, 'teacher_profile', None)
+    school = getattr(user, 'school', None)
 
     note = None
+
     if pk:
-        note = get_object_or_404(
-            LessonNote,
-            pk=pk,
-            teacher=teacher_profile
-        )
+        if user.is_superadmin:
+            note = get_object_or_404(LessonNote, pk=pk)
+
+        elif school:
+            note = get_object_or_404(
+                LessonNote,
+                pk=pk,
+                school=school
+            )
+
+        elif teacher_profile:
+            note = get_object_or_404(
+                LessonNote,
+                pk=pk,
+                teacher=teacher_profile
+            )
+
+        else:
+            raise Http404("Not allowed")
 
     if request.method == 'POST':
         form = LessonNoteForm(
             request.POST,
             request.FILES,
             instance=note,
-            teacher=teacher_profile   
+            teacher=teacher_profile,
+            user=user
         )
+
         if form.is_valid():
             lesson_note = form.save(commit=False)
-            lesson_note.teacher = teacher_profile
-            lesson_note.school = teacher_profile.school
+
+            # Teacher upload
+            if teacher_profile:
+                lesson_note.teacher = teacher_profile
+                lesson_note.school = teacher_profile.school
+
+            # School admin upload
+            elif school:
+                lesson_note.school = school
+
             lesson_note.save()
             form.save_m2m()
             return redirect('notes:dashboard')
+
     else:
         form = LessonNoteForm(
             instance=note,
-            teacher=teacher_profile   # ✅ AND THIS
+            teacher=teacher_profile,
+            user=user
         )
 
     return render(
@@ -74,17 +122,45 @@ def teacher_upload_note(request, pk=None):
 
 @login_required
 def teacher_delete_note(request, pk):
-    teacher_profile = getattr(request.user, 'teacher_profile', None)
-    if not teacher_profile:
-        raise Http404("No teacher profile found.")
+    user = request.user
+    teacher_profile = getattr(user, 'teacher_profile', None)
+    school = getattr(user, 'school', None)
 
-    note = get_object_or_404(LessonNote, pk=pk, teacher=teacher_profile)
+    # Superadmin
+    if user.is_superadmin:
+        note = get_object_or_404(
+            LessonNote,
+            pk=pk
+        )
+
+    # School admin → delete any note in school
+    elif school:
+        note = get_object_or_404(
+            LessonNote,
+            pk=pk,
+            school=school
+        )
+
+    # Teacher → only own notes
+    elif teacher_profile:
+        note = get_object_or_404(
+            LessonNote,
+            pk=pk,
+            teacher=teacher_profile
+        )
+
+    else:
+        raise Http404("Not allowed")
 
     if request.method == 'POST':
         note.delete()
         return redirect('notes:teacher_notes_list')
 
-    return render(request, 'notes/teacher_delete_confirm.html', {'note': note})
+    return render(
+        request,
+        'notes/teacher_delete_confirm.html',
+        {'note': note}
+    )
 
 
 # ------------------------
@@ -161,10 +237,29 @@ def download_note_file(request, pk):
 def dashboard(request):
     user = request.user
     teacher_profile = getattr(user, 'teacher_profile', None)
+    school = getattr(user, 'school', None)
     student = getattr(user, 'student_profile', None) or getattr(user, 'student', None)
 
-    if teacher_profile:
-        # Only notes for teacher's school & subjects/classes
+    # School Admin
+    if school and not teacher_profile and not student:
+        notes = LessonNote.objects.filter(
+            school=school
+        ).order_by('-publish_date')
+
+        pending = LessonNoteSubmission.objects.filter(
+            note__school=school,
+            status='submitted'
+        ).order_by('submitted_on')[:20]
+
+        context = {
+            'is_school_admin': True,
+            'can_create_notes': True,
+            'notes': notes,
+            'pending': pending
+        }
+
+    # Teacher
+    elif teacher_profile:
         notes = LessonNote.objects.filter(
             teacher=teacher_profile
         ).order_by('-publish_date')
@@ -176,16 +271,21 @@ def dashboard(request):
 
         context = {
             'is_teacher': True,
+            'can_create_notes': True,
             'notes': notes,
             'pending': pending
         }
 
+    # Student
     elif student:
         notes = LessonNote.objects.filter(
             classes=student.school_class
-        ).order_by('-publish_date')
+        ).distinct().order_by('-publish_date')
 
-        submissions = LessonNoteSubmission.objects.filter(student=student).select_related('note')
+        submissions = LessonNoteSubmission.objects.filter(
+            student=student
+        ).select_related('note')
+
         subs_map = {s.note_id: s for s in submissions}
 
         context = {
@@ -198,5 +298,9 @@ def dashboard(request):
     else:
         raise Http404("Profile required")
 
-    return render(request, 'notes/dashboard.html', context)
+    return render(
+        request,
+        'notes/dashboard.html',
+        context
+    )
 

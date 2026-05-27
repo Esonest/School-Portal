@@ -10,7 +10,8 @@ from .forms import StudentProfileForm
 from results.models import Score
 from attendance.models import Attendance
 from assignments.models import Assignment, AssignmentSubmission 
-from cbt.models import CBTExam, CBTSubmission # ✅ your actual models
+from cbt.models import CBTExam, CBTSubmission 
+from results.utils import portal_required
 
 # ------------------------
 # Helper Decorators
@@ -326,7 +327,7 @@ from django.utils import timezone
 
 from django.db.models import Q
 
-
+@portal_required("announcement")
 @login_required
 def announcement_list(request):
 

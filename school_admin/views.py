@@ -6,7 +6,7 @@ from students.models import Announcement
 from results.models import ClassScoreSetting, ClassSubjectTeacher, Subject
 from finance.models import SchoolTermSetting
 from django.shortcuts import get_object_or_404
-from results.utils import SESSION_CHOICES, normalize_latex
+from results.utils import SESSION_CHOICES, normalize_latex, portal_required
 from superadmin.views import class_create, class_edit, class_delete, subject_create, subject_edit, subject_delete 
 
 # Permission checks
@@ -341,6 +341,7 @@ from .forms import CBTExamForm, CBTQuestionForm
 from accounts.decorators import school_admin_or_superadmin_required, get_user_school
 
 # Dashboard: list exams for a school (school_id passed)
+@portal_required("cbt")
 @school_admin_or_superadmin_required
 def admin_dashboard(request, school_id=None):
     user_school = get_user_school(request)
@@ -362,6 +363,7 @@ def admin_dashboard(request, school_id=None):
 
 
 # Create exam
+@portal_required("cbt")
 @school_admin_or_superadmin_required
 def exam_create(request, school_id):
     school = get_object_or_404(School, id=school_id)
@@ -1773,16 +1775,31 @@ from accounts.models import School
 # ---------------------------
 # School admin: List notes
 # ---------------------------
-@login_required
-@user_passes_test(lambda u: u.is_superadmin or hasattr(u, 'school'))
-def lessonnote_list(request):
-    school = getattr(request.user, 'school', None) if not request.user.is_superadmin else None
-    notes = LessonNote.objects.all() if request.user.is_superadmin else LessonNote.objects.filter(school=school)
-    return render(request, 'school_admin/notes/lessonnote_list.html', {'notes': notes})
 
+@login_required
+@user_passes_test(
+    lambda u: u.is_superadmin or getattr(u, 'school', None) is not None
+)
+def lessonnote_list(request):
+    user = request.user
+    school = getattr(user, 'school', None)
+
+    # Superadmin sees all notes
+    if user.is_superadmin:
+        notes = LessonNote.objects.all()
+    else:
+        # School admin sees only their school's notes
+        notes = LessonNote.objects.filter(school=school)
+
+    return render(
+        request,
+        'school_admin/notes/lessonnote_list.html',
+        {'notes': notes}
+    )
 # ---------------------------
 # Create/Edit note
 # ---------------------------
+
 @login_required
 @user_passes_test(lambda u: u.is_superadmin or hasattr(u, 'school'))
 def lessonnote_create_edit(request, pk=None):
@@ -1868,6 +1885,7 @@ from accounts.models import School
 # ------------------------
 # List assignments for a school
 # ------------------------
+@portal_required("assignments")
 @login_required
 def assignment_list(request, school_id):
     school = get_object_or_404(School, id=school_id)
@@ -2015,7 +2033,7 @@ from results.models import Score
 def school_admin_required(user):
     return hasattr(user, "is_schooladmin") and user.is_schooladmin
 
-
+@portal_required("attendance")
 @login_required
 def attendance_list(request, school_id):
     # --------------------------------
@@ -2143,7 +2161,7 @@ from attendance.models import Attendance
 from students.models import Student, SchoolClass
 from attendance.forms import AttendanceForm
 
-
+@portal_required("attendance")
 @login_required
 def attendance_create(request, school_id):
     if not school_admin_required(request.user):
@@ -3367,7 +3385,7 @@ from .forms import AccountantUserForm, SchoolAccountantForm
 
 
 
-
+@portal_required("finance")
 @login_required
 def accountant_list(request, school_id):
     # Get the school
@@ -3401,7 +3419,7 @@ def accountant_toggle_status(request, pk):
     return redirect("school_admin:accountant_list", accountant.school.id)
 
 
-
+@portal_required("finance")
 @login_required
 def accountant_create(request, school_id):
     school = get_object_or_404(School, id=school_id)

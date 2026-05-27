@@ -2,16 +2,19 @@
 {% block content %}
 <div class="max-w-6xl mx-auto p-6">
   <!-- Header -->
-  <div class="flex justify-between items-center mb-6">
-    <h1 class="text-2xl font-bold text-{{ school.theme_color }}-600">Notes Dashboard</h1>
+  <!-- Header -->
+<div class="flex justify-between items-center mb-6">
+  <h1 class="text-2xl font-bold text-{{ school.theme_color }}-600">
+    Notes Dashboard
+  </h1>
 
-    {% if is_teacher %}
-      <a href="{% url 'notes:upload_note' %}" 
-         class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition">
-        + Create Note
-      </a>
-    {% endif %}
-  </div>
+  {% if is_teacher or is_school_admin or request.user.is_superadmin %}
+    <a href="{% url 'notes:upload_note' %}" 
+       class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition">
+      + Add Lesson Note
+    </a>
+  {% endif %}
+</div>
 
   {% if is_teacher %}
     <!-- Teacher View -->

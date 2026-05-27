@@ -16,6 +16,8 @@
                 <th class="p-3">Lesson notes</th>
                 <th class="p-3">Finance</th>
                 <th class="p-3">Assignments</th>
+                <th class="p-3">Announcement</th>
+                <th class="p-3">Liveclass</th>
                 <th class="p-3">Actions</th>
             </tr>
         </thead>
@@ -53,6 +55,14 @@
 
                 <td class="p-3 text-center">
                     {{ school.portal_settings.assignments_enabled|yesno:"✅,❌" }}
+                </td>
+
+                <td class="p-3 text-center">
+                    {{ school.portal_settings.announcement_enabled|yesno:"✅,❌" }}
+                </td>
+
+                 <td class="p-3 text-center">
+                    {{ school.portal_settings.liveclass_enabled|yesno:"✅,❌" }}
                 </td>
 
                 <td class="p-3 text-center">
