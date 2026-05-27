@@ -124,7 +124,12 @@ from superadmin.models import SchoolPortalSetting
 
 def portal_required(portal_name):
     """
-    Decorator to block access if a specific portal is disabled
+    Block access if a portal is disabled for a school.
+    Supports:
+    - School admin
+    - Teacher
+    - Student
+    - Superadmin (always allowed)
     """
     def decorator(view_func):
         @wraps(view_func)
@@ -132,22 +137,57 @@ def portal_required(portal_name):
             user = request.user
             school = None
 
-            if hasattr(user, "teacher_profile") and user.teacher_profile:
+            # Superadmin bypass
+            if getattr(user, "is_superadmin", False):
+                return view_func(request, *args, **kwargs)
+
+            # School admin
+            if getattr(user, "school", None):
+                school = user.school
+
+            # Teacher
+            elif getattr(user, "teacher_profile", None):
                 school = user.teacher_profile.school
-            elif hasattr(user, "student_profile") and user.student_profile:
+
+            # Student
+            elif getattr(user, "student_profile", None):
                 school = user.student_profile.school
 
+            elif getattr(user, "student", None):
+                school = user.student.school
+
             if not school:
-                return render(request, "superadmin/portal_settings/portal_disabled.html", {"school": None, "portal_name": portal_name})
+                return render(
+                    request,
+                    "superadmin/portal_settings/portal_disabled.html",
+                    {
+                        "school": None,
+                        "portal_name": portal_name
+                    }
+                )
 
-            portal_settings, _ = SchoolPortalSetting.objects.get_or_create(school=school)
+            portal_settings, _ = SchoolPortalSetting.objects.get_or_create(
+                school=school
+            )
 
-            # check the portal_name dynamically
-            enabled = getattr(portal_settings, f"{portal_name}_enabled", False)
+            enabled = getattr(
+                portal_settings,
+                f"{portal_name}_enabled",
+                False
+            )
+
             if not enabled:
-                return render(request, "superadmin/portal_settings/portal_disabled.html", {"school": school, "portal_name": portal_name})
+                return render(
+                    request,
+                    "superadmin/portal_settings/portal_disabled.html",
+                    {
+                        "school": school,
+                        "portal_name": portal_name
+                    }
+                )
 
             return view_func(request, *args, **kwargs)
+
         return _wrapped_view
     return decorator
 

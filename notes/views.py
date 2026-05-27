@@ -44,6 +44,7 @@ def teacher_notes_list(request):
 
 # ------------------------
 # Teacher: upload/edit note
+@portal_required("lesson_note")
 @login_required
 def teacher_upload_note(request, pk=None):
     user = request.user
@@ -233,6 +234,7 @@ def download_note_file(request, pk):
 # ------------------------
 # Notes dashboard
 # ------------------------
+@portal_required("lesson_note")
 @login_required
 def dashboard(request):
     user = request.user
