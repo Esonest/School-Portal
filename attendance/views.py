@@ -126,74 +126,7 @@ def dashboard(request):
 
 
 
-# -------------------------------------------------------
-# TEACHER MARK ATTENDANCE
-# -------------------------------------------------------
-@portal_required("attendance")
-@login_required
-def mark_attendance(request, class_id):
-    teacher = get_teacher(request.user)
 
-    cls = get_object_or_404(SchoolClass, id=class_id)
-
-    # Ensure this teacher teaches this class
-    if cls not in teacher.classes.all():
-        messages.error(request, "You are not assigned to this class.")
-        return redirect("attendance:dashboard")
-
-    # Get all students in this class
-    students = Student.objects.filter(school_class=cls)
-    if not students.exists():
-        messages.warning(request, f"No students found in class {cls.name}.")
-        return redirect("attendance:dashboard")
-
-    # -------------------
-    # POST - Save Attendance
-    # -------------------
-    if request.method == "POST":
-        form = BulkAttendanceForm(request.POST, class_queryset=students)
-
-        if form.is_valid():
-            date = form.cleaned_data["date"]
-            status = form.cleaned_data["status"]
-            selected_students = form.cleaned_data["students"]
-            session = form.cleaned_data["session"]
-            term = form.cleaned_data["term"]
-
-            for student in selected_students:
-                record, created = Attendance.objects.get_or_create(
-                    student=student,
-                    date=date,
-                    defaults={
-                        "status": status,
-                        "marked_by": request.user,  
-                        "school": student.school,
-                        "session": session,   
-                        "term": term,   
-                    }
-                )
-
-                if not created:
-                    record.status = status
-                    record.session = session   
-                    record.term = term  
-                    record.marked_by = request.user,
-                    record.save()
-
-            messages.success(
-                request,
-                f"Attendance marked for {len(selected_students)} students on {date}."
-            )
-            return redirect("attendance:dashboard")
-
-    else:
-        form = BulkAttendanceForm(class_queryset=students)
-
-    return render(request, "attendance/mark_attendance.html", {
-        "form": form,
-        "cls": cls,
-        "students": students,
-    })
 
 
 @portal_required("attendance")

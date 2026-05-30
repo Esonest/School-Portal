@@ -2036,17 +2036,60 @@ def school_admin_required(user):
 @portal_required("attendance")
 @login_required
 def attendance_list(request, school_id):
-    # --------------------------------
-    # Permission Check (FIXED)
-    # --------------------------------
-    if not school_admin_required(request.user):
-        raise PermissionDenied
 
     school = get_object_or_404(School, id=school_id)
 
-    # --------------------------------
-    # Filters
-    # --------------------------------
+    # ------------------------------------------------
+    # ROLE-BASED ACCESS
+    # ------------------------------------------------
+    teacher_classes = None
+
+    # SCHOOL ADMIN
+    if school_admin_required(request.user):
+
+        records = Attendance.objects.filter(
+            school=school
+        ).select_related(
+            "student",
+            "student__school_class"
+        )
+
+        classes = SchoolClass.objects.filter(
+            school=school
+        )
+
+        students = Student.objects.filter(
+            school=school
+        )
+
+    # TEACHER
+    elif hasattr(request.user, "teacher_profile"):
+
+        teacher = request.user.teacher_profile
+        teacher_classes = teacher.classes.filter(
+            school=school
+        )
+
+        records = Attendance.objects.filter(
+            school=school,
+            student__school_class__in=teacher_classes
+        ).select_related(
+            "student",
+            "student__school_class"
+        )
+
+        classes = teacher_classes
+
+        students = Student.objects.filter(
+            school_class__in=teacher_classes
+        )
+
+    else:
+        raise PermissionDenied
+
+    # ------------------------------------------------
+    # FILTERS
+    # ------------------------------------------------
     selected_class = request.GET.get("class") or ""
     selected_session = request.GET.get("session") or ""
     selected_term = request.GET.get("term") or ""
@@ -2055,61 +2098,59 @@ def attendance_list(request, school_id):
     start_date = request.GET.get("start_date") or ""
     end_date = request.GET.get("end_date") or ""
 
-    records = Attendance.objects.filter(school=school).select_related("student")
-
-    # Filter: class
     if selected_class:
-        records = records.filter(student__school_class_id=selected_class)
+        records = records.filter(
+            student__school_class_id=selected_class
+        )
 
     if selected_session:
-        records = records.filter(session=selected_session)
+        records = records.filter(
+            session=selected_session
+        )
 
     if selected_term:
-        records = records.filter(term=selected_term)    
+        records = records.filter(
+            term=selected_term
+        )
 
-    # Filter: student
     if selected_student:
-        records = records.filter(student_id=selected_student)
+        records = records.filter(
+            student_id=selected_student
+        )
 
-    # Filter: status
     if selected_status:
-        records = records.filter(status=selected_status)
+        records = records.filter(
+            status=selected_status
+        )
 
-    # Filter: date range
     if start_date:
-        records = records.filter(date__gte=parse_date(start_date))
+        records = records.filter(
+            date__gte=parse_date(start_date)
+        )
 
     if end_date:
-        records = records.filter(date__lte=parse_date(end_date))
+        records = records.filter(
+            date__lte=parse_date(end_date)
+        )
 
-    # --------------------------------
-    # Dropdown data
-    # --------------------------------
-    classes = SchoolClass.objects.filter(school=school)
-    students = Student.objects.filter(school=school)
-    sessions = SESSION_LIST
-    terms = [t[0] for t in Score.TERM_CHOICES]  # ['1','2','3']
-
-    # --------------------------------
-    # Chart Data
-    # --------------------------------
-
-    # Daily count
+    # ------------------------------------------------
+    # CHART DATA
+    # ------------------------------------------------
     daily_chart = (
         records.values("date")
         .annotate(total=Count("id"))
         .order_by("date")
     )
 
-    # Status distribution
     status_chart = (
         records.values("status")
         .annotate(total=Count("id"))
     )
 
-    # Class distribution
     class_chart = (
-        records.values("student__school_class__name")
+        records.values(
+            "student__school_class__name"
+        )
         .annotate(total=Count("id"))
     )
 
@@ -2119,8 +2160,9 @@ def attendance_list(request, school_id):
         "classes": classes,
         "students": students,
 
-        "sessions": sessions,
-        "terms": terms,
+        "sessions": SESSION_LIST,
+        "terms": [t[0] for t in Score.TERM_CHOICES],
+
         "selected_class": selected_class,
         "selected_session": selected_session,
         "selected_term": selected_term,
@@ -2129,13 +2171,23 @@ def attendance_list(request, school_id):
         "start_date": start_date,
         "end_date": end_date,
 
-        # Chart datasets
-        "daily_chart": json.dumps(list(daily_chart), default=str),
-        "status_chart": json.dumps(list(status_chart)),
-        "class_chart": json.dumps(list(class_chart)),
+        "daily_chart": json.dumps(
+            list(daily_chart),
+            default=str
+        ),
+        "status_chart": json.dumps(
+            list(status_chart)
+        ),
+        "class_chart": json.dumps(
+            list(class_chart)
+        ),
     }
 
-    return render(request, "school_admin/attendance/admin_list.html", context)
+    return render(
+        request,
+        "school_admin/attendance/admin_list.html",
+        context
+    )
 
 
 
@@ -2164,24 +2216,76 @@ from attendance.forms import AttendanceForm
 @portal_required("attendance")
 @login_required
 def attendance_create(request, school_id):
-    if not school_admin_required(request.user):
+
+    school = get_object_or_404(
+        School,
+        id=school_id
+    )
+
+    # -----------------------------------
+    # ROLE CHECK
+    # -----------------------------------
+    teacher_classes = None
+
+    # ADMIN
+    if school_admin_required(request.user):
+
+        form = AttendanceForm(
+            request.POST or None,
+            school=school
+        )
+
+        marked_by = None
+
+    # TEACHER
+    elif hasattr(request.user, "teacher_profile"):
+
+        teacher = request.user.teacher_profile
+        teacher_classes = teacher.classes.filter(
+            school=school
+        )
+
+        form = AttendanceForm(
+            request.POST or None,
+            school=school
+        )
+
+        # Restrict teacher class choices
+        form.fields["school_class"].queryset = teacher_classes
+
+        marked_by = request.user
+
+    else:
         raise PermissionDenied
 
-    school = get_object_or_404(School, id=school_id)
-
-    form = AttendanceForm(request.POST or None, school=school)
-
+    # -----------------------------------
+    # SAVE
+    # -----------------------------------
     if request.method == "POST":
+
         if form.is_valid():
+
             school_class = form.cleaned_data["school_class"]
+            students = form.cleaned_data["students"]
+
+            # Teacher security check
+            if teacher_classes is not None:
+
+                if school_class not in teacher_classes:
+                    raise PermissionDenied
+
+                students = students.filter(
+                    school_class__in=teacher_classes
+                )
+
             session = form.cleaned_data["session"]
             term = form.cleaned_data["term"]
-            students = form.cleaned_data["students"]
             date = form.cleaned_data["date"]
             status = form.cleaned_data["status"]
             remarks = form.cleaned_data["remarks"]
 
             for student in students:
+
                 Attendance.objects.create(
                     student=student,
                     date=date,
@@ -2190,27 +2294,80 @@ def attendance_create(request, school_id):
                     school=school,
                     session=session,
                     term=term,
-                    marked_by=None,   # admin has no teacher profile
+                    marked_by=marked_by,
                 )
 
-            messages.success(request, "Attendance saved successfully.")
-            return redirect("school_admin:admin_attendance_list", school_id=school.id)
+            messages.success(
+                request,
+                "Attendance saved successfully."
+            )
 
-    return render(request, "school_admin/attendance/admin_form.html", {
-        "form": form,
-        "school": school,
-    })
+            return redirect(
+                "school_admin:admin_attendance_list",
+                school_id=school.id
+            )
+
+    return render(
+        request,
+        "school_admin/attendance/admin_form.html",
+        {
+            "form": form,
+            "school": school,
+        }
+    )
 
 
 from django.http import JsonResponse
 
+from django.http import JsonResponse
+from django.core.exceptions import PermissionDenied
+
+
 @login_required
 def load_students(request, class_id):
-    students = Student.objects.filter(school_class_id=class_id)
+
+    cls = get_object_or_404(
+        SchoolClass,
+        id=class_id
+    )
+
+    # --------------------------
+    # ADMIN ACCESS
+    # --------------------------
+    if school_admin_required(request.user):
+
+        students = Student.objects.filter(
+            school_class=cls
+        )
+
+    # --------------------------
+    # TEACHER ACCESS
+    # --------------------------
+    elif hasattr(request.user, "teacher_profile"):
+
+        teacher = request.user.teacher_profile
+
+        if not teacher.classes.filter(
+            id=class_id
+        ).exists():
+            raise PermissionDenied
+
+        students = Student.objects.filter(
+            school_class=cls
+        )
+
+    else:
+        raise PermissionDenied
 
     data = {
         "students": [
-            {"id": s.id, "name": s.user.get_full_name() or s.admission_no}
+            {
+                "id": s.id,
+                "name": (
+                    s.user.get_full_name()
+                    or s.admission_no
+                )
+            }
             for s in students
         ]
     }
@@ -2226,10 +2383,10 @@ from attendance.forms import AttendanceEditForm
 @login_required
 def attendance_edit(request, school_id, record_id):
 
-    if not school_admin_required(request.user):
-        raise PermissionDenied
-
-    school = get_object_or_404(School, id=school_id)
+    school = get_object_or_404(
+        School,
+        id=school_id
+    )
 
     record = get_object_or_404(
         Attendance,
@@ -2237,6 +2394,35 @@ def attendance_edit(request, school_id, record_id):
         school=school
     )
 
+    teacher_classes = None
+
+    # -----------------------------------
+    # ADMIN
+    # -----------------------------------
+    if school_admin_required(request.user):
+
+        pass
+
+    # -----------------------------------
+    # TEACHER
+    # -----------------------------------
+    elif hasattr(request.user, "teacher_profile"):
+
+        teacher = request.user.teacher_profile
+
+        teacher_classes = teacher.classes.filter(
+            school=school
+        )
+
+        if record.student.school_class not in teacher_classes:
+            raise PermissionDenied
+
+    else:
+        raise PermissionDenied
+
+    # -----------------------------------
+    # FORM
+    # -----------------------------------
     if request.method == "POST":
 
         form = AttendanceEditForm(
@@ -2247,22 +2433,22 @@ def attendance_edit(request, school_id, record_id):
 
         if form.is_valid():
 
-            updated_record = form.save(commit=False)
+            updated_record = form.save(
+                commit=False
+            )
 
-            # Security check
+            # School security
             if updated_record.student.school_id != school.id:
+                raise PermissionDenied
 
-                messages.error(
-                    request,
-                    "Invalid student for this school."
-                )
+            # Teacher security
+            if teacher_classes is not None:
 
-                return redirect(
-                    "school_admin:admin_attendance_list",
-                    school_id=school.id
-                )
-
-            updated_record.marked_by = record.marked_by
+                if (
+                    updated_record.student.school_class
+                    not in teacher_classes
+                ):
+                    raise PermissionDenied
 
             updated_record.save()
 
@@ -2283,17 +2469,22 @@ def attendance_edit(request, school_id, record_id):
             school=school
         )
 
-    context = {
-        "form": form,
-        "school": school,
-        "record": record,
-        "is_edit": True,
-    }
+    # Restrict teacher student choices
+    if teacher_classes is not None:
+
+        form.fields["student"].queryset = Student.objects.filter(
+            school_class__in=teacher_classes
+        )
 
     return render(
         request,
         "school_admin/attendance/admin_form.html",
-        context
+        {
+            "form": form,
+            "school": school,
+            "record": record,
+            "is_edit": True,
+        }
     )
 
 
@@ -2302,21 +2493,65 @@ def attendance_edit(request, school_id, record_id):
 # ---------------------------------------------------------
 @login_required
 def attendance_delete(request, school_id, record_id):
-    if not school_admin_required(request.user):
+
+    school = get_object_or_404(
+        School,
+        id=school_id
+    )
+
+    record = get_object_or_404(
+        Attendance,
+        id=record_id,
+        school=school
+    )
+
+    # -----------------------------------
+    # ADMIN
+    # -----------------------------------
+    if school_admin_required(request.user):
+
+        pass
+
+    # -----------------------------------
+    # TEACHER
+    # -----------------------------------
+    elif hasattr(request.user, "teacher_profile"):
+
+        teacher = request.user.teacher_profile
+
+        if not teacher.classes.filter(
+            id=record.student.school_class_id
+        ).exists():
+            raise PermissionDenied
+
+    else:
         raise PermissionDenied
 
-    school = get_object_or_404(School, id=school_id)
-    record = get_object_or_404(Attendance, id=record_id, school=school)
-
+    # -----------------------------------
+    # DELETE
+    # -----------------------------------
     if request.method == "POST":
-        record.delete()
-        messages.success(request, "Attendance deleted successfully.")
-        return redirect("school_admin:admin_attendance_list", school_id=school.id)
 
-    return render(request, "school_admin/attendance/admin_confirm_delete.html", {
-        "record": record,
-        "school": school,
-    })
+        record.delete()
+
+        messages.success(
+            request,
+            "Attendance deleted successfully."
+        )
+
+        return redirect(
+            "school_admin:admin_attendance_list",
+            school_id=school.id
+        )
+
+    return render(
+        request,
+        "school_admin/attendance/admin_confirm_delete.html",
+        {
+            "record": record,
+            "school": school,
+        }
+    )
 
 
 
