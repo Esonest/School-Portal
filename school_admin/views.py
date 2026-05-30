@@ -1881,6 +1881,7 @@ from django.http import Http404
 from assignments.models import Assignment, AssignmentSubmission
 from assignments.forms import AssignmentForm
 from accounts.models import School
+from django.contrib import messages
 
 # ------------------------
 # List assignments for a school
@@ -1918,11 +1919,32 @@ def assignment_create_edit(request, school_id, pk=None):
         # Restrict classes to this school (use correct field name)
         form.fields['classes'].queryset = SchoolClass.objects.filter(school=school)
 
+        
+
         if form.is_valid():
-            obj = form.save(commit=False)
-            obj.school = school
-            obj.save()
-            form.save_m2m()
+
+            try:
+                obj = form.save(commit=False)
+                obj.school = school
+                obj.save()
+                form.save_m2m()
+
+                messages.success(
+                    request,
+                    "Assignment saved successfully."
+                )
+
+                return redirect(
+                    'school_admin:assignment_list',
+                    school_id=school.id
+                )
+
+            except Exception as e:
+
+                messages.error(
+                    request,
+                    f"Upload failed: {str(e)}"
+                )
             return redirect('school_admin:assignment_list', school_id=school.id)
     else:
         form = AssignmentForm(instance=assignment)

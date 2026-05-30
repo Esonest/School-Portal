@@ -73,59 +73,126 @@ scroll-smooth">
 
 <!-- NAVBAR -->
 <nav class="bg-white shadow-md sticky top-0 z-40 border-b border-gray-200">
+
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
         <div class="flex justify-between items-center h-16">
 
-            <!-- LOGO + NAME -->
-            <a href="{% url 'accounts:home' %}" class="flex items-center space-x-3">
-                <img src="{% static 'images/techcenter-logo.png' %}"
-                     class="h-16 w-16 object-contain"/>
+            {% if user.is_authenticated %}
 
-                <span class="text-lg sm:text-xl font-extrabold bg-gradient-to-r from-techPrimary to-techSecondary bg-clip-text text-transparent">
-                    TECHCENTER Portal
-                </span>
-            </a>
+                <!-- SCHOOL LOGO + NAME -->
+                <div class="flex items-center space-x-3">
 
-            <!-- DESKTOP -->
-            <div class="hidden md:flex items-center space-x-6">
+                    {% if school and school.logo %}
+                        <img src="{{ school.logo.url }}"
+                             class="h-12 w-12 rounded-full object-cover border">
+                    {% else %}
+                        <img src="{% static 'images/techcenter-logo.png' %}"
+                             class="h-12 w-12 object-contain">
+                    {% endif %}
 
-                <a href="{% url 'accounts:home' %}" class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}">Home</a>
-                <a href="{% url 'accounts:about' %}" class="nav-link {% if request.resolver_match.url_name == 'about' %}active{% endif %}">About</a>
-                <a href="{% url 'accounts:contact' %}" class="nav-link {% if request.resolver_match.url_name == 'contact' %}active{% endif %}">Contact</a>
-                <a href="{% url 'accounts:help' %}" class="nav-link {% if request.resolver_match.url_name == 'help' %}active{% endif %}">Help</a>
+                    <div class="text-lg sm:text-xl md:text-2xl font-bold text-{{ school.theme_color }}-600">
+                        {{ school.name|default:"School Portal" }}
+                    </div>
 
-                {% if user.is_authenticated %}
-                <a href="{% url 'accounts:logout' %}" class="px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition">
-                    Logout
+                </div>
+
+                <!-- DESKTOP LOGOUT -->
+                <div class="hidden md:flex items-center">
+                    <a href="{% url 'accounts:logout' %}"
+                       class="px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition">
+                        Logout
+                    </a>
+                </div>
+
+                <!-- MOBILE BTN -->
+                <button id="mobile-menu-button"
+                        class="md:hidden text-gray-700 text-2xl">
+                    ☰
+                </button>
+
+            {% else %}
+
+                <!-- GUEST NAVBAR -->
+                <a href="{% url 'accounts:home' %}"
+                   class="flex items-center space-x-3">
+
+                    <img src="{% static 'images/techcenter-logo.png' %}"
+                         class="h-16 w-16 object-contain"/>
+
+                    <span class="text-lg sm:text-xl font-extrabold bg-gradient-to-r from-techPrimary to-techSecondary bg-clip-text text-transparent">
+                        TECHCENTER Portal
+                    </span>
                 </a>
-                {% else %}
-                <a href="{% url 'accounts:login' %}" class="px-4 py-2 rounded-lg bg-gradient-to-r from-techPrimary to-techSecondary text-white hover:opacity-90 transition">
-                    Login
-                </a>
-                {% endif %}
-            </div>
 
-            <!-- MOBILE BTN -->
-            <button id="mobile-menu-button" class="md:hidden text-gray-700 text-2xl">
-                ☰
-            </button>
+                <!-- DESKTOP MENU -->
+                <div class="hidden md:flex items-center space-x-6">
+
+                    <a href="{% url 'accounts:home' %}"
+                       class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+                        Home
+                    </a>
+
+                    <a href="{% url 'accounts:about' %}"
+                       class="nav-link {% if request.resolver_match.url_name == 'about' %}active{% endif %}">
+                        About
+                    </a>
+
+                    <a href="{% url 'accounts:contact' %}"
+                       class="nav-link {% if request.resolver_match.url_name == 'contact' %}active{% endif %}">
+                        Contact
+                    </a>
+
+                    <a href="{% url 'accounts:help' %}"
+                       class="nav-link {% if request.resolver_match.url_name == 'help' %}active{% endif %}">
+                        Help
+                    </a>
+
+                    <a href="{% url 'accounts:login' %}"
+                       class="px-4 py-2 rounded-lg bg-gradient-to-r from-techPrimary to-techSecondary text-white hover:opacity-90 transition">
+                        Login
+                    </a>
+
+                </div>
+
+                <!-- MOBILE BTN -->
+                <button id="mobile-menu-button"
+                        class="md:hidden text-gray-700 text-2xl">
+                    ☰
+                </button>
+
+            {% endif %}
+
         </div>
+
     </div>
 
     <!-- MOBILE MENU -->
-    <div id="mobile-menu" class="hidden md:hidden bg-white border-t shadow-lg animate-slide-down">
-
-        <a href="{% url 'accounts:home' %}" class="mobile-link">Home</a>
-        <a href="{% url 'accounts:about' %}" class="mobile-link">About</a>
-        <a href="{% url 'accounts:contact' %}" class="mobile-link">Contact</a>
-        <a href="{% url 'accounts:help' %}" class="mobile-link">Help</a>
+    <div id="mobile-menu"
+         class="hidden md:hidden bg-white border-t shadow-lg animate-slide-down">
 
         {% if user.is_authenticated %}
-        <a href="{% url 'accounts:logout' %}" class="mobile-link text-red-600">Logout</a>
+
+            <a href="{% url 'accounts:logout' %}"
+               class="mobile-link text-red-600">
+                Logout
+            </a>
+
         {% else %}
-        <a href="{% url 'accounts:login' %}" class="mobile-link text-techPrimary font-semibold">Login</a>
+
+            <a href="{% url 'accounts:home' %}" class="mobile-link">Home</a>
+            <a href="{% url 'accounts:about' %}" class="mobile-link">About</a>
+            <a href="{% url 'accounts:contact' %}" class="mobile-link">Contact</a>
+            <a href="{% url 'accounts:help' %}" class="mobile-link">Help</a>
+
+            <a href="{% url 'accounts:login' %}"
+               class="mobile-link text-techPrimary font-semibold">
+                Login
+            </a>
+
         {% endif %}
     </div>
+
 </nav>
 
 <!-- CONTENT -->

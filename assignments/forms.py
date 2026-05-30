@@ -3,8 +3,15 @@ from .models import Assignment, AssignmentSubmission, SubmissionFile
 
 from django import forms
 from .models import Assignment, SchoolClass, Subject
+from django import forms
+from django.core.exceptions import ValidationError
+import os
+
+from .models import Assignment, SchoolClass, Subject
+
 
 class AssignmentForm(forms.ModelForm):
+
     class Meta:
         model = Assignment
         fields = (
@@ -19,17 +26,98 @@ class AssignmentForm(forms.ModelForm):
             'file',
             'published'
         )
+
         widgets = {
-            'due_date': forms.DateTimeInput(attrs={'type':'datetime-local', 'class':'w-full rounded-lg p-3 border-gray-300 focus:ring-2 focus:ring-indigo-400'}),
-            'classes': forms.SelectMultiple(attrs={'size':6, 'class':'w-full rounded-lg p-3 border-gray-300 focus:ring-2 focus:ring-indigo-400'}),
-            'term': forms.Select(attrs={'class':'w-full rounded-lg p-3 border-gray-300 focus:ring-2 focus:ring-indigo-400'}),
-            'session': forms.TextInput(attrs={'class':'w-full rounded-lg p-3 border-gray-300 focus:ring-2 focus:ring-indigo-400'}),
-            'title': forms.TextInput(attrs={'class':'w-full rounded-lg p-3 border-gray-300 focus:ring-2 focus:ring-indigo-400'}),
-            'description': forms.Textarea(attrs={'rows':3, 'class':'w-full rounded-lg p-3 border-gray-300 focus:ring-2 focus:ring-indigo-400'}),
-            'max_score': forms.NumberInput(attrs={'class':'w-full rounded-lg p-3 border-gray-300 focus:ring-2 focus:ring-indigo-400'}),
-            'file': forms.ClearableFileInput(attrs={'class':'w-full'}),
-            'published': forms.CheckboxInput(attrs={'class':'h-5 w-5 text-indigo-600'}),
+            'due_date': forms.DateTimeInput(attrs={
+                'type':'datetime-local',
+                'class':'w-full rounded-lg p-3 border-gray-300 focus:ring-2 focus:ring-indigo-400'
+            }),
+            'classes': forms.SelectMultiple(attrs={
+                'size':6,
+                'class':'w-full rounded-lg p-3 border-gray-300 focus:ring-2 focus:ring-indigo-400'
+            }),
+            'term': forms.Select(attrs={
+                'class':'w-full rounded-lg p-3 border-gray-300 focus:ring-2 focus:ring-indigo-400'
+            }),
+            'session': forms.TextInput(attrs={
+                'class':'w-full rounded-lg p-3 border-gray-300 focus:ring-2 focus:ring-indigo-400'
+            }),
+            'title': forms.TextInput(attrs={
+                'class':'w-full rounded-lg p-3 border-gray-300 focus:ring-2 focus:ring-indigo-400'
+            }),
+            'description': forms.Textarea(attrs={
+                'rows':3,
+                'class':'w-full rounded-lg p-3 border-gray-300 focus:ring-2 focus:ring-indigo-400'
+            }),
+            'max_score': forms.NumberInput(attrs={
+                'class':'w-full rounded-lg p-3 border-gray-300 focus:ring-2 focus:ring-indigo-400'
+            }),
+            'file': forms.ClearableFileInput(attrs={
+                'class':'w-full'
+            }),
+            'published': forms.CheckboxInput(attrs={
+                'class':'h-5 w-5 text-indigo-600'
+            }),
         }
+
+    # --------------------------------
+    # INIT
+    # --------------------------------
+    def __init__(self, *args, **kwargs):
+
+        teacher = kwargs.pop('teacher', None)
+        school = kwargs.pop('school', None)
+
+        super().__init__(*args, **kwargs)
+
+        if teacher:
+            self.fields['classes'].queryset = teacher.classes.all()
+            self.fields['subject'].queryset = teacher.subjects.all()
+
+        elif school:
+            self.fields['classes'].queryset = SchoolClass.objects.filter(
+                school=school
+            )
+            self.fields['subject'].queryset = Subject.objects.filter(
+                school=school
+            )
+
+    # --------------------------------
+    # FILE VALIDATION
+    # --------------------------------
+    def clean_file(self):
+
+        file = self.cleaned_data.get("file")
+
+        if not file:
+            return file
+
+        ext = os.path.splitext(
+            file.name
+        )[1].lower()
+
+        allowed = [
+            ".pdf",
+            ".doc",
+            ".docx",
+            ".ppt",
+            ".pptx",
+            ".xls",
+            ".xlsx",
+            ".zip",
+            ".rar",
+            ".txt",
+            ".jpg",
+            ".jpeg",
+            ".png",
+        ]
+
+        if ext not in allowed:
+            raise ValidationError(
+                "Unsupported file type."
+            )
+
+        return file
 
     def __init__(self, *args, **kwargs):
         # Expect teacher and school to be passed from view

@@ -4,6 +4,7 @@ from django.utils import timezone
 from accounts.models import School, Teacher  # central school model
 from students.models import SchoolClass, Student
 from results.models import Subject
+from cloudinary_storage.storage import RawMediaCloudinaryStorage
 
 
 User = settings.AUTH_USER_MODEL
@@ -30,7 +31,14 @@ class Assignment(models.Model):
     term = models.CharField(max_length=1, choices=TERM_CHOICES, blank=True, null=True)
     due_date = models.DateTimeField(null=True, blank=True)
     max_score = models.PositiveIntegerField(default=100)
-    file = models.FileField(upload_to='assignments/files/', null=True, blank=True)
+    
+
+    file = models.FileField(
+        storage=RawMediaCloudinaryStorage(),
+        upload_to='assignments/files/',
+        null=True,
+        blank=True
+    )
     created_on = models.DateTimeField(auto_now_add=True)
     published = models.BooleanField(default=True)
 

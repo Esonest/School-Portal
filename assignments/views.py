@@ -14,6 +14,8 @@ from results.utils import portal_required
 
 
 
+
+
 # Helper to check if user is teacher
 def is_teacher(user):
     return hasattr(user, 'teacher_profile') or user.is_staff
