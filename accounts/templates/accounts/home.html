@@ -30,41 +30,69 @@
 
 </section>
 
-<!-- COUNTERS (UNCHANGED) -->
-<section class="py-12 bg-gray-50 dark:bg-gray-900">
+<!-- COUNTERS -->
+<section class="py-12 bg-gray-50 dark:bg-gray-900 overflow-hidden">
   <div class="max-w-7xl mx-auto px-6">
+
     <h3 class="text-2xl font-bold text-center mb-8 text-gray-800 dark:text-white">
       Our Impact
     </h3>
 
-    <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+    <div class="impact-slider">
 
-      <div x-data="{ count: 0 }" 
-           x-init="let t=1200,s=Math.ceil(t/100);let i=setInterval(()=>{count+=s;if(count>=t){count=t;clearInterval(i)}},20)"
-           class="bg-blue-100 dark:bg-blue-900 rounded-lg p-6 shadow">
-        <div class="text-4xl font-bold text-blue-700 dark:text-blue-300" x-text="count"></div>
-        <div>Students</div>
-      </div>
+      <div class="impact-track">
 
-      <div x-data="{ count: 0 }" 
-           x-init="let t=85;let i=setInterval(()=>{count++;if(count>=t){clearInterval(i)}},30)"
-           class="bg-green-100 dark:bg-green-900 rounded-lg p-6 shadow">
-        <div class="text-4xl font-bold text-green-700 dark:text-green-300" x-text="count"></div>
-        <div>Teachers</div>
-      </div>
+        <!-- STUDENTS -->
+        <div x-data="{ count: 0 }"
+             x-init="let t=1200,s=Math.ceil(t/100);let i=setInterval(()=>{count+=s;if(count>=t){count=t;clearInterval(i)}},20)"
+             class="impact-card bg-blue-100 dark:bg-blue-900">
 
-      <div x-data="{ count: 0 }" 
-           x-init="let t=240;let i=setInterval(()=>{count+=2;if(count>=t){count=t;clearInterval(i)}},25)"
-           class="bg-purple-100 dark:bg-purple-900 rounded-lg p-6 shadow">
-        <div class="text-4xl font-bold text-purple-700 dark:text-purple-300" x-text="count"></div>
-        <div>Exams</div>
-      </div>
+          <div class="text-4xl font-bold text-blue-700 dark:text-blue-300"
+               x-text="count"></div>
+          <div>Students</div>
+        </div>
 
-      <div x-data="{ count: 0 }" 
-           x-init="let t=1500;let i=setInterval(()=>{count+=15;if(count>=t){count=t;clearInterval(i)}},20)"
-           class="bg-yellow-100 dark:bg-yellow-900 rounded-lg p-6 shadow">
-        <div class="text-4xl font-bold text-yellow-700 dark:text-yellow-300" x-text="count"></div>
-        <div>Assignments</div>
+        <!-- TEACHERS -->
+        <div x-data="{ count: 0 }"
+             x-init="let t=85;let i=setInterval(()=>{count++;if(count>=t){clearInterval(i)}},30)"
+             class="impact-card bg-green-100 dark:bg-green-900">
+
+          <div class="text-4xl font-bold text-green-700 dark:text-green-300"
+               x-text="count"></div>
+          <div>Teachers</div>
+        </div>
+
+        <!-- EXAMS -->
+        <div x-data="{ count: 0 }"
+             x-init="let t=240;let i=setInterval(()=>{count+=2;if(count>=t){count=t;clearInterval(i)}},25)"
+             class="impact-card bg-purple-100 dark:bg-purple-900">
+
+          <div class="text-4xl font-bold text-purple-700 dark:text-purple-300"
+               x-text="count"></div>
+          <div>Exams</div>
+        </div>
+
+        <!-- ASSIGNMENTS -->
+        <div x-data="{ count: 0 }"
+             x-init="let t=1500;let i=setInterval(()=>{count+=15;if(count>=t){count=t;clearInterval(i)}},20)"
+             class="impact-card bg-yellow-100 dark:bg-yellow-900">
+
+          <div class="text-4xl font-bold text-yellow-700 dark:text-yellow-300"
+               x-text="count"></div>
+          <div>Assignments</div>
+        </div>
+
+        <!-- DUPLICATES FOR SMOOTH LOOP -->
+        <div class="impact-card bg-blue-100 dark:bg-blue-900">
+          <div class="text-4xl font-bold text-blue-700 dark:text-blue-300">1200</div>
+          <div>Students</div>
+        </div>
+
+        <div class="impact-card bg-green-100 dark:bg-green-900">
+          <div class="text-4xl font-bold text-green-700 dark:text-green-300">85</div>
+          <div>Teachers</div>
+        </div>
+
       </div>
 
     </div>
@@ -72,90 +100,182 @@
 </section>
 
 <!-- PORTALS -->
-<main class="p-8 max-w-7xl mx-auto">
+<main class="p-8 max-w-7xl mx-auto overflow-hidden">
 
   <h2 class="text-3xl font-semibold mb-10 text-center text-gray-800 dark:text-white">
     TECHCENTER Portals
   </h2>
 
-  <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+  <div class="slider">
 
-    <!-- RESULT -->
-    <a href="{% static 'images/portals/result1.png' %}" target="_blank" class="portal">
-      <img src="{% static 'images/portals/result1.png' %}" class="img">
-      <h3>Generate, manage and download professional student results instantly.</h3>
-    </a>
+    <div class="slide-track">
 
-    <!-- FINANCE -->
-    <a href="{% static 'images/portals/finance.png' %}" target="_blank" class="portal">
-      <img src="{% static 'images/portals/finance.png' %}" class="img">
-      <h3>Track school fees, payments and financial records with ease.</h3>
-    </a>
+      <!-- RESULT -->
+      <a href="{% static 'images/portals/result1.png' %}" target="_blank" class="portal">
+        <img src="{% static 'images/portals/result1.png' %}" class="img">
+        <h3>Generate, manage and download professional student results instantly.</h3>
+      </a>
 
-    <!-- CBT -->
-    <a href="{% static 'images/portals/cbt1.png' %}" target="_blank" class="portal">
-      <img src="{% static 'images/portals/cbt1.png' %}" class="img">
-      <h3>Conduct exams digitally with automatic scoring and instant performance reports.</h3>
-    </a>
+      <!-- FINANCE -->
+      <a href="{% static 'images/portals/finance.png' %}" target="_blank" class="portal">
+        <img src="{% static 'images/portals/finance.png' %}" class="img">
+        <h3>Track school fees, payments and financial records with ease.</h3>
+      </a>
 
-    <!-- ASSIGNMENT -->
-    <a href="{% static 'images/portals/assignment.png' %}" target="_blank" class="portal">
-      <img src="{% static 'images/portals/assignment.png' %}" class="img">
-      <h3>Create, distribute and monitor student assignments online.</h3>
-    </a>
+      <!-- CBT -->
+      <a href="{% static 'images/portals/cbt1.png' %}" target="_blank" class="portal">
+        <img src="{% static 'images/portals/cbt1.png' %}" class="img">
+        <h3>Conduct exams digitally with automatic scoring and instant performance reports.</h3>
+      </a>
 
-    <!-- NOTES -->
-    <a href="{% static 'images/portals/notes.png' %}" target="_blank" class="portal">
-      <img src="{% static 'images/portals/notes.png' %}" class="img">
-      <h3>Upload and organize lesson notes for teachers and students anytime.</h3>
-    </a>
+      <!-- ASSIGNMENT -->
+      <a href="{% static 'images/portals/assignment.png' %}" target="_blank" class="portal">
+        <img src="{% static 'images/portals/assignment.png' %}" class="img">
+        <h3>Create, distribute and monitor student assignments online.</h3>
+      </a>
 
-    <!-- LIVE CLASS -->
-    <a href="{% static 'images/portals/liveclass.png' %}" target="_blank" class="portal">
-      <img src="{% static 'images/portals/liveclass.png' %}" class="img">
-      <h3>Conduct virtual classes and keep learning active beyond the classroom.</h3>
-    </a>
+      <!-- NOTES -->
+      <a href="{% static 'images/portals/notes.png' %}" target="_blank" class="portal">
+        <img src="{% static 'images/portals/notes.png' %}" class="img">
+        <h3>Upload and organize lesson notes for teachers and students anytime.</h3>
+      </a>
 
-    <!-- ANNOUNCEMENT -->
-   <a href="{% static 'images/portals/announcement.png' %}" target="_blank" class="portal">
-      <img src="{% static 'images/portals/announcement.png' %}" class="img">
-      <h3>Share school updates and important notices instantly with staff and students.</h3>
-    </a>
+      <!-- LIVE CLASS -->
+      <a href="{% static 'images/portals/liveclass.png' %}" target="_blank" class="portal">
+        <img src="{% static 'images/portals/liveclass.png' %}" class="img">
+        <h3>Conduct virtual classes and keep learning active beyond the classroom.</h3>
+      </a>
 
-    <!-- ATTENDANCE -->
-   <a href="{% static 'images/portals/attendance.png' %}" target="_blank" class="portal">
-      <img src="{% static 'images/portals/attendance.png' %}" class="img">
-      <h3>Monitor and record student attendance digitally in real time..</h3>
-    </a>
+      <!-- ANNOUNCEMENT -->
+      <a href="{% static 'images/portals/announcement.png' %}" target="_blank" class="portal">
+        <img src="{% static 'images/portals/announcement.png' %}" class="img">
+        <h3>Share school updates and important notices instantly with staff and students.</h3>
+      </a>
+
+      <!-- ATTENDANCE -->
+      <a href="{% static 'images/portals/attendance.png' %}" target="_blank" class="portal">
+        <img src="{% static 'images/portals/attendance.png' %}" class="img">
+        <h3>Monitor and record student attendance digitally in real time.</h3>
+      </a>
+
+      <!-- DUPLICATE FOR SMOOTH LOOP -->
+      <a href="{% static 'images/portals/result1.png' %}" target="_blank" class="portal">
+        <img src="{% static 'images/portals/result1.png' %}" class="img">
+        <h3>Generate, manage and download professional student results instantly.</h3>
+      </a>
+
+      <a href="{% static 'images/portals/finance.png' %}" target="_blank" class="portal">
+        <img src="{% static 'images/portals/finance.png' %}" class="img">
+        <h3>Track school fees, payments and financial records with ease.</h3>
+      </a>
+
+    </div>
 
   </div>
 </main>
 
 <!-- STYLES -->
 <style>
-.portal {
-  background: linear-gradient(135deg,#1e3a8a,#7c3aed);
-  padding: 16px;
-  border-radius: 14px;
-  text-align: center;
-  color: white;
-  transition: .3s;
+
+.slider{
+  overflow:hidden;
+  position:relative;
+  width:100%;
 }
-.portal:hover {
-  transform: translateY(-6px);
+
+.slide-track{
+  display:flex;
+  gap:20px;
+  width:max-content;
+  animation: scroll 28s linear infinite;
 }
-.img {
-  width: 100%;
-  height: 130px;
-  object-fit: cover;
-  border-radius: 8px;
-  margin-bottom: 10px;
+
+.slide-track:hover{
+  animation-play-state: paused;
 }
-.icon {
-  font-size: 40px;
-  margin-bottom: 10px;
+
+.portal{
+  min-width:280px;
+  max-width:280px;
+  background:linear-gradient(135deg,#1e3a8a,#7c3aed);
+  padding:16px;
+  border-radius:16px;
+  text-align:center;
+  color:white;
+  transition:.4s;
+  box-shadow:0 8px 20px rgba(0,0,0,.2);
 }
+
+.portal:hover{
+  transform:translateY(-8px) scale(1.03);
+}
+
+.img{
+  width:100%;
+  height:170px;
+  object-fit:cover;
+  border-radius:10px;
+  margin-bottom:12px;
+  transition:.4s;
+}
+
+.portal:hover .img{
+  transform:scale(1.06);
+}
+
+@keyframes scroll{
+  0%{
+    transform:translateX(0);
+  }
+  100%{
+    transform:translateX(-50%);
+  }
+}
+
+
+/* IMPACT SLIDER */
+.impact-slider{
+  overflow:hidden;
+  width:100%;
+  position:relative;
+}
+
+.impact-track{
+  display:flex;
+  gap:20px;
+  width:max-content;
+  animation: impactScroll 20s linear infinite;
+}
+
+.impact-track:hover{
+  animation-play-state:paused;
+}
+
+.impact-card{
+  min-width:220px;
+  padding:25px;
+  border-radius:16px;
+  text-align:center;
+  box-shadow:0 8px 18px rgba(0,0,0,.15);
+  transition:.4s;
+}
+
+.impact-card:hover{
+  transform:translateY(-6px) scale(1.04);
+}
+
+@keyframes impactScroll{
+  0%{
+    transform:translateX(0);
+  }
+  100%{
+    transform:translateX(-50%);
+  }
+}
+
 </style>
+
+
 
 <!-- SCRIPTS -->
 <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>

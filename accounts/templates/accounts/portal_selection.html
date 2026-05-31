@@ -45,29 +45,6 @@
 
 </section>
 
-<!-- STAT COUNTERS -->
-<section class="py-10 sm:py-12 bg-gradient-to-br from-indigo-50 via-purple-50 to-blue-50 dark:from-gray-900 dark:via-gray-900 dark:to-gray-800 px-4">
-  <div class="max-w-7xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6 text-center">
-    {% comment %} Stat Cards {% endcomment %}
-    <div class="bg-white dark:bg-gray-800 shadow-lg rounded-xl p-6">
-    <h3 class="text-3xl font-bold text-indigo-600" data-count="650">0</h3>
-      <p class="mt-2 text-gray-600 dark:text-gray-300">Active Students</p>
-    </div>
-    <div class="bg-white dark:bg-gray-800 shadow-lg rounded-xl p-6">
-     <h3 class="text-3xl font-bold text-green-600" data-count="76">0</h3>
-      <p class="mt-2 text-gray-600 dark:text-gray-300">Teachers Online</p>
-    </div>
-    <div class="bg-white dark:bg-gray-800 shadow-lg rounded-xl p-6">
-    <h3 class="text-3xl font-bold text-purple-600" data-count="20">0</h3>
-      <p class="mt-2 text-gray-600 dark:text-gray-300">Exams Today</p>
-    </div>
-    <div class="bg-white dark:bg-gray-800 shadow-lg rounded-xl p-6">
-      <h3 class="text-3xl font-bold text-pink-600" data-count="94">0</h3>
-      <p class="mt-2 text-gray-600 dark:text-gray-300">Assignments Pending</p>
-    </div>
-  </div>
-</section>
-
 <!-- PORTAL CARDS -->
 
 <!-- SCHOOL HEADER -->
@@ -360,70 +337,108 @@
 
 <!-- PORTAL CARD STYLES -->
 <style>
-.portal-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-weight: bold;
-  text-align: center;
-  color: white;
-  padding: 2rem;
-  border-radius: 1.25rem;
-  font-size: 1.1rem;
-  min-height: 140px;
-  box-shadow: 0 10px 15px rgba(0,0,0,0.1);
-  transition: transform 0.25s ease, box-shadow 0.25s ease;
+
+/* MODERN GLASS PORTAL CARD */
+.portal-card{
+    position:relative;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    overflow:hidden;
+
+    color:white;
+    font-weight:700;
+    text-align:center;
+
+    padding:2rem;
+    border-radius:28px;
+    min-height:170px;
+    font-size:1.1rem;
+
+    backdrop-filter:blur(16px);
+    border:1px solid rgba(255,255,255,.15);
+
+    box-shadow:
+      0 10px 30px rgba(0,0,0,.18),
+      inset 0 1px 0 rgba(255,255,255,.1);
+
+    transition:
+      transform .45s ease,
+      box-shadow .45s ease,
+      border-color .45s ease;
 }
-@media (min-width: 640px) { .portal-card { padding: 2.5rem; font-size: 1.3rem; min-height: 170px; } }
-@media (min-width: 1024px) { .portal-card { padding: 3rem; font-size: 1.5rem; min-height: 200px; } }
-.portal-card:hover, .portal-card:active { transform: translateY(-6px) scale(1.02); box-shadow: 0 15px 25px rgba(0,0,0,0.2); }
+
+/* SOFT GLOW */
+.portal-card::before{
+    content:'';
+    position:absolute;
+    top:-50%;
+    left:-50%;
+    width:200%;
+    height:200%;
+    background:
+      linear-gradient(
+        120deg,
+        transparent 20%,
+        rgba(255,255,255,.14) 45%,
+        transparent 70%
+      );
+    transform:rotate(25deg);
+    transition:.7s;
+}
+
+/* SHIMMER */
+.portal-card:hover::before{
+    left:100%;
+}
+
+/* HOVER FLOAT */
+.portal-card:hover{
+    transform:
+      translateY(-10px)
+      scale(1.03);
+
+    box-shadow:
+      0 20px 45px rgba(0,0,0,.28);
+
+    border-color:
+      rgba(255,255,255,.35);
+}
+
+/* MOBILE */
+@media (max-width:640px){
+  .portal-card{
+      min-height:145px;
+      padding:1.5rem;
+      border-radius:22px;
+      font-size:1rem;
+  }
+}
+
+/* TABLET */
+@media (min-width:641px){
+  .portal-card{
+      font-size:1.15rem;
+  }
+}
+
+/* DESKTOP */
+@media (min-width:1024px){
+  .portal-card{
+      min-height:190px;
+      padding:2.6rem;
+      font-size:1.35rem;
+  }
+}
+
+/* SECTION TITLES */
+h3{
+    letter-spacing:.3px;
+}
+
 </style>
 
 
-<script>
-function animateSpill(el, target, duration = 2000) {
-  let start = 0;
-  let startTime = null;
-
-  function easeOut(t) {
-    return 1 - Math.pow(1 - t, 3); // smooth ease
-  }
-
-  function animate(currentTime) {
-    if (!startTime) startTime = currentTime;
-    let progress = (currentTime - startTime) / duration;
-
-    if (progress > 1) progress = 1;
-
-    let value = Math.floor(easeOut(progress) * target);
-
-    // 🔥 SPILL EFFECT (overshoot near the end)
-    if (progress > 0.85 && progress < 1) {
-      value = Math.floor(target + (Math.random() * target * 0.05)); // overshoot 5%
-    }
-
-    el.innerText = value.toLocaleString();
-
-    if (progress < 1) {
-      requestAnimationFrame(animate);
-    } else {
-      el.innerText = target.toLocaleString(); // settle
-    }
-  }
-
-  requestAnimationFrame(animate);
-}
-
-// AUTO APPLY TO YOUR STAT CARDS
-document.addEventListener("DOMContentLoaded", () => {
-  const counters = document.querySelectorAll("[data-count]");
-
-  counters.forEach(el => {
-    const target = parseInt(el.getAttribute("data-count"));
-    animateSpill(el, target);
-  });
-});
-</script>
 
 {% endblock %}

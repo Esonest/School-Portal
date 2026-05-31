@@ -81,7 +81,7 @@ scroll-smooth">
             {% if user.is_authenticated %}
 
                 <!-- SCHOOL LOGO + NAME -->
-                <div class="flex items-center space-x-3">
+                <div class="flex items-center gap-3 min-w-0 flex-1">
 
                     {% if school and school.logo %}
                         <img src="{{ school.logo.url }}"
@@ -91,9 +91,14 @@ scroll-smooth">
                              class="h-12 w-12 object-contain">
                     {% endif %}
 
-                    <div class="text-lg sm:text-xl md:text-2xl font-bold text-{{ school.theme_color }}-600">
-                        {{ school.name|default:"School Portal" }}
-                    </div>
+                   <div class="flex-1 min-w-0">
+    <div class="text-sm sm:text-lg md:text-xl lg:text-2xl
+                font-bold text-{{ school.theme_color }}-600
+                leading-tight break-words
+                max-w-[140px] sm:max-w-[220px] md:max-w-none">
+        {{ school.name|default:"School Portal" }}
+    </div>
+</div>
 
                 </div>
 
