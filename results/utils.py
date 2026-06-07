@@ -317,3 +317,41 @@ def wrap_latex(text):
     return re.sub(r'(\\[a-zA-Z]+|[a-zA-Z0-9]+[\^_][a-zA-Z0-9]+)', replacer, text)
 
    
+
+
+import qrcode
+import io
+import base64
+from django.conf import settings
+
+
+def generate_student_qr(student):
+
+    url = (
+        f"{settings.SITE_URL}"
+        f"/students/verify/{student.student_uuid}/"
+    )
+
+    qr = qrcode.QRCode(
+        box_size=6,
+        border=1
+    )
+
+    qr.add_data(url)
+    qr.make(fit=True)
+
+    img = qr.make_image(
+        fill_color="black",
+        back_color="white"
+    )
+
+    buffer = io.BytesIO()
+
+    img.save(buffer, format="PNG")
+
+    return (
+        "data:image/png;base64,"
+        + base64.b64encode(
+            buffer.getvalue()
+        ).decode()
+    )

@@ -95,21 +95,31 @@
     </h2>
 
     <div class="flex flex-wrap gap-2 no-print">
-      <a href="{% url 'school_admin:admin_student_create' school.id %}"
-         class="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg shadow hover:bg-blue-700 transition">
-        Add Student
-      </a>
 
-      <button onclick="window.print()"
-              class="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition">
-        PDF
-      </button>
+  <a href="{% url 'school_admin:admin_student_create' school.id %}"
+     class="px-4 py-2 bg-blue-600 text-white text-sm rounded-lg shadow hover:bg-blue-700 transition">
+    Add Student
+  </a>
 
-      <button onclick="exportTableToExcel()"
-              class="px-4 py-2 bg-emerald-600 text-white text-sm rounded-lg hover:bg-emerald-700 transition">
-        Excel
-      </button>
-    </div>
+  {% if selected_class %}
+  <a href="{% url 'students:class_id_cards' school.id selected_class %}"
+     target="_blank"
+     class="px-4 py-2 bg-indigo-600 text-white text-sm rounded-lg shadow hover:bg-indigo-700 transition">
+    Generate ID Cards
+  </a>
+  {% endif %}
+
+  <button onclick="window.print()"
+          class="px-4 py-2 bg-green-600 text-white text-sm rounded-lg hover:bg-green-700 transition">
+    PDF
+  </button>
+
+  <button onclick="exportTableToExcel()"
+          class="px-4 py-2 bg-emerald-600 text-white text-sm rounded-lg hover:bg-emerald-700 transition">
+    Excel
+  </button>
+
+</div>
   </div>
 
   <!-- FILTER + SEARCH -->
@@ -168,38 +178,60 @@
             <td class="px-4 py-3 font-medium">{{ student.full_name }}</td>
             <td class="px-4 py-3">{{ student.admission_no }}</td>
             <td class="px-4 py-3">{{ student.school_class }}</td>
+<td class="px-4 py-3 relative no-print">
 
-            <td class="px-4 py-3 flex flex-wrap gap- no-print">
-    <!-- Edit -->
-    <a href="{% url 'school_admin:admin_student_edit' school.id student.id %}"
-       class="px-3 py-1 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-        Edit
-    </a>
+<!-- DROPDOWN WRAPPER -->
+<div class="relative inline-block text-left">
 
-    <!-- Activate / Deactivate -->
-    <a href="{% url 'school_admin:toggle_student_status' school.id student.id %}"
-       class="px-3 py-1 rounded-lg text-white
-              {% if student.is_active %}
-                  bg-red-600 hover:bg-red-700
-              {% else %}
-                  bg-green-600 hover:bg-green-700
-              {% endif %}">
-        {% if student.is_active %}
-            Deactivate
-        {% else %}
-            Activate
-        {% endif %}
-    </a>
+    <!-- BUTTON -->
+    <button onclick="toggleMenu(this)"
+            class="px-3 py-1 bg-gray-800 text-white rounded-lg hover:bg-gray-900 text-xs shadow">
+        Actions ▾
+    </button>
 
-    <!-- Change Class -->
-    <a href="{% url 'school_admin:change_student_class' school.id student.id %}"
-       class="px-3 py-1 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
-        Change Class
-    </a>
-    <a href="{% url 'school_admin:admin_student_delete' school.id student.id %}"
-                   class="px-3 py-1 text-xs bg-yellow-600 text-white rounded">
-                  Delete
-                </a>
+    <!-- MENU -->
+    <div class="hidden absolute right-0 mt-2 w-48 bg-white border rounded-xl shadow-lg z-50">
+
+        <!-- EDIT -->
+        <a href="{% url 'school_admin:admin_student_edit' school.id student.id %}"
+           class="block px-4 py-2 text-sm hover:bg-gray-100">
+            ✏️ Edit Student
+        </a>
+
+        <!-- ID CARD -->
+        <a href="{% url 'students:student_id_card' school.id student.id %}"
+           target="_blank"
+           class="block px-4 py-2 text-sm hover:bg-gray-100">
+            🪪 View ID Card
+        </a>
+
+        <!-- CHANGE CLASS -->
+        <a href="{% url 'school_admin:change_student_class' school.id student.id %}"
+           class="block px-4 py-2 text-sm hover:bg-gray-100">
+            🔄 Change Class
+        </a>
+
+        <!-- ACTIVATE / DEACTIVATE -->
+        <a href="{% url 'school_admin:toggle_student_status' school.id student.id %}"
+           class="block px-4 py-2 text-sm hover:bg-gray-100">
+            {% if student.is_active %}
+                🚫 Deactivate
+            {% else %}
+                ✅ Activate
+            {% endif %}
+        </a>
+
+        <hr>
+
+        <!-- DELETE -->
+        <a href="{% url 'school_admin:admin_student_delete' school.id student.id %}"
+           class="block px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+            🗑️ Delete
+        </a>
+
+    </div>
+</div>
+
 </td>
           </tr>
           {% empty %}
@@ -237,6 +269,29 @@
     a.download = "students.xls";
     a.click();
   }
+</script>
+
+<script>
+function toggleMenu(btn) {
+    const menu = btn.nextElementSibling;
+
+    // close all other menus
+    document.querySelectorAll(".absolute.right-0").forEach(m => {
+        if (m !== menu) m.classList.add("hidden");
+    });
+
+    // toggle current
+    menu.classList.toggle("hidden");
+}
+
+// close menu when clicking outside
+document.addEventListener("click", function (e) {
+    if (!e.target.closest(".relative")) {
+        document.querySelectorAll(".absolute.right-0").forEach(m => {
+            m.classList.add("hidden");
+        });
+    }
+});
 </script>
 
 {% endblock %}

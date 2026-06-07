@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+
+<meta charset="UTF-8">
+<title>ID Card</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+<style>
+
+@media print {
+    body {
+        background: white;
+    }
+    .no-print {
+        display: none;
+    }
+}
+
+/* PAGE FRAME */
+.page-frame {
+    padding: 18px;
+    border-radius: 35px;
+    background: linear-gradient(135deg, #6366f1, #ec4899, #10b981, #f59e0b);
+}
+
+.page-inner {
+    background: #f9fafb;
+    border-radius: 28px;
+    padding: 30px;
+}
+
+/* CARD WATERMARK */
+.card-watermark {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    pointer-events: none;
+    z-index: 0;
+}
+
+</style>
+
+</head>
+
+<body class="bg-gray-200 py-10">
+
+<!-- PAGE WRAPPER -->
+<div class="page-frame max-w-md mx-auto">
+<div class="page-inner">
+
+<!-- CARD WRAPPER -->
+<div class="flex justify-center">
+
+<div class="relative w-[340px] bg-white rounded-3xl overflow-hidden shadow-2xl border border-gray-200">
+
+    <!-- WATERMARK -->
+    {% if school.logo %}
+    <div class="card-watermark">
+        <img src="{{ school.logo.url }}" class="w-52 h-52 opacity-5">
+    </div>
+    {% endif %}
+
+    <!-- CONTENT -->
+    <div class="relative z-10">
+
+        <!-- HEADER -->
+        <div class="bg-gradient-to-r from-{{ school.theme_color }}-600 to-{{ school.theme_color }}-800 text-center p-4 border-b-4 border-white/30">
+
+            {% if school.logo %}
+            <img src="{{ school.logo.url }}"
+                 class="w-16 h-16 object-contain mx-auto bg-white rounded-full p-1 shadow">
+            {% endif %}
+
+            <h1 class="text-white font-bold text-lg mt-2 tracking-wide">
+                {{ school.name }}
+            </h1>
+
+            <p class="text-white/80 text-xs italic">
+                {{ school.motto }}
+            </p>
+
+        </div>
+
+        <!-- PHOTO -->
+        <div class="text-center mt-5">
+
+            {% if student.photo %}
+            <div class="inline-block p-1 rounded-2xl bg-gradient-to-tr from-indigo-400 via-pink-400 to-emerald-400">
+                <img src="{{ student.photo.url }}"
+                     class="w-32 h-32 rounded-xl object-cover bg-white">
+            </div>
+            {% endif %}
+
+        </div>
+
+        <!-- DETAILS -->
+        <div class="px-6 mt-5 space-y-3">
+
+            <div>
+                <p class="text-[11px] text-indigo-600 font-semibold tracking-wider">
+                    FULL NAME
+                </p>
+                <p class="font-bold text-gray-800">
+                    {{ student.user.get_full_name }}
+                </p>
+            </div>
+
+            <div>
+                <p class="text-[11px] text-emerald-600 font-semibold tracking-wider">
+                    ADMISSION NUMBER
+                </p>
+                <p class="font-bold text-gray-800">
+                    {{ student.admission_no }}
+                </p>
+            </div>
+
+            <div>
+                <p class="text-[11px] text-amber-600 font-semibold tracking-wider">
+                    CLASS
+                </p>
+                <p class="font-bold text-gray-800">
+                    {{ student.school_class }}
+                </p>
+            </div>
+
+        </div>
+
+        <!-- QR -->
+        <div class="text-center mt-5">
+
+            <div class="inline-block p-2 rounded-xl border border-gray-200 bg-white shadow-sm">
+                <img src="{{ qr_data_uri }}" class="w-28 h-28 mx-auto">
+            </div>
+
+            <p class="text-xs text-gray-500 mt-1">
+                Scan to Verify
+            </p>
+
+        </div>
+
+        <!-- FOOTER -->
+        <div class="bg-gray-50 mt-5 p-4 text-center border-t">
+
+            <p class="font-bold text-sm text-indigo-700 tracking-wide">
+                TECHCENTER SCHOOL PORTAL
+            </p>
+
+            <p class="text-xs text-gray-500">
+                Smart School Management System
+            </p>
+
+        </div>
+
+    </div>
+
+</div>
+
+</div>
+
+<!-- PRINT BUTTON -->
+<div class="text-center mt-6 no-print">
+    <button
+        onclick="window.print()"
+        class="px-6 py-3 rounded-xl bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow">
+        Print ID Card
+    </button>
+</div>
+
+</div>
+</div>
+
+</body>
+</html>

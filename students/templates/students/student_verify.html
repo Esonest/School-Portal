@@ -1,0 +1,93 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+
+<title>Student Verification</title>
+
+<script src="https://cdn.tailwindcss.com"></script>
+</head>
+
+<body class="bg-gray-100 min-h-screen flex items-center justify-center p-4">
+
+<div class="max-w-md w-full bg-white rounded-3xl shadow-2xl overflow-hidden">
+
+    <!-- Header -->
+    <div class="bg-gradient-to-r from-{{ school.theme_color }}-600 to-{{ school.theme_color }}-800 p-6 text-center">
+
+        {% if school.logo %}
+        <img src="{{ school.logo.url }}"
+             class="w-20 h-20 object-contain mx-auto bg-white rounded-full p-2">
+        {% endif %}
+
+        <h1 class="text-white text-2xl font-bold mt-3">
+            {{ school.name }}
+        </h1>
+
+        <p class="text-white/80 text-sm">
+            {{ school.motto }}
+        </p>
+
+    </div>
+
+    <!-- Verification -->
+    <div class="p-8 text-center">
+
+        <div class="text-green-600 text-6xl mb-3">
+            ✓
+        </div>
+
+        <h2 class="text-2xl font-bold text-gray-800">
+            Student Verified
+        </h2>
+
+        <p class="text-gray-500">
+            This student belongs to {{ school.name }}
+        </p>
+
+        {% if student.photo %}
+        <img src="{{ student.photo.url }}"
+             class="w-32 h-32 rounded-full mx-auto mt-6 border-4 border-gray-200 object-cover">
+        {% endif %}
+
+        <div class="mt-6 space-y-3 text-left">
+
+            <div class="bg-gray-50 p-3 rounded-xl">
+                <strong>Name:</strong>
+                {{ student.user.get_full_name }}
+            </div>
+
+            <div class="bg-gray-50 p-3 rounded-xl">
+                <strong>Admission No:</strong>
+                {{ student.admission_no }}
+            </div>
+
+            <div class="bg-gray-50 p-3 rounded-xl">
+                <strong>Class:</strong>
+                {{ student.school_class }}
+            </div>
+
+            <div class="bg-gray-50 p-3 rounded-xl">
+                <strong>Status:</strong>
+
+                {% if student.is_active %}
+                    <span class="text-green-600 font-bold">
+                        Active
+                    </span>
+                {% else %}
+                    <span class="text-red-600 font-bold">
+                        Inactive
+                    </span>
+                {% endif %}
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+</body>
+</html>

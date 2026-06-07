@@ -21,6 +21,10 @@ urlpatterns = [
     path("announcements/<int:pk>/delete/",views.announcement_delete,name="announcement_delete"),
     path("ajax/load-students/",views.load_students_by_class,name="load_students_by_class"),
 
+    path("verify/<uuid:student_uuid>/",views.student_verify,name="student_verify"),
+    path("<int:school_id>/<int:student_id>/id-card/",views.student_id_card,name="student_id_card"),
+    path("<int:school_id>/class/<int:class_id>/id-cards/",views.class_id_cards,name="class_id_cards"),
+
 ]
 
 

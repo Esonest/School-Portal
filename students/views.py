@@ -540,3 +540,113 @@ def load_students_by_class(
         "students": data
     })
 
+
+from django.shortcuts import render, get_object_or_404
+from students.models import Student
+
+def student_verify(request, student_uuid):
+
+    student = get_object_or_404(
+        Student,
+        student_uuid=student_uuid,
+        is_active=True
+    )
+
+    return render(
+        request,
+        "students/student_verify.html",
+        {
+            "student": student,
+            "school": student.school,
+        }
+    )
+
+from results.utils import generate_student_qr
+from accounts.decorators import school_admin_or_superadmin_required
+from accounts.models import School
+
+@login_required
+@school_admin_or_superadmin_required
+def student_id_card(
+    request,
+    school_id,
+    student_id
+):
+
+    school = get_object_or_404(
+        School,
+        id=school_id
+    )
+
+    student = get_object_or_404(
+        Student,
+        id=student_id,
+        school=school
+    )
+
+    qr_data_uri = generate_student_qr(student)
+
+    return render(
+        request,
+        "students/id_card.html",
+        {
+            "student": student,
+            "school": school,
+            "qr_data_uri": qr_data_uri,
+        }
+    )
+
+
+from django.shortcuts import get_object_or_404, render
+from students.models import Student, SchoolClass
+from accounts.models import School
+
+@login_required
+@school_admin_or_superadmin_required
+def class_id_cards(
+    request,
+    school_id,
+    class_id
+):
+
+    school = get_object_or_404(
+        School,
+        id=school_id
+    )
+
+    school_class = get_object_or_404(
+        SchoolClass,
+        id=class_id,
+        school=school
+    )
+
+    students = Student.objects.filter(
+        school=school,
+        school_class=school_class,
+        is_active=True
+    ).select_related(
+        "user",
+        "school_class"
+    ).order_by(
+        "user__first_name",
+        "user__last_name"
+    )
+
+    cards = []
+
+    for student in students:
+
+        cards.append({
+            "student": student,
+            "qr": generate_student_qr(student)
+        })
+
+    return render(
+        request,
+        "students/class_id_cards.html",
+        {
+            "school": school,
+            "school_class": school_class,
+            "cards": cards,
+        }
+    )    

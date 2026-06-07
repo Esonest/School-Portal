@@ -2,6 +2,7 @@ from django.db import models
 from django.conf import settings
 from django.utils import timezone
 from accounts.models import School
+import uuid
 
 
 class SchoolClass(models.Model):
@@ -98,6 +99,16 @@ class Student(models.Model):
     # Bio Data
     # -----------------------------
     dob = models.DateField(null=True, blank=True)
+
+  
+    student_uuid = models.UUIDField(
+        default=uuid.uuid4,
+        editable=False,
+        unique=True,
+        db_index=True
+    )
+
+    # existing fields below...
 
     gender = models.CharField(
         max_length=10,

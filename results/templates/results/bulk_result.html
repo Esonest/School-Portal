@@ -383,24 +383,27 @@
       
    <!-- FOOTER: Signature and QR -->
   <div class="flex justify-between items-end mt-6 text-sm border-t pt-2">
-    
-    <!-- Principal Signature (Left) -->
-    <div class="text-center">
-      {% if r.principal_signature_url %}
-        <img src="{{ r.principal_signature_url }}" class="h-12 border mx-auto" alt="Principal Signature" />
-      {% else %}
-        <div class="h-12 w-32 border mx-auto"></div>
-      {% endif %}
-      <p class="mt-1 font-semibold text-xs md:text-sm">Head Teacher</p>
-    </div>
 
-    <!-- QR Code (Right) -->
-    <div class="text-center">
-      <img src="{{ r.qr_data_uri }}" class="h-16 w-16 border mx-auto" alt="Student QR Code" />
-      <p class="text-xs md:text-sm">Scan to verify</p>
-    </div>
-
+  <!-- Signature -->
+  <div class="text-center w-32 md:w-40 flex-shrink-0">
+    {% if r.principal_signature_url %}
+      <img src="{{ r.principal_signature_url }}" class="h-12 border mx-auto" />
+    {% else %}
+      <div class="h-12 w-32 border mx-auto"></div>
+    {% endif %}
+    <p class="mt-1 font-semibold text-xs md:text-sm">Head Teacher</p>
   </div>
+
+  <!-- QR -->
+  <div class="text-center w-32 md:w-40 flex-shrink-0">
+    <img src="{{ r.qr_data_uri }}"
+         class="w-32 h-32 md:w-40 md:h-40 border mx-auto bg-white p-1 object-contain"
+         alt="Student QR Code" />
+    <p class="text-xs md:text-sm">Scan to verify</p>
+  </div>
+
+</div>
+
   </div>
 </div>
 {% endfor %}
