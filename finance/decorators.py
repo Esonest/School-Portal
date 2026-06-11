@@ -15,3 +15,5 @@ def accountant_required(func):
         raise PermissionDenied
 
     return wrapper
+
+

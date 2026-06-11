@@ -1076,8 +1076,26 @@ def invoice_create(request):
 
 @login_required
 def invoice_detail(request, pk):
-    invoice = get_object_or_404(Invoice, pk=pk, school=request.user.school)
-    return render(request, "finance/invoice_detail.html", {"invoice": invoice})
+    invoice = get_object_or_404(
+        Invoice,
+        pk=pk,
+        school=request.user.school
+    )
+
+    can_delete = (
+        getattr(request.user, "is_superadmin", False)
+        or getattr(request.user, "is_schooladmin", False)
+        or "accountant" in getattr(request.user, "roles", [])
+    )
+
+    return render(
+        request,
+        "finance/invoice_detail.html",
+        {
+            "invoice": invoice,
+            "can_delete": can_delete,
+        }
+    )
 
 
 
@@ -1562,21 +1580,6 @@ def financial_reports(request):
     )
 
 
-
-
-
-
-
-@login_required
-def invoice_delete(request, pk):
-    invoice = get_object_or_404(Invoice, pk=pk, school=request.user.school)
-
-    if request.method == "POST":
-        invoice.delete()
-        messages.success(request, f"Invoice '{invoice.title}' has been deleted successfully.")
-        return redirect("finance:invoice_list")
-
-    return render(request, "finance/invoice_delete.html", {"invoice": invoice})
 
 
 
