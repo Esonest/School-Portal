@@ -5,6 +5,11 @@
 
 {% block content %}
 
+<div class="fixed inset-0 -z-10 bg-black">
+    <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_right,#4f46e520,transparent_35%)]"></div>
+    <div class="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,#9333ea20,transparent_35%)]"></div>
+</div>
+
 
 <!-- HERO SECTION (LOGO BACKGROUND) -->
 <section class="relative h-80 flex items-center justify-center overflow-hidden">
@@ -31,10 +36,10 @@
 </section>
 
 <!-- COUNTERS -->
-<section class="py-12 bg-gray-50 dark:bg-gray-900 overflow-hidden">
+<section class="py-16 bg-gradient-to-b from-gray-950 via-slate-900 to-black overflow-hidden">
   <div class="max-w-7xl mx-auto px-6">
 
-    <h3 class="text-2xl font-bold text-center mb-8 text-gray-800 dark:text-white">
+    <h3 class="text-3xl font-bold text-center mb-10 text-white">
       Our Impact
     </h3>
 
@@ -100,9 +105,9 @@
 </section>
 
 <!-- PORTALS -->
-<main class="p-8 max-w-7xl mx-auto overflow-hidden">
+<main class="p-8 max-w-7xl mx-auto overflow-hidden bg-gradient-to-b from-black via-slate-950 to-gray-950">
 
-  <h2 class="text-3xl font-semibold mb-10 text-center text-gray-800 dark:text-white">
+  <h2 class="text-4xl font-bold mb-12 text-center text-white tracking-wide">
     TECHCENTER Portals
   </h2>
 
@@ -195,20 +200,75 @@
 }
 
 .portal{
-  min-width:280px;
-  max-width:280px;
-  background:linear-gradient(135deg,#1e3a8a,#7c3aed);
-  padding:16px;
-  border-radius:16px;
+  min-width:300px;
+  max-width:300px;
+
+  background:rgba(15,23,42,0.85);
+  backdrop-filter:blur(12px);
+
+  border:1px solid rgba(255,255,255,.08);
+
+  padding:18px;
+  border-radius:20px;
   text-align:center;
-  color:white;
-  transition:.4s;
-  box-shadow:0 8px 20px rgba(0,0,0,.2);
+  color:#fff;
+
+  transition:.4s ease;
+
+  box-shadow:
+    0 10px 30px rgba(0,0,0,.5),
+    inset 0 1px 1px rgba(255,255,255,.05);
+}
+
+.portal h3{
+  color:#e5e7eb;
+  font-size:.95rem;
+  line-height:1.6;
 }
 
 .portal:hover{
-  transform:translateY(-8px) scale(1.03);
+  transform:translateY(-10px);
+  border-color:#6366f1;
+
+  box-shadow:
+    0 20px 40px rgba(99,102,241,.25),
+    0 0 20px rgba(99,102,241,.15);
 }
+
+
+.portal,
+.impact-card{
+    position:relative;
+    overflow:hidden;
+}
+
+.portal::before,
+.impact-card::before{
+    content:'';
+    position:absolute;
+    top:-100%;
+    left:-100%;
+    width:250%;
+    height:250%;
+
+    background:
+      linear-gradient(
+        120deg,
+        transparent,
+        rgba(255,255,255,.04),
+        transparent
+      );
+
+    transform:rotate(25deg);
+    transition:.8s;
+}
+
+.portal:hover::before,
+.impact-card:hover::before{
+    top:100%;
+    left:100%;
+}
+
 
 .img{
   width:100%;
@@ -252,17 +312,35 @@
 }
 
 .impact-card{
-  min-width:220px;
-  padding:25px;
-  border-radius:16px;
+  min-width:240px;
+
+  background:rgba(17,24,39,.85);
+  color:white;
+
+  border:1px solid rgba(255,255,255,.08);
+
+  backdrop-filter:blur(10px);
+
+  padding:28px;
+  border-radius:20px;
   text-align:center;
-  box-shadow:0 8px 18px rgba(0,0,0,.15);
-  transition:.4s;
+
+  box-shadow:
+    0 10px 25px rgba(0,0,0,.45);
+
+  transition:.4s ease;
 }
 
+
 .impact-card:hover{
-  transform:translateY(-6px) scale(1.04);
+  transform:translateY(-8px);
+
+  border-color:#8b5cf6;
+
+  box-shadow:
+    0 15px 35px rgba(139,92,246,.25);
 }
+
 
 @keyframes impactScroll{
   0%{

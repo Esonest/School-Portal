@@ -5,8 +5,13 @@
 
 {% block content %}
 
+<div class="fixed inset-0 -z-10 bg-black">
+    <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_right,#4f46e520,transparent_35%)]"></div>
+    <div class="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,#9333ea20,transparent_35%)]"></div>
+</div>
+
 <!-- HERO -->
-<section class="relative h-[60vh] min-h-[420px] flex items-center justify-center overflow-hidden">
+<section class="relative h-[70vh] min-h-[500px] flex items-center justify-center overflow-hidden">
 
   <!-- Background Image -->
   <div class="absolute inset-0 bg-cover bg-center"
@@ -14,10 +19,10 @@
   </div>
 
   <!-- Overlay -->
-  <div class="absolute inset-0 bg-black/70"></div>
+  <div class="absolute inset-0 bg-black/85"></div>
 
   <!-- Gradient -->
-  <div class="absolute inset-0 bg-gradient-to-tr from-blue-600/30 via-purple-600/20 to-transparent animate-pulse"></div>
+  <div class="absolute inset-0 bg-gradient-to-tr from-indigo-600/20 via-purple-600/20 to-transparent"></div>
 
   <!-- Floating Shapes -->
   <div class="absolute w-72 h-72 bg-blue-500/20 rounded-full blur-3xl top-10 left-10 animate-bounce"></div>
@@ -25,22 +30,22 @@
 
   <!-- Content -->
   <div class="relative z-10 text-center px-6 max-w-3xl" data-aos="fade-up">
-    <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white">
+    <h1 class="text-4xl sm:text-5xl md:text-6xl font-extrabold text-white tracking-tight">
       TECHCENTER School Portal
     </h1>
 
-    <p class="mt-4 text-lg text-gray-200">
+    <p class="mt-6 text-xl text-gray-300 max-w-2xl mx-auto">
       Smart, powerful, and scalable school management platform for modern education.
     </p>
 
     <div class="mt-6 flex flex-col sm:flex-row gap-4 justify-center">
       <a href="{% url 'accounts:subscribe' %}"
-   class="px-6 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-lg transition">
+   class="px-8 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl shadow-xl transition-all duration-300 hover:scale-105">
   Get Started
 </a>
 
       <a href="{% url 'accounts:book_demo' %}"
-   class="px-6 py-3 bg-white/10 backdrop-blur border border-white/30 text-white rounded-lg hover:bg-white/20 transition">
+   class="px-8 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl shadow-xl transition-all duration-300 hover:scale-105">
   Request Demo
 </a>
     </div>
@@ -48,7 +53,7 @@
 </section>
 
 
-<main class="px-4 sm:px-6 md:px-8 py-12 max-w-7xl mx-auto space-y-20">
+<main class="px-4 sm:px-6 md:px-8 py-16 max-w-7xl mx-auto space-y-24">
 
   <!-- Mission & Vision -->
   <section data-aos="fade-up" class="text-center">
@@ -59,19 +64,19 @@
     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
 
       <div data-aos="zoom-in"
-           class="bg-white/70 dark:bg-gray-800/70 backdrop-blur-md rounded-2xl shadow-lg p-8 hover:shadow-2xl transition">
+           class="bg-slate-900/80 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl p-8 hover:shadow-2xl transition">
         <i class="bi bi-lightbulb text-5xl text-blue-600 mb-4"></i>
-        <h3 class="text-xl font-bold mb-3 text-gray-800 dark:text-gray-100">Our Mission</h3>
-        <p class="text-gray-700 dark:text-gray-200">
+        <h3 class="text-xl font-bold mb-3 text-white">Our Mission</h3>
+        <p class="text-gray-300">
           To provide innovative technology solutions that streamline school management, enhance learning experiences, and simplify administrative tasks.
         </p>
       </div>
 
       <div data-aos="zoom-in" data-aos-delay="100"
-           class="bg-white/70 dark:bg-gray-800/70 backdrop-blur-md rounded-2xl shadow-lg p-8 hover:shadow-2xl transition">
+           class="bg-slate-900/80 backdrop-blur-xl border border-white/10 rounded-3xl shadow-2xl p-8 hover:shadow-2xl transition">
         <i class="bi bi-eye text-5xl text-blue-600 mb-4"></i>
-        <h3 class="text-xl font-bold mb-3 text-gray-800 dark:text-gray-100">Our Vision</h3>
-        <p class="text-gray-700 dark:text-gray-200">
+        <h3 class="text-xl font-bold mb-3 text-white">Our Vision</h3>
+        <p class="text-gray-300">
           To become the leading digital education platform transforming schools with smart, easy-to-use solutions.
         </p>
       </div>
@@ -82,9 +87,9 @@
 
   <!-- IMPACT -->
   <section data-aos="fade-up"
-           class="py-12 rounded-2xl bg-gradient-to-br from-gray-50 via-white to-gray-100 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 shadow-inner">
+           class="py-16 rounded-3xl bg-gradient-to-br from-slate-950 via-slate-900 to-black border border-white/10 shadow-2xl">
 
-    <h3 class="text-2xl font-bold text-center mb-10 text-gray-800 dark:text-gray-100">
+    <h3 class="text-4xl font-bold text-center mb-12 text-white">
       Our Impact
     </h3>
 
@@ -92,32 +97,104 @@
 
       <div data-aos="zoom-in"
            x-data="{ count: 0 }"
-           x-init="let t=150; let i=setInterval(()=>{count++; if(count>=t){count=t; clearInterval(i)}},15)"
-           class="bg-blue-500/10 backdrop-blur rounded-xl p-6 shadow">
+           x-init="
+let interval = null;
+
+setTimeout(() => {
+    let target = 120;   // change per card
+    let speed = 15;
+
+    interval = setInterval(() => {
+        count++;
+
+        if (count >= target) {
+            count = target;
+            clearInterval(interval);
+            interval = null;
+        }
+    }, speed);
+
+}, 200);
+"
+           class="impact-card">
         <div class="text-4xl font-bold text-blue-600" x-text="count"></div>
         <p class="mt-2 text-gray-700 dark:text-gray-200">Schools Served</p>
       </div>
 
       <div data-aos="zoom-in" data-aos-delay="100"
            x-data="{ count: 0 }"
-           x-init="let t=1200; let i=setInterval(()=>{count+=12; if(count>=t){count=t; clearInterval(i)}},15)"
-           class="bg-green-500/10 backdrop-blur rounded-xl p-6 shadow">
+          x-init="
+let interval = null;
+
+setTimeout(() => {
+    let target = 1200;   // change per card
+    let speed = 15;
+
+    interval = setInterval(() => {
+        count++;
+
+        if (count >= target) {
+            count = target;
+            clearInterval(interval);
+            interval = null;
+        }
+    }, speed);
+
+}, 200);
+"
+           class="impact-card">
         <div class="text-4xl font-bold text-green-600" x-text="count"></div>
         <p class="mt-2 text-gray-700 dark:text-gray-200">Students</p>
       </div>
 
       <div data-aos="zoom-in" data-aos-delay="200"
            x-data="{ count: 0 }"
-           x-init="let t=85; let i=setInterval(()=>{count++; if(count>=t){count=t; clearInterval(i)}},25)"
-           class="bg-purple-500/10 backdrop-blur rounded-xl p-6 shadow">
+           x-init="
+let interval = null;
+
+setTimeout(() => {
+    let target = 85;   // change per card
+    let speed = 15;
+
+    interval = setInterval(() => {
+        count++;
+
+        if (count >= target) {
+            count = target;
+            clearInterval(interval);
+            interval = null;
+        }
+    }, speed);
+
+}, 200);
+"
+           class="impact-card">
         <div class="text-4xl font-bold text-purple-600" x-text="count"></div>
         <p class="mt-2 text-gray-700 dark:text-gray-200">Teachers</p>
       </div>
 
       <div data-aos="zoom-in" data-aos-delay="300"
-           x-data="{ count: 0 }"
-           x-init="let t=1500; let i=setInterval(()=>{count+=15; if(count>=t){count=t; clearInterval(i)}},15)"
-           class="bg-yellow-500/10 backdrop-blur rounded-xl p-6 shadow">
+     x-data="{ count: 0 }"
+     x-init="
+let interval = null;
+
+setTimeout(() => {
+    let target = 150;   // change per card
+    let speed = 15;
+
+    interval = setInterval(() => {
+        count++;
+
+        if (count >= target) {
+            count = target;
+            clearInterval(interval);
+            interval = null;
+        }
+    }, speed);
+
+}, 200);
+"
+     class="impact-card">
         <div class="text-4xl font-bold text-yellow-600" x-text="count"></div>
         <p class="mt-2 text-gray-700 dark:text-gray-200">Assignments</p>
       </div>
@@ -128,35 +205,35 @@
 
   <!-- WHY CHOOSE US -->
   <section data-aos="fade-up">
-    <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-12 text-gray-800 dark:text-gray-100">
+    <h2 class="text-2xl sm:text-3xl md:text-4xl font-bold text-center mb-12 text-white">
       Why Choose Us?
     </h2>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
 
       <div data-aos="zoom-in"
-           class="bg-white/70 dark:bg-gray-800/70 backdrop-blur-md rounded-2xl shadow-lg p-8 text-center hover:shadow-2xl transition">
+           class="feature-card text-center hover:shadow-2xl transition">
         <i class="bi bi-speedometer2 text-5xl text-blue-600 mb-4"></i>
-        <h3 class="text-xl font-bold mb-2 text-gray-800 dark:text-gray-100">Fast & Efficient</h3>
-        <p class="text-gray-700 dark:text-gray-200">
+        <h3 class="text-xl font-bold mb-2 text-white">Fast & Efficient</h3>
+        <p class="text-gray-300">
           Quick access and smooth operations across all school activities.
         </p>
       </div>
 
       <div data-aos="zoom-in" data-aos-delay="100"
-           class="bg-white/70 dark:bg-gray-800/70 backdrop-blur-md rounded-2xl shadow-lg p-8 text-center hover:shadow-2xl transition">
+           class="feature-card text-center hover:shadow-2xl transition">
         <i class="bi bi-shield-lock text-5xl text-blue-600 mb-4"></i>
-        <h3 class="text-xl font-bold mb-2 text-gray-800 dark:text-gray-100">Secure</h3>
-        <p class="text-gray-700 dark:text-gray-200">
+        <h3 class="text-xl font-bold mb-2 text-white">Secure</h3>
+        <p class="text-gray-300">
           Strong protection for all school data and records.
         </p>
       </div>
 
       <div data-aos="zoom-in" data-aos-delay="200"
-           class="bg-white/70 dark:bg-gray-800/70 backdrop-blur-md rounded-2xl shadow-lg p-8 text-center hover:shadow-2xl transition">
+           class="feature-card text-center hover:shadow-2xl transition">
         <i class="bi bi-people text-5xl text-blue-600 mb-4"></i>
-        <h3 class="text-xl font-bold mb-2 text-gray-800 dark:text-gray-100">Supportive</h3>
-        <p class="text-gray-700 dark:text-gray-200">
+        <h3 class="text-xl font-bold mb-2 text-white">Supportive</h3>
+        <p class="text-gray-300">
           Reliable support team always ready to help schools succeed.
         </p>
       </div>
@@ -166,7 +243,7 @@
 
 
   <!-- CTA -->
-  <section class="mt-20 relative overflow-hidden rounded-2xl bg-gradient-to-r from-blue-600 to-purple-600 text-white text-center py-16 px-6">
+  <section class="mt-24 relative overflow-hidden rounded-3xl bg-gradient-to-r from-indigo-700 via-purple-700 to-blue-700 text-white text-center py-20 px-8 border border-white/10 shadow-2xl">
 
     <div class="absolute w-96 h-96 bg-white/20 blur-3xl rounded-full top-[-50px] left-[-50px]"></div>
 
@@ -181,7 +258,7 @@
 
       <div class="mt-6">
         <a href="{% url 'accounts:book_demo' %}"
-   class="px-8 py-3 bg-white text-blue-600 font-semibold rounded-lg shadow-lg hover:scale-105 transition">
+   class="px-8 py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl shadow-xl transition-all duration-300 hover:scale-105">
   Visit Portal
 </a>
       </div>
@@ -190,6 +267,74 @@
   </section>
 
 </main>
+
+<style>
+
+.impact-card,
+.feature-card{
+    background:rgba(15,23,42,.85);
+    backdrop-filter:blur(14px);
+
+    border:1px solid rgba(255,255,255,.08);
+
+    border-radius:24px;
+
+    padding:32px;
+
+    box-shadow:
+      0 10px 30px rgba(0,0,0,.45);
+
+    transition:.4s ease;
+
+    color:white;
+
+    position:relative;
+    overflow:hidden;
+}
+
+.impact-card:hover,
+.feature-card:hover{
+    transform:translateY(-10px);
+
+    border-color:#6366f1;
+
+    box-shadow:
+      0 20px 40px rgba(99,102,241,.25),
+      0 0 20px rgba(99,102,241,.15);
+}
+
+.impact-card::before,
+.feature-card::before{
+    content:'';
+
+    position:absolute;
+
+    top:-100%;
+    left:-100%;
+
+    width:250%;
+    height:250%;
+
+    background:
+      linear-gradient(
+        120deg,
+        transparent,
+        rgba(255,255,255,.04),
+        transparent
+      );
+
+    transform:rotate(25deg);
+
+    transition:.8s;
+}
+
+.impact-card:hover::before,
+.feature-card:hover::before{
+    top:100%;
+    left:100%;
+}
+
+</style>
 
 <!-- Alpine -->
 <script src="https://cdn.jsdelivr.net/npm/alpinejs@3.x.x/dist/cdn.min.js" defer></script>
@@ -202,6 +347,14 @@
     duration: 800,
     once: true
   });
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', () => {
+  setTimeout(() => {
+    AOS.refresh();
+  }, 500);
+});
 </script>
 
 {% endblock %}
