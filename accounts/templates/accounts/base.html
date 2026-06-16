@@ -72,7 +72,7 @@ scroll-smooth">
 {% endif %}
 
 <!-- NAVBAR -->
-<nav   class="bg-techDark shadow-md sticky top-0 z-40 border-b border-gray-200">
+<nav class="sticky top-0 z-40 bg-slate-950/90 backdrop-blur-xl border-b border-white/10 shadow-lg">
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
@@ -134,27 +134,27 @@ scroll-smooth">
                 <div class="hidden md:flex items-center space-x-6">
 
                     <a href="{% url 'accounts:home' %}"
-                       class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+                       class="text-gray-300 hover:text-white transition font-medium {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
                         Home
                     </a>
 
                     <a href="{% url 'accounts:about' %}"
-                       class="nav-link {% if request.resolver_match.url_name == 'about' %}active{% endif %}">
+                       class="text-gray-300 hover:text-white transition font-medium {% if request.resolver_match.url_name == 'about' %}active{% endif %}">
                         About
                     </a>
 
                     <a href="{% url 'accounts:contact' %}"
-                       class="nav-link {% if request.resolver_match.url_name == 'contact' %}active{% endif %}">
+                       class="text-gray-300 hover:text-white transition font-medium {% if request.resolver_match.url_name == 'contact' %}active{% endif %}">
                         Contact
                     </a>
 
                     <a href="{% url 'accounts:help' %}"
-                       class="nav-link {% if request.resolver_match.url_name == 'help' %}active{% endif %}">
+                       class="text-gray-300 hover:text-white transition font-medium {% if request.resolver_match.url_name == 'help' %}active{% endif %}">
                         Help
                     </a>
 
                     <a href="{% url 'accounts:login' %}"
-                       class="px-4 py-2 rounded-lg bg-gradient-to-r from-techPrimary to-techSecondary text-white hover:opacity-90 transition">
+                       class="px-4 py-2 rounded-lg bg-gradient-to-r from-techPrimary to-techSecondary text-white hover:opacity-90 hover:scale-[1.02] transition">
                         Login
                     </a>
 
@@ -174,7 +174,7 @@ scroll-smooth">
 
     <!-- MOBILE MENU -->
     <div id="mobile-menu"
-         class="hidden md:hidden bg-white border-t shadow-lg animate-slide-down">
+         class="hidden md:hidden bg-slate-950 border-t border-white/10 shadow-lg animate-slide-down">
 
         {% if user.is_authenticated %}
 
@@ -222,17 +222,19 @@ scroll-smooth">
     color: #2563eb;
 }
 .active {
-    color: #2563eb;
-    font-weight: 700;
-    border-bottom: 2px solid #2563eb;
+    color: white;
+    font-weight: 600;
+    border-bottom: 2px solid #7c3aed;
 }
 .mobile-link {
     display: block;
     padding: 0.75rem 1rem;
-    border-bottom: 1px solid #f1f5f9;
+    border-bottom: 1px solid rgba(255,255,255,0.08);
+    color: #cbd5e1;
 }
 .mobile-link:hover {
-    background: #f8fafc;
+    background: rgba(255,255,255,0.05);
+    color: white;
 }
 .animate-slide-down {
     animation: slideDown 0.3s ease;
