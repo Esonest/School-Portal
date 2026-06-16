@@ -4,93 +4,82 @@
 
 {% block content %}
 
+<!-- BACKGROUND -->
+<div class="fixed inset-0 -z-10 bg-black">
+    <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_right,#4f46e520,transparent_35%)]"></div>
+    <div class="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,#9333ea20,transparent_35%)]"></div>
+</div>
+
 <!-- HERO -->
-<section class="relative h-64 flex items-center justify-center overflow-hidden">
+<section class="relative h-72 flex items-center justify-center overflow-hidden">
 
-  <!-- CLEAN GRADIENT BACKGROUND -->
-  <div class="absolute inset-0 bg-gradient-to-br from-blue-900 via-purple-900 to-blue-800"></div>
+  <div class="absolute inset-0 bg-gradient-to-br from-indigo-900 via-purple-900 to-black"></div>
+  <div class="absolute inset-0 bg-black/70"></div>
 
-  <!-- CONTENT -->
-  <div class="relative z-10 text-center px-4 max-w-2xl flex flex-col items-center" data-aos="zoom-in">
+  <div class="relative z-10 text-center px-4 max-w-2xl" data-aos="zoom-in">
 
-    <!-- LOGO (VISIBLE, NOT COVERED) -->
     <img src="{% static 'images/techcenter-logo.png' %}"
-         alt="Techcenter Logo"
-         class="w-16 sm:w-20 md:w-24 mb-4 drop-shadow-2xl brightness-110">
+         class="w-20 sm:w-24 mx-auto mb-4 drop-shadow-2xl">
 
-    <!-- TEXT -->
-    <h1 class="text-3xl md:text-4xl font-bold text-white">
-      Get in Touch
-    </h1>
+    <h1 class="text-4xl font-bold text-white">Get in Touch</h1>
 
-    <p class="mt-3 text-blue-100">
+    <p class="mt-3 text-gray-300">
       We’re here to support you. Reach out anytime.
     </p>
 
   </div>
 </section>
 
+<!-- MAIN -->
 <main class="px-4 sm:px-6 md:px-8 py-16 max-w-7xl mx-auto space-y-20">
 
   <!-- CONTACT INFO -->
   <section>
-    <h2 class="text-2xl md:text-3xl font-bold text-center mb-12 text-gray-800 dark:text-gray-100">
+    <h2 class="text-3xl font-bold text-center mb-12 text-white">
       Contact Information
     </h2>
 
     <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-6">
 
-      <div data-aos="zoom-in"
-           class="bg-blue-500/10 backdrop-blur-md rounded-2xl p-6 shadow hover:shadow-xl transition">
-        <h3 class="font-semibold mb-2 text-blue-700">📍 Address</h3>
-        <p class="text-gray-700 dark:text-gray-300 text-sm">
-          Elekahia Housing Estate, Port Harcourt
-        </p>
+      <div data-aos="zoom-in" class="contact-card">
+        <h3 class="text-blue-400 font-semibold mb-2">📍 Address</h3>
+        <p class="text-gray-300 text-sm">Elekahia Housing Estate, Port Harcourt</p>
       </div>
 
-      <div data-aos="zoom-in" data-aos-delay="100"
-           class="bg-purple-500/10 backdrop-blur-md rounded-2xl p-6 shadow hover:shadow-xl transition">
-        <h3 class="font-semibold mb-2 text-purple-700">📞 Phone</h3>
-        <p class="text-gray-700 dark:text-gray-300 text-sm">
-          +234 708 573 4441
-        </p>
+      <div data-aos="zoom-in" data-aos-delay="100" class="contact-card">
+        <h3 class="text-purple-400 font-semibold mb-2">📞 Phone</h3>
+        <p class="text-gray-300 text-sm">+234 708 573 4441</p>
       </div>
 
-      <div data-aos="zoom-in" data-aos-delay="200"
-           class="bg-blue-500/10 backdrop-blur-md rounded-2xl p-6 shadow hover:shadow-xl transition">
-        <h3 class="font-semibold mb-2 text-blue-700">✉️ Email</h3>
-        <p class="text-gray-700 dark:text-gray-300 text-sm">
-          techcenter652@gmail.com
-        </p>
+      <div data-aos="zoom-in" data-aos-delay="200" class="contact-card">
+        <h3 class="text-blue-400 font-semibold mb-2">✉️ Email</h3>
+        <p class="text-gray-300 text-sm">techcenter652@gmail.com</p>
       </div>
 
-      <div data-aos="zoom-in" data-aos-delay="300"
-           class="bg-purple-500/10 backdrop-blur-md rounded-2xl p-6 shadow hover:shadow-xl transition">
-        <h3 class="font-semibold mb-2 text-purple-700">🌐 Website</h3>
-        <p class="text-gray-700 dark:text-gray-300 text-sm">
-          www.techcenter.com.ng
-        </p>
+      <div data-aos="zoom-in" data-aos-delay="300" class="contact-card">
+        <h3 class="text-purple-400 font-semibold mb-2">🌐 Website</h3>
+        <p class="text-gray-300 text-sm">www.techcenter.com.ng</p>
       </div>
 
     </div>
   </section>
 
-
-  <!-- CONTACT FORM -->
+  <!-- FORM -->
   <section>
-    <h2 class="text-2xl md:text-3xl font-bold text-center mb-10 text-gray-800 dark:text-gray-100">
+    <h2 class="text-3xl font-bold text-center mb-10 text-white">
       Send Us a Message
     </h2>
 
     <form action="{% url 'accounts:contact_us' %}" method="POST"
-          class="bg-white/80 dark:bg-gray-800/80 backdrop-blur-md shadow-xl rounded-2xl p-6 sm:p-8 space-y-6 max-w-3xl mx-auto"
           id="contactForm"
-          data-aos="zoom-in">
+          data-aos="zoom-in"
+          class="form-card space-y-6 max-w-3xl mx-auto">
+
       {% csrf_token %}
 
       {% if messages %}
         {% for message in messages %}
-          <div class="alert-message p-4 rounded-lg text-white
+          <div class="p-4 rounded-lg text-white
             {% if message.tags == 'success' %}bg-green-600{% else %}bg-red-600{% endif %}">
             {{ message }}
           </div>
@@ -98,95 +87,140 @@
       {% endif %}
 
       <div class="grid md:grid-cols-2 gap-6">
+
         <div>
-          <label class="form-label">Full Name</label>
-          <input class="form-input" type="text" name="name" id="name" required>
-          <p class="error-text hidden" id="nameError">Enter your name</p>
+          <label class="label">Full Name</label>
+          <input class="input" type="text" name="name" id="name">
+          <p class="error hidden" id="nameError">Enter your name</p>
         </div>
 
         <div>
-          <label class="form-label">Email</label>
-          <input class="form-input" type="email" name="email" id="email" required>
-          <p class="error-text hidden" id="emailError">Enter valid email</p>
+          <label class="label">Email</label>
+          <input class="input" type="email" name="email" id="email">
+          <p class="error hidden" id="emailError">Enter valid email</p>
         </div>
+
       </div>
 
       <div>
-        <label class="form-label">Subject</label>
-        <input class="form-input" type="text" name="subject" id="subject" required>
-        <p class="error-text hidden" id="subjectError">Enter subject</p>
+        <label class="label">Subject</label>
+        <input class="input" type="text" name="subject" id="subject">
+        <p class="error hidden" id="subjectError">Enter subject</p>
       </div>
 
       <div>
-        <label class="form-label">Message</label>
-        <textarea class="form-input h-32" name="message" id="message" required></textarea>
-        <p class="error-text hidden" id="messageError">Enter message</p>
+        <label class="label">Message</label>
+        <textarea class="input h-32" name="message" id="message"></textarea>
+        <p class="error hidden" id="messageError">Enter message</p>
       </div>
 
-      <div class="text-center pt-4">
-        <button type="submit" id="sendBtn"
-                class="px-8 py-3 bg-blue-600 hover:bg-blue-700 text-white rounded-lg shadow-lg transition w-full sm:w-auto">
-          Send Message
-        </button>
-      </div>
+      <button id="sendBtn"
+              class="w-full py-3 bg-indigo-600 hover:bg-indigo-500 text-white rounded-xl transition hover:scale-105">
+        Send Message
+      </button>
+
+      <!-- WHATSAPP QUICK CONTACT -->
+<a href="https://wa.me/2347085734441?text=Hello%20TECHCENTER%20Support,%20I%20need%20help%20with%20your%20school%20portal"
+   target="_blank"
+   class="mt-4 w-full flex items-center justify-center gap-2 py-3 rounded-xl bg-green-600 hover:bg-green-500 text-white font-semibold transition hover:scale-105 shadow-lg">
+
+  <!-- WhatsApp Icon -->
+  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" viewBox="0 0 24 24">
+    <path d="M20.52 3.48A11.91 11.91 0 0 0 12.06 0C5.64 0 .45 5.19.45 11.6c0 2.04.53 4.03 1.53 5.79L0 24l6.78-1.77a11.6 11.6 0 0 0 5.28 1.34h.01c6.42 0 11.61-5.19 11.61-11.6 0-3.11-1.21-6.04-3.36-8.49zM12.07 21.3a9.7 9.7 0 0 1-4.94-1.35l-.35-.2-4.02 1.05 1.07-3.92-.23-.36a9.71 9.71 0 0 1-1.5-5.18c0-5.36 4.36-9.72 9.73-9.72 2.6 0 5.05 1.01 6.89 2.85a9.68 9.68 0 0 1 2.85 6.88c0 5.37-4.37 9.72-9.7 9.72zm5.32-7.22c-.29-.15-1.72-.85-1.99-.95-.27-.1-.47-.15-.66.15-.19.29-.76.95-.93 1.14-.17.19-.34.21-.63.07-.29-.15-1.22-.45-2.33-1.43-.86-.76-1.44-1.7-1.61-1.99-.17-.29-.02-.45.13-.6.14-.14.29-.34.43-.52.14-.17.19-.29.29-.48.1-.19.05-.36-.02-.51-.07-.15-.66-1.59-.9-2.18-.24-.58-.48-.5-.66-.51h-.56c-.19 0-.51.07-.78.36-.27.29-1.04 1.02-1.04 2.48s1.07 2.86 1.22 3.06c.15.19 2.09 3.2 5.08 4.48.71.31 1.27.49 1.7.63.71.23 1.36.2 1.87.12.57-.08 1.72-.7 1.97-1.37.24-.66.24-1.22.17-1.37-.07-.15-.26-.24-.55-.38z"/>
+  </svg>
+
+  Chat on WhatsApp
+</a>
+
     </form>
   </section>
 
 </main>
 
-
 <!-- STYLES -->
 <style>
-.form-label {
+
+.contact-card{
+  background:rgba(15,23,42,.85);
+  backdrop-filter:blur(14px);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:18px;
+  padding:20px;
+  transition:.4s ease;
+  box-shadow:0 10px 30px rgba(0,0,0,.4);
+}
+
+.contact-card:hover{
+  transform:translateY(-8px);
+  border-color:#6366f1;
+  box-shadow:0 20px 40px rgba(99,102,241,.2);
+}
+
+.form-card{
+  background:rgba(15,23,42,.85);
+  backdrop-filter:blur(14px);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:24px;
+  padding:28px;
+  box-shadow:0 10px 30px rgba(0,0,0,.4);
+}
+
+.label{
   display:block;
   margin-bottom:6px;
+  color:#e5e7eb;
   font-weight:600;
-  color:#1f2937;
 }
 
-.form-input {
+.input{
   width:100%;
-  padding:10px;
-  border-radius:8px;
-  border:1px solid #d1d5db;
+  padding:12px;
+  border-radius:10px;
+  background:rgba(255,255,255,.05);
+  border:1px solid rgba(255,255,255,.1);
+  color:white;
+  outline:none;
 }
 
-.form-input:focus {
-  border-color:#2563eb;
-  box-shadow:0 0 0 2px rgba(37,99,235,0.2);
+.input:focus{
+  border-color:#6366f1;
+  box-shadow:0 0 0 2px rgba(99,102,241,.2);
 }
 
-.error-text {
-  color:#dc2626;
+.error{
+  color:#f87171;
   font-size:12px;
   margin-top:4px;
 }
+
 </style>
 
-
-<!-- SCRIPT -->
+<!-- SCRIPT FIX -->
 <script>
-setTimeout(() => {
-  document.querySelectorAll(".alert-message").forEach(el => {
-    el.style.opacity = "0";
-    setTimeout(() => el.remove(), 500);
-  });
-}, 4000);
-
 const form = document.getElementById("contactForm");
 const btn = document.getElementById("sendBtn");
 
-form.addEventListener("submit", function(e) {
+const name = document.getElementById("name");
+const email = document.getElementById("email");
+const subject = document.getElementById("subject");
+const message = document.getElementById("message");
+
+const nameError = document.getElementById("nameError");
+const emailError = document.getElementById("emailError");
+const subjectError = document.getElementById("subjectError");
+const messageError = document.getElementById("messageError");
+
+form.addEventListener("submit", function(e){
   let valid = true;
 
-  document.querySelectorAll(".error-text").forEach(el => el.classList.add("hidden"));
+  document.querySelectorAll(".error").forEach(el => el.classList.add("hidden"));
 
-  if (!name.value.trim()) { nameError.classList.remove("hidden"); valid=false; }
-  if (!/^\S+@\S+\.\S+$/.test(email.value)) { emailError.classList.remove("hidden"); valid=false; }
-  if (!subject.value.trim()) { subjectError.classList.remove("hidden"); valid=false; }
-  if (!message.value.trim()) { messageError.classList.remove("hidden"); valid=false; }
+  if(!name.value.trim()){ nameError.classList.remove("hidden"); valid=false; }
+  if(!/^\S+@\S+\.\S+$/.test(email.value)){ emailError.classList.remove("hidden"); valid=false; }
+  if(!subject.value.trim()){ subjectError.classList.remove("hidden"); valid=false; }
+  if(!message.value.trim()){ messageError.classList.remove("hidden"); valid=false; }
 
-  if (!valid) {
+  if(!valid){
     e.preventDefault();
     return;
   }
@@ -194,11 +228,19 @@ form.addEventListener("submit", function(e) {
   btn.disabled = true;
   btn.innerText = "Sending...";
 });
+
+setTimeout(() => {
+  document.querySelectorAll(".p-4.rounded-lg").forEach(el => {
+    el.style.opacity = "0";
+    setTimeout(() => el.remove(), 500);
+  });
+}, 4000);
+
 </script>
 
 <!-- AOS -->
-<script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
 <link href="https://unpkg.com/aos@2.3.4/dist/aos.css" rel="stylesheet">
+<script src="https://unpkg.com/aos@2.3.4/dist/aos.js"></script>
 
 <script>
 AOS.init({

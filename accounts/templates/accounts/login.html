@@ -5,30 +5,33 @@
 
 {% block content %}
 
-<!-- PREMIUM BACKGROUND -->
-<div class="min-h-screen flex items-center justify-center px-4
-            bg-gradient-to-br from-blue-900 via-purple-900 to-indigo-900
-            animate-gradient bg-[length:200%_200%]">
+<!-- BACKGROUND -->
+<div class="fixed inset-0 -z-10 bg-black">
+  <div class="absolute inset-0 bg-[radial-gradient(circle_at_top_right,#4f46e520,transparent_40%)]"></div>
+  <div class="absolute inset-0 bg-[radial-gradient(circle_at_bottom_left,#9333ea20,transparent_40%)]"></div>
+</div>
+
+<!-- MAIN WRAPPER -->
+<div class="min-h-screen flex items-center justify-center px-4">
 
   <!-- LOGIN CARD -->
-  <div id="loginContainer"
-       class="w-full max-w-md p-8 rounded-2xl
-              bg-white/10 backdrop-blur-xl border border-white/20
-              shadow-[0_8px_32px_rgba(0,0,0,0.3)]
-              text-white transition-all duration-300">
+  <div class="w-full max-w-md p-8 rounded-3xl
+              bg-slate-900/80 backdrop-blur-xl
+              border border-white/10 shadow-2xl text-white">
 
     <!-- LOGO -->
     <div class="flex flex-col items-center mb-6">
-      <img src="{% static 'images/techcenter-logo.png' %}" 
+      <img src="{% static 'images/techcenter-logo.png' %}"
            class="w-20 mb-3 drop-shadow-lg">
       <h2 class="text-2xl font-bold">TECHCENTER</h2>
-      <p class="text-sm text-gray-300">School Portal Login</p>
+      <p class="text-sm text-gray-400">School Portal Login</p>
     </div>
 
+    <!-- MESSAGES -->
     {% if messages %}
-      <div class="mb-4 space-y-2">
+      <div class="mb-4 space-y-2 text-center">
         {% for message in messages %}
-          <p class="text-red-300 text-sm text-center">{{ message }}</p>
+          <p class="text-red-300 text-sm">{{ message }}</p>
         {% endfor %}
       </div>
     {% endif %}
@@ -37,58 +40,38 @@
       ⚠️ Session expired. Please login again.
     </div>
 
+    <!-- ROLE SELECT -->
+    <div class="flex justify-center gap-2 mb-6">
+      <button type="button" class="role-btn active" data-role="student">Student</button>
+      <button type="button" class="role-btn" data-role="teacher">Teacher</button>
+      <button type="button" class="role-btn" data-role="admin">Admin</button>
+    </div>
+
+    <input type="hidden" name="role" id="roleInput" value="student">
+
     <!-- FORM -->
-    <form method="post" action="{% url 'accounts:login' %}" class="space-y-6" id="loginForm">
+    <form method="post" action="{% url 'accounts:login' %}" id="loginForm" class="space-y-6">
       {% csrf_token %}
 
-
-      <div class="flex justify-center gap-2 mb-6">
-  <button type="button" class="role-btn active" data-role="student">Student</button>
-  <button type="button" class="role-btn" data-role="teacher">Teacher</button>
-  <button type="button" class="role-btn" data-role="admin">Admin</button>
-</div>
-
-<input type="hidden" name="role" id="roleInput" value="student">
       <!-- USERNAME -->
       <div class="relative">
+        <span class="absolute left-3 top-3 text-gray-400">👤</span>
         <input type="text" name="username" id="id_username" required
-               class="peer w-full px-10 py-3 bg-transparent border border-gray-300/30 rounded-lg
-                      text-white placeholder-transparent focus:outline-none
-                      focus:border-purple-400 focus:ring-2 focus:ring-purple-500 transition">
-
-        <label for="id_username"
-               class="absolute left-10 top-3 text-gray-300 text-sm
-                      peer-placeholder-shown:top-3
-                      peer-placeholder-shown:text-base
-                      peer-focus:-top-2 peer-focus:text-xs
-                      peer-focus:text-purple-300 transition-all">
-          Username
-        </label>
-
-        <span class="absolute left-3 top-3 text-gray-300">👤</span>
+               class="w-full pl-10 pr-3 py-3 rounded-xl
+                      bg-black/40 border border-white/10 text-white
+                      focus:outline-none focus:ring-2 focus:ring-indigo-500">
       </div>
 
       <!-- PASSWORD -->
       <div class="relative">
+        <span class="absolute left-3 top-3 text-gray-400">🔒</span>
         <input type="password" name="password" id="id_password" required
-               class="peer w-full px-10 py-3 bg-transparent border border-gray-300/30 rounded-lg
-                      text-white placeholder-transparent focus:outline-none
-                      focus:border-purple-400 focus:ring-2 focus:ring-purple-500 transition">
+               class="w-full pl-10 pr-10 py-3 rounded-xl
+                      bg-black/40 border border-white/10 text-white
+                      focus:outline-none focus:ring-2 focus:ring-indigo-500">
 
-        <label for="id_password"
-               class="absolute left-10 top-3 text-gray-300 text-sm
-                      peer-placeholder-shown:top-3
-                      peer-placeholder-shown:text-base
-                      peer-focus:-top-2 peer-focus:text-xs
-                      peer-focus:text-purple-300 transition-all">
-          Password
-        </label>
-
-        <span class="absolute left-3 top-3 text-gray-300">🔒</span>
-
-        <!-- TOGGLE -->
         <button type="button" id="togglePassword"
-                class="absolute right-3 top-3 text-gray-300 hover:text-white">
+                class="absolute right-3 top-3 text-gray-400 hover:text-white">
           👁️
         </button>
       </div>
@@ -97,16 +80,16 @@
 
       <!-- FORGOT -->
       <div class="text-right">
-        <a href="#" class="text-sm text-purple-300 hover:underline">
+        <a href="#" class="text-sm text-indigo-300 hover:underline">
           Forgot Password?
         </a>
       </div>
 
       <!-- BUTTON -->
       <button type="submit" id="loginButton"
-              class="w-full py-3 rounded-lg font-semibold
-                     bg-gradient-to-r from-purple-500 to-indigo-500
-                     hover:from-purple-600 hover:to-indigo-600
+              class="w-full py-3 rounded-xl font-semibold
+                     bg-gradient-to-r from-indigo-600 to-purple-600
+                     hover:from-indigo-500 hover:to-purple-500
                      transition transform hover:scale-[1.02]
                      flex items-center justify-center gap-2">
 
@@ -122,32 +105,25 @@
   </div>
 </div>
 
-<!-- ANIMATION -->
-<style>
-@keyframes gradientMove {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-.animate-gradient {
-  animation: gradientMove 10s ease infinite;
-}
-</style>
-
+<!-- ROLE BUTTON STYLE -->
 <style>
 .role-btn {
   padding: 8px 14px;
-  border-radius: 8px;
-  background: rgba(255,255,255,0.1);
+  border-radius: 10px;
+  background: rgba(255,255,255,0.05);
   color: white;
   cursor: pointer;
   transition: 0.3s;
+  border: 1px solid rgba(255,255,255,0.1);
 }
+
 .role-btn.active {
-  background: linear-gradient(to right, #9333ea, #6366f1);
+  background: linear-gradient(to right, #6366f1, #8b5cf6);
+  border-color: transparent;
 }
 </style>
 
+<!-- SCRIPT -->
 <script>
 const roleBtns = document.querySelectorAll(".role-btn");
 const roleInput = document.getElementById("roleInput");
@@ -159,10 +135,7 @@ roleBtns.forEach(btn => {
     roleInput.value = btn.dataset.role;
   });
 });
-</script>
 
-<!-- SCRIPT (UNCHANGED LOGIC) -->
-<script>
 const passwordInput = document.getElementById('id_password');
 const togglePassword = document.getElementById('togglePassword');
 const loginForm = document.getElementById('loginForm');
