@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+ <!DOCTYPE html>
 <html lang="en">
 <head>
     <meta charset="UTF-8">
@@ -20,9 +20,9 @@
             theme: {
                 extend: {
                     colors: {
-                        techPrimary: "#2563eb",
-                        techSecondary: "#7c3aed",
-                        techDark: "#0b1220"
+                        techPrimary: "#2563eb",   // blue
+                        techSecondary: "#7c3aed", // purple
+                        techDark: "#0f172a"
                     }
                 }
             }
@@ -45,8 +45,9 @@
     <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 </head>
 
-<body class="min-h-screen flex flex-col text-gray-100
-bg-gradient-to-br from-[#070b14] via-[#0b1220] to-[#0a0f1c]
+<body class="flex flex-col min-h-screen text-gray-800 
+bg-gradient-to-br from-gray-50 via-white to-gray-100 
+dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 
 scroll-smooth">
 
 <!-- FLASH -->
@@ -54,13 +55,13 @@ scroll-smooth">
 <div class="fixed top-4 inset-x-0 z-50 px-4">
     <div class="max-w-xl mx-auto space-y-3">
         {% for message in messages %}
-        <div class="px-4 py-3 rounded-xl text-sm font-medium text-center shadow-lg backdrop-blur-md
+        <div class="px-4 py-3 rounded-lg text-sm font-medium text-center shadow-lg
             {% if message.tags == 'error' %}
-              bg-red-500/20 text-red-200 border border-red-500/30
+              bg-red-100 text-red-700 border border-red-300
             {% elif message.tags == 'success' %}
-              bg-green-500/20 text-green-200 border border-green-500/30
+              bg-green-100 text-green-700 border border-green-300
             {% else %}
-              bg-white/10 text-gray-200 border border-white/10
+              bg-gray-100 text-gray-700 border border-gray-300
             {% endif %}
         animate-fade-in">
             {{ message }}
@@ -71,7 +72,7 @@ scroll-smooth">
 {% endif %}
 
 <!-- NAVBAR -->
-<nav class="sticky top-0 z-40 border-b border-white/10 bg-black/30 backdrop-blur-xl">
+<nav   class="bg-techDark shadow-md sticky top-0 z-40 border-b border-gray-200">
 
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 
@@ -79,69 +80,89 @@ scroll-smooth">
 
             {% if user.is_authenticated %}
 
-                <!-- SCHOOL + LOGO -->
+                <!-- SCHOOL LOGO + NAME -->
                 <div class="flex items-center gap-3 min-w-0 flex-1">
 
                     {% if school and school.logo %}
                         <img src="{{ school.logo.url }}"
-                             class="h-11 w-11 rounded-full object-cover border border-white/10 shadow">
+                             class="h-12 w-12 rounded-full object-cover border">
                     {% else %}
                         <img src="{% static 'images/techcenter-logo.png' %}"
-                             class="h-11 w-11 object-contain">
+                             class="h-12 w-12 object-contain">
                     {% endif %}
 
-                    <div class="min-w-0">
-                        <div class="text-sm sm:text-lg md:text-xl font-bold truncate
-                                    text-white">
-                            <span class="px-2 py-1 rounded-md bg-gradient-to-r from-techPrimary to-techSecondary">
-                                {{ school.name|default:"School Portal" }}
-                            </span>
-                        </div>
-                    </div>
+                   <div class="flex-1 min-w-0">
+    <div class="text-sm sm:text-lg md:text-xl lg:text-2xl
+                font-bold text-{{ school.theme_color }}-600
+                leading-tight break-words
+                max-w-[140px] sm:max-w-[220px] md:max-w-none">
+        {{ school.name|default:"School Portal" }}
+    </div>
+</div>
 
                 </div>
 
+                <!-- DESKTOP LOGOUT -->
                 <div class="hidden md:flex items-center">
                     <a href="{% url 'accounts:logout' %}"
-                       class="px-4 py-2 rounded-lg bg-red-500/80 hover:bg-red-500 text-white transition">
+                       class="px-4 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition">
                         Logout
                     </a>
                 </div>
 
+                <!-- MOBILE BTN -->
                 <button id="mobile-menu-button"
-                        class="md:hidden text-white text-2xl">
+                        class="md:hidden text-gray-700 text-2xl">
                     ☰
                 </button>
 
             {% else %}
 
-                <a href="{% url 'accounts:home' %}" class="flex items-center gap-3">
+                <!-- GUEST NAVBAR -->
+                <a href="{% url 'accounts:home' %}"
+                   class="flex items-center space-x-3">
 
                     <img src="{% static 'images/techcenter-logo.png' %}"
-                         class="h-14 w-14 object-contain">
+                         class="h-16 w-16 object-contain"/>
 
-                    <span class="text-lg font-extrabold bg-gradient-to-r from-techPrimary to-techSecondary bg-clip-text text-transparent">
+                    <span class="text-lg sm:text-xl font-extrabold bg-gradient-to-r from-techPrimary to-techSecondary bg-clip-text text-transparent">
                         TECHCENTER Portal
                     </span>
-
                 </a>
 
-                <div class="hidden md:flex items-center space-x-6 text-gray-300">
+                <!-- DESKTOP MENU -->
+                <div class="hidden md:flex items-center space-x-6">
 
-                    <a href="{% url 'accounts:home' %}" class="hover:text-white">Home</a>
-                    <a href="{% url 'accounts:about' %}" class="hover:text-white">About</a>
-                    <a href="{% url 'accounts:contact' %}" class="hover:text-white">Contact</a>
-                    <a href="{% url 'accounts:help' %}" class="hover:text-white">Help</a>
+                    <a href="{% url 'accounts:home' %}"
+                       class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+                        Home
+                    </a>
+
+                    <a href="{% url 'accounts:about' %}"
+                       class="nav-link {% if request.resolver_match.url_name == 'about' %}active{% endif %}">
+                        About
+                    </a>
+
+                    <a href="{% url 'accounts:contact' %}"
+                       class="nav-link {% if request.resolver_match.url_name == 'contact' %}active{% endif %}">
+                        Contact
+                    </a>
+
+                    <a href="{% url 'accounts:help' %}"
+                       class="nav-link {% if request.resolver_match.url_name == 'help' %}active{% endif %}">
+                        Help
+                    </a>
 
                     <a href="{% url 'accounts:login' %}"
-                       class="px-4 py-2 rounded-lg bg-gradient-to-r from-techPrimary to-techSecondary text-white hover:opacity-90">
+                       class="px-4 py-2 rounded-lg bg-gradient-to-r from-techPrimary to-techSecondary text-white hover:opacity-90 transition">
                         Login
                     </a>
 
                 </div>
 
+                <!-- MOBILE BTN -->
                 <button id="mobile-menu-button"
-                        class="md:hidden text-white text-2xl">
+                        class="md:hidden text-gray-700 text-2xl">
                     ☰
                 </button>
 
@@ -151,21 +172,32 @@ scroll-smooth">
 
     </div>
 
-    <!-- MOBILE -->
+    <!-- MOBILE MENU -->
     <div id="mobile-menu"
-         class="hidden md:hidden bg-[#0b1220] border-t border-white/10">
+         class="hidden md:hidden bg-white border-t shadow-lg animate-slide-down">
 
         {% if user.is_authenticated %}
-            <a href="{% url 'accounts:logout' %}" class="block px-4 py-3 text-red-400">Logout</a>
-        {% else %}
-            <a href="{% url 'accounts:home' %}" class="block px-4 py-3">Home</a>
-            <a href="{% url 'accounts:about' %}" class="block px-4 py-3">About</a>
-            <a href="{% url 'accounts:contact' %}" class="block px-4 py-3">Contact</a>
-            <a href="{% url 'accounts:help' %}" class="block px-4 py-3">Help</a>
-            <a href="{% url 'accounts:login' %}" class="block px-4 py-3 text-techPrimary font-semibold">Login</a>
-        {% endif %}
 
+            <a href="{% url 'accounts:logout' %}"
+               class="mobile-link text-red-600">
+                Logout
+            </a>
+
+        {% else %}
+
+            <a href="{% url 'accounts:home' %}" class="mobile-link">Home</a>
+            <a href="{% url 'accounts:about' %}" class="mobile-link">About</a>
+            <a href="{% url 'accounts:contact' %}" class="mobile-link">Contact</a>
+            <a href="{% url 'accounts:help' %}" class="mobile-link">Help</a>
+
+            <a href="{% url 'accounts:login' %}"
+               class="mobile-link text-techPrimary font-semibold">
+                Login
+            </a>
+
+        {% endif %}
     </div>
+
 </nav>
 
 <!-- CONTENT -->
@@ -174,19 +206,58 @@ scroll-smooth">
 </main>
 
 <!-- FOOTER -->
-<footer class="border-t border-white/10 bg-black/30 backdrop-blur-xl text-gray-400 py-5">
-    <div class="text-center text-xs sm:text-sm">
+<footer class="bg-techDark text-white py-4">
+    <div class="text-center text-xs sm:text-sm opacity-90">
         © {{ year|default:2025 }} TECHCENTER School Portal — All Rights Reserved.
     </div>
 </footer>
 
-<!-- SCRIPTS -->
+<!-- STYLES -->
+<style>
+.nav-link {
+    font-weight: 500;
+    transition: all 0.3s ease;
+}
+.nav-link:hover {
+    color: #2563eb;
+}
+.active {
+    color: #2563eb;
+    font-weight: 700;
+    border-bottom: 2px solid #2563eb;
+}
+.mobile-link {
+    display: block;
+    padding: 0.75rem 1rem;
+    border-bottom: 1px solid #f1f5f9;
+}
+.mobile-link:hover {
+    background: #f8fafc;
+}
+.animate-slide-down {
+    animation: slideDown 0.3s ease;
+}
+.animate-fade-in {
+    animation: fadeIn 0.6s ease;
+}
+@keyframes slideDown {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+}
+</style>
+
+<!-- MOBILE SCRIPT -->
 <script>
 document.getElementById("mobile-menu-button").addEventListener("click", () => {
     document.getElementById("mobile-menu").classList.toggle("hidden");
 });
 </script>
 
+<!-- AUTO LOGOUT -->
 <script>
 let timeout = 600000;
 let warningTime = 540000;
@@ -199,7 +270,7 @@ function resetTimers() {
     clearTimeout(warningTimer);
 
     warningTimer = setTimeout(() => {
-        alert("You will be logged out soon due to inactivity.");
+        alert("You will be logged out in 1 minute due to inactivity.");
     }, warningTime);
 
     logoutTimer = setTimeout(() => {
