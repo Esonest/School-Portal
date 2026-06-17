@@ -1,0 +1,67 @@
+{% extends 'accounts/base.html' %}
+{% load static %}
+
+{% block content %}
+
+<div class="max-w-4xl mx-auto bg-white dark:bg-gray-900 shadow-lg rounded-2xl p-6 sm:p-10 border border-gray-100 dark:border-gray-700 transition-colors duration-300">
+
+    <!-- Title -->
+    <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-800 dark:text-white mb-2">
+        TECHCENTER School Portal Data Deletion Instructions
+    </h1>
+
+    <p class="text-sm text-gray-500 dark:text-gray-400 mb-6">
+        We respect your right to control your personal data.
+    </p>
+
+    <!-- Intro -->
+    <p class="text-gray-700 dark:text-gray-300 mb-6 leading-relaxed">
+        Users may request deletion of their personal data by sending an email to the address below.
+    </p>
+
+    <!-- Email Card -->
+    <div class="bg-gray-50 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl p-4 mb-6">
+
+        <p class="text-sm text-gray-500 dark:text-gray-400 mb-1">Contact Email</p>
+
+        <a href="mailto:techcenter652@gmail.com"
+           class="text-indigo-600 dark:text-indigo-400 font-semibold hover:underline text-lg">
+            techcenter652@gmail.com
+        </a>
+
+    </div>
+
+    <!-- Subject -->
+    <h2 class="text-lg font-bold text-gray-800 dark:text-white mb-2">
+        Email Subject
+    </h2>
+
+    <p class="text-gray-700 dark:text-gray-300 mb-6">
+        <span class="font-semibold">Data Deletion Request</span>
+    </p>
+
+    <!-- Required Info -->
+    <h2 class="text-lg font-bold text-gray-800 dark:text-white mb-3">
+        Include in your request
+    </h2>
+
+    <ul class="list-disc list-inside space-y-2 text-gray-700 dark:text-gray-300 mb-6">
+        <li>Full Name</li>
+        <li>Registered Email Address</li>
+        <li>School Name</li>
+        <li>Reason for Request (Optional)</li>
+    </ul>
+
+    <!-- Notice -->
+    <div class="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-xl p-4">
+
+        <p class="text-sm text-yellow-800 dark:text-yellow-200 leading-relaxed">
+            Upon verification, TECHCENTER will process the request within a reasonable period and remove eligible personal information from our systems,
+            except where retention is required by law or legitimate educational recordkeeping obligations.
+        </p>
+
+    </div>
+
+</div>
+
+{% endblock %}

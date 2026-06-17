@@ -1,5 +1,5 @@
 from django.urls import path
-from .views import portal_selection, keep_alive, login_view, logout_view, home, open_portal,about, contact,help, contact_us, book_demo, subscribe
+from .views import portal_selection, keep_alive, login_view, logout_view, home, open_portal,about, contact,help, contact_us, book_demo, subscribe, privacy_policy,terms_of_service, data_deletion
 
 app_name = 'accounts'
 
@@ -18,6 +18,10 @@ urlpatterns = [
     path( "book-demo/",book_demo,name="book_demo"),
 
     path("subscribe/",subscribe,name="subscribe"),
+
+    path('privacy-policy/', privacy_policy, name='privacy_policy'),
+    path('terms-of-service/', terms_of_service, name='terms_of_service'),
+    path('data-deletion/', data_deletion, name='data_deletion'),
 
 
 ]

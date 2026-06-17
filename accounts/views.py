@@ -419,3 +419,14 @@ def subscribe(request):
         request,
         "accounts/subscribe.html"
     )
+
+
+
+def privacy_policy(request):
+    return render(request, 'accounts/privacy_policy.html')
+
+def terms_of_service(request):
+    return render(request, 'accounts/terms_of_service.html')
+
+def data_deletion(request):
+    return render(request, 'accounts/data_deletion.html')

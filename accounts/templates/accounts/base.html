@@ -206,10 +206,57 @@ scroll-smooth">
 </main>
 
 <!-- FOOTER -->
-<footer class="bg-techDark text-white py-4">
-    <div class="text-center text-xs sm:text-sm opacity-90">
-        © {{ year|default:2025 }} TECHCENTER School Portal — All Rights Reserved.
+<!-- FOOTER -->
+<footer class="bg-slate-950 border-t border-white/10 mt-20">
+
+    <div class="max-w-7xl mx-auto px-6 py-10">
+
+        <div class="flex flex-col md:flex-row items-center justify-between gap-6">
+
+            <!-- LEFT -->
+            <div class="text-center md:text-left">
+                <h3 class="text-white font-semibold text-sm sm:text-base">
+                    TECHCENTER School Portal
+                </h3>
+
+                <p class="text-xs text-gray-400 mt-1">
+                    Empowering education through technology
+                </p>
+            </div>
+
+            <!-- CENTER LINKS -->
+            <div class="flex flex-wrap items-center justify-center gap-4 text-xs sm:text-sm">
+
+                <a href="{% url 'accounts:privacy_policy' %}"
+                   class="text-gray-400 hover:text-white transition">
+                    Privacy Policy
+                </a>
+
+                <span class="text-gray-600">•</span>
+
+                <a href="{% url 'accounts:terms_of_service' %}"
+                   class="text-gray-400 hover:text-white transition">
+                    Terms of Service
+                </a>
+
+                <span class="text-gray-600">•</span>
+
+                <a href="{% url 'accounts:data_deletion' %}"
+                   class="text-gray-400 hover:text-white transition">
+                    Data Deletion
+                </a>
+
+            </div>
+
+            <!-- RIGHT -->
+            <div class="text-center md:text-right text-xs text-gray-500">
+                © {{ year|default:2026 }} All rights reserved.
+            </div>
+
+        </div>
+
     </div>
+
 </footer>
 
 <!-- STYLES -->
