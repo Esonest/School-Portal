@@ -85,28 +85,33 @@ class StudentCreateForm(forms.ModelForm):
 
     def save(self, commit=True):
         data = self.cleaned_data
-        username = data.get("username") or generate_unique_username(data.get("first_name"))
+        username = data.get("username") or generate_unique_username(data["first_name"])
 
+        # Create User
         user = User.objects.create_user(
             username=username,
             first_name=data["first_name"],
             last_name=data["last_name"],
-            email=data["email"],  # email saved here
+            email=data["email"],
             password=data["password"],
-            parent_name=data["parent_name"],
-            parent_email=data["parent_email"],
-            parent_phone=data["parent_phone"],
-            student_email=data["student_email"],
             role="student",
             is_student=True,
-            school=self.school
+            school=self.school,
         )
 
+    # Create Student
         student = super().save(commit=False)
         student.user = user
         student.school = self.school
 
+    # Student fields
+        student.parent_name = data["parent_name"]
+        student.parent_email = data["parent_email"]
+        student.parent_phone = data["parent_phone"]
+        student.student_email = data["student_email"]
+
         if commit:
+            user.save()
             student.save()
             self.save_m2m()
 
@@ -203,6 +208,7 @@ class StudentUpdateForm(forms.ModelForm):
             self.fields["last_name"].initial = self.instance.user.last_name
 
     # STUDENT fields (FIXED)
+            self.fields["parent_name"].initial = self.instance.parent_name
             self.fields["parent_phone"].initial = self.instance.parent_phone
             self.fields["parent_email"].initial = self.instance.parent_email
             self.fields["student_email"].initial = self.instance.student_email
@@ -225,6 +231,7 @@ class StudentUpdateForm(forms.ModelForm):
             user.set_password(password)
 
     # STUDENT (FIXED)
+        student.parent_name = self.cleaned_data["parent_name"]
         student.parent_phone = self.cleaned_data["parent_phone"]
         student.parent_email = self.cleaned_data["parent_email"]
         student.student_email = self.cleaned_data["student_email"]
