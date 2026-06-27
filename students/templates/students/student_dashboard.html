@@ -200,21 +200,35 @@
     <div class="card bg-white p-4 sm:p-6 rounded-xl shadow border">
       <h2 class="font-semibold mb-4" style="color:var(--theme)">Assignments</h2>
       <ul class="divide-y">
-        {% for a in assignments %}
-        <li class="py-3 flex justify-between text-sm flex-wrap">
-          <div>
-            <p class="font-medium">{{ a.title }}</p>
-            <p class="text-xs muted">{{ a.due_date|date:"M d, Y" }}</p>
-          </div>
-          {% if a.due_date < now %}
-            <span class="text-xs text-red-600 mt-1 sm:mt-0">Overdue</span>
-          {% else %}
-            <span class="text-xs text-green-600 mt-1 sm:mt-0">Active</span>
-          {% endif %}
-        </li>
-        {% empty %}
-        <li class="py-3 text-center text-sm muted">No assignments</li>
-        {% endfor %}
+       {% for a in assignments %}
+<li class="py-3 flex justify-between items-center text-sm flex-wrap gap-2">
+
+  <div>
+    <p class="font-medium">{{ a.title }}</p>
+    <p class="text-xs muted">{{ a.due_date|date:"M d, Y" }}</p>
+  </div>
+
+  <div class="flex items-center gap-2 flex-wrap">
+
+    {% if a.due_date < now %}
+      <span class="text-xs text-red-600">Overdue</span>
+    {% else %}
+      <span class="text-xs text-green-600">Active</span>
+    {% endif %}
+
+    <!-- 🔥 ADD THIS LINK -->
+    <a href="{% url 'assignments:student_assignment_detail' a.pk %}"
+       class="no-print px-3 py-1 text-xs text-white rounded"
+       style="background:var(--theme)">
+      View / Submit
+    </a>
+
+  </div>
+
+</li>
+{% empty %}
+<li class="py-3 text-center text-sm muted">No assignments</li>
+{% endfor %}
       </ul>
     </div>
 
