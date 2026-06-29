@@ -216,7 +216,10 @@ def admin_edit(request, pk):
     schools = School.objects.all()
 
     if request.method == "POST":
-        form = CreateAndAssignAdminForm(request.POST)
+        form = CreateAndAssignAdminForm(
+            request.POST,
+            user=admin_user
+        )
         if form.is_valid():
             data = form.cleaned_data
             admin_user.username = data['username']
@@ -226,13 +229,21 @@ def admin_edit(request, pk):
             if data['password']:
                 admin_user.set_password(data['password'])
             admin_user.school = data.get('school')
+            admin_user.is_active = "active" in request.POST
             admin_user.save()
 
             # Update or create SchoolAdminProfile if school is assigned
-            if data.get('school'):
-                profile, created = SchoolAdmin.objects.get_or_create(user=admin_user)
-                profile.school = data['school']
-                profile.save()
+            school = data.get("school")
+
+            if school:
+                profile, created = SchoolAdmin.objects.get_or_create(
+                    user=admin_user,
+                    defaults={"school": school}
+                )
+
+                if not created:
+                    profile.school = school
+                    profile.save()
 
             messages.success(request, "School Admin updated successfully.")
             return redirect("superadmin:admin_list")
@@ -245,7 +256,10 @@ def admin_edit(request, pk):
             "email": admin_user.email,
             "school": admin_user.school
         }
-        form = CreateAndAssignAdminForm(initial=initial_data)
+        form = CreateAndAssignAdminForm(
+            initial=initial_data,
+            user=admin_user
+        )
 
     return render(request, "superadmin/admins/edit_admin.html", {"form": form, "admin_user": admin_user, "schools": schools})
 

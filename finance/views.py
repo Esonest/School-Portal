@@ -62,6 +62,39 @@ from decimal import Decimal
 from datetime import timedelta
 from django.utils import timezone
 
+
+
+from django.db.models import Sum, Q, F, Value, DecimalField
+from django.db.models.functions import Coalesce
+from decimal import Decimal
+
+
+PAYMENT_METHOD_MAP = {
+    "manual": ["manual", "cash", "pos", "transfer"],
+    "online": ["online"],
+    "bank": ["bank", "bank_transfer"],
+}
+
+
+def get_filtered_payments(school, start_date, session=None, term=None, class_id=None):
+    qs = Payment.objects.filter(
+        school=school,
+        status="approved",
+        payment_date__gte=start_date,
+        invoice__isnull=False,   # IMPORTANT: keep dataset clean
+    )
+
+    if session:
+        qs = qs.filter(invoice__session=session)
+
+    if term:
+        qs = qs.filter(invoice__term=term)
+
+    if class_id:
+        qs = qs.filter(invoice__school_class_id=class_id)
+
+    return qs
+
 @login_required
 def dashboard(request):
     school = request.user.school
@@ -174,97 +207,65 @@ def dashboard(request):
         )
     )
     # -----------------------------
-    # Payments (include all student VA payments)
-    # -----------------------------
-    student_ids_with_va = VirtualAccount.objects.filter(
-        student__school=school
-    ).values_list("student_id", flat=True)
-
-    payments_base = Payment.objects.filter(
-        school=school,
-        status="approved",
-        payment_date__gte=start_date
-    ).filter(
-        Q(invoice__isnull=False) | Q(student_id__in=student_ids_with_va)
-    ).select_related("invoice", "invoice__student", "student", "invoice__school_class")
-
-
-    # -----------------------------
-# APPLY FILTERS TO PAYMENTS
+# PAYMENTS (CLEAN BASE)
 # -----------------------------
+    payments_base = get_filtered_payments(
+        school=school,
+        start_date=start_date,
+        session=current_session,
+        term=current_term,
+        class_id=selected_class
+    )
 
-# Session filter
-    if current_session:
-        payments_base = payments_base.filter(
-            Q(invoice__session=current_session)
+# -----------------------------
+# PAYMENT TYPE FILTERING (SAFE + CONSISTENT)
+# -----------------------------
+    def payment_q(method):
+        return payments_base.filter(
+            payment_method__in=PAYMENT_METHOD_MAP[method]
         )
 
-# Term filter
-    if current_term:
-        payments_base = payments_base.filter(
-            Q(invoice__term=current_term)
-        )
+    manual_qs = payment_q("manual")
+    online_qs = payment_q("online")
+    bank_qs = payment_q("bank")
 
-# Class filter
-    selected_class = request.GET.get("class")
-
-    if selected_class:
-        payments_base = payments_base.filter(
-            Q(school_class__id=selected_class) |
-            Q(invoice__school_class__id=selected_class)
-        )
-
-# Search filter
-    search = request.GET.get("search")
-
-    if search:
-        payments_base = payments_base.filter(
-            Q(invoice__student__user__first_name__icontains=search) |
-            Q(invoice__student__user__last_name__icontains=search) |
-            Q(invoice__student__admission_no__icontains=search)
-        )
-
-    # -----------------------------
-    # Manual / Offline Payments
-    # -----------------------------
-    recent_payments = payments_base.exclude(
-        payment_method__in=["online", "bank"]
-    ).order_by("-payment_date")[:5]
-
-    # -----------------------------
-    # Paystack Payments
-    # -----------------------------
-    paystack_online_qs = payments_base.filter(payment_method="online")
-    paystack_bank_qs = payments_base.filter(payment_method="bank")
-
-    paystack_online_total = paystack_online_qs.aggregate(
+# -----------------------------
+# TOTALS
+# -----------------------------
+    total_paid = payments_base.aggregate(
         total=Coalesce(Sum("amount"), Decimal("0"))
     )["total"]
 
-    paystack_bank_total = paystack_bank_qs.aggregate(
+    manual_total = manual_qs.aggregate(
+        total=Coalesce(Sum("amount"), Decimal("0"))
+    )["total"]
+
+    paystack_online_total = online_qs.aggregate(
+        total=Coalesce(Sum("amount"), Decimal("0"))
+    )["total"]
+
+    paystack_bank_total = bank_qs.aggregate(
         total=Coalesce(Sum("amount"), Decimal("0"))
     )["total"]
 
     paystack_total = paystack_online_total + paystack_bank_total
 
-    manual_total = payments_base.exclude(
-        payment_method__in=["online", "bank"]
-    ).aggregate(
-        total=Coalesce(Sum("amount"), Decimal("0"))
-    )["total"]
+# -----------------------------
+# RECENT LISTS
+# -----------------------------
+    recent_payments = manual_qs.order_by("-payment_date")[:5]
 
-    
-    total_paid = payments_base.aggregate(
-        total=Coalesce(Sum("amount"), Decimal("0"))
-    )["total"]
+    recent_paystack_online = online_qs.order_by("-payment_date")[:5]
+    recent_paystack_bank = bank_qs.order_by("-payment_date")[:5]
 
-    outstanding = total_expected - total_paid
-
-    recent_paystack_online = paystack_online_qs.order_by("-payment_date")[:5]
-    recent_paystack_bank = paystack_bank_qs.order_by("-payment_date")[:5]
     recent_paystack = payments_base.filter(
-        payment_method__in=["online", "bank"]
+        payment_method__in=["online", "bank", "bank_transfer"]
     ).order_by("-payment_date")[:5]
+
+# -----------------------------
+# OUTSTANDING (NOW CONSISTENT)
+# -----------------------------
+    outstanding = total_expected - total_paid
 
     # -----------------------------
     # Expenses
@@ -370,12 +371,12 @@ def payments_modal(request):
     # -----------------------------
     # Payment method filter
     # -----------------------------
-    if method == "manual":
-        payments_qs = payments_qs.exclude(
-            payment_method__in=["online", "bank"]
+    method = request.GET.get("method")
+
+    if method in PAYMENT_METHOD_MAP:
+        payments_qs = payments_qs.filter(
+            payment_method__in=PAYMENT_METHOD_MAP[method]
         )
-    elif method in ["online", "bank"]:
-        payments_qs = payments_qs.filter(payment_method=method)
 
 
     # -----------------------------

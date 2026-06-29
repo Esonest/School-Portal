@@ -17,7 +17,11 @@
       {{ form.first_name.errors }}
     </div>
 
-
+     <div>
+    {{ form.last_name.label_tag }}
+    {{ form.last_name }}
+    {{ form.last_name.errors }}
+</div>
 
     <!-- Username -->
     <div>
@@ -50,8 +54,9 @@
 
     <!-- Active Status -->
     <div class="flex items-center space-x-2">
-      <input type="checkbox" name="active" {% if admin_user.is_active %}checked{% endif %}
-             class="h-5 w-5 text-indigo-600">
+      <input type="checkbox" name="active"
+       {% if admin_user.is_active %}checked{% endif %}
+       class="h-5 w-5 text-indigo-600">
       <label class="font-semibold">Active</label>
     </div>
 

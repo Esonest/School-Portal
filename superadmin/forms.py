@@ -10,7 +10,11 @@ class CreateAndAssignAdminForm(forms.Form):
     first_name = forms.CharField(max_length=150, label="First Name")
     last_name = forms.CharField(max_length=150, label="Last Name")
     email = forms.EmailField(required=False, label="Email")
-    password = forms.CharField(widget=forms.PasswordInput, label="Password")
+    password = forms.CharField(
+        widget=forms.PasswordInput(render_value=False),
+        required=False,
+        label="Password"
+    )
 
     # School for assignment (optional)
     school = forms.ModelChoiceField(
@@ -20,10 +24,21 @@ class CreateAndAssignAdminForm(forms.Form):
         empty_label="-- No School --"
     )
 
+    def __init__(self, *args, user=None, **kwargs):
+        self.user = user
+        super().__init__(*args, **kwargs)
+
     def clean_username(self):
         username = self.cleaned_data["username"]
-        if User.objects.filter(username=username).exists():
+
+        qs = User.objects.filter(username=username)
+
+        if self.user:
+            qs = qs.exclude(pk=self.user.pk)
+
+        if qs.exists():
             raise forms.ValidationError("This username is already taken.")
+
         return username
 
     def save(self):
