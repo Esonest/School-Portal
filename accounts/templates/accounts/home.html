@@ -113,8 +113,6 @@
 
  <div class="slider-wrapper">
 
-  <!-- LEFT BUTTON -->
-  <button class="nav-btn left" id="scrollLeft">‹</button>
 
   <!-- SCROLL AREA -->
   <div class="slider" id="portalSlider">
@@ -246,9 +244,6 @@
 
      </div>
 
-  <!-- RIGHT BUTTON -->
-  <button class="nav-btn right" id="scrollRight">›</button>
-
   </div>
 </main>
 
@@ -259,64 +254,70 @@
   width:100%;
   overflow-x:auto;
   overflow-y:hidden;
-
+  scroll-snap-type: x mandatory;
   scroll-behavior:smooth;
   -webkit-overflow-scrolling:touch;
+  padding: 10px 20px;
 
-  padding-bottom:10px;
-  scroll-snap-type: x mandatory;
+  /* hide scrollbar */
+  scrollbar-width:none;
 }
-
-/* hide scrollbar */
 .slider::-webkit-scrollbar{
   display:none;
 }
 
-
 .slide-track{
   display:flex;
-  gap:20px;
-
-  width:max-content;
-  padding-right:20px;
+  gap: 14px;
+  padding:10px;
 }
 
+/* CARD (VERY IMPORTANT CHANGE) */
+.portal{
+   flex: 0 0 auto;
+  width: 260px;   /* fixed but not too big */
+  max-width: 260px;
+
+  scroll-snap-align: center;
+
+  background:rgba(15,23,42,.85);
+  backdrop-filter:blur(12px);
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:20px;
+
+  padding:18px;
+  color:white;
+
+  transform: scale(0.95);
+  opacity: 0.9;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+
+.portal:active{
+  transform: scale(1);
+  opacity: 1;
+}
+
+
+/* mobile sizing */
+@media (min-width: 768px){
+  .portal{
+    width: 280px;
+  }
+}
+
+@media (max-width:480px){
+  .portal{
+    width:85%;
+  }
+}
 
 
 .slide-track:hover{
   animation-play-state: paused;
 }
 
-.portal{
-  flex: 0 0 auto;
-  width: clamp(180px, 70vw, 300px);
-
-  background:rgba(15,23,42,.85);
-  backdrop-filter:blur(12px);
-  border:1px solid rgba(255,255,255,.08);
-
-  padding:18px;
-  border-radius:20px;
-  text-align:center;
-  color:#fff;
-
-  position:relative;
-  overflow:hidden;
-
-  transform-style:preserve-3d;
-  perspective:1000px;
-
-  scroll-snap-align: start;
-
-  transition:
-      transform .7s cubic-bezier(.2,.8,.2,1),
-      box-shadow .5s,
-      border-color .5s;
-
-  box-shadow:
-      0 10px 30px rgba(0,0,0,.5),
-      inset 0 1px 1px rgba(255,255,255,.05);
-}
 
 
 .portal::after{
@@ -421,17 +422,6 @@
     transform:scale(1.08) translateY(-4px);
 }
 
-@media (max-width: 768px){
-  .portal{
-    width: 220px;
-  }
-}
-
-@media (max-width: 480px){
-  .portal{
-    width: 180px;
-  }
-}
 
 @keyframes scroll{
   0%{
@@ -570,49 +560,52 @@ document.getElementById('theme-toggle').onclick = () => {
 
 <script>
 const slider = document.getElementById("portalSlider");
-const track = document.querySelector(".slide-track");
 
-let scrollSpeed = 1;
-let paused = false;
-let userInteracting = false;
+let isDown = false;
+let startX;
+let scrollLeft;
 
-/* AUTO SCROLL */
-function autoScroll(){
-  if(!paused && !userInteracting){
-    slider.scrollLeft += scrollSpeed;
-
-    const maxScroll = track.scrollWidth - slider.clientWidth;
-
-    if(slider.scrollLeft >= maxScroll){
-      slider.scrollLeft = 0;
-    }
-  }
-
-  requestAnimationFrame(autoScroll);
-}
-
-autoScroll();
-
-/* PAUSE ON HOVER */
-slider.addEventListener("mouseenter", () => paused = true);
-slider.addEventListener("mouseleave", () => paused = false);
-
-/* BUTTONS */
-document.getElementById("scrollLeft").addEventListener("click", () => {
-  userInteracting = true;
-
-  slider.scrollBy({ left: -400, behavior: "smooth" });
-
-  setTimeout(() => userInteracting = false, 800);
+// TOUCH START
+slider.addEventListener("touchstart", (e) => {
+  isDown = true;
+  startX = e.touches[0].pageX - slider.offsetLeft;
+  scrollLeft = slider.scrollLeft;
 });
 
-document.getElementById("scrollRight").addEventListener("click", () => {
-  userInteracting = true;
+// TOUCH MOVE
+slider.addEventListener("touchmove", (e) => {
+  if(!isDown) return;
+  e.preventDefault();
 
-  slider.scrollBy({ left: 400, behavior: "smooth" });
+  const x = e.touches[0].pageX - slider.offsetLeft;
+  const walk = (x - startX) * 1.2;
 
-  setTimeout(() => userInteracting = false, 800);
+  slider.scrollLeft = scrollLeft - walk;
+}, { passive:false });
+
+// TOUCH END
+slider.addEventListener("touchend", () => {
+  isDown = false;
 });
+
+// MOUSE DRAG (desktop support)
+slider.addEventListener("mousedown", (e) => {
+  isDown = true;
+  startX = e.pageX - slider.offsetLeft;
+  scrollLeft = slider.scrollLeft;
+});
+
+slider.addEventListener("mousemove", (e) => {
+  if(!isDown) return;
+
+  const x = e.pageX - slider.offsetLeft;
+  const walk = (x - startX) * 1.2;
+
+  slider.scrollLeft = scrollLeft - walk;
+});
+
+slider.addEventListener("mouseup", () => isDown = false);
+slider.addEventListener("mouseleave", () => isDown = false);
 </script>
 
 
