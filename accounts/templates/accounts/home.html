@@ -288,8 +288,8 @@
 }
 
 .portal{
-  min-width:300px;
-  max-width:300px;
+  flex: 0 0 auto;
+  width: clamp(180px, 70vw, 300px);
 
   background:rgba(15,23,42,.85);
   backdrop-filter:blur(12px);
@@ -419,6 +419,18 @@
 
 .portal:hover .img{
     transform:scale(1.08) translateY(-4px);
+}
+
+@media (max-width: 768px){
+  .portal{
+    width: 220px;
+  }
+}
+
+@media (max-width: 480px){
+  .portal{
+    width: 180px;
+  }
 }
 
 @keyframes scroll{
