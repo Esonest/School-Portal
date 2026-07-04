@@ -25,6 +25,10 @@ urlpatterns = [
     path("<int:school_id>/<int:student_id>/id-card/",views.student_id_card,name="student_id_card"),
     path("<int:school_id>/class/<int:class_id>/id-cards/",views.class_id_cards,name="class_id_cards"),
 
+    
+    path("webhooks/whatsapp/", views.whatsapp_webhook,name="whatsapp_webhook"),
+
+
 ]
 
 

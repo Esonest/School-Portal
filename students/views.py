@@ -508,6 +508,41 @@ def announcement_delete(request, pk):
     )
 
 
+
+import json
+
+from django.conf import settings
+from django.http import HttpResponse, JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+
+
+@csrf_exempt
+def whatsapp_webhook(request):
+
+    if request.method == "GET":
+
+        mode = request.GET.get("hub.mode")
+        token = request.GET.get("hub.verify_token")
+        challenge = request.GET.get("hub.challenge")
+
+        if (
+            mode == "subscribe"
+            and token == settings.WHATSAPP_VERIFY_TOKEN
+        ):
+            return HttpResponse(challenge)
+
+        return HttpResponse("Forbidden", status=403)
+
+    elif request.method == "POST":
+
+        body = json.loads(request.body)
+
+        print(body)
+
+        return JsonResponse({"status": "ok"})
+
+    return HttpResponse(status=405)
+
 from django.http import JsonResponse
 
 
