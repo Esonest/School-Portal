@@ -1,32 +1,28 @@
 from celery import shared_task
+
 from students.models import Announcement, MessageLog
+
 from .announcement_service import get_announcement_recipients
 from .email_service import send_brevo_email
 from .whatsapp_service import send_whatsapp_message
 
 
-
-
 def process_announcement(announcement):
     print("🚀 PROCESS ANNOUNCEMENT STARTED")
     print("PROCESSING:", announcement.id)
-    
+    print("CHANNELS:", announcement.send_channels)
 
     students = get_announcement_recipients(announcement)
 
     for student in students:
-        print(student.parent_email)
+
+        print("=" * 60)
+        print("STUDENT:", student)
+        print("EMAIL:", student.parent_email)
+        print("PHONE:", student.parent_phone)
+        print("=" * 60)
 
         school_name = announcement.school.name
-
-        message = f"""
-{school_name}
-via TECHCENTER School Portal
-
-{announcement.message}
-
-— School Management
-"""
 
         subject = f"{school_name} Announcement"
 
@@ -37,7 +33,10 @@ via TECHCENTER School Portal
         <p>{announcement.message}</p>
         """
 
+        # =====================================================
         # EMAIL
+        # =====================================================
+
         if (
             "email" in announcement.send_channels
             and student.parent_email
@@ -49,46 +48,46 @@ via TECHCENTER School Portal
                 student.parent_name or "Parent",
                 subject,
                 html_content,
-                announcement.school
+                announcement.school,
             )
 
-            print(
-                "EMAIL:",
-                success,
-                response
-            )
+            print("EMAIL:", success, response)
+
             MessageLog.objects.create(
                 school=announcement.school,
                 announcement=announcement,
                 recipient=student.parent_email,
                 channel="email",
                 status="sent" if success else "failed",
-                response=str(response)
+                response=str(response),
             )
 
+        # =====================================================
         # WHATSAPP
+        # =====================================================
+
         if (
             "whatsapp" in announcement.send_channels
             and student.parent_phone
-            and announcement.school.whatsapp_enabled
         ):
 
             success, response = send_whatsapp_message(
-                student.parent_phone,
-                message,
-                announcement.school
+                phone=student.parent_phone,
+                template_name="school_announcement",
+                template_parameters=[
+                    school_name,
+                    "Announcement",
+                    announcement.message,
+                ],
             )
 
-            print(
-                "WHATSAPP:",
-                success,
-                response
-            )
+            print("WHATSAPP:", success, response)
+
             MessageLog.objects.create(
                 school=announcement.school,
                 announcement=announcement,
-                recipient=student.parent_email,
-                channel="email",
+                recipient=student.parent_phone,
+                channel="whatsapp",
                 status="sent" if success else "failed",
-                response=str(response)
-            )    
+                response=str(response),
+            )

@@ -4,6 +4,7 @@ from django.utils import timezone
 from accounts.models import School,Teacher
 from students.models import Student, SchoolClass
 from results.models import Subject
+from cloudinary_storage.storage import RawMediaCloudinaryStorage
 
 
 # -----------------------------
@@ -48,7 +49,12 @@ class LessonNote(models.Model):
     content = models.TextField(blank=True)
     session = models.CharField(max_length=20, blank=True, null=True)
     term = models.CharField(max_length=1, choices=TERM_CHOICES, blank=True, null=True)
-    file = models.FileField(upload_to='lesson_notes/', null=True, blank=True)
+    file = models.FileField(
+        storage=RawMediaCloudinaryStorage(),
+        upload_to="lesson_notes/",
+        blank=True,
+        null=True,
+    )
     visibility = models.CharField(max_length=20, choices=VISIBILITY_CHOICES, default='all')
     classes = models.ManyToManyField(SchoolClass, blank=True, help_text="If visibility is 'Specific Classes', choose classes.")
     created_on = models.DateTimeField(auto_now_add=True)
@@ -119,7 +125,10 @@ class LessonNoteSubmission(models.Model):
 # -----------------------------
 class SubmissionFile(models.Model):
     submission = models.ForeignKey(LessonNoteSubmission, on_delete=models.CASCADE, related_name='files')
-    file = models.FileField(upload_to='notes/submissions/')
+    file = models.FileField(
+        storage=RawMediaCloudinaryStorage(),
+        upload_to='notes/submissions/',
+    )
     uploaded_on = models.DateTimeField(auto_now_add=True)
 
     def filename(self):

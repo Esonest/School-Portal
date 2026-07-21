@@ -537,7 +537,44 @@ def whatsapp_webhook(request):
 
         body = json.loads(request.body)
 
-        print(body)
+        print("=" * 80)
+        print("WHATSAPP WEBHOOK")
+        print(json.dumps(body, indent=4))
+        print("=" * 80)
+
+        try:
+
+            for entry in body.get("entry", []):
+
+                for change in entry.get("changes", []):
+
+                    value = change.get("value", {})
+
+                    # Incoming messages
+                    if "messages" in value:
+                        print("Incoming Message")
+                        print(value["messages"])
+
+                    # Delivery statuses
+                    if "statuses" in value:
+
+                        for status in value["statuses"]:
+
+                            print("-" * 50)
+                            print("MESSAGE STATUS")
+                            print("ID:", status.get("id"))
+                            print("STATUS:", status.get("status"))
+                            print("RECIPIENT:", status.get("recipient_id"))
+
+                            if status.get("errors"):
+                                print("ERRORS:")
+                                print(status["errors"])
+
+                            print("-" * 50)
+
+        except Exception as e:
+
+            print("WEBHOOK ERROR:", e)
 
         return JsonResponse({"status": "ok"})
 
