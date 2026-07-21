@@ -7,6 +7,7 @@ from .models import LessonNote, LessonNoteSubmission
 from .forms import LessonNoteForm
 from results.utils import portal_required
 from django.http import HttpResponseRedirect
+from django.contrib import messages
 
 # ------------------------
 # Teacher: list notes
@@ -48,15 +49,23 @@ def teacher_notes_list(request):
 @portal_required("lesson_note")
 @login_required
 def teacher_upload_note(request, pk=None):
+
     user = request.user
     teacher_profile = getattr(user, 'teacher_profile', None)
     school = getattr(user, 'school', None)
 
     note = None
 
+    # ------------------------
+    # Edit existing note
+    # ------------------------
     if pk:
+
         if user.is_superadmin:
-            note = get_object_or_404(LessonNote, pk=pk)
+            note = get_object_or_404(
+                LessonNote,
+                pk=pk
+            )
 
         elif school:
             note = get_object_or_404(
@@ -75,7 +84,12 @@ def teacher_upload_note(request, pk=None):
         else:
             raise Http404("Not allowed")
 
-    if request.method == 'POST':
+
+    # ------------------------
+    # Submit form
+    # ------------------------
+    if request.method == "POST":
+
         form = LessonNoteForm(
             request.POST,
             request.FILES,
@@ -84,38 +98,83 @@ def teacher_upload_note(request, pk=None):
             user=user
         )
 
+
         if form.is_valid():
+
             lesson_note = form.save(commit=False)
+
 
             # Teacher upload
             if teacher_profile:
                 lesson_note.teacher = teacher_profile
                 lesson_note.school = teacher_profile.school
 
+
             # School admin upload
             elif school:
                 lesson_note.school = school
 
+
             lesson_note.save()
             form.save_m2m()
-            return redirect('notes:dashboard')
 
+
+            if note:
+                messages.success(
+                    request,
+                    "Lesson note updated successfully."
+                )
+
+            else:
+                messages.success(
+                    request,
+                    "Lesson note uploaded successfully."
+                )
+
+
+            return redirect(
+                "notes:dashboard"
+            )
+
+
+        else:
+
+            messages.error(
+                request,
+                "Lesson note was not uploaded. Please correct the errors below."
+            )
+
+
+            for field, errors in form.errors.items():
+
+                for error in errors:
+
+                    messages.error(
+                        request,
+                        f"{field}: {error}"
+                    )
+
+
+    # ------------------------
+    # Display empty/edit form
+    # ------------------------
     else:
+
         form = LessonNoteForm(
             instance=note,
             teacher=teacher_profile,
             user=user
         )
 
+
     return render(
         request,
-        'notes/teacher_upload.html',
+        "notes/teacher_upload.html",
         {
-            'form': form,
-            'note': note
+            "form": form,
+            "note": note
         }
     )
-
 
 
 # ------------------------

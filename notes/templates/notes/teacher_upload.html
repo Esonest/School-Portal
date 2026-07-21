@@ -1,167 +1,439 @@
 {% extends 'accounts/base.html' %}
 {% block content %}
-<div class="max-w-6xl mx-auto mt-10 bg-white rounded-2xl shadow-xl overflow-hidden">
-  <div class="grid md:grid-cols-2">
-    
-    <!-- LEFT: FORM -->
-    <div class="p-8">
-      <h1 class="text-2xl font-bold text-indigo-700 mb-6">
-        {% if note %}Edit{% else %}Upload{% endif %} Lesson Note
-      </h1>
 
-      <form method="post" enctype="multipart/form-data" id="noteForm" class="space-y-6">
-        {% csrf_token %}
+<div class="max-w-7xl mx-auto py-8 px-4">
 
-        {% for field in form %}
-          <div>
-            <label for="{{ field.id_for_label }}" class="block text-gray-700 font-medium mb-1">
-              {{ field.label }}
-            </label>
-            {{ field }}
-            {% if field.help_text %}
-              <p class="text-xs text-gray-500 mt-1">{{ field.help_text }}</p>
-            {% endif %}
-            {% for error in field.errors %}
-              <p class="text-sm text-red-500 mt-1">{{ error }}</p>
-            {% endfor %}
-          </div>
-        {% endfor %}
+<div class="grid lg:grid-cols-3 gap-8">
 
-        <!-- Buttons -->
-        <div class="flex items-center space-x-4 pt-4">
-          <button type="submit"
-            class="px-5 py-2.5 bg-indigo-600 hover:bg-indigo-700 text-white font-semibold rounded-lg shadow transition-all duration-300">
-            {% if note %}Update{% else %}Upload{% endif %}
-          </button>
-          <a href="{% url 'notes:dashboard' %}"
-             class="px-5 py-2.5 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition font-medium">
-             Cancel
-          </a>
-        </div>
-      </form>
-    </div>
+<!-- ================= FORM ================= -->
 
-    <!-- RIGHT: LIVE PREVIEW PANEL -->
-    <div class="bg-gradient-to-br from-indigo-50 via-white to-fuchsia-50 border-l border-indigo-100 p-8 flex flex-col justify-between">
-      <div>
-        <h2 class="text-xl font-semibold text-indigo-700 mb-4">📘 Live Preview</h2>
+<div class="lg:col-span-2">
 
-        <div class="bg-white rounded-xl shadow p-5 space-y-4">
-          <!-- Title -->
-          <div>
-            <p class="text-gray-500 text-sm">Title</p>
-            <p id="previewTitle" class="font-semibold text-gray-800 mt-1">—</p>
-          </div>
+<div class="bg-white rounded-2xl shadow-xl border border-gray-100 overflow-hidden">
 
-          <!-- Subject -->
-          <div>
-            <p class="text-gray-500 text-sm">Subject</p>
-            <p id="previewSubject" class="font-medium text-gray-800 mt-1">—</p>
-          </div>
+<!-- Header -->
+<div class="bg-gradient-to-r from-indigo-600 to-purple-600 p-6 text-white">
 
-          <!-- File -->
-          <div class="flex items-center space-x-3">
-            <div id="fileIcon" class="text-gray-400 text-4xl">📄</div>
-            <div>
-              <p class="text-gray-500 text-sm">Selected File</p>
-              <a id="previewFileLink" href="#" target="_blank" class="text-indigo-600 hover:text-indigo-800 font-medium mt-1 block">
-                <span id="previewFile">No file selected</span>
-              </a>
-            </div>
-          </div>
+<h1 class="text-2xl font-bold">
+📘 {% if note %}Edit Lesson Note{% else %}Upload Lesson Note{% endif %}
+</h1>
 
-          <!-- Date -->
-          <div>
-            <p class="text-gray-500 text-sm">Publish Date</p>
-            <p id="previewDate" class="text-gray-700 font-medium mt-1">Not set</p>
-          </div>
-        </div>
-      </div>
+<p class="text-indigo-100 mt-1">
+Create and share lesson materials with your students.
+</p>
 
-      <p class="text-xs text-gray-500 mt-6 text-center italic">
-        Preview updates automatically as you type ✨
-      </p>
-    </div>
-  </div>
 </div>
 
-<!-- Tailwind base input styles -->
+
+<form method="post"
+      enctype="multipart/form-data"
+      class="p-6 space-y-6">
+
+{% csrf_token %}
+
+
+<!-- Basic Information -->
+
+<div>
+
+<h2 class="text-lg font-semibold text-gray-800 mb-4 flex items-center gap-2">
+📝 Basic Information
+</h2>
+
+
+<div class="grid md:grid-cols-2 gap-5">
+
+
+{% for field in form %}
+
+{% if field.name in "title subject session term visibility publish_date" %}
+
+<div>
+
+<label class="block text-sm font-semibold text-gray-700 mb-2">
+{{field.label}}
+</label>
+
+
+{{field}}
+
+
+{% for error in field.errors %}
+<p class="text-sm text-red-500 mt-1">
+{{error}}
+</p>
+{% endfor %}
+
+</div>
+
+
+{% endif %}
+
+
+{% endfor %}
+
+
+</div>
+
+</div>
+
+
+
+<!-- Classes -->
+
+<div class="bg-gray-50 rounded-xl p-5">
+
+<h2 class="font-semibold text-gray-800 mb-3">
+👥 Assign To Classes
+</h2>
+
+
+{% for field in form %}
+
+{% if field.name == "classes" %}
+
+<label class="text-sm font-medium">
+{{field.label}}
+</label>
+
+{{field}}
+
+<p class="text-xs text-gray-500 mt-2">
+Hold CTRL to select multiple classes.
+</p>
+
+
+{% endif %}
+
+{% endfor %}
+
+
+</div>
+
+
+
+<!-- Lesson Content -->
+
+<div>
+
+
+<h2 class="text-lg font-semibold text-gray-800 mb-3">
+📚 Lesson Content
+</h2>
+
+
+{% for field in form %}
+
+{% if field.name == "content" %}
+
+{{field}}
+
+
+{% for error in field.errors %}
+<p class="text-red-500 text-sm">
+{{error}}
+</p>
+{% endfor %}
+
+
+{% endif %}
+
+{% endfor %}
+
+
+</div>
+
+
+
+
+<!-- File Upload -->
+
+
+<div>
+
+<h2 class="text-lg font-semibold text-gray-800 mb-3">
+📎 Attachment
+</h2>
+
+
+<label class="flex flex-col items-center justify-center 
+border-2 border-dashed border-indigo-300
+rounded-xl p-8 cursor-pointer
+hover:bg-indigo-50 transition">
+
+
+<span class="text-4xl">
+☁️
+</span>
+
+
+<span class="mt-3 text-gray-700 font-medium">
+Click to upload lesson file
+</span>
+
+
+<span class="text-sm text-gray-500">
+PDF, Word, PowerPoint, Images
+</span>
+
+
+{% for field in form %}
+
+{% if field.name == "file" %}
+
+{{field}}
+
+{% endif %}
+
+{% endfor %}
+
+
+</label>
+
+
+
+</div>
+
+
+
+
+<!-- Buttons -->
+
+
+<div class="flex gap-4 pt-4">
+
+
+<button type="submit"
+class="px-7 py-3 bg-indigo-600 
+hover:bg-indigo-700 text-white 
+rounded-xl font-semibold shadow">
+
+{% if note %}
+Update Note
+{% else %}
+Upload Note
+{% endif %}
+
+</button>
+
+
+<a href="{% url 'notes:dashboard' %}"
+class="px-7 py-3 bg-gray-100 hover:bg-gray-200 
+rounded-xl font-semibold">
+
+Cancel
+
+</a>
+
+
+</div>
+
+
+</form>
+
+</div>
+
+</div>
+
+
+
+
+<!-- ================= PREVIEW ================= -->
+
+
+<div>
+
+<div class="sticky top-5 bg-gradient-to-br 
+from-indigo-50 via-white to-purple-50
+rounded-2xl shadow-lg border p-6">
+
+
+<h2 class="text-xl font-bold text-indigo-700 mb-5">
+✨ Live Preview
+</h2>
+
+
+
+<div class="bg-white rounded-xl shadow p-5 space-y-5">
+
+
+<div>
+
+<p class="text-xs text-gray-500">
+TITLE
+</p>
+
+<p id="previewTitle"
+class="font-bold text-gray-800">
+No title
+</p>
+
+</div>
+
+
+
+<div>
+
+<p class="text-xs text-gray-500">
+SUBJECT
+</p>
+
+<p id="previewSubject">
+Not selected
+</p>
+
+</div>
+
+
+
+
+<div class="flex gap-3 items-center">
+
+<div id="fileIcon"
+class="text-4xl">
+📄
+</div>
+
+
+<div>
+
+<p class="text-xs text-gray-500">
+FILE
+</p>
+
+
+<p id="previewFile"
+class="font-medium">
+No file
+</p>
+
+
+</div>
+
+</div>
+
+
+
+<div>
+
+<p class="text-xs text-gray-500">
+PUBLISH DATE
+</p>
+
+<p id="previewDate">
+Not set
+</p>
+
+
+</div>
+
+
+</div>
+
+
+<div class="mt-6 text-sm text-gray-500 text-center">
+
+Your students will see this information.
+
+</div>
+
+
+</div>
+
+</div>
+
+
+</div>
+
+</div>
+
+
 <style>
-  input, select, textarea {
-    @apply w-full border border-gray-300 rounded-lg px-3 py-2 
-           focus:outline-none focus:ring-2 focus:ring-indigo-500 
-           focus:border-indigo-500 transition;
-  }
+
+input,
+select,
+textarea {
+
+width:100%;
+border:1px solid #d1d5db;
+border-radius:0.75rem;
+padding:0.75rem;
+
+}
+
+
+input:focus,
+select:focus,
+textarea:focus {
+
+outline:none;
+border-color:#6366f1;
+box-shadow:0 0 0 3px rgba(99,102,241,.2);
+
+}
+
+
+textarea {
+
+min-height:180px;
+
+}
+
+
 </style>
 
-<!-- JS: Live Preview with Clickable File -->
+
 <script>
-  document.addEventListener('DOMContentLoaded', function() {
-    const titleInput = document.querySelector('#id_title');
-    const subjectSelect = document.querySelector('#id_subject');
-    const fileInput = document.querySelector('#id_file');
-    const dateInput = document.querySelector('#id_publish_date');
 
-    const previewTitle = document.getElementById('previewTitle');
-    const previewSubject = document.getElementById('previewSubject');
-    const previewFile = document.getElementById('previewFile');
-    const previewFileLink = document.getElementById('previewFileLink');
-    const previewDate = document.getElementById('previewDate');
-    const fileIcon = document.getElementById('fileIcon');
+document.addEventListener(
+"DOMContentLoaded",
+()=>{
 
-    const getFileIcon = (filename) => {
-      const ext = filename.split('.').pop().toLowerCase();
-      switch (ext) {
-        case 'pdf': return '📕';
-        case 'doc':
-        case 'docx': return '📝';
-        case 'ppt':
-        case 'pptx': return '📊';
-        case 'xls':
-        case 'xlsx': return '📈';
-        case 'zip':
-        case 'rar': return '🗜️';
-        default: return '📄';
-      }
-    };
 
-    if (titleInput) titleInput.addEventListener('input', () => {
-      previewTitle.textContent = titleInput.value || '—';
-    });
+const title=document.querySelector("#id_title");
+const subject=document.querySelector("#id_subject");
+const file=document.querySelector("#id_file");
+const date=document.querySelector("#id_publish_date");
 
-    if (subjectSelect) subjectSelect.addEventListener('change', () => {
-      const selected = subjectSelect.options[subjectSelect.selectedIndex];
-      previewSubject.textContent = selected.text || '—';
-    });
 
-    if (fileInput) fileInput.addEventListener('change', () => {
-      if (fileInput.files.length) {
-        const file = fileInput.files[0];
-        const filename = file.name;
-        previewFile.textContent = filename;
-        fileIcon.textContent = getFileIcon(filename);
+title?.addEventListener(
+"input",
+()=>previewTitle.innerText=title.value || "No title"
+);
 
-        // Create blob preview link
-        const fileURL = URL.createObjectURL(file);
-        previewFileLink.href = fileURL;
-        previewFileLink.classList.remove('pointer-events-none', 'text-gray-400');
-      } else {
-        previewFile.textContent = 'No file selected';
-        previewFileLink.href = '#';
-        fileIcon.textContent = '📄';
-      }
-    });
 
-    if (dateInput) dateInput.addEventListener('change', () => {
-      previewDate.textContent = dateInput.value || 'Not set';
-    });
 
-    // Preload existing note file (for edit mode)
-    {% if note and note.file %}
-      previewFile.textContent = "{{ note.file.name|escapejs }}";
-      previewFileLink.href = "{{ note.file.url }}";
-      fileIcon.textContent = getFileIcon("{{ note.file.name|escapejs }}");
-    {% endif %}
-  });
+subject?.addEventListener(
+"change",
+()=>previewSubject.innerText=
+subject.options[subject.selectedIndex].text
+);
+
+
+
+file?.addEventListener(
+"change",
+()=>{
+
+if(file.files.length){
+
+previewFile.innerText=file.files[0].name;
+
+}
+
+});
+
+
+
+date?.addEventListener(
+"change",
+()=>previewDate.innerText=date.value || "Not set"
+);
+
+
+});
+
 </script>
+
+
 {% endblock %}

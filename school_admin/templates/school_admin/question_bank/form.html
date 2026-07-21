@@ -345,6 +345,37 @@ Draft not saved
 
 <!-- JS: handle MathLive hidden input syncing -->
 <script>
+
+  function initializeMathLive(formBlock) {
+
+    const mathFields = formBlock.querySelectorAll('math-field.equation-field');
+
+    mathFields.forEach((mf) => {
+
+        const hiddenInput = mf.parentElement.querySelector('input.mathlive-hidden');
+
+        if (!hiddenInput) return;
+
+        if (mf._listener) {
+            mf.removeEventListener('input', mf._listener);
+        }
+
+        const listener = function () {
+            hiddenInput.value = mf.getValue('latex');
+        };
+
+        mf.addEventListener('input', listener);
+        mf._listener = listener;
+
+
+        if(hiddenInput.value){
+            mf.setValue(hiddenInput.value,{
+                format:'latex'
+            });
+        }
+
+    });
+}
 document.addEventListener('DOMContentLoaded', function () {
 
   /* ---------- CKEDITOR INITIALIZER ---------- */
@@ -370,34 +401,7 @@ document.addEventListener('DOMContentLoaded', function () {
     });
   }
 
-
-  /* ---------- MATHLIVE INITIALIZER ---------- */
-  function initializeMathLive(formBlock) {
-
-    const mathFields = formBlock.querySelectorAll('math-field.equation-field');
-
-    mathFields.forEach((mf) => {
-
-      const hiddenInput = mf.parentElement.querySelector('input.mathlive-hidden');
-      if (!hiddenInput) return;
-
-      if (mf._listener) {
-        mf.removeEventListener('input', mf._listener);
-      }
-
-      const listener = function () {
-        hiddenInput.value = mf.getValue('latex');
-      };
-
-      mf.addEventListener('input', listener);
-      mf._listener = listener;
-
-      if (hiddenInput.value) {
-        mf.setValue(hiddenInput.value, { format: 'latex' });
-      }
-    });
-  }
-
+  
 
   /* ---------- INITIAL PAGE SETUP ---------- */
 
@@ -637,9 +641,9 @@ let rawText = textarea.value
 rawText = rawText.replace(/\n{2,}/g,"\n");
 
 const questionBlocks = rawText
-.split(/\n(?=\s*\d+[\.\)]\s)/)   // split only when number starts new line
+.split(/\n(?=\s*\d+\s*[\.\)]\s*)/)
 .map(b=>b.trim())
-.filter(b => b.length > 10);  // keep only real questions
+.filter(b => b.length > 10);
 
 let totalForms = parseInt(totalFormsInput.value);
 let createdCount = 0;
@@ -762,9 +766,9 @@ lines.forEach(line => {
 
 /* QUESTION */
 
-if(line.match(/^\d+[\.\)]/)){
+if(line.match(/^\s*\d+\s*[\.\)]\s*/)){
 
-let q = line.replace(/^\d+[\.\)]\s*/,'');
+let q = line.replace(/^\s*\d+\s*[\.\)]\s*/,'');
 
 /* detect if question contains math */
 
@@ -1045,32 +1049,6 @@ textarea.selectionStart = textarea.selectionEnd = start + text.length;
 
 
 <script>
-
-  function showImportMessage(type, title, text){
-
-  const box = document.getElementById("import-message-box");
-  const icon = document.getElementById("import-message-icon");
-  const titleEl = document.getElementById("import-message-title");
-  const textEl = document.getElementById("import-message-text");
-
-  if(!box) return;
-
-  if(type === "success"){
-    box.className = "p-4 flex items-start gap-3 bg-green-100 text-green-800";
-    icon.innerHTML = "✅";
-  }
-  else{
-    box.className = "p-4 flex items-start gap-3 bg-red-100 text-red-800";
-    icon.innerHTML = "❌";
-  }
-
-  titleEl.innerText = title;
-  textEl.innerText = text;
-
-  document.getElementById("import-message").style.display = "block";
-
-  setTimeout(closeImportMessage, 4000);
-}
 
 function closeImportMessage(){
   const msg = document.getElementById("import-message");
@@ -1431,12 +1409,12 @@ document.querySelectorAll(".question-form").forEach(form=>{
 
 
 <script>
-let timeout = 3600000; // 10 min
-let warningTime = 3240000; // 9 min
+let inactivityTimeout = 3600000;
+let inactivityWarningTime = 3240000;
 
 let warningTimer = setTimeout(() => {
     alert("⚠️ You will be logged out in 1 minute due to inactivity!");
-}, warningTime);
+}, inactivityWarningTime);
 </script>
 
 <script>
@@ -1519,5 +1497,7 @@ math-field {
 
 </style>
 
-
+<div id="toast-container"
+     class="fixed top-5 right-5 z-50 space-y-3">
+</div>
 {% endblock %}
