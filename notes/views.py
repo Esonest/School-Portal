@@ -6,6 +6,7 @@ import os, mimetypes
 from .models import LessonNote, LessonNoteSubmission
 from .forms import LessonNoteForm
 from results.utils import portal_required
+from django.http import HttpResponseRedirect
 
 # ------------------------
 # Teacher: list notes
@@ -206,29 +207,36 @@ def note_detail(request, pk):
 # Download note file
 # ------------------------
 
+from django.http import Http404, HttpResponseRedirect
+from urllib.parse import quote
+
+
 @login_required
 def download_note_file(request, pk):
     note = get_object_or_404(LessonNote, pk=pk)
+
     teacher_profile = getattr(request.user, 'teacher_profile', None)
-    student = getattr(request.user, 'student_profile', None) or getattr(request.user, 'student', None)
+    student = (
+        getattr(request.user, 'student_profile', None)
+        or getattr(request.user, 'student', None)
+    )
 
     if not note.file:
         raise Http404("No file attached.")
 
+    # Permission checks
     if note.visibility == 'private' and note.teacher != teacher_profile:
         raise Http404("Not allowed")
-    if note.visibility == 'classes' and (not student or student.school_class not in note.classes.all()):
-        if not teacher_profile:
-            raise Http404("Not allowed")
 
-    file_path = note.file.path
-    filename = os.path.basename(file_path)
-    content_type, encoding = mimetypes.guess_type(file_path)
-    content_type = content_type or 'application/octet-stream'
+    if note.visibility == 'classes':
+        if not student or student.school_class not in note.classes.all():
+            if not teacher_profile:
+                raise Http404("Not allowed")
 
-    response = FileResponse(open(file_path, 'rb'), content_type=content_type)
-    response['Content-Disposition'] = f'attachment; filename="{filename}"'
-    return response
+    # Cloudinary file URL
+    return HttpResponseRedirect(
+    note.file.url + "?fl_attachment"
+)
 
 
 # ------------------------
