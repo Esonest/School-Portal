@@ -349,31 +349,105 @@ from urllib.parse import quote
 
 @login_required
 def download_note_file(request, pk):
-    note = get_object_or_404(LessonNote, pk=pk)
 
-    teacher_profile = getattr(request.user, 'teacher_profile', None)
+    note = get_object_or_404(
+        LessonNote,
+        pk=pk
+    )
+
+    user = request.user
+
+    teacher_profile = getattr(
+        user,
+        'teacher_profile',
+        None
+    )
+
     student = (
-        getattr(request.user, 'student_profile', None)
-        or getattr(request.user, 'student', None)
+        getattr(user, 'student_profile', None)
+        or getattr(user, 'student', None)
+    )
+
+    school = getattr(
+        user,
+        'school',
+        None
     )
 
     if not note.file:
         raise Http404("No file attached.")
 
-    # Permission checks
-    if note.visibility == 'private' and note.teacher != teacher_profile:
+
+    # -------------------------
+    # SCHOOL SECURITY CHECK
+    # -------------------------
+
+    # Students, teachers and admins
+    # must belong to same school
+    if school and note.school != school:
         raise Http404("Not allowed")
 
-    if note.visibility == 'classes':
-        if not student or student.school_class not in note.classes.all():
-            if not teacher_profile:
-                raise Http404("Not allowed")
 
-    # Cloudinary file URL
-    return HttpResponseRedirect(
-    note.file.url + "?fl_attachment"
-)
+    # -------------------------
+    # SUPERADMIN
+    # -------------------------
 
+    if user.is_superadmin:
+        return HttpResponseRedirect(
+            note.file.url + "?fl_attachment"
+        )
+
+
+    # -------------------------
+    # SCHOOL ADMIN
+    # -------------------------
+
+    if (
+        user.role == "schooladmin"
+        and note.school == school
+    ):
+        return HttpResponseRedirect(
+            note.file.url + "?fl_attachment"
+        )
+
+
+    # -------------------------
+    # TEACHER
+    # -------------------------
+
+    if teacher_profile:
+
+        if note.teacher == teacher_profile:
+            return HttpResponseRedirect(
+                note.file.url + "?fl_attachment"
+            )
+
+
+    # -------------------------
+    # STUDENT
+    # -------------------------
+
+    if student:
+
+        # Public notes
+        if note.visibility == "all":
+            return HttpResponseRedirect(
+                note.file.url + "?fl_attachment"
+            )
+
+
+        # Class notes
+        if (
+            note.visibility == "classes"
+            and student.school_class
+            and student.school_class in note.classes.all()
+        ):
+            return HttpResponseRedirect(
+                note.file.url + "?fl_attachment"
+            )
+
+
+    raise Http404("You do not have permission to download this file.")
 
 # ------------------------
 # Notes dashboard
