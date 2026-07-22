@@ -1,90 +1,259 @@
-{% extends 'accounts/base.html' %}
+{% extends "accounts/base.html" %}
+
 {% block content %}
-<div class="max-w-6xl mx-auto p-6">
-  <!-- Header -->
-  <!-- Header -->
-<div class="flex justify-between items-center mb-6">
-  <h1 class="text-2xl font-bold text-{{ school.theme_color }}-600">
-    Notes Dashboard
-  </h1>
+<div class="max-w-7xl mx-auto p-6">
 
-  {% if is_teacher or is_school_admin or request.user.is_superadmin %}
-    <a href="{% url 'notes:upload_note' %}" 
-       class="px-4 py-2 bg-indigo-600 text-white rounded hover:bg-indigo-700 transition">
-      + Add Lesson Note
-    </a>
-  {% endif %}
-</div>
-
-  {% if is_teacher %}
-    <!-- Teacher View -->
-    <div class="grid md:grid-cols-3 gap-6">
-      <!-- Teacher Notes -->
-      <div class="bg-white p-4 rounded-lg shadow">
-        <h3 class="font-semibold text-gray-800 mb-3">Your Notes</h3>
-        <div class="space-y-4">
-          {% for note in notes %}
-            {% include 'notes/note_card.html' with note=note %}
-          {% empty %}
-            <p class="text-gray-600 text-sm">No notes yet. Create one above.</p>
-          {% endfor %}
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
+        <div>
+            <h1 class="text-3xl font-bold text-{{ school.theme_color }}-600">
+                Lesson Notes Dashboard
+            </h1>
+            <p class="text-gray-500 mt-1">
+                Manage and access lesson notes.
+            </p>
         </div>
-      </div>
 
-      <!-- Pending Grading -->
-      <div class="col-span-2 bg-white p-4 rounded-lg shadow">
-        <h3 class="font-semibold text-gray-800 mb-3">Pending Grading</h3>
-        <ul class="divide-y divide-gray-100">
-          {% for p in pending %}
-            <li class="py-3 flex justify-between items-center">
-              <div>
-                <div class="font-medium text-gray-800">{{ p.note.title }}</div>
-                <div class="text-sm text-gray-600">
-                  {{ p.student }} • Submitted {{ p.submitted_on|date:"M d, Y" }}
+        {% if is_teacher or is_school_admin or request.user.is_superadmin %}
+        <a href="{% url 'notes:upload_note' %}"
+           class="mt-4 md:mt-0 px-5 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow transition">
+            + Upload Lesson Note
+        </a>
+        {% endif %}
+    </div>
+
+
+    {% if is_teacher or is_school_admin or request.user.is_superadmin %}
+
+    <!-- ========================= -->
+    <!-- Teacher / School Admin -->
+    <!-- ========================= -->
+
+    <div class="grid lg:grid-cols-3 gap-6">
+
+        <!-- Notes -->
+        <div class="lg:col-span-2 bg-white rounded-2xl shadow border border-gray-200">
+
+            <div class="border-b px-6 py-4">
+                <h2 class="text-xl font-semibold text-gray-800">
+                    Lesson Notes
+                </h2>
+            </div>
+
+            <div class="p-6 space-y-5">
+
+                {% for note in notes %}
+
+                <div class="border rounded-xl p-5 hover:shadow-md transition">
+
+                    <div class="flex flex-col md:flex-row md:justify-between gap-4">
+
+                        <div class="flex-1">
+
+                            <h3 class="text-lg font-bold text-gray-800">
+                                {{ note.title }}
+                            </h3>
+
+                            <div class="mt-1 text-sm text-gray-500">
+                                {{ note.subject }}
+                                •
+                                {{ note.publish_date|date:"M d, Y" }}
+                            </div>
+
+                            <p class="mt-3 text-gray-600">
+                                {{ note.content|truncatewords:30 }}
+                            </p>
+
+                        </div>
+
+                        <div class="flex flex-wrap gap-2">
+
+                            <a href="{% url 'notes:note_detail' note.pk %}"
+                               class="px-3 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">
+                                View
+                            </a>
+
+                            <a href="{% url 'notes:edit_note' note.pk %}"
+                               class="px-3 py-2 rounded-lg bg-amber-500 text-white hover:bg-amber-600">
+                                Edit
+                            </a>
+
+                            <a href="{% url 'notes:delete_note' note.pk %}"
+                               class="px-3 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700">
+                                Delete
+                            </a>
+
+                        </div>
+
+                    </div>
+
                 </div>
-              </div>
-              <a href="{% url 'notes:grade_submission' p.id %}" 
-                 class="px-3 py-1 bg-yellow-500 text-white rounded hover:bg-yellow-600 text-sm">
-                Grade
-              </a>
-            </li>
-          {% empty %}
-            <li class="text-gray-600 py-4 text-sm">No pending submissions</li>
-          {% endfor %}
-        </ul>
-      </div>
-    </div>
 
-  {% else %}
-    <!-- Student View -->
-    <div class="grid md:grid-cols-3 gap-6 mt-6">
-      <div class="col-span-2">
-        <h2 class="font-semibold text-{{ school.theme_color }}-600">Assigned to You</h2>
-        <div class="space-y-4">
-          {% for note in notes %}
-            {% include 'notes/note_card.html' with note=note %}
-          {% empty %}
-            <p class="text-gray-600 text-sm">No notes assigned to your class.</p>
-          {% endfor %}
+                {% empty %}
+
+                <div class="text-center py-10 text-gray-500">
+                    No lesson notes available.
+                </div>
+
+                {% endfor %}
+
+            </div>
+
         </div>
-      </div>
 
-      <!-- Submissions -->
-      <div class="bg-white p-4 rounded-lg shadow">
-        <h3 class="font-semibold text-gray-800 mb-3">My Submissions</h3>
-        <ul class="space-y-2">
-          {% for s in submissions %}
-            <li class="text-sm text-gray-700">
-              <span class="font-medium">{{ s.note.title }}</span> • 
-              {{ s.status }} • 
-              {{ s.submitted_on|date:"M d, Y" }}
-            </li>
-          {% empty %}
-            <li class="text-gray-600 text-sm">No submissions yet.</li>
-          {% endfor %}
-        </ul>
-      </div>
+
+        <!-- Pending -->
+        <div class="bg-white rounded-2xl shadow border border-gray-200">
+
+            <div class="border-b px-6 py-4">
+                <h2 class="text-xl font-semibold text-gray-800">
+                    Pending Grading
+                </h2>
+            </div>
+
+            <div class="divide-y">
+
+                {% for p in pending %}
+
+                <div class="p-5">
+
+                    <div class="font-semibold text-gray-800">
+                        {{ p.note.title }}
+                    </div>
+
+                    <div class="text-sm text-gray-500 mt-1">
+                        {{ p.student }}
+                    </div>
+
+                    <div class="text-xs text-gray-400 mt-1">
+                        Submitted {{ p.submitted_on|date:"M d, Y" }}
+                    </div>
+
+                    <a href="{% url 'notes:grade_submission' p.id %}"
+                       class="inline-block mt-3 px-3 py-2 bg-yellow-500 hover:bg-yellow-600 text-white rounded-lg text-sm">
+                        Grade
+                    </a>
+
+                </div>
+
+                {% empty %}
+
+                <div class="p-6 text-center text-gray-500">
+                    No pending submissions.
+                </div>
+
+                {% endfor %}
+
+            </div>
+
+        </div>
+
     </div>
-  {% endif %}
+
+
+    {% else %}
+
+    <!-- ========================= -->
+    <!-- Student -->
+    <!-- ========================= -->
+
+    <div class="grid lg:grid-cols-3 gap-6">
+
+        <!-- Assigned Notes -->
+
+        <div class="lg:col-span-2 bg-white rounded-2xl shadow border border-gray-200">
+
+            <div class="border-b px-6 py-4">
+                <h2 class="text-xl font-semibold text-gray-800">
+                    Assigned Lesson Notes
+                </h2>
+            </div>
+
+            <div class="p-6 space-y-5">
+
+                {% for note in notes %}
+
+                <div class="border rounded-xl p-5 hover:shadow-md transition">
+
+                    <h3 class="font-bold text-lg">
+                        {{ note.title }}
+                    </h3>
+
+                    <div class="text-sm text-gray-500 mt-1">
+                        {{ note.subject }}
+                        •
+                        {{ note.publish_date|date:"M d, Y" }}
+                    </div>
+
+                    <p class="mt-3 text-gray-600">
+                        {{ note.content|truncatewords:30 }}
+                    </p>
+
+                    <a href="{% url 'notes:note_detail' note.pk %}"
+                       class="inline-block mt-4 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                        View Note
+                    </a>
+
+                </div>
+
+                {% empty %}
+
+                <div class="text-center py-10 text-gray-500">
+                    No lesson notes assigned to your class.
+                </div>
+
+                {% endfor %}
+
+            </div>
+
+        </div>
+
+
+        <!-- Submissions -->
+
+        <div class="bg-white rounded-2xl shadow border border-gray-200">
+
+            <div class="border-b px-6 py-4">
+                <h2 class="text-xl font-semibold text-gray-800">
+                    My Submissions
+                </h2>
+            </div>
+
+            <div class="divide-y">
+
+                {% for s in submissions %}
+
+                <div class="p-5">
+
+                    <div class="font-semibold">
+                        {{ s.note.title }}
+                    </div>
+
+                    <div class="text-sm text-gray-500 mt-1">
+                        {{ s.status }}
+                    </div>
+
+                    <div class="text-xs text-gray-400 mt-1">
+                        {{ s.submitted_on|date:"M d, Y" }}
+                    </div>
+
+                </div>
+
+                {% empty %}
+
+                <div class="p-6 text-center text-gray-500">
+                    No submissions yet.
+                </div>
+
+                {% endfor %}
+
+            </div>
+
+        </div>
+
+    </div>
+
+    {% endif %}
+
 </div>
 {% endblock %}

@@ -230,17 +230,58 @@ def teacher_delete_note(request, pk):
 
 @login_required
 def student_notes_list(request):
-    student = getattr(request.user, 'student_profile', None) or getattr(request.user, 'student', None)
+    student = (
+        getattr(request.user, 'student_profile', None)
+        or getattr(request.user, 'student', None)
+    )
+
     if not student:
         raise Http404("Student profile required")
 
-    qs = LessonNote.objects.filter(publish_date__lte=timezone.now())
-    qs_all = qs.filter(visibility='all')
-    qs_private = qs.filter(visibility='private', teacher=getattr(request.user, 'teacher_profile', None))
-    qs_classes = qs.filter(visibility='classes', classes=student.school_class) if student.school_class else LessonNote.objects.none()
+    school = student.school
 
-    notes = (qs_all | qs_classes | qs_private).distinct().order_by('-publish_date')
-    return render(request, 'notes/student_notes_list.html', {'notes': notes})
+    # Only notes belonging to student's school
+    qs = LessonNote.objects.filter(
+        school=school,
+        publish_date__lte=timezone.now()
+    )
+
+    # Public notes for this school
+    qs_all = qs.filter(
+        visibility='all'
+    )
+
+    # Private notes (only if created by student's teacher)
+    qs_private = qs.filter(
+        visibility='private',
+        teacher=getattr(request.user, 'teacher_profile', None)
+    )
+
+    # Notes assigned to student's class
+    qs_classes = (
+        qs.filter(
+            visibility='classes',
+            classes=student.school_class
+        )
+        if student.school_class
+        else LessonNote.objects.none()
+    )
+
+    notes = (
+        qs_all |
+        qs_classes |
+        qs_private
+    ).distinct().order_by('-publish_date')
+
+
+    return render(
+        request,
+        'notes/student_notes_list.html',
+        {
+            'notes': notes,
+            'school': school
+        }
+    )
 
 
 # ------------------------
@@ -249,17 +290,53 @@ def student_notes_list(request):
 
 @login_required
 def note_detail(request, pk):
-    note = get_object_or_404(LessonNote, pk=pk)
-    teacher_profile = getattr(request.user, 'teacher_profile', None)
-    student = getattr(request.user, 'student_profile', None) or getattr(request.user, 'student', None)
+    note = get_object_or_404(
+        LessonNote,
+        pk=pk,
+        school=request.user.school
+    )
 
-    if note.visibility == 'private' and note.teacher != teacher_profile:
-        raise Http404("Not allowed")
-    if note.visibility == 'classes' and (not student or student.school_class not in note.classes.all()):
-        if not teacher_profile:
+    user = request.user
+    teacher_profile = getattr(user, "teacher_profile", None)
+    school = getattr(user, "school", None)
+    student = (
+        getattr(user, "student_profile", None)
+        or getattr(user, "student", None)
+    )
+
+    # Superadmin
+    if user.is_superadmin:
+        pass
+
+    # School admin can view every note in their school
+    elif school and note.school == school:
+        pass
+
+    # Teacher can view own notes
+    elif teacher_profile and note.teacher == teacher_profile:
+        pass
+
+    # Student permission
+    else:
+        if note.visibility == "private":
             raise Http404("Not allowed")
 
-    return render(request, 'notes/note_detail.html', {'note': note})
+        if (
+            note.visibility == "classes"
+            and (
+                not student
+                or student.school_class not in note.classes.all()
+            )
+        ):
+            raise Http404("Not allowed")
+
+    return render(
+        request,
+        "notes/note_detail.html",
+        {
+            "note": note
+        }
+    )
 
 
 # ------------------------

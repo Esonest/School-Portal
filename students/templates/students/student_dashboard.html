@@ -233,17 +233,27 @@
     </div>
 
     <!-- NOTES -->
-    <div class="card bg-white p-4 sm:p-6 rounded-xl shadow border flex flex-col justify-between">
-      <div>
-        <h2 class="font-semibold mb-2" style="color:var(--theme)">Class Notes</h2>
-        <p class="text-sm muted">Access all uploaded notes.</p>
-      </div>
-      <a href="{% url 'students:notes_list' %}"
-         class="no-print mt-4 px-4 py-2 text-sm text-white rounded text-center"
-         style="background:var(--theme)">
-        View Notes
-      </a>
-    </div>
+    <!-- NOTES -->
+<div class="card bg-white p-4 sm:p-6 rounded-xl shadow border flex flex-col justify-between">
+
+  <div>
+    <h2 class="font-semibold mb-2" style="color:var(--theme)">
+      Class Notes
+    </h2>
+
+    <p class="text-sm muted">
+      Access lesson notes, study materials and downloadable resources.
+    </p>
+  </div>
+
+  <a href="{% url 'notes:student_list' %}"
+     class="no-print mt-4 px-4 py-2 text-sm text-white rounded-xl text-center transition hover:opacity-90"
+     style="background:var(--theme)">
+    View Notes
+  </a>
+
+</div>
+
   </div>
 
   <!-- 💻 CBT -->
