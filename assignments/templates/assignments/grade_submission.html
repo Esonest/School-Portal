@@ -1,87 +1,523 @@
 {% extends 'accounts/base.html' %}
+
 {% block content %}
-<div class="max-w-3xl mx-auto px-6 py-10">
-  
-  <!-- Header -->
-  <div class="bg-gradient-to-r from-indigo-50 to-white border border-indigo-100 rounded-2xl shadow-sm p-6 mb-8">
-    <h2 class="text-3xl font-bold text-gray-800 flex items-center gap-2">
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-              d="M12 20h9M12 4v16m0-16L3 12l9 8"/>
-      </svg>
-      Grade Submission
-    </h2>
-    <p class="text-gray-600 mt-1">Review and score student work for this assignment.</p>
-  </div>
 
-  <!-- Submission Info -->
-  <div class="bg-white border border-gray-100 rounded-2xl shadow-sm p-6">
-    <div class="space-y-2 text-gray-700">
-      <p><span class="font-semibold text-gray-800">Assignment:</span> {{ submission.assignment.title }}</p>
-      <p><span class="font-semibold text-gray-800">Student:</span> {{ submission.student }}</p>
-      <p><span class="font-semibold text-gray-800">Submitted:</span> {{ submission.submitted_on|date:"M d, Y H:i" }}</p>
-    </div>
 
-    {% if submission.text %}
-    <div class="mt-5 bg-gray-50 border border-gray-100 rounded-xl p-4">
-      <h3 class="font-semibold text-gray-800 mb-2">Student Response</h3>
-      <p class="text-gray-700 whitespace-pre-line">{{ submission.text }}</p>
-    </div>
-    {% endif %}
+<div class="max-w-7xl mx-auto px-4 py-8">
 
-    {% if submission.files.all %}
-    <div class="mt-5">
-      <h3 class="font-semibold text-gray-800 mb-2">Submitted Files</h3>
-      <ul class="list-disc ml-6 space-y-1">
-        {% for f in submission.files.all %}
-          <li>
-            <a href="{% url 'assignments:download_submission_file' file_id=f.id %}" 
-               class="text-indigo-600 hover:text-indigo-800 transition font-medium">
-              📎 {{ f.filename|default:"Download file" }}
-            </a>
-          </li>
-        {% endfor %}
-      </ul>
-    </div>
-    {% endif %}
-  </div>
 
-  <!-- Grading Form -->
-  <div class="mt-8 bg-white border border-gray-100 rounded-2xl shadow-sm p-6">
-    <h3 class="text-xl font-semibold text-gray-800 mb-4">Enter Grade</h3>
-    <form method="post" class="space-y-6">
-      {% csrf_token %}
-      <div class="space-y-4">
-        {% for field in form %}
-        <div>
-          <label for="{{ field.id_for_label }}" class="block text-sm font-medium text-gray-700 mb-1">
-            {{ field.label }}
-          </label>
-          <div class="mt-1">
-            {{ field }}
-          </div>
-          {% if field.help_text %}
-          <p class="text-xs text-gray-500 mt-1">{{ field.help_text }}</p>
-          {% endif %}
-          {% for error in field.errors %}
-          <p class="text-sm text-red-600">{{ error }}</p>
-          {% endfor %}
-        </div>
-        {% endfor %}
-      </div>
+<!-- ================= HEADER ================= -->
 
-      <div class="flex items-center gap-4 pt-4 border-t border-gray-100">
-        <button type="submit" 
-                class="px-5 py-2.5 bg-green-600 hover:bg-green-700 text-white font-medium rounded-lg shadow transition">
-          💾 Save Grade
-        </button>
-        <a href="{% url 'assignments:teacher_assignment_detail' pk=submission.assignment.id %}" 
-           class="px-5 py-2.5 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition">
-          ← Back
-        </a>
-      </div>
-    </form>
-  </div>
+
+<div class="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl shadow-lg p-6 text-white mb-8">
+
+
+<div class="flex flex-col md:flex-row justify-between gap-4 items-center">
+
+
+<div>
+
+<h1 class="text-3xl font-bold flex items-center gap-3">
+
+📝 Grade Submission
+
+</h1>
+
+
+<p class="text-indigo-100 mt-2">
+
+Review student work, provide scores and feedback.
+
+</p>
+
 
 </div>
+
+
+
+<div class="bg-white/20 rounded-xl px-5 py-3">
+
+
+<p class="text-sm text-indigo-100">
+
+Submission Status
+
+</p>
+
+
+<p class="font-bold text-lg">
+
+{{ submission.status|title }}
+
+</p>
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+
+
+<div class="grid lg:grid-cols-3 gap-8">
+
+
+
+
+
+
+<!-- ================= SUBMISSION DETAILS ================= -->
+
+
+<div class="lg:col-span-2 space-y-6">
+
+
+
+<div class="bg-white rounded-2xl shadow border border-gray-100 p-6">
+
+
+<h2 class="text-xl font-bold text-gray-800 mb-5">
+
+📚 Submission Details
+
+</h2>
+
+
+
+
+<div class="grid md:grid-cols-2 gap-5">
+
+
+
+<div class="bg-gray-50 rounded-xl p-4">
+
+<p class="text-xs text-gray-500 uppercase">
+
+Assignment
+
+</p>
+
+
+<p class="font-semibold text-gray-800 mt-1">
+
+{{ submission.assignment.title }}
+
+</p>
+
+
+</div>
+
+
+
+
+
+<div class="bg-gray-50 rounded-xl p-4">
+
+<p class="text-xs text-gray-500 uppercase">
+
+Student
+
+</p>
+
+
+<p class="font-semibold text-gray-800 mt-1">
+
+{{ submission.student }}
+
+</p>
+
+
+</div>
+
+
+
+
+
+<div class="bg-gray-50 rounded-xl p-4">
+
+<p class="text-xs text-gray-500 uppercase">
+
+Submitted Date
+
+</p>
+
+
+<p class="font-semibold text-gray-800 mt-1">
+
+{{ submission.submitted_on|date:"M d, Y H:i" }}
+
+</p>
+
+
+</div>
+
+
+
+
+
+<div class="bg-gray-50 rounded-xl p-4">
+
+<p class="text-xs text-gray-500 uppercase">
+
+Maximum Score
+
+</p>
+
+
+<p class="font-semibold text-indigo-600 text-xl">
+
+{{ submission.assignment.max_score }}
+
+</p>
+
+
+</div>
+
+
+
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+
+
+
+
+<!-- STUDENT ANSWER -->
+
+
+{% if submission.text %}
+
+
+<div class="bg-white rounded-2xl shadow border p-6">
+
+
+<h2 class="text-xl font-bold mb-4">
+
+💬 Student Response
+
+</h2>
+
+
+
+<div class="bg-gray-50 rounded-xl p-5 text-gray-700 whitespace-pre-line">
+
+{{ submission.text }}
+
+</div>
+
+
+</div>
+
+
+{% endif %}
+
+
+
+
+
+
+
+
+
+<!-- FILES -->
+
+
+{% if submission.files.all %}
+
+
+<div class="bg-white rounded-2xl shadow border p-6">
+
+
+<h2 class="text-xl font-bold mb-4">
+
+📎 Submitted Files
+
+</h2>
+
+
+
+<div class="space-y-3">
+
+
+{% for file in submission.files.all %}
+
+
+<a href="{% url 'assignments:download_submission_file' file_id=file.id %}"
+
+class="flex items-center justify-between bg-indigo-50 hover:bg-indigo-100 rounded-xl p-4 transition">
+
+
+<div class="flex items-center gap-3">
+
+
+<span class="text-2xl">
+
+📄
+
+</span>
+
+
+<div>
+
+
+<p class="font-medium text-gray-800">
+
+{{ file.filename }}
+
+</p>
+
+
+<p class="text-xs text-gray-500">
+
+Click to download
+
+</p>
+
+
+</div>
+
+
+</div>
+
+
+
+<span class="text-indigo-600 font-semibold">
+
+Download →
+
+</span>
+
+
+
+</a>
+
+
+{% endfor %}
+
+
+</div>
+
+
+
+</div>
+
+
+{% endif %}
+
+
+
+</div>
+
+
+
+
+
+
+
+
+<!-- ================= GRADING PANEL ================= -->
+
+
+<div>
+
+
+
+<div class="sticky top-5 bg-white rounded-2xl shadow-xl border p-6">
+
+
+
+<h2 class="text-xl font-bold text-gray-800 mb-5">
+
+🎯 Enter Grade
+
+</h2>
+
+
+
+
+<form method="post" class="space-y-5">
+
+
+{% csrf_token %}
+
+
+
+
+{% for field in form %}
+
+
+
+<div>
+
+
+<label class="block text-sm font-semibold text-gray-700 mb-2">
+
+{{ field.label }}
+
+</label>
+
+
+
+{{ field }}
+
+
+
+{% if field.help_text %}
+
+<p class="text-xs text-gray-500 mt-1">
+
+{{ field.help_text }}
+
+</p>
+
+{% endif %}
+
+
+
+
+{% for error in field.errors %}
+
+
+<p class="text-sm text-red-600 mt-1">
+
+{{ error }}
+
+</p>
+
+
+{% endfor %}
+
+
+
+</div>
+
+
+
+{% endfor %}
+
+
+
+
+
+
+<div class="border-t pt-5 flex flex-col gap-3">
+
+
+<button type="submit"
+
+class="w-full px-6 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-semibold shadow">
+
+
+💾 Save Grade
+
+
+</button>
+
+
+
+
+
+<a href="{% url 'assignments:teacher_assignment_detail' pk=submission.assignment.id %}"
+
+class="w-full text-center px-6 py-3 bg-gray-100 hover:bg-gray-200 rounded-xl font-semibold">
+
+
+← Back
+
+
+</a>
+
+
+
+</div>
+
+
+
+
+
+</form>
+
+
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+
+</div>
+
+
+</div>
+
+
+
+<style>
+
+
+input,
+textarea,
+select {
+
+
+width:100%;
+
+border:1px solid #d1d5db;
+
+border-radius:0.75rem;
+
+padding:0.75rem;
+
+
+}
+
+
+
+input:focus,
+textarea:focus,
+select:focus {
+
+
+outline:none;
+
+border-color:#6366f1;
+
+box-shadow:0 0 0 3px rgba(99,102,241,.2);
+
+
+}
+
+
+textarea {
+
+min-height:150px;
+
+}
+
+
+</style>
+
+
+
 {% endblock %}

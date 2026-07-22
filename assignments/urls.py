@@ -7,7 +7,7 @@ urlpatterns = [
     # teacher routes
     path('create/', views.create_assignment, name='create_assignment'),
     path('teacher/assignment/<int:pk>/edit/', views.create_assignment, name='edit_assignment'),
-    path('teacher/assignment/<int:pk>/', views.teacher_assignment_detail, name='teacher_assignment_detail'),
+    path('teacher/assignment/<int:pk>/', views.assignment_detail, name='teacher_assignment_detail'),
     path('teacher/grade/<int:submission_id>/', views.grade_submission, name='grade_submission'),
     path('teacher/assignment/<int:pk>/delete/', views.delete_assignment, name='delete_assignment'),
 

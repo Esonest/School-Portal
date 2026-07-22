@@ -1,16 +1,470 @@
-{% extends 'base.html' %}
+{% extends 'accounts/base.html' %}
+
 {% block content %}
-<div class="max-w-6xl mx-auto p-6">
-  <h2 class="text-2xl font-bold">Submissions</h2>
-  <table class="w-full mt-4 bg-white rounded shadow">
-    <thead><tr class="bg-gray-100"><th class="p-2">Assignment</th><th class="p-2">Student</th><th class="p-2">Submitted</th><th class="p-2">Status</th><th class="p-2">Score</th></tr></thead>
-    <tbody>
-      {% for s in submissions %}
-      <tr class="border-b"><td class="p-2">{{ s.assignment.title }}</td><td class="p-2">{{ s.student }}</td><td class="p-2">{{ s.submitted_on }}</td><td class="p-2">{{ s.status }}</td><td class="p-2">{{ s.score|default:"—" }}</td></tr>
-      {% empty %}
-      <tr><td colspan="5" class="p-4 text-gray-600">No submissions found.</td></tr>
-      {% endfor %}
-    </tbody>
-  </table>
+
+<div class="min-h-screen bg-gray-50 py-8">
+
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+
+
+<!-- ================= HEADER ================= -->
+
+<div class="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-3xl shadow-xl p-8 text-white mb-8">
+
+
+<div class="flex flex-col md:flex-row md:justify-between md:items-center gap-5">
+
+
+<div>
+
+<h1 class="text-3xl font-bold flex items-center gap-3">
+
+📤 Assignment Submissions
+
+</h1>
+
+
+<p class="text-indigo-100 mt-2">
+
+Review student submissions, scores and grading status.
+
+</p>
+
+
 </div>
+
+
+
+
+<div class="bg-white/20 rounded-xl px-6 py-4 backdrop-blur">
+
+
+<p class="text-sm text-indigo-100">
+Total Submissions
+</p>
+
+
+<p class="text-3xl font-bold">
+
+{{ submissions|length }}
+
+</p>
+
+
+</div>
+
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+<!-- ================= SUBMISSIONS ================= -->
+
+
+<div class="bg-white rounded-3xl shadow border border-gray-100 overflow-hidden">
+
+
+
+{% if submissions %}
+
+
+
+<!-- DESKTOP TABLE -->
+
+<div class="hidden md:block overflow-x-auto">
+
+
+<table class="w-full text-left">
+
+
+<thead class="bg-gray-50 border-b">
+
+
+<tr>
+
+
+<th class="px-6 py-4 text-sm font-semibold text-gray-600">
+Assignment
+</th>
+
+
+<th class="px-6 py-4 text-sm font-semibold text-gray-600">
+Student
+</th>
+
+
+<th class="px-6 py-4 text-sm font-semibold text-gray-600">
+Submitted
+</th>
+
+
+<th class="px-6 py-4 text-sm font-semibold text-gray-600">
+Status
+</th>
+
+
+<th class="px-6 py-4 text-sm font-semibold text-gray-600">
+Score
+</th>
+
+
+</tr>
+
+
+</thead>
+
+
+
+
+<tbody class="divide-y">
+
+
+{% for s in submissions %}
+
+
+<tr class="hover:bg-gray-50 transition">
+
+
+
+<td class="px-6 py-5">
+
+
+<p class="font-semibold text-gray-800">
+
+{{ s.assignment.title }}
+
+</p>
+
+
+<p class="text-xs text-gray-500">
+
+{{ s.assignment.subject|default:"No subject" }}
+
+</p>
+
+
+</td>
+
+
+
+
+
+<td class="px-6 py-5">
+
+
+<div class="flex items-center gap-3">
+
+
+<div class="w-10 h-10 rounded-full bg-indigo-100 flex items-center justify-center">
+
+👤
+
+</div>
+
+
+<span class="font-medium text-gray-800">
+
+{{ s.student }}
+
+</span>
+
+
+</div>
+
+
+</td>
+
+
+
+
+
+
+<td class="px-6 py-5 text-sm text-gray-600">
+
+
+{{ s.submitted_on|date:"M d, Y H:i" }}
+
+
+</td>
+
+
+
+
+
+
+<td class="px-6 py-5">
+
+
+{% if s.status == "graded" %}
+
+
+<span class="px-3 py-1 rounded-full text-xs font-semibold bg-green-100 text-green-700">
+
+✓ Graded
+
+</span>
+
+
+{% elif s.status == "late" %}
+
+
+<span class="px-3 py-1 rounded-full text-xs font-semibold bg-red-100 text-red-700">
+
+Late
+
+</span>
+
+
+{% elif s.status == "submitted" %}
+
+
+<span class="px-3 py-1 rounded-full text-xs font-semibold bg-yellow-100 text-yellow-700">
+
+Pending Review
+
+</span>
+
+
+{% else %}
+
+
+<span class="px-3 py-1 rounded-full text-xs font-semibold bg-gray-100 text-gray-700">
+
+{{ s.status|title }}
+
+</span>
+
+
+{% endif %}
+
+
+
+</td>
+
+
+
+
+
+<td class="px-6 py-5">
+
+
+{% if s.score %}
+
+
+<span class="font-bold text-indigo-600">
+
+{{ s.score }}
+
+</span>
+
+
+{% else %}
+
+<span class="text-gray-400">
+—
+</span>
+
+
+{% endif %}
+
+
+</td>
+
+
+
+</tr>
+
+
+
+{% endfor %}
+
+
+
+</tbody>
+
+
+</table>
+
+
+</div>
+
+
+
+
+
+
+
+<!-- MOBILE CARD VIEW -->
+
+
+<div class="md:hidden p-4 space-y-4">
+
+
+{% for s in submissions %}
+
+
+
+<div class="border rounded-2xl p-5 shadow-sm bg-white">
+
+
+<div class="flex justify-between gap-3">
+
+
+<h3 class="font-bold text-gray-800">
+
+{{ s.assignment.title }}
+
+</h3>
+
+
+
+{% if s.status == "graded" %}
+
+
+<span class="text-xs bg-green-100 text-green-700 px-2 py-1 rounded-full">
+
+Graded
+
+</span>
+
+
+{% elif s.status == "late" %}
+
+
+<span class="text-xs bg-red-100 text-red-700 px-2 py-1 rounded-full">
+
+Late
+
+</span>
+
+
+{% else %}
+
+
+<span class="text-xs bg-yellow-100 text-yellow-700 px-2 py-1 rounded-full">
+
+{{ s.status|title }}
+
+</span>
+
+
+{% endif %}
+
+
+
+</div>
+
+
+
+
+
+<div class="mt-4 space-y-2 text-sm text-gray-600">
+
+
+<p>
+
+👤 <strong>Student:</strong>
+{{ s.student }}
+
+</p>
+
+
+<p>
+
+📅 <strong>Submitted:</strong>
+{{ s.submitted_on|date:"M d, Y H:i" }}
+
+</p>
+
+
+
+<p>
+
+⭐ <strong>Score:</strong>
+
+{% if s.score %}
+
+{{ s.score }}
+
+{% else %}
+
+Not graded
+
+{% endif %}
+
+
+</p>
+
+
+</div>
+
+
+</div>
+
+
+
+{% endfor %}
+
+
+
+</div>
+
+
+
+
+
+
+{% else %}
+
+
+
+<div class="text-center py-16">
+
+
+<div class="text-6xl mb-4">
+📭
+</div>
+
+
+<h2 class="text-2xl font-bold text-gray-800">
+
+No Submissions Found
+
+</h2>
+
+
+<p class="text-gray-500 mt-2">
+
+Students have not submitted any assignments yet.
+
+</p>
+
+
+</div>
+
+
+
+{% endif %}
+
+
+
+</div>
+
+
+
+</div>
+
+
+</div>
+
+
 {% endblock %}

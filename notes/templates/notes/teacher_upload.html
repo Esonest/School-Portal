@@ -46,32 +46,57 @@ Create and share lesson materials with your students.
 
 {% for field in form %}
 
-{% if field.name in "title subject session term visibility publish_date" %}
+{% if field.name in "title subject session term visibility publish_date expiry_date is_active" %}
 
 <div>
 
 <label class="block text-sm font-semibold text-gray-700 mb-2">
-{{field.label}}
+{{ field.label }}
 </label>
 
 
-{{field}}
+{% if field.name == "is_active" %}
+
+<div class="flex items-center gap-3 bg-gray-50 rounded-xl p-4">
+
+    {{ field }}
+
+    <div>
+        <p class="font-medium text-gray-800">
+            Make Note Active
+        </p>
+
+        <p class="text-xs text-gray-500">
+            Active notes are visible to students.
+        </p>
+    </div>
+
+</div>
+
+
+{% else %}
+
+{{ field }}
+
+{% endif %}
+
 
 
 {% for error in field.errors %}
+
 <p class="text-sm text-red-500 mt-1">
-{{error}}
+{{ error }}
 </p>
+
 {% endfor %}
+
 
 </div>
 
 
 {% endif %}
 
-
 {% endfor %}
-
 
 </div>
 
@@ -324,6 +349,34 @@ PUBLISH DATE
 Not set
 </p>
 
+</div>
+
+
+
+<div>
+
+<p class="text-xs text-gray-500">
+EXPIRY DATE
+</p>
+
+<p id="previewExpiry">
+No expiry date
+</p>
+
+</div>
+
+
+
+<div>
+
+<p class="text-xs text-gray-500">
+STATUS
+</p>
+
+<p id="previewStatus"
+class="font-semibold text-green-600">
+Active
+</p>
 
 </div>
 
@@ -394,6 +447,8 @@ const title=document.querySelector("#id_title");
 const subject=document.querySelector("#id_subject");
 const file=document.querySelector("#id_file");
 const date=document.querySelector("#id_publish_date");
+const expiry=document.querySelector("#id_expiry_date");
+const active=document.querySelector("#id_is_active");
 
 
 title?.addEventListener(
@@ -402,6 +457,33 @@ title?.addEventListener(
 );
 
 
+expiry?.addEventListener(
+"change",
+()=>previewExpiry.innerText =
+expiry.value || "No expiry date"
+);
+
+
+
+active?.addEventListener(
+"change",
+()=>{
+
+if(active.checked){
+
+previewStatus.innerText="Active";
+previewStatus.className="font-semibold text-green-600";
+
+}
+
+else{
+
+previewStatus.innerText="Inactive";
+previewStatus.className="font-semibold text-red-600";
+
+}
+
+});
 
 subject?.addEventListener(
 "change",

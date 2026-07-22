@@ -721,18 +721,17 @@
 </a>
 
 <!-- 9 -->
-<a href="{% url 'school_admin:assignment_list' school.id %}" class="sidebar-link">
+<a href="{% url 'assignments:dashboard' %}" class="sidebar-link">
 
-    
     <span>
-📌 Assignments
-</span>
+        📌 Assignments
+    </span>
 
-<span class="sidebar-badge">
-{{ assignment_count }}
-</span>
+    <span class="sidebar-badge">
+        {{ assignment_count }}
+    </span>
+
 </a>
-
 <!-- 10 -->
 <a href="{% url 'school_admin:admin_dashboard' school.id %}" class="sidebar-link">
 

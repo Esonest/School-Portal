@@ -12,6 +12,8 @@ from attendance.models import Attendance
 from assignments.models import Assignment, AssignmentSubmission 
 from cbt.models import CBTExam, CBTSubmission 
 from results.utils import portal_required
+from django.utils import timezone
+from django.db.models import Q
 
 # ------------------------
 # Helper Decorators
@@ -39,41 +41,49 @@ from results.utils import portal_required
 @student_required
 def student_dashboard(request):
 
-
-
     student = getattr(request.user, 'student_profile', None) or getattr(request.user, 'student', None)
+
     if not student:
         return redirect("accounts:portal_selection")
 
-    now = localtime(timezone.now())
-    
+
+    now = timezone.now()
+
 
     # ✅ Assignments
-    assignments = list(Assignment.objects.filter(
-        published=True,
-        classes__in=[student.school_class]
-    ).distinct().order_by('-created_on'))
+    
 
-    # ✅ Active CBTs
-    active_cbts = list(CBTExam.objects.filter(
+
+    # Current time for template status display
+    now = timezone.now()
+
+
+    # ✅ Assignments - show all assignments for student's class
+    assignments = Assignment.objects.filter(
+        classes=student.school_class
+    ).distinct().order_by('-created_on')
+
+
+    active_cbts = CBTExam.objects.filter(
         active=True,
         school_class=student.school_class,
         start_time__lte=now,
         end_time__gte=now
-    ).order_by('start_time'))
+    ).order_by('start_time')
 
-    # ✅ Upcoming CBTs
-    upcoming_cbts = list(CBTExam.objects.filter(
+
+    upcoming_cbts = CBTExam.objects.filter(
         active=True,
         school_class=student.school_class,
         start_time__gt=now
-    ).order_by('start_time'))
-    
+    ).order_by('start_time')
+
+
     recent_results = CBTSubmission.objects.filter(
         student=student,
         completed_on__isnull=False
     ).order_by('-completed_on')[:5]
-    
+
 
     context = {
         'student': student,
@@ -83,7 +93,12 @@ def student_dashboard(request):
         'upcoming_cbts': upcoming_cbts,
         'now': now,
     }
-    return render(request, 'students/student_dashboard.html', context)
+
+    return render(
+        request,
+        'students/student_dashboard.html',
+        context
+    )
 
 
 

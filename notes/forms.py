@@ -1,13 +1,18 @@
+
 from django import forms
+from django.core.exceptions import ValidationError
+
 from .models import LessonNote
 from students.models import SchoolClass
 from results.models import Subject
 from results.utils import SESSION_LIST
 
 
+
 class LessonNoteForm(forms.ModelForm):
 
     class Meta:
+
         model = LessonNote
 
         fields = (
@@ -19,55 +24,97 @@ class LessonNoteForm(forms.ModelForm):
             'term',
             'visibility',
             'classes',
-            'publish_date'
+            'publish_date',
+            'expiry_date',
+            'is_active',
         )
 
+
         widgets = {
+
             'publish_date': forms.DateInput(
                 attrs={
                     'type': 'date'
                 }
             ),
 
-            'classes': forms.SelectMultiple(
+
+            'expiry_date': forms.DateInput(
                 attrs={
-                    'size': 6
+                    'type': 'date'
                 }
             ),
+
+
+            'classes': forms.SelectMultiple(
+                attrs={
+                    'size': 8
+                }
+            ),
+
+
+            'is_active': forms.CheckboxInput(
+                attrs={
+                    'class': 'h-5 w-5 rounded text-indigo-600'
+                }
+            ),
+
         }
+
 
 
     def __init__(self, *args, **kwargs):
 
-        teacher = kwargs.pop('teacher', None)
-        user = kwargs.pop('user', None)
+        teacher = kwargs.pop(
+            'teacher',
+            None
+        )
+
+        user = kwargs.pop(
+            'user',
+            None
+        )
+
 
         super().__init__(*args, **kwargs)
 
 
 
-        # -------------------------
+        # ==========================
         # SESSION DROPDOWN
-        # -------------------------
+        # ==========================
 
         session_choices = []
+
 
         for item in SESSION_LIST:
 
             if isinstance(item, (list, tuple)) and len(item) >= 2:
+
                 session_choices.append(
-                    (item[0], item[1])
+                    (
+                        item[0],
+                        item[1]
+                    )
                 )
 
             else:
+
                 session_choices.append(
-                    (item, item)
+                    (
+                        item,
+                        item
+                    )
                 )
 
 
+
         self.fields['session'] = forms.ChoiceField(
+
             choices=session_choices,
+
             required=False,
+
             widget=forms.Select(
                 attrs={
                     "class":
@@ -77,13 +124,15 @@ class LessonNoteForm(forms.ModelForm):
         )
 
 
-        # -------------------------
-        # DEFAULT SECURITY LOCK
-        # -------------------------
+
+        # ==========================
+        # SECURITY DEFAULT
+        # ==========================
 
         self.fields['classes'].queryset = (
             SchoolClass.objects.none()
         )
+
 
         self.fields['subject'].queryset = (
             Subject.objects.none()
@@ -91,26 +140,24 @@ class LessonNoteForm(forms.ModelForm):
 
 
 
-        # -------------------------
-        # COMMON STYLING
-        # -------------------------
+        # ==========================
+        # COMMON FIELD STYLING
+        # ==========================
 
         for name, field in self.fields.items():
 
-            if name != "session":
+            field.widget.attrs.update({
 
-                field.widget.attrs.update({
+                "class":
+                "w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
 
-                    "class":
-                    "w-full border border-gray-300 rounded-xl px-4 py-3 focus:outline-none focus:ring-2 focus:ring-indigo-500"
-
-                })
+            })
 
 
 
-        # -------------------------
-        # SPECIAL FIELDS
-        # -------------------------
+        # ==========================
+        # CONTENT FIELD
+        # ==========================
 
         self.fields['content'].widget.attrs.update({
 
@@ -119,6 +166,11 @@ class LessonNoteForm(forms.ModelForm):
 
         })
 
+
+
+        # ==========================
+        # MULTIPLE CLASSES FIELD
+        # ==========================
 
         self.fields['classes'].widget.attrs.update({
 
@@ -131,6 +183,10 @@ class LessonNoteForm(forms.ModelForm):
 
 
 
+        # ==========================
+        # FILE FIELD
+        # ==========================
+
         self.fields['file'].widget.attrs.update({
 
             "class":
@@ -140,11 +196,12 @@ class LessonNoteForm(forms.ModelForm):
 
 
 
-        # -------------------------
-        # SCHOOL ADMIN
-        # -------------------------
+        # ==========================
+        # SCHOOL ADMIN ACCESS
+        # ==========================
 
-        if user and hasattr(user, 'school') and not teacher:
+        if user and getattr(user, 'school', None) and not teacher:
+
 
             self.fields['classes'].queryset = (
                 SchoolClass.objects.filter(
@@ -161,11 +218,12 @@ class LessonNoteForm(forms.ModelForm):
 
 
 
-        # -------------------------
-        # TEACHER
-        # -------------------------
+        # ==========================
+        # TEACHER ACCESS
+        # ==========================
 
         elif teacher:
+
 
             self.fields['classes'].queryset = (
                 teacher.classes
@@ -183,3 +241,35 @@ class LessonNoteForm(forms.ModelForm):
                 )
                 .distinct()
             )
+
+
+
+    # ==========================
+    # FORM VALIDATION
+    # ==========================
+
+    def clean(self):
+
+        cleaned_data = super().clean()
+
+
+        publish_date = cleaned_data.get(
+            "publish_date"
+        )
+
+
+        expiry_date = cleaned_data.get(
+            "expiry_date"
+        )
+
+
+        if expiry_date and publish_date:
+
+            if expiry_date < publish_date:
+
+                raise ValidationError(
+                    "Expiry date cannot be before publish date."
+                )
+
+
+        return cleaned_data

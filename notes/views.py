@@ -8,6 +8,7 @@ from .forms import LessonNoteForm
 from results.utils import portal_required
 from django.http import HttpResponseRedirect
 from django.contrib import messages
+from django.db.models import Q
 
 # ------------------------
 # Teacher: list notes
@@ -227,62 +228,73 @@ def teacher_delete_note(request, pk):
 # ------------------------
 # Student / public notes
 # ------------------------
+from django.core.paginator import Paginator
+
+from django.core.paginator import Paginator
+from django.db.models import Q
+from django.utils import timezone
+from django.http import Http404
+from django.shortcuts import render
+from django.contrib.auth.decorators import login_required
+
 
 @login_required
 def student_notes_list(request):
+
     student = (
-        getattr(request.user, 'student_profile', None)
-        or getattr(request.user, 'student', None)
+        getattr(request.user, "student_profile", None)
+        or getattr(request.user, "student", None)
     )
 
     if not student:
         raise Http404("Student profile required")
 
-    school = student.school
 
-    # Only notes belonging to student's school
-    qs = LessonNote.objects.filter(
-        school=school,
-        publish_date__lte=timezone.now()
-    )
+    today = timezone.now().date()
 
-    # Public notes for this school
-    qs_all = qs.filter(
-        visibility='all'
-    )
 
-    # Private notes (only if created by student's teacher)
-    qs_private = qs.filter(
-        visibility='private',
-        teacher=getattr(request.user, 'teacher_profile', None)
-    )
-
-    # Notes assigned to student's class
-    qs_classes = (
-        qs.filter(
-            visibility='classes',
+    notes = LessonNote.objects.select_related(
+        "school",
+        "subject",
+        "teacher",
+        "category"
+    ).prefetch_related(
+        "classes"
+    ).filter(
+        school=student.school,
+        is_active=True,
+        publish_date__lte=today,
+    ).filter(
+        Q(expiry_date__isnull=True) |
+        Q(expiry_date__gte=today)
+    ).filter(
+        Q(visibility="all") |
+        Q(
+            visibility="classes",
             classes=student.school_class
         )
-        if student.school_class
-        else LessonNote.objects.none()
+    ).distinct().order_by(
+        "-publish_date"
     )
 
-    notes = (
-        qs_all |
-        qs_classes |
-        qs_private
-    ).distinct().order_by('-publish_date')
+
+    paginator = Paginator(
+        notes,
+        10
+    )
+
+    page_obj = paginator.get_page(
+        request.GET.get("page")
+    )
 
 
     return render(
         request,
-        'notes/student_notes_list.html',
+        "notes/student_notes_list.html",
         {
-            'notes': notes,
-            'school': school
+            "notes": page_obj,
         }
     )
-
 
 # ------------------------
 # Note detail

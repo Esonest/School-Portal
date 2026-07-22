@@ -41,28 +41,97 @@ class LessonNote(models.Model):
         ('3', 'Term 3'),
     ]
 
-    school = models.ForeignKey(School, on_delete=models.CASCADE, default='', related_name='lesson_notes')
+    school = models.ForeignKey(
+        School,
+        on_delete=models.CASCADE,
+        related_name='lesson_notes'
+    )
+
     title = models.CharField(max_length=255)
-    teacher = models.ForeignKey(Teacher, on_delete=models.SET_NULL, null=True, blank=True, related_name='lesson_notes')
-    subject = models.ForeignKey(Subject, on_delete=models.SET_NULL, null=True, blank=True)
-    category = models.ForeignKey(NoteCategory, on_delete=models.SET_NULL, null=True, blank=True)
+
+    teacher = models.ForeignKey(
+        Teacher,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='lesson_notes'
+    )
+
+    subject = models.ForeignKey(
+        Subject,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+
+    category = models.ForeignKey(
+        NoteCategory,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True
+    )
+
     content = models.TextField(blank=True)
-    session = models.CharField(max_length=20, blank=True, null=True)
-    term = models.CharField(max_length=1, choices=TERM_CHOICES, blank=True, null=True)
+
+    session = models.CharField(
+        max_length=20,
+        blank=True,
+        null=True
+    )
+
+    term = models.CharField(
+        max_length=1,
+        choices=TERM_CHOICES,
+        blank=True,
+        null=True
+    )
+
     file = models.FileField(
         storage=RawMediaCloudinaryStorage(),
         upload_to="lesson_notes/",
         blank=True,
         null=True,
     )
-    visibility = models.CharField(max_length=20, choices=VISIBILITY_CHOICES, default='all')
-    classes = models.ManyToManyField(SchoolClass, blank=True, help_text="If visibility is 'Specific Classes', choose classes.")
+
+    visibility = models.CharField(
+        max_length=20,
+        choices=VISIBILITY_CHOICES,
+        default='all'
+    )
+
+    classes = models.ManyToManyField(
+        SchoolClass,
+        blank=True,
+        help_text="If visibility is 'Specific Classes', choose classes."
+    )
+
+    publish_date = models.DateField(
+        default=timezone.now
+    )
+
+    # ==========================
+    # NEW FIELDS
+    # ==========================
+
+    expiry_date = models.DateField(
+        blank=True,
+        null=True,
+        help_text="Leave blank if the lesson note should never expire."
+    )
+
+    is_active = models.BooleanField(
+        default=True,
+        help_text="Inactive notes are hidden from students."
+    )
+
     created_on = models.DateTimeField(auto_now_add=True)
     updated_on = models.DateTimeField(auto_now=True)
-    publish_date = models.DateField(default=timezone.now)
 
     class Meta:
-        ordering = ('-publish_date', '-created_on')
+        ordering = (
+            '-publish_date',
+            '-created_on'
+        )
         verbose_name = "Lesson Note"
         verbose_name_plural = "Lesson Notes"
 
@@ -73,6 +142,29 @@ class LessonNote(models.Model):
         if not self.school_id and self.teacher:
             self.school = self.teacher.school
         super().save(*args, **kwargs)
+
+    @property
+    def expired(self):
+        return (
+            self.expiry_date is not None
+            and self.expiry_date < timezone.now().date()
+        )
+
+    @property
+    def available(self):
+        """
+        True if students should still be able to see it.
+        """
+        if not self.is_active:
+            return False
+
+        if self.expired:
+            return False
+
+        if self.publish_date > timezone.now().date():
+            return False
+
+        return True
 
 
 # -----------------------------
