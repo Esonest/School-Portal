@@ -252,7 +252,7 @@ def dashboard(request):
 
         return render(
             request,
-            "students/student_dashboard.html",
+            "assignments/student_dashboard.html",
             {
                 "is_teacher": False,
                 "is_admin": False,
