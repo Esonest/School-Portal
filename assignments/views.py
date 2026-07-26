@@ -549,10 +549,12 @@ def submit_assignment(request, pk):
         # Create form instance only when submitting
         form = SubmissionForm(
             request.POST,
+            request.FILES,
             instance=submission
         )
 
-        files = request.FILES.getlist('file')
+        files = request.FILES.getlist('files')
+        print(request.FILES)
 
 
         if form.is_valid():

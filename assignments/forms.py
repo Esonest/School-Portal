@@ -348,10 +348,36 @@ class AssignmentForm(forms.ModelForm):
         return file
 
 class SubmissionForm(forms.ModelForm):
+
     class Meta:
         model = AssignmentSubmission
         fields = ('text',)
 
+        widgets = {
+            'text': forms.Textarea(
+                attrs={
+                    'placeholder': 'Write your answer or submission details here...',
+                    'rows': 8,
+                    'class':
+                    'w-full border rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500'
+                }
+            )
+        }
+
+
+    def clean_text(self):
+
+        text = self.cleaned_data.get('text')
+
+        if not text or not text.strip():
+
+            raise ValidationError(
+                "Please write your answer before submitting."
+            )
+
+        return text
+
+    
 class SubmissionFileForm(forms.ModelForm):
     class Meta:
         model = SubmissionFile

@@ -227,7 +227,10 @@ class AssignmentSubmission(models.Model):
 # -------------------------
 class SubmissionFile(models.Model):
     submission = models.ForeignKey(AssignmentSubmission, on_delete=models.CASCADE, related_name='files')
-    file = models.FileField(upload_to='assignments/submissions/')
+    file = models.FileField(
+        storage=RawMediaCloudinaryStorage(),
+        upload_to='assignments/submissions/'
+    )
     uploaded_on = models.DateTimeField(auto_now_add=True)
 
     def filename(self):
