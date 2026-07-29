@@ -1,0 +1,302 @@
+{% extends "accounts/base.html" %}
+
+
+
+{% block content %}
+
+
+<div class="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100 p-6">
+
+
+<div class="max-w-7xl mx-auto">
+
+
+
+
+
+<!-- HEADER -->
+
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-5 mb-10">
+
+
+
+<div>
+
+<h1 class="text-4xl font-extrabold text-blue-900">
+
+🖼️ School Gallery
+
+</h1>
+
+
+<p class="text-gray-500 mt-2">
+
+Manage school pictures, events and memories.
+
+</p>
+
+
+</div>
+
+
+
+
+
+<a href="{% url 'tis_website_admin:gallery_create' %}"
+
+class="bg-blue-900 text-white px-8 py-3 rounded-2xl shadow-lg hover:bg-blue-800 transition font-bold">
+
+
++ Upload Image
+
+
+</a>
+
+
+
+</div>
+
+
+
+
+
+
+
+
+
+<!-- GALLERY GRID -->
+
+
+<div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
+
+
+
+
+
+{% for item in gallery %}
+
+
+
+
+
+<div class="bg-white rounded-3xl shadow-xl overflow-hidden hover:-translate-y-2 transition">
+
+
+
+
+
+<!-- IMAGE -->
+
+
+<div class="h-64 bg-gray-100 overflow-hidden">
+
+
+<img src="{{ item.image.url }}"
+
+class="w-full h-full object-cover hover:scale-110 transition duration-500">
+
+
+</div>
+
+
+
+
+
+
+
+
+<div class="p-6">
+
+
+
+
+
+<div class="flex justify-between items-start gap-3">
+
+
+<h2 class="text-xl font-extrabold text-blue-900">
+
+
+{{ item.title }}
+
+
+</h2>
+
+
+
+
+
+{% if item.is_published %}
+
+
+<span class="bg-green-100 text-green-700 text-xs px-3 py-1 rounded-full font-bold">
+
+
+Published
+
+
+</span>
+
+
+
+{% else %}
+
+
+
+<span class="bg-red-100 text-red-700 text-xs px-3 py-1 rounded-full font-bold">
+
+
+Draft
+
+
+</span>
+
+
+
+{% endif %}
+
+
+
+</div>
+
+
+
+
+
+
+
+
+<p class="text-gray-600 mt-4 line-clamp-3">
+
+
+{{ item.description }}
+
+
+</p>
+
+
+
+
+
+
+
+
+<div class="flex gap-3 mt-6">
+
+
+
+
+
+<a href="{% url 'tis_website_admin:gallery_update' item.id %}"
+
+class="flex-1 text-center bg-blue-100 text-blue-900 py-3 rounded-xl font-bold hover:bg-blue-200">
+
+
+Edit
+
+
+</a>
+
+
+
+
+
+
+<a href="{% url 'tis_website_admin:gallery_delete' item.id %}"
+
+onclick="return confirm('Delete this image?')"
+
+class="flex-1 text-center bg-red-100 text-red-700 py-3 rounded-xl font-bold hover:bg-red-200">
+
+
+Delete
+
+
+</a>
+
+
+
+
+
+</div>
+
+
+
+
+
+
+</div>
+
+
+
+
+
+
+
+</div>
+
+
+
+
+
+
+
+{% empty %}
+
+
+
+
+
+<div class="col-span-full bg-white rounded-3xl shadow p-12 text-center">
+
+
+<div class="text-7xl">
+
+🖼️
+
+</div>
+
+
+<h2 class="text-2xl font-bold mt-5">
+
+No Gallery Images
+
+</h2>
+
+
+<p class="text-gray-500 mt-2">
+
+Upload your first school image.
+
+</p>
+
+
+</div>
+
+
+
+
+
+{% endfor %}
+
+
+
+
+
+
+</div>
+
+
+
+
+
+
+</div>
+
+
+</div>
+
+
+
+
+{% endblock %}

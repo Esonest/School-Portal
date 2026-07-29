@@ -467,6 +467,32 @@ def submit_exam(request, exam_id):
     submission.completed_on = timezone.now()
     submission.save()
 
+    # ============================================
+# ADMISSION CBT INTEGRATION
+# ============================================
+    try:
+        from tis_website.models import AdmissionApplication
+
+        application = AdmissionApplication.objects.filter(
+            admission_exam=exam,
+            student_name__iexact=student.full_name()
+        ).first()
+
+        if application:
+            application.exam_completed = True
+            application.exam_score = submission.percentage
+
+            if submission.percentage >= application.exam_pass_mark:
+                application.status = "passed"
+            else:
+                application.status = "failed"
+
+            application.save()
+
+    except Exception:
+    # Never interrupt the normal CBT workflow
+        pass
+
     return redirect("cbt:student_exam_result", exam_id=exam.id)
 
 
@@ -658,3 +684,5 @@ def student_submission_detail(request, submission_id):
         "school_motto": school_motto,
         "school_logo_url": school_logo_url,
     })
+
+

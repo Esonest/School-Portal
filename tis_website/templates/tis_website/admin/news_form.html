@@ -1,0 +1,276 @@
+{% extends "accounts/base.html" %}
+
+
+
+{% block content %}
+
+
+
+<div class="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100 p-6">
+
+
+
+<div class="max-w-4xl mx-auto">
+
+
+
+
+
+<div class="mb-8">
+
+
+<h1 class="text-4xl font-extrabold text-blue-900">
+
+📰 News Editor
+
+</h1>
+
+
+<p class="text-gray-500 mt-2">
+
+Create or update school news and events.
+
+</p>
+
+
+</div>
+
+
+
+
+
+
+
+<form method="POST"
+
+enctype="multipart/form-data"
+
+class="bg-white rounded-3xl shadow-xl p-8">
+
+
+{% csrf_token %}
+
+
+
+
+
+<div class="grid md:grid-cols-2 gap-6">
+
+
+
+
+
+{% for field in form %}
+
+
+
+<div class="{% if field.name == 'content' %}md:col-span-2{% endif %}">
+
+
+
+
+
+<label class="block font-bold text-gray-700 mb-2">
+
+
+{{ field.label }}
+
+
+</label>
+
+
+
+
+
+
+{{ field }}
+
+
+
+
+
+
+{% if field.errors %}
+
+
+<p class="text-red-600 text-sm mt-2">
+
+{{ field.errors }}
+
+</p>
+
+
+{% endif %}
+
+
+
+
+
+</div>
+
+
+
+
+
+{% endfor %}
+
+
+
+
+
+
+</div>
+
+
+
+
+
+
+
+
+<!-- IMAGE PREVIEW -->
+
+
+<div class="mt-8">
+
+
+
+<img id="preview"
+
+class="hidden w-64 h-40 object-cover rounded-2xl shadow"
+
+alt="Preview">
+
+
+</div>
+
+
+
+
+
+
+
+
+
+<div class="flex flex-col sm:flex-row gap-4 mt-10">
+
+
+
+
+
+<button
+
+class="bg-blue-900 text-white px-10 py-4 rounded-2xl font-bold shadow-lg hover:bg-blue-800 transition">
+
+
+Save News
+
+
+</button>
+
+
+
+
+
+
+<a href="{% url 'tis_website_admin:news_list' %}"
+
+class="bg-gray-200 text-gray-800 px-10 py-4 rounded-2xl font-bold text-center">
+
+
+Cancel
+
+
+</a>
+
+
+
+
+
+
+</div>
+
+
+
+
+
+
+
+</form>
+
+
+
+
+
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+
+
+
+
+<script>
+
+
+const imageInput = document.querySelector(
+'input[type="file"]'
+);
+
+
+const preview = document.getElementById(
+"preview"
+);
+
+
+
+if(imageInput){
+
+
+imageInput.addEventListener(
+"change",
+function(){
+
+
+const file=this.files[0];
+
+
+if(file){
+
+
+preview.src =
+URL.createObjectURL(file);
+
+
+preview.classList.remove(
+"hidden"
+);
+
+
+}
+
+
+
+}
+
+);
+
+
+}
+
+
+
+</script>
+
+
+
+
+
+{% endblock %}

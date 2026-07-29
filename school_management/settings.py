@@ -79,6 +79,7 @@ INSTALLED_APPS = [
     "cloudinary_storage",
     'ckeditor',
     'ckeditor_uploader',
+    'tis_website',
 ]
 
 MIDDLEWARE = [

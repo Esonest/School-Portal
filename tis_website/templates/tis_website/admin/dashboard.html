@@ -1,0 +1,589 @@
+{% extends "accounts/base.html" %}
+
+
+{% block content %}
+
+
+<div class="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100 p-4 sm:p-6">
+
+
+<div class="max-w-7xl mx-auto">
+
+
+<!-- HEADER -->
+
+<div class="bg-white rounded-3xl shadow-lg p-6 mb-8">
+
+
+<div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+
+
+<div>
+
+<h1 class="text-3xl md:text-4xl font-extrabold text-blue-900">
+
+🌐 Website Management
+
+</h1>
+
+
+<p class="text-gray-500 mt-2">
+
+Manage your school's online presence, content and branding.
+
+</p>
+
+
+</div>
+
+
+
+<a href="#"
+class="bg-blue-900 text-white px-6 py-3 rounded-xl shadow hover:bg-blue-800 transition">
+
+🚀 View Website
+
+</a>
+
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+<!-- SUMMARY CARDS -->
+
+
+<div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+
+
+
+<div class="bg-gradient-to-br from-blue-500 to-indigo-600 text-white rounded-3xl p-6 shadow-xl">
+
+
+<div class="text-3xl mb-3">
+🏫
+</div>
+
+
+<h3 class="text-sm opacity-80">
+
+School Profile
+
+</h3>
+
+
+<p class="text-3xl font-bold">
+
+1
+
+</p>
+
+
+</div>
+
+
+
+
+
+<div class="bg-gradient-to-br from-green-500 to-emerald-600 text-white rounded-3xl p-6 shadow-xl">
+
+
+<div class="text-3xl mb-3">
+🏠
+</div>
+
+
+<h3 class="text-sm opacity-80">
+
+Homepage
+
+</h3>
+
+
+<p class="text-3xl font-bold">
+
+1
+
+</p>
+
+
+</div>
+
+
+
+
+
+<div class="bg-gradient-to-br from-purple-500 to-violet-600 text-white rounded-3xl p-6 shadow-xl">
+
+
+<div class="text-3xl mb-3">
+📰
+</div>
+
+
+<h3 class="text-sm opacity-80">
+
+News & Events
+
+</h3>
+
+
+<p class="text-3xl font-bold">
+
+0
+
+</p>
+
+
+</div>
+
+
+
+
+
+<div class="bg-gradient-to-br from-orange-500 to-red-500 text-white rounded-3xl p-6 shadow-xl">
+
+
+<div class="text-3xl mb-3">
+🖼️
+</div>
+
+
+<h3 class="text-sm opacity-80">
+
+Gallery
+
+</h3>
+
+
+<p class="text-3xl font-bold">
+
+0
+
+</p>
+
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+
+<!-- MANAGEMENT MODULES -->
+
+
+<div class="mb-5">
+
+
+<h2 class="text-2xl font-bold text-gray-800">
+
+Website Modules
+
+</h2>
+
+
+<p class="text-gray-500">
+
+Control every section of your school website.
+
+</p>
+
+
+</div>
+
+
+
+
+
+<div class="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+
+
+
+
+
+<!-- PROFILE -->
+
+<div class="bg-white rounded-3xl shadow-lg p-6 hover:-translate-y-2 transition">
+
+
+<div class="flex items-center gap-4">
+
+
+<div class="w-14 h-14 rounded-2xl bg-blue-100 flex items-center justify-center text-3xl">
+
+🏫
+
+</div>
+
+
+<div>
+
+<h3 class="font-bold text-xl">
+
+School Profile
+
+</h3>
+
+
+<p class="text-gray-500 text-sm">
+
+Logo, motto, vision and mission.
+
+</p>
+
+
+</div>
+
+
+</div>
+
+
+
+<a href="{% url 'tis_website_admin:profile' %}"
+
+class="block mt-6 text-center bg-blue-900 text-white py-3 rounded-xl font-semibold hover:bg-blue-800 transition">
+
+Manage Profile
+
+</a>
+
+
+</div>
+
+
+
+
+
+
+<!-- HOMEPAGE -->
+
+
+<div class="bg-white rounded-3xl shadow-lg p-6 hover:-translate-y-2 transition">
+
+
+<div class="flex items-center gap-4">
+
+
+<div class="w-14 h-14 rounded-2xl bg-green-100 flex items-center justify-center text-3xl">
+
+🏠
+
+</div>
+
+
+<div>
+
+<h3 class="font-bold text-xl">
+
+Homepage
+
+</h3>
+
+
+<p class="text-gray-500 text-sm">
+
+Hero section, statistics and highlights.
+
+</p>
+
+
+</div>
+
+
+</div>
+
+
+
+<a href="{% url 'tis_website_admin:homepage' %}"
+
+class="block mt-6 text-center bg-green-600 text-white py-3 rounded-xl font-semibold hover:bg-green-700 transition">
+
+Manage Homepage
+
+</a>
+
+
+</div>
+
+
+
+
+
+
+<!-- NEWS -->
+
+
+<div class="bg-white rounded-3xl shadow-lg p-6 hover:-translate-y-2 transition">
+
+
+<div class="bg-white shadow-xl rounded-3xl p-6">
+
+
+<div class="text-4xl mb-4">
+
+📰
+
+</div>
+
+
+<h2 class="text-xl font-bold">
+
+News & Events
+
+</h2>
+
+
+<p class="text-gray-500 mt-2">
+
+Publish school activities,
+announcements and events.
+
+</p>
+
+
+<a href="{% url 'tis_website_admin:news_list' %}"
+
+class="inline-block mt-5 bg-blue-900 text-white px-6 py-3 rounded-xl">
+
+Manage News
+
+</a>
+
+
+</div>
+
+</div>
+
+
+
+
+
+
+
+<!-- GALLERY -->
+
+
+<div class="bg-white rounded-3xl shadow-lg p-6 hover:-translate-y-2 transition">
+
+
+<div class="bg-white shadow-xl rounded-3xl p-6">
+
+
+<div class="text-4xl mb-4">
+
+🖼️
+
+</div>
+
+
+<h2 class="text-xl font-bold">
+
+Gallery
+
+</h2>
+
+
+<p class="text-gray-500 mt-2">
+
+Upload and manage school pictures.
+
+</p>
+
+
+
+<a href="{% url 'tis_website_admin:gallery_list' %}"
+
+class="inline-block mt-5 bg-blue-900 text-white px-6 py-3 rounded-xl">
+
+
+Manage Gallery
+
+
+</a>
+
+
+</div>
+</div>
+
+
+
+<div class="bg-white shadow-xl rounded-3xl p-6">
+
+
+<div class="text-4xl mb-4">
+
+🎓
+
+</div>
+
+
+
+<h2 class="text-xl font-bold">
+
+Admissions
+
+</h2>
+
+
+<p class="text-gray-500 mt-2">
+
+Review and manage student applications.
+
+</p>
+
+
+
+<a href="{% url 'tis_website_admin:admission_list' %}"
+
+class="inline-block mt-5 bg-blue-900 text-white px-6 py-3 rounded-xl">
+
+
+Manage Admissions
+
+
+</a>
+
+
+
+</div>
+
+
+
+
+
+
+<!-- STAFF -->
+
+
+<div class="bg-white rounded-3xl shadow-lg p-6 hover:-translate-y-2 transition">
+
+
+<div class="flex items-center gap-4">
+
+
+<div class="w-14 h-14 rounded-2xl bg-yellow-100 flex items-center justify-center text-3xl">
+
+👨‍🏫
+
+</div>
+
+
+<div>
+
+<h3 class="font-bold text-xl">
+
+Staff Directory
+
+</h3>
+
+
+<p class="text-gray-500 text-sm">
+
+Display teachers and leadership.
+
+</p>
+
+
+</div>
+
+
+</div>
+
+
+
+<button
+
+class="w-full mt-6 bg-yellow-600 text-white py-3 rounded-xl font-semibold">
+
+Manage Staff
+
+</button>
+
+
+</div>
+
+
+
+
+
+
+
+
+<!-- ADMISSIONS -->
+
+
+<div class="bg-white rounded-3xl shadow-lg p-6 hover:-translate-y-2 transition">
+
+
+<div class="flex items-center gap-4">
+
+
+<div class="w-14 h-14 rounded-2xl bg-red-100 flex-center justify-center text-3xl">
+
+📝
+
+</div>
+
+
+<div>
+
+<h3 class="font-bold text-xl">
+
+Admissions
+
+</h3>
+
+
+<p class="text-gray-500 text-sm">
+
+Manage admission information.
+
+</p>
+
+
+</div>
+
+
+</div>
+
+
+
+<button
+
+class="w-full mt-6 bg-red-600 text-white py-3 rounded-xl font-semibold">
+
+Manage Admissions
+
+</button>
+
+
+</div>
+
+
+
+
+
+</div>
+
+
+
+
+
+</div>
+
+
+</div>
+
+
+{% endblock %}

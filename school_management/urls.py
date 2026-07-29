@@ -36,6 +36,8 @@ urlpatterns = [
     path('school_admin/', include('school_admin.urls', namespace='school_admin')),
     path("superadmin/", include("superadmin.urls", namespace='superadmin')),
     path("liveclass/", include("liveclass.urls", namespace='liveclass')),
+    path("school/",include("tis_website.urls")),
+    path("school-admin/website/",include("tis_website.admin_urls")),
 
    
 ]

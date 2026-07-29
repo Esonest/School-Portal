@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+
+<meta charset="UTF-8">
+
+<meta name="viewport"
+content="width=device-width, initial-scale=1.0">
+
+
+<title>
+
+{% block title %}
+Tech International School
+{% endblock %}
+
+</title>
+
+
+<script src="https://cdn.tailwindcss.com"></script>
+
+
+</head>
+
+
+
+
+<body class="bg-gray-50 text-gray-800">
+
+
+
+
+
+
+<!-- ================= NAVBAR ================= -->
+
+
+<nav class="bg-white shadow-lg sticky top-0 z-50">
+
+
+<div class="container mx-auto px-5 py-4">
+
+
+
+<div class="flex items-center justify-between gap-5">
+
+
+
+
+
+<!-- BRAND -->
+
+
+<div class="flex items-center gap-3 min-w-0">
+
+
+
+
+
+{% if website.school.logo %}
+
+
+<img src="{{ website.school.logo.url }}"
+
+class="w-12 h-12 rounded-full object-cover shadow"
+
+alt="School Logo">
+
+
+{% else %}
+
+
+<div class="w-12 h-12 rounded-full bg-blue-900 text-white flex items-center justify-center font-bold text-xl">
+
+TIS
+
+</div>
+
+
+{% endif %}
+
+
+
+
+
+
+
+<div class="min-w-0">
+
+
+
+<h1 class="
+
+text-xl
+
+md:text-2xl
+
+font-extrabold
+
+text-blue-900
+
+leading-tight
+
+truncate
+
+max-w-[180px]
+
+sm:max-w-[280px]
+
+md:max-w-[420px]
+
+">
+
+
+{% if website %}
+
+{{ website.school.name }}
+
+{% else %}
+
+TECH INTERNATIONAL SCHOOL
+
+{% endif %}
+
+
+</h1>
+
+
+
+
+
+{% if website.school.motto %}
+
+
+<p class="text-xs text-gray-500 truncate max-w-[250px]">
+
+
+{{ website.school.motto }}
+
+
+</p>
+
+
+{% endif %}
+
+
+
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+
+
+
+
+<!-- DESKTOP MENU -->
+
+
+<div class="hidden lg:flex items-center gap-6 font-semibold">
+
+
+
+
+
+<a href="{% url 'tis_website:home' school_slug=website.slug %}"
+
+class="hover:text-blue-700 transition">
+
+Home
+
+</a>
+
+
+
+
+
+
+<a href="{% url 'tis_website:about' school_slug=website.slug %}"
+
+class="hover:text-blue-700 transition">
+
+About
+
+</a>
+
+
+
+
+
+
+<a href="{% url 'tis_website:academics' school_slug=website.slug %}"
+
+class="hover:text-blue-700 transition">
+
+Academics
+
+</a>
+
+
+
+
+
+
+<a href="{% url 'tis_website:admissions' school_slug=website.slug %}"
+
+class="hover:text-blue-700 transition">
+
+Admissions
+
+</a>
+
+
+
+
+
+
+<a href="{% url 'tis_website:contact' school_slug=website.slug %}"
+
+class="hover:text-blue-700 transition">
+
+Contact
+
+</a>
+
+
+
+
+
+
+
+<a href="/accounts/login/"
+
+class="bg-blue-900 text-white px-6 py-3 rounded-xl hover:bg-blue-800 transition shadow">
+
+
+Portal Login
+
+
+</a>
+
+
+
+
+
+</div>
+
+
+
+
+
+
+
+<!-- MOBILE BUTTON -->
+
+
+<button
+
+onclick="toggleMenu()"
+
+class="lg:hidden text-3xl text-blue-900">
+
+
+☰
+
+
+</button>
+
+
+
+
+</div>
+
+
+
+
+
+
+
+
+
+<!-- MOBILE MENU -->
+
+
+<div id="mobileMenu"
+
+class="hidden lg:hidden mt-5 space-y-3 pb-4">
+
+
+
+
+
+
+<a href="{% url 'tis_website:home' school_slug=website.slug %}"
+
+class="block px-4 py-3 rounded-xl hover:bg-blue-50">
+
+
+Home
+
+
+</a>
+
+
+
+
+
+
+<a href="{% url 'tis_website:about' school_slug=website.slug %}"
+
+class="block px-4 py-3 rounded-xl hover:bg-blue-50">
+
+
+About
+
+
+</a>
+
+
+
+
+
+
+<a href="{% url 'tis_website:academics' school_slug=website.slug %}"
+
+class="block px-4 py-3 rounded-xl hover:bg-blue-50">
+
+
+Academics
+
+
+</a>
+
+
+
+
+
+
+<a href="{% url 'tis_website:admissions' school_slug=website.slug %}"
+
+class="block px-4 py-3 rounded-xl hover:bg-blue-50">
+
+
+Admissions
+
+
+</a>
+
+
+
+
+
+
+<a href="{% url 'tis_website:contact' school_slug=website.slug %}"
+
+class="block px-4 py-3 rounded-xl hover:bg-blue-50">
+
+
+Contact
+
+
+</a>
+
+
+
+
+
+
+<a href="/accounts/login/"
+
+class="block text-center bg-blue-900 text-white px-5 py-3 rounded-xl">
+
+
+Portal Login
+
+
+</a>
+
+
+
+
+
+</div>
+
+
+
+
+
+</div>
+
+
+</nav>
+
+
+
+
+
+
+
+
+
+<!-- PAGE CONTENT -->
+
+
+{% block content %}
+
+{% endblock %}
+
+
+
+
+
+
+
+
+
+<!-- ================= FOOTER ================= -->
+
+
+<footer class="bg-gradient-to-r from-blue-950 to-indigo-900 text-white mt-16">
+
+
+
+<div class="container mx-auto px-6 py-10">
+
+
+
+<div class="grid md:grid-cols-3 gap-8">
+
+
+
+
+
+<div>
+
+
+<h2 class="text-2xl font-bold mb-3">
+
+
+{% if website %}
+
+{{ website.school.name }}
+
+{% else %}
+
+Tech International School
+
+{% endif %}
+
+
+</h2>
+
+
+
+<p class="text-blue-100">
+
+
+{% if website.school.motto %}
+
+{{ website.school.motto }}
+
+{% endif %}
+
+
+</p>
+
+
+
+</div>
+
+
+
+
+
+
+
+<div>
+
+
+<h3 class="font-bold text-lg mb-3">
+
+Quick Links
+
+</h3>
+
+
+<div class="space-y-2 text-blue-100">
+
+
+<a href="#" class="block">
+
+Admissions
+
+</a>
+
+
+<a href="#" class="block">
+
+Academics
+
+</a>
+
+
+<a href="#" class="block">
+
+Student Portal
+
+</a>
+
+
+</div>
+
+
+
+</div>
+
+
+
+
+
+
+
+
+<div>
+
+
+<h3 class="font-bold text-lg mb-3">
+
+Contact
+
+</h3>
+
+
+{% if website %}
+
+
+<p class="text-blue-100">
+
+{{ website.phone }}
+
+</p>
+
+
+<p class="text-blue-100">
+
+{{ website.email }}
+
+</p>
+
+
+{% endif %}
+
+
+</div>
+
+
+
+
+
+
+</div>
+
+
+
+
+
+
+<div class="border-t border-white/20 mt-8 pt-5 text-center text-blue-200">
+
+
+<p>
+
+© {% now "Y" %}
+
+{% if website %}
+
+{{ website.school.name }}
+
+{% else %}
+
+Tech International School
+
+{% endif %}
+
+
+</p>
+
+
+</div>
+
+
+
+
+
+
+</div>
+
+
+</footer>
+
+
+
+
+
+
+
+
+
+<script>
+
+
+function toggleMenu(){
+
+const menu = document.getElementById("mobileMenu");
+
+menu.classList.toggle("hidden");
+
+}
+
+
+</script>
+
+
+
+
+
+
+</body>
+
+</html>

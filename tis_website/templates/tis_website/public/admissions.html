@@ -1,0 +1,274 @@
+{% extends "tis_website/public/base.html" %}
+
+
+
+{% block title %}
+
+Admissions | {{ website.school.name }}
+
+{% endblock %}
+
+
+
+
+
+{% block content %}
+
+
+
+<section class="bg-gradient-to-r from-blue-950 to-indigo-800 text-white py-20">
+
+
+<div class="container mx-auto px-6 text-center">
+
+
+<h1 class="text-5xl font-extrabold">
+
+Admissions
+
+</h1>
+
+
+
+<p class="mt-5 text-xl text-blue-100 max-w-3xl mx-auto">
+
+Begin your child's journey with
+
+{{ website.school.name }}
+
+through our simple online admission process.
+
+</p>
+
+
+</div>
+
+
+</section>
+
+
+
+
+
+
+
+
+<section class="container mx-auto px-6 py-16">
+
+
+
+<div class="grid lg:grid-cols-3 gap-10">
+
+
+
+
+
+<!-- INFORMATION -->
+
+<div class="bg-white shadow-xl rounded-3xl p-8 h-fit">
+
+
+<h2 class="text-2xl font-extrabold text-blue-900">
+
+Why Join Us?
+
+</h2>
+
+
+
+<ul class="mt-6 space-y-4 text-gray-600">
+
+
+<li>
+✅ Quality academic programmes
+</li>
+
+
+<li>
+✅ Technology-driven learning
+</li>
+
+
+<li>
+✅ Experienced teachers
+</li>
+
+
+<li>
+✅ Safe learning environment
+</li>
+
+
+<li>
+✅ AI, Coding and Robotics exposure
+</li>
+
+
+</ul>
+
+
+</div>
+
+
+
+
+
+
+
+
+
+<!-- FORM -->
+
+
+<div class="lg:col-span-2 bg-white shadow-xl rounded-3xl p-8">
+
+
+
+
+
+{% if submitted %}
+
+
+
+<div class="bg-green-100 text-green-800 p-5 rounded-2xl mb-8 font-semibold">
+
+
+🎉 Application submitted successfully.
+
+Our admission team will contact you shortly.
+
+
+</div>
+
+
+
+{% endif %}
+
+
+
+
+
+
+
+<h2 class="text-3xl font-extrabold text-blue-900 mb-8">
+
+Online Application Form
+
+</h2>
+
+
+
+
+
+
+
+<form method="POST"
+
+enctype="multipart/form-data">
+
+
+{% csrf_token %}
+
+
+
+
+
+
+<div class="grid md:grid-cols-2 gap-6">
+
+
+
+
+
+{% for field in form %}
+
+
+
+<div class="{% if field.name == 'address' %}md:col-span-2{% endif %}">
+
+
+<label class="block font-bold text-gray-700 mb-2">
+
+
+{{ field.label }}
+
+
+</label>
+
+
+
+{{ field }}
+
+
+
+{% if field.errors %}
+
+<p class="text-red-600 text-sm">
+
+{{ field.errors }}
+
+</p>
+
+
+{% endif %}
+
+
+</div>
+
+
+
+{% endfor %}
+
+
+
+
+</div>
+
+
+
+
+
+
+
+<button
+
+class="mt-8 bg-blue-900 text-white px-10 py-4 rounded-2xl font-bold shadow-lg hover:bg-blue-800 transition">
+
+
+Submit Application
+
+
+</button>
+
+
+
+
+
+
+
+</form>
+
+
+
+
+
+
+</div>
+
+
+
+
+
+
+
+</div>
+
+
+</section>
+
+
+
+
+
+
+{% endblock %}

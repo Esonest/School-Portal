@@ -264,6 +264,7 @@ class CBTExamForm(forms.ModelForm):
         model = CBTExam
         fields = [
             'title',
+            'exam_type',
             'subject',
             'session',
             'term',

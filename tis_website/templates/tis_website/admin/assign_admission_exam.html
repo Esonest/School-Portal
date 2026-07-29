@@ -1,0 +1,104 @@
+{% extends "accounts/base.html" %}
+
+
+
+{% block content %}
+
+
+<div class="min-h-screen bg-gradient-to-br from-slate-100 to-blue-100 p-6">
+
+
+<div class="max-w-3xl mx-auto">
+
+
+
+<div class="bg-white shadow-xl rounded-3xl p-8">
+
+
+
+<h1 class="text-3xl font-extrabold text-blue-900">
+
+Assign Admission CBT
+
+</h1>
+
+
+
+<div class="mt-6 bg-blue-50 p-5 rounded-2xl">
+
+
+<h2 class="font-bold text-xl">
+
+{{ application.student_name }}
+
+</h2>
+
+
+
+<p class="text-gray-600">
+
+Application No:
+
+{{ application.application_number }}
+
+</p>
+
+
+
+</div>
+
+
+
+
+
+<form method="POST" class="mt-8">
+
+
+{% csrf_token %}
+
+
+
+
+<label class="font-bold block mb-3">
+
+Select Entrance Examination
+
+</label>
+
+
+
+{{ form.admission_exam }}
+
+
+
+
+
+<button
+
+class="mt-8 w-full bg-blue-900 text-white py-4 rounded-2xl font-bold">
+
+
+Assign Examination
+
+
+</button>
+
+
+
+</form>
+
+
+
+</div>
+
+
+
+</div>
+
+
+
+</div>
+
+
+
+{% endblock %}

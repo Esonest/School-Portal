@@ -15,11 +15,43 @@ from results.utils import normalize_latex, normalize_latex_in_html, wrap_latex
 # EXAM MODEL
 # -------------------------
 class CBTExam(models.Model):
+
+
     TERM_CHOICES = [
+
         ('1', 'Term 1'),
+
         ('2', 'Term 2'),
+
         ('3', 'Term 3'),
+
     ]
+
+
+    EXAM_TYPE_CHOICES = [
+
+        ("academic", "Academic Exam"),
+
+        ("admission", "Admission Exam"),
+
+    ]
+
+
+
+    title = models.CharField(
+        max_length=255
+    )
+
+
+    exam_type = models.CharField(
+
+        max_length=20,
+
+        choices=EXAM_TYPE_CHOICES,
+
+        default="academic"
+
+    )
 
     title = models.CharField(max_length=255)
     subject = models.ForeignKey(Subject, on_delete=models.CASCADE)
@@ -296,7 +328,30 @@ class QuestionBank(models.Model):
 # SUBMISSION MODEL
 # -------------------------
 class CBTSubmission(models.Model):
-    student = models.ForeignKey(Student, on_delete=models.CASCADE)
+    student = models.ForeignKey(
+
+        Student,
+
+        on_delete=models.CASCADE,
+
+        null=True,
+
+        blank=True
+
+    )
+    admission_candidate = models.ForeignKey(
+
+        "tis_website.AdmissionApplication",
+
+        on_delete=models.CASCADE,
+
+        null=True,
+
+        blank=True,
+
+        related_name="cbt_attempts"
+
+    )
     exam = models.ForeignKey(CBTExam, on_delete=models.CASCADE)
     school = models.ForeignKey(School, on_delete=models.CASCADE, default='', related_name='cbt_submissions')
 
@@ -315,7 +370,20 @@ class CBTSubmission(models.Model):
     class Meta:
         verbose_name = "CBT Submission"
         verbose_name_plural = "CBT Submissions"
-        unique_together = ('student', 'exam')
+        constraints = [
+
+            models.UniqueConstraint(
+
+                fields=[
+                    "student",
+                    "exam"
+                ],
+
+                name="unique_student_exam",
+
+            ),
+
+        ]
         db_table = "CBTSubmission"
 
     def save(self, *args, **kwargs):
