@@ -1,0 +1,66 @@
+{% extends "accounts/base.html" %}
+
+
+{% block content %}
+
+
+<div class="max-w-xl mx-auto mt-10 bg-white shadow-xl rounded-3xl p-8">
+
+
+<h1 class="text-3xl font-bold text-blue-900">
+🎓 Accept Admission
+</h1>
+
+
+<p class="mt-5">
+
+Dear {{ application.parent_name }},
+
+</p>
+
+
+<p class="mt-3">
+
+You are accepting admission offer for:
+
+</p>
+
+
+<h2 class="text-xl font-bold mt-3">
+
+{{ application.student_name }}
+
+</h2>
+
+
+<p class="mt-3">
+
+Class:
+
+{{ application.class_applying_for }}
+
+</p>
+
+
+
+<form method="post" class="mt-8">
+
+{% csrf_token %}
+
+
+<button
+
+class="w-full bg-green-600 text-white py-3 rounded-xl font-bold">
+
+Accept Admission
+
+</button>
+
+
+</form>
+
+
+</div>
+
+
+{% endblock %}

@@ -516,109 +516,177 @@ class GalleryForm(forms.ModelForm):
 from .models import AdmissionApplication
 
 
+from django import forms
+from .models import AdmissionApplication
+
 
 class AdmissionApplicationForm(forms.ModelForm):
 
-
     class Meta:
-
 
         model = AdmissionApplication
 
-
-
         fields = [
-
+            # ----------------------------
+            # Student Information
+            # ----------------------------
             "student_name",
-
+            "student_email",
             "date_of_birth",
-
             "gender",
-
-            "parent_name",
-
-            "parent_phone",
-
-            "parent_email",
-
-            "address",
-
-            "previous_school",
-
             "class_applying_for",
 
+            # ----------------------------
+            # Parent Information
+            # ----------------------------
+            "parent_name",
+            "parent_phone",
+            "parent_email",
+            "address",
+
+            # ----------------------------
+            # Academic Information
+            # ----------------------------
+            "previous_school",
+
+            # ----------------------------
+            # Uploads
+            # ----------------------------
             "passport",
-
             "document",
-
         ]
-
-
 
         widgets = {
 
-
+            # -----------------------------------
+            # STUDENT INFORMATION
+            # -----------------------------------
 
             "student_name": forms.TextInput(
-
                 attrs={
-
-                    "class":
-                    "w-full border rounded-xl p-3",
-
-                    "placeholder":
-                    "Student full name"
-
+                    "class": "w-full border rounded-xl p-3",
+                    "placeholder": "Enter student's full name"
                 }
-
             ),
 
-
+            "student_email": forms.EmailInput(
+                attrs={
+                    "class": "w-full border rounded-xl p-3",
+                    "placeholder": "Student email (optional)"
+                }
+            ),
 
             "date_of_birth": forms.DateInput(
-
                 attrs={
-
-                    "type":
-                    "date",
-
-                    "class":
-                    "w-full border rounded-xl p-3"
-
+                    "type": "date",
+                    "class": "w-full border rounded-xl p-3"
                 }
-
             ),
-
-
 
             "gender": forms.Select(
-
                 attrs={
-
-                    "class":
-                    "w-full border rounded-xl p-3"
-
+                    "class": "w-full border rounded-xl p-3"
                 }
-
             ),
 
+            "class_applying_for": forms.Select(
+                attrs={
+                    "class": "w-full border rounded-xl p-3"
+                }
+            ),
 
+            # -----------------------------------
+            # PARENT INFORMATION
+            # -----------------------------------
+
+            "parent_name": forms.TextInput(
+                attrs={
+                    "class": "w-full border rounded-xl p-3",
+                    "placeholder": "Parent/Guardian Full Name"
+                }
+            ),
+
+            "parent_phone": forms.TextInput(
+                attrs={
+                    "class": "w-full border rounded-xl p-3",
+                    "placeholder": "WhatsApp / Mobile Number"
+                }
+            ),
+
+            "parent_email": forms.EmailInput(
+                attrs={
+                    "class": "w-full border rounded-xl p-3",
+                    "placeholder": "Parent Email Address"
+                }
+            ),
 
             "address": forms.Textarea(
-
                 attrs={
-
-                    "class":
-                    "w-full border rounded-xl p-3",
-
-                    "rows":4
-
+                    "class": "w-full border rounded-xl p-3",
+                    "rows": 4,
+                    "placeholder": "Residential Address"
                 }
-
             ),
 
+            # -----------------------------------
+            # ACADEMIC INFORMATION
+            # -----------------------------------
 
-        }              
+            "previous_school": forms.TextInput(
+                attrs={
+                    "class": "w-full border rounded-xl p-3",
+                    "placeholder": "Previous School (if any)"
+                }
+            ),
+
+            # -----------------------------------
+            # UPLOADS
+            # -----------------------------------
+
+            "passport": forms.ClearableFileInput(
+                attrs={
+                    "class": "w-full border rounded-xl p-3"
+                }
+            ),
+
+            "document": forms.ClearableFileInput(
+                attrs={
+                    "class": "w-full border rounded-xl p-3"
+                }
+            ),
+        }
+
+        labels = {
+
+            "student_name": "Student Full Name",
+            "student_email": "Student Email",
+            "date_of_birth": "Date of Birth",
+            "gender": "Gender",
+            "class_applying_for": "Class Applying For",
+
+            "parent_name": "Parent / Guardian Name",
+            "parent_phone": "WhatsApp / Phone Number",
+            "parent_email": "Parent Email",
+            "address": "Home Address",
+
+            "previous_school": "Previous School",
+
+            "passport": "Passport Photograph",
+            "document": "Birth Certificate / Previous Result (Optional)",
+        }
+
+        help_texts = {
+
+            "parent_phone": "This number will receive admission updates via WhatsApp.",
+
+            "parent_email": "Admission letters and student login credentials will be sent here.",
+
+            "student_email": "Optional. Used for student notifications if available.",
+
+            "passport": "Upload a recent passport photograph.",
+
+            "document": "Upload birth certificate, previous result or any supporting document."
+        }            
 
 
 from cbt.models import CBTExam

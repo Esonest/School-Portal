@@ -59,7 +59,11 @@ class School(models.Model):
     email_enabled = models.BooleanField(default=True)
 
     whatsapp_enabled = models.BooleanField(default=False)
-
+    admission_fee = models.DecimalField(
+        max_digits=12,
+        decimal_places=2,
+        default=0
+    )
     paystack_public_key = models.CharField(max_length=255, blank=True, null=True)
     paystack_secret_key = models.CharField(max_length=255, blank=True, null=True)
 

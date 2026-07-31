@@ -1,0 +1,32 @@
+{% extends "accounts/base.html" %}
+
+
+{% block content %}
+
+<div class="min-h-screen flex items-center justify-center bg-gray-100">
+
+<div class="bg-white shadow-xl rounded-3xl p-10 text-center">
+
+<h1 class="text-3xl font-bold text-blue-900">
+Admission Processing
+</h1>
+
+
+<p class="mt-4 text-gray-600">
+
+Dear {{ application.parent_name }},
+
+<br><br>
+
+Your application is still being processed.
+
+Please check again later.
+
+</p>
+
+
+</div>
+
+</div>
+
+{% endblock %}

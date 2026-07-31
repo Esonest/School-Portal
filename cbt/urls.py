@@ -11,7 +11,7 @@ urlpatterns = [
     path("exam/<int:exam_id>/submit/", views.submit_exam, name="submit_exam"),
     path('ajax/save_answer/', views.ajax_save_answer, name='ajax_save_answer'),
     path("exam/<int:exam_id>/result/", views.student_exam_result, name="student_exam_result"),
-    path('submission/<int:submission_id>/', views.student_submission_detail, name='student_submission_detail')
-
-
+    path('submission/<int:submission_id>/', views.student_submission_detail, name='student_submission_detail'),
+    path("admission/start/<int:exam_id>/",views.start_admission_exam,name="start_admission_exam"),
+    
 ]

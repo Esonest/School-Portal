@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+
+<meta charset="UTF-8">
+
+<style>
+
+body {
+    font-family: Arial, sans-serif;
+    font-size: 14px;
+    line-height: 1.6;
+}
+
+
+.header {
+    text-align:center;
+}
+
+
+.logo {
+    width:100px;
+    height:100px;
+}
+
+
+.school-name {
+    font-size:22px;
+    font-weight:bold;
+    color:#1e3a8a;
+}
+
+
+.title {
+
+    text-align:center;
+    margin-top:30px;
+    font-size:20px;
+    font-weight:bold;
+
+}
+
+
+.content {
+
+    margin-top:30px;
+
+}
+
+
+.details {
+
+    margin-top:20px;
+    border-collapse:collapse;
+    width:100%;
+
+}
+
+
+.details td {
+
+    border:1px solid #ddd;
+    padding:8px;
+
+}
+
+
+.signature {
+
+    margin-top:60px;
+
+}
+
+
+.footer {
+
+    text-align:center;
+    margin-top:50px;
+    font-size:12px;
+
+}
+
+</style>
+
+</head>
+
+
+<body>
+
+
+
+<div class="header">
+
+
+{% if school.logo %}
+
+<img src="{{ school.logo.url }}"
+class="logo">
+
+{% endif %}
+
+
+<div class="school-name">
+
+{{ school.name }}
+
+</div>
+
+
+<p>
+{{ school.motto }}
+</p>
+
+
+<p>
+{{ school.address }}
+</p>
+
+
+</div>
+
+
+
+
+
+<h2 class="title">
+
+ADMISSION LETTER
+
+</h2>
+
+
+
+
+
+<div class="content">
+
+
+<p>
+
+Dear {{ application.parent_name }},
+
+</p>
+
+
+
+<p>
+
+We are pleased to inform you that your child,
+
+<strong>
+{{ application.student_name }}
+</strong>
+
+has been offered admission into
+
+<strong>
+{{ application.class_applying_for }}
+</strong>
+
+at {{ school.name }}.
+
+</p>
+
+
+
+
+<table class="details">
+
+
+<tr>
+
+<td>
+Application Number
+</td>
+
+<td>
+{{ application.application_number }}
+</td>
+
+</tr>
+
+
+
+<tr>
+
+<td>
+Student Name
+</td>
+
+<td>
+{{ application.student_name }}
+</td>
+
+</tr>
+
+
+
+<tr>
+
+<td>
+Gender
+</td>
+
+<td>
+{{ application.gender }}
+</td>
+
+</tr>
+
+
+
+
+<tr>
+
+<td>
+Class Admitted
+</td>
+
+<td>
+{{ application.class_applying_for }}
+</td>
+
+</tr>
+
+
+
+<tr>
+
+<td>
+Academic Session
+</td>
+
+<td>
+{{ application.admission_session|default:"2026/2027" }}
+</td>
+
+</tr>
+
+
+
+<tr>
+
+<td>
+Resumption Date
+</td>
+
+<td>
+{{ application.resume_date|date:"F j, Y" }}
+</td>
+
+</tr>
+
+
+
+</table>
+
+
+
+
+
+<h3>
+Admission Instructions
+</h3>
+
+
+<ol>
+
+<li>
+Report to the school on the resumption date.
+</li>
+
+<li>
+Bring all required admission documents.
+</li>
+
+<li>
+Complete all necessary registration procedures.
+</li>
+
+<li>
+Pay all applicable school fees before commencement of classes.
+</li>
+
+</ol>
+
+
+
+
+<p>
+
+We welcome you to {{ school.name }} and look forward to partnering with you in your child's education.
+
+</p>
+
+
+
+</div>
+
+
+
+
+
+
+<div class="signature">
+
+
+<p>
+
+_________________________
+
+</p>
+
+
+<p>
+
+Principal
+
+</p>
+
+<a href="{{ acceptance_link }}"
+class="bg-green-600 text-white px-5 py-3 rounded-xl">
+
+Accept Admission
+
+</a>
+
+
+</div>
+
+
+
+
+
+
+<div class="footer">
+
+Generated electronically by TECHCENTER School Portal
+
+</div>
+
+
+
+</body>
+
+</html>

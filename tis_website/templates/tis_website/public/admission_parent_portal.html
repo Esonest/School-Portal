@@ -1,0 +1,229 @@
+{% extends "accounts/base.html" %}
+
+
+{% block content %}
+
+
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
+
+
+<div class="max-w-3xl mx-auto bg-white rounded-3xl shadow-xl p-8">
+
+
+<div class="text-center">
+
+
+{% if school.logo %}
+
+<img src="{{ school.logo.url }}"
+class="w-24 h-24 rounded-full mx-auto">
+
+{% endif %}
+
+
+<h1 class="text-3xl font-bold text-blue-900 mt-4">
+
+{{ school.name }}
+
+</h1>
+
+
+<p class="text-gray-500">
+
+Admission Portal
+
+</p>
+
+
+</div>
+
+
+
+<hr class="my-6">
+
+
+
+<h2 class="text-2xl font-bold">
+
+Congratulations 🎉
+
+</h2>
+
+
+<p class="mt-3 text-gray-700">
+
+{{ application.student_name }} has been offered admission.
+
+</p>
+
+
+
+<div class="mt-6 bg-blue-50 rounded-xl p-5 space-y-3">
+
+
+<p>
+<strong>Application Number:</strong>
+
+{{ application.application_number }}
+
+</p>
+
+
+<p>
+<strong>Student Name:</strong>
+
+{{ application.student_name }}
+
+</p>
+
+
+<p>
+<strong>Class:</strong>
+
+{{ application.class_applying_for }}
+
+</p>
+
+
+<p>
+<strong>Parent:</strong>
+
+{{ application.parent_name }}
+
+</p>
+
+
+</div>
+
+
+
+<a href="{% url 'tis_website:download_admission_letter' application.admission_token %}"
+
+class="block mt-8 text-center bg-green-600 hover:bg-green-700 text-white py-4 rounded-xl font-bold">
+
+📄 Download Admission Letter
+
+</a>
+
+
+</div>
+
+
+</div>
+
+
+{% endblock %}{% extends "accounts/base.html" %}
+
+
+{% block content %}
+
+
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 p-6">
+
+
+<div class="max-w-3xl mx-auto bg-white rounded-3xl shadow-xl p-8">
+
+
+<div class="text-center">
+
+
+{% if school.logo %}
+
+<img src="{{ school.logo.url }}"
+class="w-24 h-24 rounded-full mx-auto">
+
+{% endif %}
+
+
+<h1 class="text-3xl font-bold text-blue-900 mt-4">
+
+{{ school.name }}
+
+</h1>
+
+
+<p class="text-gray-500">
+
+Admission Portal
+
+</p>
+
+
+</div>
+
+
+
+<hr class="my-6">
+
+
+
+<h2 class="text-2xl font-bold">
+
+Congratulations 🎉
+
+</h2>
+
+
+<p class="mt-3 text-gray-700">
+
+{{ application.student_name }} has been offered admission.
+
+</p>
+
+
+
+<div class="mt-6 bg-blue-50 rounded-xl p-5 space-y-3">
+
+
+<p>
+<strong>Application Number:</strong>
+
+{{ application.application_number }}
+
+</p>
+
+
+<p>
+<strong>Student Name:</strong>
+
+{{ application.student_name }}
+
+</p>
+
+
+<p>
+<strong>Class:</strong>
+
+{{ application.class_applying_for }}
+
+</p>
+
+
+<p>
+<strong>Parent:</strong>
+
+{{ application.parent_name }}
+
+</p>
+
+
+</div>
+
+
+
+<a href="{% url 'tis_website:download_admission_letter' application.admission_token %}"
+
+class="block mt-8 text-center bg-green-600 hover:bg-green-700 text-white py-4 rounded-xl font-bold">
+
+📄 Download Admission Letter
+
+</a>
+
+
+</div>
+
+
+</div>
+
+
+{% endblock %}

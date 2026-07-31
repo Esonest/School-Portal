@@ -8,8 +8,14 @@ from django.contrib import messages
 
 from .models import SchoolWebsite
 from .forms import SchoolWebsiteForm
+from django.urls import reverse
 
 from .decorators import website_admin_required
+from django.http import HttpResponse
+from django.template.loader import get_template
+from xhtml2pdf import pisa
+from io import BytesIO
+from .utils import send_admission_email, send_admission_whatsapp
 
 
 
@@ -574,37 +580,154 @@ def admission_list(request):
 
 
 
-
-def admission_update_status(request,pk,status):
-
-
-    school=request.user.school
+from django.utils import timezone
 
 
+from django.utils import timezone
+from django.urls import reverse
+from django.core.mail import EmailMessage
+from django.conf import settings
 
-    application=get_object_or_404(
+from .utils import generate_admission_letter_pdf
 
+def admission_update_status(request, pk, status):
+
+    allowed_status = [
+        "approved",
+        "rejected",
+    ]
+
+    if status not in allowed_status:
+        return redirect(
+            "tis_website_admin:admission_list"
+        )
+
+
+    school = request.user.school
+
+
+    application = get_object_or_404(
         AdmissionApplication,
-
         id=pk,
-
         school=school
-
     )
 
 
+    application.status = status
 
-    application.status=status
+
+    # ======================================
+    # APPROVAL PROCESS
+    # ======================================
+
+    if status == "approved":
+
+        from django.utils import timezone
+
+        application.approved_on = timezone.now()
+
+        application.admission_letter_generated = True
+
+
+        # Generate acceptance link
+        acceptance_link = request.build_absolute_uri(
+            reverse(
+                "tis_website:accept_admission",
+                args=[
+                    application.admission_token
+                ]
+            )
+        )
+
+
+        message = f"""
+
+Dear {application.parent_name},
+
+Congratulations!
+
+Your child {application.student_name}
+has been offered admission into:
+
+{application.school.name}
+
+
+Class:
+{application.class_applying_for}
+
+
+To continue the admission process, please accept your admission offer using the link below:
+
+{acceptance_link}
+
+
+Application Number:
+
+{application.application_number}
+
+
+Thank you.
+
+{application.school.name}
+
+"""
+
+
+        # WhatsApp
+
+        try:
+
+            from students.services.whatsapp_service import send_whatsapp_message
+
+
+            send_whatsapp_message(
+                application.parent_phone,
+                message=message
+            )
+
+
+        except Exception as e:
+
+            print("WhatsApp approval error:", e)
+
+
+
+        # Email
+
+        try:
+
+            from students.services.email_service import send_brevo_email
+
+
+            send_brevo_email(
+
+                to_email=application.parent_email,
+
+                to_name=application.parent_name,
+
+                subject="Admission Offer Accepted",
+
+                html_content=message.replace(
+                    "\n",
+                    "<br>"
+                ),
+
+                school=application.school
+
+            )
+
+
+        except Exception as e:
+
+            print("Email approval error:", e)
+
 
 
     application.save()
 
 
-
     return redirect(
-
         "tis_website_admin:admission_list"
-
     )
 
 
@@ -624,6 +747,9 @@ from .forms import AdmissionExamAssignmentForm
 
 def assign_admission_exam(request, pk):
 
+    print("VIEW HIT")
+    print("METHOD:", request.method)
+
     application = get_object_or_404(
         AdmissionApplication,
         id=pk,
@@ -633,6 +759,8 @@ def assign_admission_exam(request, pk):
 
     if request.method == "POST":
 
+        print("POST:", request.POST)
+
         form = AdmissionExamAssignmentForm(
             request.POST,
             instance=application,
@@ -640,15 +768,236 @@ def assign_admission_exam(request, pk):
         )
 
 
+        print("VALID:", form.is_valid())
+
+
         if form.is_valid():
 
-            admission = form.save(
-                commit=False
+            admission = form.save(commit=False)
+
+            print(
+                "Exam selected:",
+                admission.admission_exam
             )
+
 
             admission.status = "exam_assigned"
 
             admission.save()
+
+
+
+            # ============================================
+            # SEND CBT LINK TO PARENT
+            # ============================================
+
+            exam_link = request.build_absolute_uri(
+                reverse(
+                    "tis_website:admission_exam_access",
+                    args=[admission.admission_token]
+                )
+            )
+
+
+            tracking_link = request.build_absolute_uri(
+                "/admission/track/"
+            )
+
+
+
+            whatsapp_message = f"""
+Dear {admission.parent_name},
+
+Your child {admission.student_name} has been scheduled for the Admission CBT Examination.
+
+School:
+{admission.school.name}
+
+Examination:
+{admission.admission_exam.title}
+
+Duration:
+{admission.admission_exam.duration_minutes} Minutes
+
+Exam Link:
+{exam_link}
+
+Track your admission:
+{tracking_link}
+
+Application Number:
+{admission.application_number}
+
+Please save your application number for future reference.
+
+Ensure you have a stable internet connection before starting the examination.
+
+Thank you.
+
+{admission.school.name}
+"""
+
+
+
+            html_message = f"""
+<html>
+<body style="font-family:Arial,sans-serif;line-height:1.7;">
+
+<h2>
+Admission CBT Examination
+</h2>
+
+
+<p>
+Dear <strong>{admission.parent_name}</strong>,
+</p>
+
+
+<p>
+Your child
+<strong>{admission.student_name}</strong>
+has been scheduled for the Admission CBT Examination.
+</p>
+
+
+<p>
+<strong>School:</strong>
+{admission.school.name}
+</p>
+
+
+<p>
+<strong>Examination:</strong>
+{admission.admission_exam.title}
+</p>
+
+
+<p>
+<strong>Duration:</strong>
+{admission.admission_exam.duration_minutes}
+Minutes
+</p>
+
+
+<p>
+<strong>Application Number:</strong>
+{admission.application_number}
+</p>
+
+
+<p>
+<a href="{exam_link}">
+Start Admission Examination
+</a>
+</p>
+
+
+<p>
+Exam Link:
+<br>
+{exam_link}
+</p>
+
+
+<p>
+Track Admission:
+<br>
+{tracking_link}
+</p>
+
+
+<p>
+Thank you.
+<br>
+<strong>{admission.school.name}</strong>
+</p>
+
+
+</body>
+</html>
+"""
+
+
+
+            # ============================================
+            # WHATSAPP
+            # ============================================
+
+            try:
+
+                from students.services.whatsapp_service import send_whatsapp_message
+
+
+                success, response = send_whatsapp_message(
+                    admission.parent_phone,
+                    message=whatsapp_message
+                )
+
+
+                print(
+                    "WHATSAPP SUCCESS:",
+                    success
+                )
+
+                print(
+                    "WHATSAPP RESPONSE:",
+                    response
+                )
+
+
+            except Exception as e:
+
+                print(
+                    "WHATSAPP ERROR:",
+                    e
+                )
+
+
+
+            # ============================================
+            # EMAIL
+            # ============================================
+
+            try:
+
+                from students.services.email_service import send_brevo_email
+
+
+                success, response = send_brevo_email(
+
+                    to_email=admission.parent_email,
+
+                    to_name=admission.parent_name,
+
+                    subject="Admission CBT Examination Link",
+
+                    html_content=html_message,
+
+                    school=admission.school
+
+                )
+
+
+                print(
+                    "EMAIL SUCCESS:",
+                    success
+                )
+
+
+                print(
+                    "EMAIL RESPONSE:",
+                    response
+                )
+
+
+
+            except Exception as e:
+
+                print(
+                    "EMAIL ERROR:",
+                    e
+                )
+
 
 
             return redirect(
@@ -656,19 +1005,157 @@ def assign_admission_exam(request, pk):
             )
 
 
+
+        else:
+
+            print(
+                form.errors
+            )
+
+
+
     else:
 
+
         form = AdmissionExamAssignmentForm(
+
             instance=application,
+
             school=request.user.school
+
+        )
+
+
+
+    return render(
+
+        request,
+
+        "tis_website/admin/assign_admission_exam.html",
+
+        {
+
+            "application": application,
+
+            "form": form
+
+        }
+
+    )
+
+
+@login_required
+def admission_detail(request, pk):
+
+    application = get_object_or_404(
+        AdmissionApplication,
+        id=pk,
+        school=request.user.school
+    )
+
+    return render(
+        request,
+        "tis_website/admin/admission_detail.html",
+        {
+            "application": application,
+        }
+    )
+
+from django.shortcuts import render, get_object_or_404
+from .models import AdmissionApplication
+
+
+def admission_track(request):
+
+    application = None
+    error = None
+
+
+    if request.method == "POST":
+
+        application_number = request.POST.get(
+            "application_number"
+        )
+
+
+        try:
+
+            application = AdmissionApplication.objects.get(
+                application_number=application_number
+            )
+
+
+        except AdmissionApplication.DoesNotExist:
+
+            error = "Invalid application number."
+
+
+    exam_link = None
+
+
+    if application and application.admission_exam:
+
+        exam_link = request.build_absolute_uri(
+            reverse(
+                "tis_website:admission_exam_access",
+                args=[
+                    application.admission_token
+                ]
+            )
         )
 
 
     return render(
         request,
-        "tis_website/admin/assign_admission_exam.html",
+        "tis_website/admin/admission_track.html",
         {
             "application": application,
-            "form": form
+            "error": error,
+            "exam_link": exam_link,
         }
     )
+
+
+@login_required
+def download_admission_letter(request, pk):
+
+    application = get_object_or_404(
+        AdmissionApplication,
+        id=pk,
+        school=request.user.school,
+        status="approved"
+    )
+
+
+    template = get_template(
+        "tis_website/admin/admission_letter.html"
+    )
+
+
+    html = template.render(
+        {
+            "application": application,
+            "school": application.school,
+        }
+    )
+
+
+    response = HttpResponse(
+        content_type="application/pdf"
+    )
+
+    response[
+        "Content-Disposition"
+    ] = (
+        f'attachment; filename="'
+        f'{application.student_name}_Admission_Letter.pdf"'
+    )
+
+
+    pisa.CreatePDF(
+        BytesIO(html.encode("UTF-8")),
+        dest=response
+    )
+
+
+    return response

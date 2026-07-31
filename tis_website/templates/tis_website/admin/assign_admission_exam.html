@@ -51,39 +51,25 @@ Application No:
 
 
 
-<form method="POST" class="mt-8">
-
+<form method="POST"
+      action="{% url 'tis_website_admin:assign_admission_exam' application.id %}"
+      class="mt-8">
 
 {% csrf_token %}
 
-
-
-
 <label class="font-bold block mb-3">
-
-Select Entrance Examination
-
+    Select Entrance Examination
 </label>
-
-
 
 {{ form.admission_exam }}
 
-
-
-
-
 <button
+    type="submit"
+    class="mt-8 w-full bg-blue-900 text-white py-4 rounded-2xl font-bold">
 
-class="mt-8 w-full bg-blue-900 text-white py-4 rounded-2xl font-bold">
-
-
-Assign Examination
-
+    Assign Examination
 
 </button>
-
-
 
 </form>
 

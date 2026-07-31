@@ -1,7 +1,7 @@
 from django.db import models
 from accounts.models import School
 from django.utils.text import slugify
-
+from students.models import SchoolClass
 import uuid
 
 
@@ -495,16 +495,38 @@ class AdmissionApplication(models.Model):
         choices=GENDER_CHOICES
 
     )
+    
 
 
+    accepted = models.BooleanField(
+        default=False
+    )
 
-    class_applying_for = models.CharField(
-
-        max_length=100
-
+    accepted_on = models.DateTimeField(
+        null=True,
+        blank=True
     )
 
 
+    student_created = models.BooleanField(
+        default=False
+    ) 
+
+
+    invoice_generated = models.BooleanField(
+        default=False
+    )
+
+    
+    class_applying_for = models.ForeignKey(
+        SchoolClass,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="admission_applications"
+    )
+
+    
 
     previous_school = models.CharField(
 
@@ -535,6 +557,10 @@ class AdmissionApplication(models.Model):
 
 
     parent_email = models.EmailField()
+    student_email = models.EmailField(
+        blank=True,
+        null=True
+    )
 
 
 
@@ -647,6 +673,47 @@ class AdmissionApplication(models.Model):
 
     )
 
+    resume_date = models.DateField(
+        null=True,
+        blank=True
+    )
+
+    admission_session = models.CharField(
+        max_length=50,
+        blank=True
+    )
+
+    admission_term = models.CharField(
+        max_length=50,
+        blank=True
+    )
+
+    accepted_offer = models.BooleanField(
+        default=False
+    )
+
+    accepted_on = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+
+    approved_on = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+
+
+    student_username = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True
+    )
+
+    student_password = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True
+    )
 
 
     # ==========================
@@ -771,3 +838,4 @@ class AdmissionExamSubmission(models.Model):
     def __str__(self):
 
         return self.application.student_name    
+

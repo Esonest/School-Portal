@@ -37,7 +37,19 @@
         </div>
 
         <div class="mt-4 md:mt-0 text-sm">
-            <p><strong>{{ submission.student.full_name }}</strong></p>
+            {% if admission_mode %}
+
+<strong>Candidate:</strong> {{ application.student_name }} <br>
+
+<strong>Class Applying For:</strong> {{ application.class_applying_for }}
+
+{% else %}
+
+<strong>Student:</strong> {{ request.user.get_full_name }} <br>
+
+<strong>Class:</strong> {{ student.school_class }}
+
+{% endif %}
             <p>Admission No: {{ submission.student.admission_no }}</p>
             <p>Exam: {{ exam.title }}</p>
             <p>Score: {{ submission.score }} / {{ submission.total_questions }} ({{ submission.percentage }}%)</p>

@@ -17,6 +17,7 @@ from .forms import FeeTemplate, FeeTemplateForm
 from collections import defaultdict
 from django.db.models import Q
 from .utils import calculate_paystack_fee, send_school_payment_notification
+from tis_website.models import AdmissionApplication
 
 
 from django.db.models import (
@@ -64,6 +65,7 @@ from django.utils import timezone
 
 
 
+
 from django.db.models import Sum, Q, F, Value, DecimalField
 from django.db.models.functions import Coalesce
 from decimal import Decimal
@@ -94,6 +96,73 @@ def get_filtered_payments(school, start_date, session=None, term=None, class_id=
         qs = qs.filter(invoice__school_class_id=class_id)
 
     return qs
+
+
+
+def activate_student_after_admission_payment(payment):
+
+    """
+    Activate newly admitted student after admission invoice payment.
+    """
+
+    invoice = payment.invoice
+
+    if not invoice:
+        return
+
+
+    # Only admission invoices
+    if invoice.title != "Admission Fees":
+        return
+
+
+
+    student = payment.student
+
+
+    if not student:
+        return
+
+
+
+    # Activate student login
+
+    student.is_active = True
+
+    student.save(
+        update_fields=[
+            "is_active"
+        ]
+    )
+
+
+
+    # Find admission application
+
+    application = AdmissionApplication.objects.filter(
+        application_number=student.admission_no
+    ).first()
+
+
+
+    if application:
+
+        application.payment_completed = True
+
+        application.status = "completed"
+
+        application.save(
+            update_fields=[
+                "payment_completed",
+                "status"
+            ]
+        )
+
+
+    print(
+        "ADMISSION STUDENT ACTIVATED:",
+        student.admission_no
+    )    
 
 @login_required
 def dashboard(request):
@@ -2524,10 +2593,69 @@ def paystack_webhook(request):
     # ==================================================
 
     if created:
+
+
+    # ======================================
+    # ADMISSION PAYMENT ACTIVATION
+    # ======================================
+
         try:
-            send_school_payment_notification(payment)
-        except Exception:
-            pass
+
+            activate_student_after_admission_payment(
+                payment
+            )
+
+        except Exception as e:
+
+            print(
+                "Admission activation error:",
+                e
+            )
+
+        # SEND LOGIN DETAILS TO PARENT
+    # ======================================
+
+        try:
+
+            from tis_website.models import AdmissionApplication
+
+            application = AdmissionApplication.objects.filter(
+                application_number=payment.student.admission_no
+            ).first()
+
+            if application:
+
+                from students.services.admission_notification import (
+                    send_student_login_details
+                )   
+
+                send_student_login_details(
+                    application
+                )
+
+        except Exception as e:
+
+            print(
+                "Login notification error:",
+                e
+            )
+
+    # ======================================
+    # NORMAL PAYMENT NOTIFICATION
+    # ======================================
+
+        try:
+
+            send_school_payment_notification(
+                payment
+            )
+
+        except Exception as e:
+
+            print(
+                "Payment notification error:",
+                e
+            )
 
     return HttpResponse(status=200)
 

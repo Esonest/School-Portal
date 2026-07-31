@@ -52,4 +52,24 @@ urlpatterns = [
 
     ),
 
+
+
+    path(
+        "admission/portal/<uuid:token>/",
+        views.parent_admission_portal,
+        name="parent_admission_portal"
+    ),
+
+    path(
+        "admission/download-letter/<uuid:token>/",
+        views.download_admission_letter,
+        name="download_admission_letter"
+    ),
+
+    path(
+        "admission/accept/<uuid:token>/",
+        views.accept_admission,
+        name="accept_admission"
+    ),
+
 ]

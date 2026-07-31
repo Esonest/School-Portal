@@ -8,6 +8,10 @@ from django.views.decorators.csrf import csrf_exempt
 from .models import CBTExam, CBTQuestion, CBTSubmission
 from students.models import Student
 from results.utils import portal_required, normalize_latex
+from django.http import Http404
+from tis_website.models import AdmissionApplication
+
+
 
 
 # --------------------------------------
@@ -60,22 +64,84 @@ def exam_list(request):
 @portal_required("cbt")
 @login_required
 def start_exam_page(request, exam_id):
+
     exam = get_object_or_404(CBTExam, id=exam_id)
-    student = getattr(request.user, "student_profile", None) or getattr(request.user, "student", None)
-    if not student:
-        return HttpResponseForbidden("You must be logged in as a student.")
 
-    # check if student already took exam
-    submission = CBTSubmission.objects.filter(student=student, exam=exam).first()
-    already_taken = submission and submission.completed_on is not None
+    student = None
+    application = None
+    submission = None
+    school = None
 
-    return render(request, "cbt/start_exam.html", {
-        "exam": exam,
-        "student": student,
-        "already_taken": already_taken,
-        "school": getattr(student, "school", None),
-    })
+    # ==============================
+    # ADMISSION EXAM
+    # ==============================
+    if exam.exam_type == "admission":
 
+        application_id = request.session.get(
+            "admission_application_id"
+        )
+
+        if not application_id:
+            raise Http404("Candidate not found")
+
+        application = get_object_or_404(
+            AdmissionApplication,
+            id=application_id
+        )
+
+        submission = CBTSubmission.objects.filter(
+            admission_candidate=application,
+            exam=exam
+        ).first()
+
+        school = application.school
+
+
+    # ==============================
+    # NORMAL STUDENT EXAM
+    # ==============================
+    else:
+
+        student = getattr(
+            request.user,
+            "student_profile",
+            None
+        ) or getattr(
+            request.user,
+            "student",
+            None
+        )
+
+        if not student:
+            return HttpResponseForbidden(
+                "You must be logged in as a student."
+            )
+
+        submission = CBTSubmission.objects.filter(
+            student=student,
+            exam=exam
+        ).first()
+
+        school = student.school
+
+
+    already_taken = (
+        submission and submission.completed_on is not None
+    )
+
+
+    return render(
+        request,
+        "cbt/start_exam.html",
+        {
+            "exam": exam,
+            "student": student,
+            "application": application,
+            "admission_mode": exam.exam_type == "admission",
+            "already_taken": already_taken,
+            "school": school,
+        }
+    )
 
 
 # --------------------------------------
@@ -84,18 +150,43 @@ def start_exam_page(request, exam_id):
 @portal_required("cbt")
 @login_required
 def start_exam(request, exam_id):
+
     exam = get_object_or_404(CBTExam, id=exam_id)
-    student = getattr(request.user, "student_profile", None) or getattr(request.user, "student", None)
 
-    if not student:
-        return HttpResponseForbidden("You must be logged in as a student.")
+    # ==========================
+    # GET CANDIDATE / STUDENT
+    # ==========================
 
+    if exam.exam_type == "admission":
+
+        application = get_object_or_404(
+            AdmissionApplication,
+            id=request.session.get("admission_application_id")
+        )
+
+        submission = CBTSubmission.objects.filter(
+            admission_candidate=application,
+            exam=exam
+        ).first()
+
+
+    else:
+
+        student = getattr(request.user, "student_profile", None) or getattr(request.user, "student", None)
+
+        if not student:
+            return HttpResponseForbidden("Student account required.")
+
+        submission = CBTSubmission.objects.filter(
+            student=student,
+            exam=exam
+        ).first()
     now = timezone.now()
     if not (exam.start_time <= now <= exam.end_time):
         return HttpResponseForbidden("This exam is not active at the moment.")
 
     # 🚫 Check if already completed
-    submission = CBTSubmission.objects.filter(student=student, exam=exam).first()
+    
     if submission:
         if submission.completed_on:
             return redirect("cbt:cbt_result_analysis", exam_id=exam.id)
@@ -110,7 +201,19 @@ def start_exam(request, exam_id):
             return redirect("cbt:take_exam", exam_id=exam.id, question_index=0)
 
     # ✅ create new submission
-    submission = CBTSubmission.objects.create(student=student, exam=exam)
+    if exam.exam_type == "admission":
+
+        submission = CBTSubmission.objects.create(
+            admission_candidate=application,
+            exam=exam
+        )
+
+    else:
+
+        submission = CBTSubmission.objects.create(
+            student=student,
+            exam=exam
+        )
 
     question_order = list(exam.questions.values_list("id", flat=True))
     random.shuffle(question_order)
@@ -134,14 +237,58 @@ def take_exam(request, exam_id, question_index):
     from django.utils import timezone
 
     exam = get_object_or_404(CBTExam, id=exam_id)
-    student = getattr(request.user, "student_profile", None) or getattr(request.user, "student", None)
 
-    if not student:
-        return HttpResponseForbidden("You must be logged in as a student to take this exam.")
+    student = None
+    application = None
 
-    submission = CBTSubmission.objects.filter(student=student, exam=exam).first()
+
+# Admission CBT
+    if exam.exam_type == "admission":
+
+        from tis_website.models import AdmissionApplication
+
+        application_id = request.session.get(
+            "admission_application_id"
+        )
+
+        if not application_id:
+            raise Http404("Admission candidate not found")
+
+        application = get_object_or_404(
+            AdmissionApplication,
+            id=application_id
+        )
+
+        submission = CBTSubmission.objects.filter(
+            admission_candidate=application,
+            exam=exam
+        ).first()
+
+
+# Normal Student CBT
+    else:
+
+        student = (
+            getattr(request.user, "student_profile", None)
+            or getattr(request.user, "student", None)
+        )
+
+        if not student:
+            return HttpResponseForbidden(
+                "You must be logged in as a student to take this exam."
+            )
+
+        submission = CBTSubmission.objects.filter(
+            student=student,
+            exam=exam
+        ).first()
+
+
     if not submission:
-        return redirect("cbt:start_exam_page", exam_id=exam.id)
+        return redirect(
+            "cbt:start_exam_page",
+            exam_id=exam.id
+        )
 
     # Prevent retake after completion
    # Prevent access after completion
@@ -149,6 +296,8 @@ def take_exam(request, exam_id, question_index):
         return render(request, "cbt/exam_ended.html", {
             "exam": exam,
             "student": student,
+            "application": application,
+            "admission_mode": exam.exam_type == "admission",
         })
 
     # ------------------ QUESTION ORDER ------------------
@@ -336,6 +485,8 @@ def take_exam(request, exam_id, question_index):
         "time_limit": time_limit,
         "exam_start_time": exam_start_time,
         "student": student,
+        "application": application,
+        "admission_mode": exam.exam_type == "admission",
     })
 
 
@@ -385,12 +536,29 @@ def ajax_save_answer(request):
 @login_required
 def submit_exam(request, exam_id):
     exam = get_object_or_404(CBTExam, id=exam_id)
-    student = getattr(request.user, "student_profile", None) or getattr(request.user, "student", None)
-
-    if not student:
-        return HttpResponseForbidden("You must be logged in as a student to submit this exam.")
-
-    submission = CBTSubmission.objects.filter(student=student, exam=exam).first()
+    if exam.exam_type == "admission":
+    
+        application = get_object_or_404(
+            AdmissionApplication,
+            id=request.session["admission_application_id"]
+            )
+    
+        submission = CBTSubmission.objects.filter(
+            admission_candidate=application,
+            exam=exam
+        ).first()
+    
+    else:
+    
+        student = getattr(request.user, "student_profile", None) or getattr(request.user, "student", None)
+    
+        if not student:
+            return HttpResponseForbidden(...)
+    
+        submission = CBTSubmission.objects.filter(
+            student=student,
+            exam=exam
+        ).first()
     if not submission:
         return redirect("cbt:start_exam_page", exam_id=exam.id)
 
@@ -470,28 +638,26 @@ def submit_exam(request, exam_id):
     # ============================================
 # ADMISSION CBT INTEGRATION
 # ============================================
-    try:
-        from tis_website.models import AdmissionApplication
+   # ============================================
+# ADMISSION CBT INTEGRATION
+# ============================================
 
-        application = AdmissionApplication.objects.filter(
-            admission_exam=exam,
-            student_name__iexact=student.full_name()
-        ).first()
+    if exam.exam_type == "admission":
 
-        if application:
-            application.exam_completed = True
-            application.exam_score = submission.percentage
+        application = submission.admission_candidate
 
-            if submission.percentage >= application.exam_pass_mark:
-                application.status = "passed"
-            else:
-                application.status = "failed"
+    if application:
 
-            application.save()
+        application.exam_completed = True
+        application.exam_score = submission.percentage
 
-    except Exception:
-    # Never interrupt the normal CBT workflow
-        pass
+        application.status = (
+            "passed"
+            if submission.percentage >= application.exam_pass_mark
+            else "failed"
+        )
+
+        application.save()
 
     return redirect("cbt:student_exam_result", exam_id=exam.id)
 
@@ -515,17 +681,45 @@ from django.http import HttpResponseForbidden
 def student_exam_result(request, exam_id):
     exam = get_object_or_404(CBTExam, id=exam_id)
 
-    try:
-        student = Student.objects.get(user=request.user)
-    except Student.DoesNotExist:
-        return render(request, "cbt/student_result.html", {
-            "error": "You are not registered as a student."
-        })
+    student = getattr(request.user, "student_profile", None) or getattr(request.user, "student", None)
 
-    school = getattr(student, "school", None)
-    school_logo_url = getattr(school.logo, "url", None) if school and school.logo else None
+# Find submission depending on exam type
+    if exam.exam_type == "admission":
 
-    submission = get_object_or_404(CBTSubmission, exam=exam, student=student)
+        application = get_object_or_404(
+            AdmissionApplication,
+            id=request.session.get("admission_application_id")
+        )
+
+        submission = get_object_or_404(
+            CBTSubmission,
+            exam=exam,
+            admission_candidate=application
+        )
+
+        school = application.school
+
+    else:
+
+        if not student:
+            return HttpResponseForbidden(
+                "You are not registered as a student."
+            )
+
+        submission = get_object_or_404(
+            CBTSubmission,
+            exam=exam,
+            student=student
+        )
+
+        school = student.school
+
+
+    school_logo_url = (
+        school.logo.url
+        if school and school.logo
+        else None
+    )
     answers = submission.raw_answers or {}
 
     total_questions = exam.questions.count()
@@ -591,6 +785,8 @@ def student_exam_result(request, exam_id):
         "exam": exam,
         "submission": submission,
         "student": student,
+        "application": application if exam.exam_type == "admission" else None,
+        "admission_mode": exam.exam_type == "admission",
         "school": school,
         "school_logo_url": school_logo_url,
         "question_map": question_map,
@@ -609,23 +805,51 @@ from django.core.exceptions import PermissionDenied
 
 @login_required
 def student_submission_detail(request, submission_id):
-    # Get student
-    student = getattr(request.user, "student", None)
-    if not request.user.is_student_user:
-        raise PermissionDenied("Only students can view this page.")
 
-    # Get submission
     submission = get_object_or_404(
-        CBTSubmission.objects.select_related("student", "exam"),
-        id=submission_id,
-        student__user=request.user
+        CBTSubmission.objects.select_related(
+            "student",
+            "exam",
+            "admission_candidate"
+        ),
+        id=submission_id
     )
 
-    # Get school info
-    school = getattr(student, "school", None)
-    school_name = getattr(school, "name", "") if school else ""
-    school_motto = getattr(school, "motto", "") if school else ""
-    school_logo_url = getattr(school.logo, "url", None) if school and school.logo else None
+
+    # Permission check
+    if submission.student:
+
+        if submission.student.user != request.user:
+            raise PermissionDenied(
+                "You cannot view this submission."
+            )
+
+        school = submission.student.school
+
+
+    elif submission.admission_candidate:
+
+        if request.session.get("admission_application_id") != submission.admission_candidate.id:
+            raise PermissionDenied(
+                "You cannot view this submission."
+            )
+
+        school = submission.admission_candidate.school
+
+
+    else:
+        raise PermissionDenied(
+            "Invalid submission."
+        )
+
+
+    school_name = getattr(school, "name", "")
+    school_motto = getattr(school, "motto", "")
+    school_logo_url = getattr(
+        school.logo,
+        "url",
+        None
+    ) if school and school.logo else None
 
     # Answers
     answers = submission.raw_answers or {}
@@ -686,3 +910,66 @@ def student_submission_detail(request, submission_id):
     })
 
 
+
+
+# ============================================
+# ADMISSION CBT START
+# ============================================
+
+@portal_required("cbt")
+@login_required
+def start_admission_exam(request, exam_id):
+
+    exam = get_object_or_404(
+        CBTExam,
+        id=exam_id,
+        exam_type="admission"
+    )
+
+    application = get_object_or_404(
+        AdmissionApplication,
+        id=request.session.get("admission_application_id")
+    )
+
+    print("APPLICATION SCHOOL:", application.school)
+    print("EXAM SCHOOL:", exam.school)
+    submission, created = CBTSubmission.objects.get_or_create(
+        admission_candidate=application,
+        exam=exam
+    )
+
+
+
+    if submission.completed_on:
+        return redirect(
+            "cbt:student_exam_result",
+            exam_id=exam.id
+        )
+
+
+    question_order = list(
+        exam.questions.values_list(
+            "id",
+            flat=True
+        )
+    )
+
+    random.shuffle(question_order)
+
+
+    submission.raw_answers["_question_order"] = question_order
+    submission.raw_answers["_exam_start_time"] = timezone.now().isoformat()
+    submission.save(
+        update_fields=["raw_answers"]
+    )
+
+
+    request.session["question_order"] = question_order
+    request.session["exam_start_time"] = timezone.now().isoformat()
+
+
+    return redirect(
+        "cbt:take_exam",
+        exam_id=exam.id,
+        question_index=0
+    )

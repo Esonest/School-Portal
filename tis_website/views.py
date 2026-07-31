@@ -7,6 +7,17 @@ from .models import (
     SchoolStatistic
 )
 
+from django.utils import timezone
+from django.shortcuts import get_object_or_404, redirect, render
+
+from .models import AdmissionApplication
+from students.models import Student
+from accounts.models import User
+from finance.models import Invoice
+from django.contrib.auth.hashers import make_password
+import random
+import string
+
 
 
 def get_website(slug):
@@ -269,3 +280,268 @@ def admission_exam_access(request, token):
         exam_id=exam.id
     )   
 
+from django.shortcuts import render, get_object_or_404
+
+from .models import AdmissionApplication
+
+
+
+def parent_admission_portal(request, token):
+
+    application = get_object_or_404(
+        AdmissionApplication,
+        admission_token=token
+    )
+
+
+    # Only approved applicants can access letter
+
+    if application.status != "approved":
+
+        return render(
+            request,
+            "tis_website/public/admission_pending.html",
+            {
+                "application": application
+            }
+        )
+
+    
+
+
+    return render(
+        request,
+        "tis_website/public/parent_admission_portal.html",
+        {
+            "application": application,
+            "school": application.school
+        }
+    )
+
+
+from django.http import HttpResponse
+from django.template.loader import render_to_string
+from xhtml2pdf import pisa
+
+
+
+def download_admission_letter(request, token):
+
+    application = get_object_or_404(
+        AdmissionApplication,
+        admission_token=token,
+        status="approved"
+    )
+
+
+    html = render_to_string(
+        "tis_website/admission_letter.html",
+        {
+            "application": application,
+            "school": application.school
+        }
+    )
+
+
+    response = HttpResponse(
+        content_type="application/pdf"
+    )
+
+
+    response["Content-Disposition"] = (
+        f'attachment; filename="{application.student_name}_Admission_Letter.pdf"'
+    )
+
+
+    pisa.CreatePDF(
+        html,
+        dest=response
+    )
+
+
+    return response
+
+
+from django.shortcuts import render, redirect, get_object_or_404
+from django.utils import timezone
+from django.contrib.auth.hashers import make_password
+from django.contrib.auth import get_user_model
+import random
+import string
+
+from students.models import Student
+from finance.models import Invoice
+from tis_website.models import AdmissionApplication
+
+
+User = get_user_model()
+
+
+def accept_admission(request, token):
+
+    application = get_object_or_404(
+        AdmissionApplication,
+        admission_token=token
+    )
+
+
+    if request.method == "POST":
+
+
+        # =====================================
+        # ACCEPT ADMISSION
+        # =====================================
+
+        application.accepted = True
+
+        application.accepted_on = timezone.now()
+
+        application.status = "approved"
+
+        application.save()
+
+
+
+        # =====================================
+        # CREATE STUDENT ACCOUNT
+        # =====================================
+
+        student = None
+
+
+        if not application.student_created:
+
+
+            username = (
+                application.application_number.lower()
+            )
+
+
+            password = ''.join(
+                random.choices(
+                    string.ascii_uppercase +
+                    string.digits,
+                    k=10
+                )
+            )
+
+
+            user = User.objects.create(
+                username=username,
+                first_name=application.student_name.split()[0],
+                email=application.parent_email,
+                password=make_password(password),
+                role="student",
+                school=application.school,
+                is_active=False
+
+            )
+
+
+
+            student = Student.objects.create(
+
+                user=user,
+
+                school=application.school,
+
+                admission_no=application.application_number,
+
+                school_class=None,
+
+                dob=application.date_of_birth,
+
+                gender=application.gender,
+
+                parent_name=application.parent_name,
+
+                parent_email=application.parent_email,
+
+                parent_phone=application.parent_phone,
+
+                session="2026/2027",
+
+                term="1"
+
+            )
+
+
+            application.student_created = True
+
+            application.save()
+
+
+
+            request.session["student_username"] = username
+
+            request.session["student_password"] = password
+
+
+
+        else:
+
+
+            student = Student.objects.filter(
+                admission_no=application.application_number
+            ).first()
+
+
+
+        # =====================================
+        # GENERATE ADMISSION FEE INVOICE
+        # =====================================
+
+
+        if not application.invoice_generated:
+
+
+            Invoice.objects.create(
+
+                school=application.school,
+
+                student=student,
+
+                school_class=student.school_class,
+
+                title="Admission Fees",
+
+                total_amount=application.school.admission_fee,
+
+                amount_paid=0,
+
+                session="2026/2027",
+
+                term="1",
+
+                due_date=timezone.now().date()
+
+            )
+
+
+            application.invoice_generated = True
+
+            application.student_username = username
+
+            application.student_password = password
+
+            application.save()
+
+
+
+        return redirect(
+            "tis_website:acceptance_success"
+        )
+
+
+
+    return render(
+
+        request,
+
+        "tis_website/public/accept_admission.html",
+
+        {
+            "application":application
+        }
+
+    )

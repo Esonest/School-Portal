@@ -97,7 +97,15 @@ urlpatterns = [
 
     ),
 
-
+    path(
+    
+            "admissions/<int:pk>/assign-exam/",
+    
+            admin_views.assign_admission_exam,
+    
+            name="assign_admission_exam"
+    
+        ),
 
     path(
 
@@ -109,15 +117,24 @@ urlpatterns = [
 
     ),
 
+    path(
+        "admission/<int:pk>/",
+        admin_views.admission_detail,
+        name="admission_detail",
+    ),
 
     path(
-
-        "admissions/<int:pk>/assign-exam/",
-
-        admin_views.assign_admission_exam,
-
-        name="assign_admission_exam"
-
+        "admission/track/",
+        admin_views.admission_track,
+        name="admission_track"
     ),
+
+    path(
+        "admission-letter/<int:pk>/",
+        admin_views.download_admission_letter,
+        name="download_admission_letter"
+    ),
+
+
 
 ]

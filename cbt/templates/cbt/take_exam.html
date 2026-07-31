@@ -21,8 +21,12 @@
         </h1>
 
         <p class="text-sm sm:text-base text-gray-600 leading-snug mt-1">
-          <strong>Student:</strong> {{ request.user.get_full_name }} <br>
-          <strong>Class:</strong> {{ student.school_class }}
+          {% if is_admission %}
+    <strong>Candidate:</strong> {{ application.student_name }}
+{% else %}
+    <strong>Student:</strong> {{ request.user.get_full_name }} <br>
+    <strong>Class:</strong> {{ student.school_class }}
+{% endif %}
         </p>
       </div>
 

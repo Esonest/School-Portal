@@ -353,7 +353,13 @@ class CBTSubmission(models.Model):
 
     )
     exam = models.ForeignKey(CBTExam, on_delete=models.CASCADE)
-    school = models.ForeignKey(School, on_delete=models.CASCADE, default='', related_name='cbt_submissions')
+    school = models.ForeignKey(
+        School,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='cbt_submissions'
+    )
 
     score = models.FloatField(default=0)
     started_on = models.DateTimeField(default=timezone.now)
@@ -371,24 +377,27 @@ class CBTSubmission(models.Model):
         verbose_name = "CBT Submission"
         verbose_name_plural = "CBT Submissions"
         constraints = [
-
             models.UniqueConstraint(
-
-                fields=[
-                    "student",
-                    "exam"
-                ],
-
+                fields=["student", "exam"],
                 name="unique_student_exam",
-
             ),
-
+            models.UniqueConstraint(
+                fields=["admission_candidate", "exam"],
+                name="unique_admission_exam",
+            ),
         ]
         db_table = "CBTSubmission"
 
     def save(self, *args, **kwargs):
-        if not self.school_id:
-            self.school = self.student.school
+
+        if not self.school:
+
+            if self.student:
+                self.school = self.student.school
+
+            elif self.admission_candidate and self.admission_candidate.school:
+                self.school = self.admission_candidate.school
+
         super().save(*args, **kwargs)
 
     def __str__(self):
