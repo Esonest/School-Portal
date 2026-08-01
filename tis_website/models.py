@@ -472,6 +472,9 @@ class AdmissionApplication(models.Model):
     )
 
 
+    is_archived = models.BooleanField(
+        default=False
+    )
 
     # ==========================
     # STUDENT INFORMATION

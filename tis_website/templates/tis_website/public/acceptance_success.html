@@ -1,0 +1,145 @@
+{% extends "accounts/base.html" %}
+
+
+{% block content %}
+
+
+<div class="min-h-screen bg-gradient-to-br from-green-50 to-blue-100 p-6">
+
+
+<div class="max-w-3xl mx-auto bg-white rounded-3xl shadow-xl p-8 text-center">
+
+
+{% if school.logo %}
+
+<img src="{{ school.logo.url }}"
+class="w-24 h-24 rounded-full mx-auto">
+
+{% endif %}
+
+
+
+<h1 class="text-3xl font-bold text-green-700 mt-5">
+
+Admission Accepted Successfully 🎉
+
+</h1>
+
+
+
+<p class="mt-4 text-gray-700 text-lg">
+
+Congratulations!
+
+<strong>
+{{ application.student_name }}
+</strong>
+
+has successfully accepted the admission offer.
+
+</p>
+
+
+
+<div class="mt-6 bg-blue-50 rounded-xl p-5 text-left">
+
+
+<p>
+<strong>Application Number:</strong>
+
+{{ application.application_number }}
+
+</p>
+
+
+<p>
+<strong>Student:</strong>
+
+{{ application.student_name }}
+
+</p>
+
+
+<p>
+<strong>Class:</strong>
+
+{{ application.class_applying_for }}
+
+</p>
+
+
+</div>
+
+
+
+<div class="mt-8 bg-yellow-50 border border-yellow-200 rounded-xl p-6">
+
+
+<h3 class="text-xl font-bold text-yellow-800 mb-4">
+
+Next Steps
+
+</h3>
+
+
+<ol class="list-decimal list-inside space-y-2 text-gray-700">
+
+
+<li>
+Download your admission letter.
+</li>
+
+
+<li>
+Pay the admission fee.
+</li>
+
+
+<li>
+Wait for payment confirmation.
+</li>
+
+
+<li>
+Receive your student login details.
+</li>
+
+
+<li>
+Access the student dashboard after activation.
+</li>
+
+
+</ol>
+
+
+</div>
+
+
+
+<a href="{% url 'tis_website:download_admission_letter' application.admission_token %}"
+
+class="block mt-8 bg-green-600 hover:bg-green-700 text-white py-4 rounded-xl font-bold">
+
+📄 Download Admission Letter
+
+</a>
+
+
+
+<a href="{% url 'tis_website:admission_payment' application.admission_token %}"
+
+class="block mt-4 bg-blue-600 hover:bg-blue-700 text-white py-4 rounded-xl font-bold">
+
+💳 Pay Admission Fee
+
+</a>
+
+
+
+</div>
+
+</div>
+
+
+{% endblock %}

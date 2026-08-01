@@ -65,6 +65,12 @@ class CBTExam(models.Model):
     start_time = models.DateTimeField()
     end_time = models.DateTimeField()
     duration_minutes = models.PositiveIntegerField(default=30)
+    pass_mark = models.DecimalField(
+        max_digits=5,
+        decimal_places=2,
+        default=50,
+        help_text="Minimum percentage required to pass this exam"
+    )
     active = models.BooleanField(default=False)
 
     class Meta:

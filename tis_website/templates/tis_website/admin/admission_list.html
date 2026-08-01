@@ -21,6 +21,11 @@
 <div class="mb-10">
 
 
+<div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+
+
+<div>
+
 <h1 class="text-4xl font-extrabold text-blue-900">
 
 🎓 Admission Applications
@@ -34,9 +39,23 @@ Review and manage student admission requests.
 
 </p>
 
+</div>
+
+
+
+<a href="{% url 'tis_website_admin:archived_admissions' %}"
+
+class="bg-gray-700 hover:bg-gray-800 text-white px-6 py-3 rounded-xl font-bold text-center shadow">
+
+📦 Archived Applications
+
+</a>
+
 
 </div>
 
+
+</div>
 
 
 
@@ -316,7 +335,42 @@ class="block text-center bg-indigo-700 text-white py-3 rounded-xl font-bold">
 {% endif %}
 
 
-    
+<!-- Archive -->
+
+<form method="POST"
+action="{% url 'tis_website_admin:admission_archive' item.id %}"
+onsubmit="return confirm('Archive this application?');">
+
+{% csrf_token %}
+
+<button
+type="submit"
+class="block w-full bg-orange-600 hover:bg-orange-700 text-white py-3 rounded-xl font-bold">
+
+📦 Archive Application
+
+</button>
+
+</form>
+
+
+<!-- Permanent Delete -->
+
+<form method="POST"
+action="{% url 'tis_website_admin:admission_delete' item.id %}"
+onsubmit="return confirm('Permanently delete this application? This cannot be undone.');">
+
+{% csrf_token %}
+
+<button
+type="submit"
+class="block w-full bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl font-bold">
+
+🗑️ Delete Permanently
+
+</button>
+
+</form> 
 
 </div>
 

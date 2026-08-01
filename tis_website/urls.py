@@ -72,4 +72,16 @@ urlpatterns = [
         name="accept_admission"
     ),
 
+    path(
+        "admission/success/<uuid:token>/",
+        views.acceptance_success,
+        name="acceptance_success"
+    ),
+
+    path(
+        "admission/payment/<uuid:token>/",
+        views.admission_payment,
+        name="admission_payment"
+    ),
+
 ]

@@ -108,17 +108,12 @@ Status:
 
 <div class="mt-5 bg-blue-50 rounded-xl p-5">
 
-
 <h3 class="font-bold text-blue-900">
-
 💻 CBT Examination
-
 </h3>
 
 
-
 {% if application.admission_exam %}
-
 
 <p>
 Exam:
@@ -128,7 +123,43 @@ Exam:
 </p>
 
 
-{% if exam_link %}
+{% if application.exam_completed %}
+
+<div class="mt-4 bg-green-100 p-4 rounded-xl">
+
+<p>
+<strong>Status:</strong>
+Completed
+</p>
+
+
+<p>
+<strong>Score:</strong>
+
+{{ application.exam_score }}%
+
+</p>
+
+
+{% if application.status == "passed" %}
+
+<p class="text-green-700 font-bold">
+Result: PASSED 🎉
+</p>
+
+{% elif application.status == "failed" %}
+
+<p class="text-red-700 font-bold">
+Result: FAILED
+</p>
+
+{% endif %}
+
+
+</div>
+
+
+{% elif exam_link %}
 
 
 <a href="{{ exam_link }}"
@@ -143,8 +174,8 @@ Start CBT Examination
 {% endif %}
 
 
-{% else %}
 
+{% else %}
 
 <p>
 CBT has not been assigned yet.
@@ -156,7 +187,38 @@ CBT has not been assigned yet.
 
 </div>
 
+{% if application.status == "approved" %}
 
+
+<div class="mt-5 bg-green-50 rounded-xl p-5">
+
+<h3 class="font-bold text-green-900">
+🎓 Admission Approved
+</h3>
+
+
+<a href="{% url 'tis_website:parent_admission_portal' application.admission_token %}"
+
+class="block mt-4 bg-blue-900 text-white text-center py-3 rounded-xl font-bold">
+
+Open Admission Portal
+
+</a>
+
+
+<a href="{% url 'tis_website:download_admission_letter' application.admission_token %}"
+
+class="block mt-4 bg-green-600 text-white text-center py-3 rounded-xl font-bold">
+
+Download Admission Letter
+
+</a>
+
+
+</div>
+
+
+{% endif %}
 
 
 

@@ -97,6 +97,26 @@ urlpatterns = [
 
     ),
 
+
+    path(
+        "admissions/archived/",
+        admin_views.archived_admissions,
+        name="archived_admissions"
+    ),
+
+    path(
+            "admissions/<int:pk>/archive/",
+            admin_views.admission_archive,
+            name="admission_archive"
+        ), 
+
+
+    path(
+        "admissions/<int:pk>/restore/",
+        admin_views.admission_restore,
+        name="admission_restore"
+    ),
+
     path(
     
             "admissions/<int:pk>/assign-exam/",
@@ -108,6 +128,11 @@ urlpatterns = [
         ),
 
     path(
+        "admissions/<int:pk>/delete/",
+        admin_views.admission_delete,
+        name="admission_delete"
+    ),
+    path(
 
         "admissions/<int:pk>/<str:status>/",
 
@@ -116,6 +141,8 @@ urlpatterns = [
         name="admission_status"
 
     ),
+
+
 
     path(
         "admission/<int:pk>/",

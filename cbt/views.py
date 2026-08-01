@@ -768,7 +768,7 @@ def student_exam_result(request, exam_id):
 
     wrong_count = attempted - correct_count
     percentage = round((correct_count / total_questions) * 100, 2) if total_questions else 0
-    status = "Pass" if percentage >= 50 else "Fail"
+    status = "Pass" if percentage >= exam.pass_mark else "Fail"
 
     submission.score = correct_count
     submission.total_questions = total_questions
@@ -776,6 +776,29 @@ def student_exam_result(request, exam_id):
     submission.wrong_answers = wrong_count
     submission.percentage = percentage
     submission.status = status
+
+
+    if submission.admission_candidate:
+
+        application = submission.admission_candidate
+
+        application.exam_completed = True
+
+        application.exam_score = percentage
+
+
+        if percentage >= exam.pass_mark:
+
+            application.status = "passed"
+
+        else:
+
+            application.status = "failed"
+
+
+        application.save()
+
+
     submission.save(update_fields=[
         "score", "total_questions", "correct_answers",
         "wrong_answers", "percentage", "status"

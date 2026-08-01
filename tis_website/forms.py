@@ -513,14 +513,32 @@ class GalleryForm(forms.ModelForm):
 
         }  
 
-from .models import AdmissionApplication
+
 
 
 from django import forms
 from .models import AdmissionApplication
+from students.models import SchoolClass
 
 
 class AdmissionApplicationForm(forms.ModelForm):
+
+    def __init__(self, *args, **kwargs):
+
+        school = kwargs.pop("school", None)
+
+        super().__init__(*args, **kwargs)
+
+
+        if school:
+
+            self.fields["class_applying_for"].queryset = SchoolClass.objects.filter(
+                school=school
+            )
+
+        else:
+
+            self.fields["class_applying_for"].queryset = SchoolClass.objects.none()
 
     class Meta:
 

@@ -1,0 +1,140 @@
+{% extends "accounts/base.html" %}
+
+
+{% block content %}
+
+
+<div class="min-h-screen bg-gray-100 p-6">
+
+
+<div class="max-w-7xl mx-auto">
+
+
+<h1 class="text-4xl font-extrabold text-gray-800 mb-8">
+
+📦 Archived Applications
+
+</h1>
+
+
+
+<div class="grid md:grid-cols-2 xl:grid-cols-3 gap-8">
+
+
+{% for item in applications %}
+
+
+<div class="bg-white rounded-3xl shadow-xl p-6">
+
+
+<h2 class="text-xl font-bold text-blue-900">
+
+{{ item.student_name }}
+
+</h2>
+
+
+<p class="mt-2">
+
+Application No:
+
+<strong>
+{{ item.application_number }}
+</strong>
+
+</p>
+
+
+<p>
+
+Class:
+
+<strong>
+{{ item.class_applying_for }}
+</strong>
+
+</p>
+
+
+
+<div class="mt-6 space-y-3">
+
+
+<form method="POST"
+action="{% url 'tis_website_admin:admission_restore' item.id %}">
+
+{% csrf_token %}
+
+<button
+
+class="w-full bg-green-600 text-white py-3 rounded-xl font-bold">
+
+♻️ Restore Application
+
+</button>
+
+</form>
+
+
+
+<form method="POST"
+action="{% url 'tis_website_admin:admission_delete' item.id %}"
+onsubmit="return confirm('Delete permanently?');">
+
+
+{% csrf_token %}
+
+
+<button
+
+class="w-full bg-red-600 text-white py-3 rounded-xl font-bold">
+
+🗑️ Delete Permanently
+
+</button>
+
+
+</form>
+
+
+</div>
+
+
+</div>
+
+
+{% empty %}
+
+
+<div class="bg-white rounded-3xl shadow p-10 text-center col-span-full">
+
+<h2 class="text-2xl font-bold">
+
+No Archived Applications
+
+</h2>
+
+
+<p class="text-gray-500 mt-3">
+
+Archived admission records will appear here.
+
+</p>
+
+
+</div>
+
+
+{% endfor %}
+
+
+</div>
+
+
+</div>
+
+
+</div>
+
+
+{% endblock %}

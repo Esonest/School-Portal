@@ -272,6 +272,7 @@ class CBTExamForm(forms.ModelForm):
             'start_time',
             'end_time',
             'duration_minutes',
+            'pass_mark',
             'active',
             'allow_calculator',
         ]

@@ -128,42 +128,74 @@ Fill all required information carefully.
 
 </h2>
 
-<p class="mt-4">
 
-Application Number
+<p class="mt-4 font-semibold">
 
-</p>
-
-<div class="text-4xl font-extrabold text-blue-900 mt-3">
-
-{{ application.application_number }}
-
-</div>
-
-<p class="mt-4">
-
-Please save this Application Number.
+Your Application Number
 
 </p>
 
-<div class="mt-6 flex flex-wrap gap-4">
 
-<a href="{% url 'tis_website:track_admission' %}"
-class="bg-blue-900 text-white px-6 py-3 rounded-xl">
+<div class="mt-3 flex">
 
-Track Admission
+<input
+id="applicationNumber"
+type="text"
+readonly
+value="{{ application.application_number }}"
+class="flex-1 border rounded-l-xl p-3 bg-white text-2xl font-bold text-blue-900">
 
-</a>
 
 <button
-onclick="window.print()"
-class="bg-green-600 text-white px-6 py-3 rounded-xl">
+type="button"
+onclick="copyApplicationNumber()"
+class="bg-blue-900 text-white px-5 rounded-r-xl">
 
-Print Acknowledgement
+Copy
 
 </button>
 
 </div>
+
+
+
+<p class="mt-6 font-semibold">
+
+Admission Tracking URL
+
+</p>
+
+
+<div class="mt-3 flex">
+
+<input
+id="trackingUrl"
+type="text"
+readonly
+value="{{ request.scheme }}://{{ request.get_host }}{% url 'tis_website_admin:admission_track' %}"
+class="flex-1 border rounded-l-xl p-3 bg-white text-sm">
+
+
+<button
+type="button"
+onclick="copyTrackingUrl()"
+class="bg-green-600 text-white px-5 rounded-r-xl">
+
+Copy
+
+</button>
+
+</div>
+
+
+
+<p class="mt-5 text-gray-700">
+
+Save both your Application Number and Tracking URL. 
+Use them to check admission status, CBT examination, results, admission letter and payment details.
+
+</p>
+
 
 </div>
 
@@ -930,6 +962,33 @@ function(){
 });
 
 
+
+</script>
+
+
+<script>
+
+function copyApplicationNumber(){
+
+    const input = document.getElementById("applicationNumber");
+
+    navigator.clipboard.writeText(input.value);
+
+    alert("Application number copied.");
+
+}
+
+
+
+function copyTrackingUrl(){
+
+    const input = document.getElementById("trackingUrl");
+
+    navigator.clipboard.writeText(input.value);
+
+    alert("Tracking URL copied.");
+
+}
 
 </script>
 

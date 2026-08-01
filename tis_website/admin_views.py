@@ -545,36 +545,25 @@ from .models import AdmissionApplication
 
 
 
-
+@login_required
 def admission_list(request):
 
-
-    school=request.user.school
-
+    school = request.user.school
 
 
     applications = AdmissionApplication.objects.filter(
-
-        school=school
-
-    )
-
+        school=school,
+        is_archived=False
+    ).order_by("-created_at")
 
 
     return render(
-
         request,
-
         "tis_website/admin/admission_list.html",
-
         {
-
-            "applications":applications
-
+            "applications": applications
         }
-
     )
-
 
 
 
@@ -1064,11 +1053,11 @@ def admission_detail(request, pk):
 from django.shortcuts import render, get_object_or_404
 from .models import AdmissionApplication
 
-
 def admission_track(request):
 
     application = None
     error = None
+    exam_link = None
 
 
     if request.method == "POST":
@@ -1090,19 +1079,22 @@ def admission_track(request):
             error = "Invalid application number."
 
 
-    exam_link = None
-
 
     if application and application.admission_exam:
 
-        exam_link = request.build_absolute_uri(
-            reverse(
-                "tis_website:admission_exam_access",
-                args=[
-                    application.admission_token
-                ]
+        # Only show CBT link if exam has NOT been completed
+
+        if not application.exam_completed:
+
+            exam_link = request.build_absolute_uri(
+                reverse(
+                    "tis_website:admission_exam_access",
+                    args=[
+                        application.admission_token
+                    ]
+                )
             )
-        )
+
 
 
     return render(
@@ -1159,3 +1151,110 @@ def download_admission_letter(request, pk):
 
 
     return response
+
+
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import get_object_or_404, redirect
+from django.contrib import messages
+
+from .models import AdmissionApplication
+
+
+@login_required
+def admission_delete(request, pk):
+
+    application = get_object_or_404(
+        AdmissionApplication,
+        id=pk,
+        school=request.user.school
+    )
+
+    if request.method == "POST":
+
+        student_name = application.student_name
+
+        application.delete()
+
+        messages.success(
+            request,
+            f"{student_name}'s admission application deleted successfully."
+        )
+
+        return redirect(
+            "tis_website_admin:admission_list"
+        )
+
+
+    return redirect(
+        "tis_website_admin:admission_list"
+    )  
+
+@login_required
+def admission_archive(request, pk):
+
+    application = get_object_or_404(
+        AdmissionApplication,
+        id=pk,
+        school=request.user.school
+    )
+
+    if request.method == "POST":
+
+        application.is_archived = True
+        application.save()
+
+        messages.success(
+            request,
+            "Admission application archived successfully."
+        )
+
+    return redirect(
+        "tis_website_admin:admission_list"
+    )      
+
+
+@login_required
+def archived_admissions(request):
+
+    school = request.user.school
+
+
+    applications = AdmissionApplication.objects.filter(
+        school=school,
+        is_archived=True
+    ).order_by("-created_at")
+
+
+    return render(
+        request,
+        "tis_website/admin/archived_admissions.html",
+        {
+            "applications": applications
+        }
+    )
+
+
+@login_required
+def admission_restore(request, pk):
+
+    application = get_object_or_404(
+        AdmissionApplication,
+        id=pk,
+        school=request.user.school
+    )
+
+
+    if request.method == "POST":
+
+        application.is_archived = False
+        application.save()
+
+        messages.success(
+            request,
+            "Admission application restored successfully."
+        )
+
+
+    return redirect(
+        "tis_website_admin:archived_admissions"
+    )

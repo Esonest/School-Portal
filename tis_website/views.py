@@ -152,89 +152,55 @@ from .forms import AdmissionApplicationForm
 
 def admissions(request, school_slug):
 
-
     website = get_object_or_404(
-
         SchoolWebsite,
-
         slug=school_slug
-
     )
-
-
 
     school = website.school
 
-
-
-
     submitted = False
 
-
-
+    application = None
 
     if request.method == "POST":
 
-
-
         form = AdmissionApplicationForm(
-
             request.POST,
-
-            request.FILES
-
+            request.FILES,
+            school=school
         )
-
-
 
         if form.is_valid():
 
-
-
             admission = form.save(
-
                 commit=False
-
             )
-
-
 
             admission.school = school
 
-
-
             admission.save()
 
-
+            application = admission
 
             submitted = True
 
-
-
     else:
 
-
-        form = AdmissionApplicationForm()
-
-
+        form = AdmissionApplicationForm(
+            school=school
+        )
 
 
     return render(
-
         request,
-
         "tis_website/public/admissions.html",
-
         {
-
-            "form":form,
-
-            "website":website,
-
-            "submitted":submitted
-
+            "form": form,
+            "website": website,
+            "submitted": submitted,
+            "application": application,
         }
-
     )
 
 from cbt.models import CBTExam, CBTQuestion, CBTSubmission
@@ -311,7 +277,7 @@ def parent_admission_portal(request, token):
 
     return render(
         request,
-        "tis_website/public/parent_admission_portal.html",
+        "tis_website/public/admission_parent_portal.html",
         {
             "application": application,
             "school": application.school
@@ -335,7 +301,7 @@ def download_admission_letter(request, token):
 
 
     html = render_to_string(
-        "tis_website/admission_letter.html",
+        "tis_website/public/admission_letter.html",
         {
             "application": application,
             "school": application.school
@@ -372,9 +338,11 @@ import string
 from students.models import Student
 from finance.models import Invoice
 from tis_website.models import AdmissionApplication
+from accounts.models import SystemSetting   
 
 
 User = get_user_model()
+
 
 
 def accept_admission(request, token):
@@ -393,28 +361,46 @@ def accept_admission(request, token):
         # =====================================
 
         application.accepted = True
-
         application.accepted_on = timezone.now()
-
         application.status = "approved"
-
         application.save()
 
 
 
         # =====================================
-        # CREATE STUDENT ACCOUNT
+        # GET CURRENT SESSION AND TERM
+        # =====================================
+
+        setting = SystemSetting.objects.first()
+
+
+        if setting:
+
+            current_session = setting.current_session
+            current_term = setting.current_term
+
+        else:
+
+            current_session = "2026/2027"
+            current_term = "1"
+
+
+
+        # =====================================
+        # CREATE TEMPORARY STUDENT ACCOUNT
         # =====================================
 
         student = None
+
+        username = application.student_username
+        password = application.student_password
+
 
 
         if not application.student_created:
 
 
-            username = (
-                application.application_number.lower()
-            )
+            username = application.application_number.lower()
 
 
             password = ''.join(
@@ -434,7 +420,6 @@ def accept_admission(request, token):
                 role="student",
                 school=application.school,
                 is_active=False
-
             )
 
 
@@ -447,6 +432,8 @@ def accept_admission(request, token):
 
                 admission_no=application.application_number,
 
+                # Temporary student
+                # Class assigned after payment confirmation
                 school_class=None,
 
                 dob=application.date_of_birth,
@@ -459,17 +446,14 @@ def accept_admission(request, token):
 
                 parent_phone=application.parent_phone,
 
-                session="2026/2027",
+                session=current_session,
 
-                term="1"
+                term=current_term
 
             )
 
 
             application.student_created = True
-
-            application.save()
-
 
 
             request.session["student_username"] = username
@@ -488,48 +472,59 @@ def accept_admission(request, token):
 
 
         # =====================================
-        # GENERATE ADMISSION FEE INVOICE
+        # CREATE ADMISSION FEE INVOICE
         # =====================================
-
 
         if not application.invoice_generated:
 
 
-            Invoice.objects.create(
-
-                school=application.school,
+            Invoice.objects.get_or_create(
 
                 student=student,
 
-                school_class=student.school_class,
+                session=current_session,
+
+                term=current_term,
 
                 title="Admission Fees",
 
-                total_amount=application.school.admission_fee,
+                defaults={
 
-                amount_paid=0,
+                    "school": application.school,
 
-                session="2026/2027",
+                    "school_class": application.class_applying_for,
 
-                term="1",
+                    "total_amount": application.school.admission_fee,
 
-                due_date=timezone.now().date()
+                    "amount_paid": 0,
+
+                    "due_date": timezone.now().date(),
+
+                }
 
             )
 
 
             application.invoice_generated = True
 
+
+
+        # Save credentials
+        if username and password:
+
             application.student_username = username
 
             application.student_password = password
 
-            application.save()
+
+
+        application.save()
 
 
 
         return redirect(
-            "tis_website:acceptance_success"
+            "tis_website:acceptance_success",
+            token=application.admission_token
         )
 
 
@@ -541,7 +536,50 @@ def accept_admission(request, token):
         "tis_website/public/accept_admission.html",
 
         {
-            "application":application
+            "application": application
         }
 
     )
+
+
+def acceptance_success(request, token):
+
+    application = get_object_or_404(
+        AdmissionApplication,
+        admission_token=token
+    )
+
+
+    return render(
+        request,
+        "tis_website/public/acceptance_success.html",
+        {
+            "application": application,
+            "school": application.school
+        }
+    )
+
+
+from django.shortcuts import render, get_object_or_404
+
+def admission_payment(request, token):
+
+    application = get_object_or_404(
+        AdmissionApplication,
+        admission_token=token
+    )
+
+
+    school = application.school
+
+
+    return render(
+        request,
+        "tis_website/public/admission_payment.html",
+        {
+            "application": application,
+            "school": school,
+            "amount": school.admission_fee,
+            "paystack_key": school.paystack_public_key,
+        }
+    )    
