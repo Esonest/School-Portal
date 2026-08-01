@@ -56,6 +56,12 @@ class School(models.Model):
         null=True
     )
 
+    admission_prefix = models.CharField(
+        max_length=10,
+        blank=True,
+        default=""
+    )
+
     email_enabled = models.BooleanField(default=True)
 
     whatsapp_enabled = models.BooleanField(default=False)

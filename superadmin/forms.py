@@ -103,6 +103,11 @@ class SchoolForm(forms.ModelForm):
             "email_enabled",
             "whatsapp_enabled",
 
+            # Admission
+            "admission_prefix",
+            "admission_fee",
+
+
             "paystack_public_key",
             "paystack_secret_key",
         ]
@@ -149,6 +154,20 @@ class SchoolForm(forms.ModelForm):
                 "class": "h-4 w-4"
             }),
 
+
+            "admission_prefix": forms.TextInput(attrs={
+                "class": "form-input",
+                "placeholder": "Example: TIS, EVTL, GGS",
+                "style": "text-transform:uppercase;"
+            }),
+
+            "admission_fee": forms.NumberInput(attrs={
+                "class": "form-input",
+                "placeholder": "Admission Fee",
+                "min": "0",
+                "step": "0.01"
+            }),
+
             "paystack_public_key": forms.TextInput(attrs={
                 "class": "form-input",
                 "placeholder": "Paystack Public Key"
@@ -159,6 +178,10 @@ class SchoolForm(forms.ModelForm):
                 "placeholder": "Paystack Secret Key"
             }),
         }
+
+    def clean_admission_prefix(self):
+        prefix = self.cleaned_data.get("admission_prefix", "")
+        return prefix.strip().upper()    
 
 
 # -------------------------

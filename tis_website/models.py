@@ -755,24 +755,28 @@ class AdmissionApplication(models.Model):
 
     def save(self, *args, **kwargs):
 
-
-        if not self.application_number:
-
-
-            prefix = "TIS"
-
-
-            count = AdmissionApplication.objects.count() + 1
-
-
-            self.application_number = (
-
-                f"{prefix}{count:05d}"
-
-            )
-
+        creating = self.pk is None
 
         super().save(*args, **kwargs)
+
+        if creating and not self.application_number:
+
+            prefix = self.school.admission_prefix.strip().upper()
+
+            if not prefix:
+                import re
+                words = re.findall(r"[A-Za-z]+", self.school.name)
+                prefix = "".join(word[0].upper() for word in words)[:6]
+
+            application_number = f"{prefix}{self.pk:06d}"
+
+            AdmissionApplication.objects.filter(
+                pk=self.pk
+            ).update(
+                application_number=application_number
+            )
+
+            self.application_number = application_number
 
 
 
