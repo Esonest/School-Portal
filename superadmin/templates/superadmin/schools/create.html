@@ -68,6 +68,24 @@
         </div>
 
 
+
+        <div>
+    {{ form.admission_prefix.label_tag }}
+    {{ form.admission_prefix }}
+    <p class="text-xs text-gray-500 mt-1">
+        Prefix used when generating admission numbers (e.g. TIS, EVTL, GGSS).
+    </p>
+</div>
+
+<div>
+    {{ form.admission_fee.label_tag }}
+    {{ form.admission_fee }}
+    <p class="text-xs text-gray-500 mt-1">
+        Amount every successful admission candidate pays before completing registration.
+    </p>
+</div>
+
+
         <!-- Notification Email -->
 <div>
     {{ form.notification_email.label_tag }}
