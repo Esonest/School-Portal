@@ -1,7 +1,6 @@
 {% extends "tis_website/public/base.html" %}
 
 
-
 {% block title %}
 
 Home | Tech International School
@@ -10,21 +9,14 @@ Home | Tech International School
 
 
 
-
 {% block content %}
-
-
-
 
 
 
 <!-- ================= HERO SECTION ================= -->
 
 
-<section 
-
-class="relative overflow-hidden bg-gradient-to-r from-blue-950 via-blue-900 to-indigo-800 text-white py-28">
-
+<section class="relative overflow-hidden bg-gradient-to-br from-blue-950 via-indigo-900 to-blue-700 text-white">
 
 
 {% if homepage.hero_image %}
@@ -32,9 +24,7 @@ class="relative overflow-hidden bg-gradient-to-r from-blue-950 via-blue-900 to-i
 <div class="absolute inset-0">
 
 <img src="{{ homepage.hero_image.url }}"
-
 class="w-full h-full object-cover opacity-20">
-
 
 </div>
 
@@ -42,19 +32,28 @@ class="w-full h-full object-cover opacity-20">
 
 
 
+<div class="relative container mx-auto px-6 py-24 md:py-32">
 
 
-<div class="relative container mx-auto px-6 text-center">
-
-
-
-
-
-<div class="max-w-5xl mx-auto">
+<div class="max-w-6xl mx-auto text-center">
 
 
 
-<h1 class="text-5xl md:text-7xl font-extrabold leading-tight">
+<div class="inline-flex items-center bg-white/10 backdrop-blur px-5 py-2 rounded-full mb-8">
+
+<span class="mr-2">
+🚀
+</span>
+
+Smart Learning • Digital Education • Future Skills
+
+</div>
+
+
+
+
+
+<h1 class="text-4xl sm:text-5xl md:text-7xl font-black leading-tight">
 
 
 {% if homepage %}
@@ -68,25 +67,30 @@ TECH INTERNATIONAL SCHOOL
 {% endif %}
 
 
+
 </h1>
 
 
 
 
 
-<p class="mt-8 text-xl md:text-2xl text-blue-100 leading-relaxed">
+<p class="mt-8 text-lg md:text-2xl text-blue-100 max-w-4xl mx-auto leading-relaxed">
 
 
 {% if homepage %}
 
 {{ homepage.hero_subtitle }}
 
+{% else %}
+
+Building future-ready students through technology,
+innovation and academic excellence.
+
 {% endif %}
 
 
+
 </p>
-
-
 
 
 
@@ -96,11 +100,9 @@ TECH INTERNATIONAL SCHOOL
 
 
 
-
-
 <a href="{% url 'tis_website:admissions' school_slug=website.slug %}"
 
-class="bg-white text-blue-900 px-10 py-4 rounded-2xl font-bold shadow-xl hover:scale-105 transition">
+class="bg-white text-blue-900 px-10 py-4 rounded-2xl font-extrabold shadow-xl hover:scale-105 transition">
 
 
 {% if homepage.primary_button_text %}
@@ -109,7 +111,7 @@ class="bg-white text-blue-900 px-10 py-4 rounded-2xl font-bold shadow-xl hover:s
 
 {% else %}
 
-Apply Now
+Apply For Admission
 
 {% endif %}
 
@@ -120,14 +122,12 @@ Apply Now
 
 
 
-
-
 {% if homepage.secondary_button_text %}
 
 
 <a href="{{ homepage.secondary_button_link }}"
 
-class="border border-white text-white px-10 py-4 rounded-2xl font-bold hover:bg-white hover:text-blue-900 transition">
+class="border-2 border-white px-10 py-4 rounded-2xl font-bold hover:bg-white hover:text-blue-900 transition">
 
 
 {{ homepage.secondary_button_text }}
@@ -140,26 +140,126 @@ class="border border-white text-white px-10 py-4 rounded-2xl font-bold hover:bg-
 
 
 
-
-
-
-</div>
-
-
-
-
-
 </div>
 
 
 
 </div>
 
+
+</div>
 
 
 </section>
 
 
+
+
+
+
+
+<!-- ================= QUICK FEATURES ================= -->
+
+
+<section class="container mx-auto px-6 -mt-10 relative z-10">
+
+
+<div class="grid md:grid-cols-3 gap-6">
+
+
+
+<div class="bg-white rounded-3xl shadow-xl p-8 text-center">
+
+
+<div class="text-4xl mb-4">
+
+💻
+
+</div>
+
+
+<h3 class="text-xl font-bold text-blue-900">
+
+Digital Learning
+
+</h3>
+
+
+<p class="text-gray-600 mt-3">
+
+Online classes, LMS resources and interactive learning.
+
+</p>
+
+
+</div>
+
+
+
+
+
+<div class="bg-white rounded-3xl shadow-xl p-8 text-center">
+
+
+<div class="text-4xl mb-4">
+
+🤖
+
+</div>
+
+
+<h3 class="text-xl font-bold text-blue-900">
+
+AI & Robotics
+
+</h3>
+
+
+<p class="text-gray-600 mt-3">
+
+Preparing students for future technology careers.
+
+</p>
+
+
+</div>
+
+
+
+
+
+<div class="bg-white rounded-3xl shadow-xl p-8 text-center">
+
+
+<div class="text-4xl mb-4">
+
+📊
+
+</div>
+
+
+<h3 class="text-xl font-bold text-blue-900">
+
+Smart School Portal
+
+</h3>
+
+
+<p class="text-gray-600 mt-3">
+
+CBT exams, digital results and parent monitoring.
+
+</p>
+
+
+</div>
+
+
+
+</div>
+
+
+</section>
 
 
 
@@ -170,29 +270,25 @@ class="border border-white text-white px-10 py-4 rounded-2xl font-bold hover:bg-
 <!-- ================= WHY CHOOSE US ================= -->
 
 
-
-<section class="container mx-auto px-6 py-20">
-
+<section class="container mx-auto px-6 py-24">
 
 
-<div class="text-center mb-12">
+<div class="text-center mb-14">
 
 
-<h2 class="text-4xl md:text-5xl font-extrabold text-blue-900">
+<h2 class="text-4xl md:text-5xl font-black text-blue-900">
 
 Why Choose Us
 
 </h2>
 
 
+<p class="mt-5 text-gray-500 max-w-3xl mx-auto text-lg">
 
-<p class="text-gray-500 mt-4 max-w-3xl mx-auto">
-
-Experience quality education combining academic excellence,
-innovation and technology.
+Experience quality education combining academics,
+technology and innovation.
 
 </p>
-
 
 
 </div>
@@ -201,23 +297,17 @@ innovation and technology.
 
 
 
-
-
-<div class="grid md:grid-cols-3 gap-8">
-
-
-
+<div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
 
 
 {% for item in why_choose %}
 
 
 
-<div class="bg-white rounded-3xl shadow-xl p-8 hover:-translate-y-3 transition">
+<div class="group bg-white rounded-3xl shadow-lg p-8 border border-gray-100 hover:shadow-2xl hover:-translate-y-2 transition">
 
 
-
-<div class="w-14 h-14 rounded-2xl bg-blue-100 flex items-center justify-center text-3xl mb-6">
+<div class="w-16 h-16 rounded-2xl bg-blue-100 flex items-center justify-center text-3xl mb-6 group-hover:bg-blue-900 transition">
 
 
 ⭐
@@ -227,23 +317,23 @@ innovation and technology.
 
 
 
+<h3 class="text-xl font-extrabold text-blue-900">
 
-
-<h3 class="text-xl font-extrabold text-blue-900 mb-3">
 
 {{ item.title }}
+
 
 </h3>
 
 
 
+<p class="mt-4 text-gray-600 leading-relaxed">
 
-<p class="text-gray-600 leading-relaxed">
 
 {{ item.description }}
 
-</p>
 
+</p>
 
 
 </div>
@@ -253,25 +343,141 @@ innovation and technology.
 {% empty %}
 
 
+<div class="col-span-full grid sm:grid-cols-2 lg:grid-cols-3 gap-8">
 
-<div class="col-span-full text-center text-gray-500">
 
+<div class="bg-white rounded-3xl shadow-lg p-8 border border-gray-100">
 
-No information available yet.
+<div class="text-4xl mb-5">
+💻
+</div>
 
+<h3 class="text-xl font-extrabold text-blue-900">
+Technology-Driven Education
+</h3>
+
+<p class="mt-4 text-gray-600 leading-relaxed">
+We combine modern teaching methods with digital tools,
+LMS platforms, CBT examinations and innovative learning
+experiences.
+</p>
 
 </div>
 
+
+
+
+
+<div class="bg-white rounded-3xl shadow-lg p-8 border border-gray-100">
+
+<div class="text-4xl mb-5">
+👩‍🏫
+</div>
+
+<h3 class="text-xl font-extrabold text-blue-900">
+Qualified Teachers
+</h3>
+
+<p class="mt-4 text-gray-600 leading-relaxed">
+Our teachers are committed to delivering quality instruction,
+personal attention and academic excellence.
+</p>
+
+</div>
+
+
+
+
+
+<div class="bg-white rounded-3xl shadow-lg p-8 border border-gray-100">
+
+<div class="text-4xl mb-5">
+🤖
+</div>
+
+<h3 class="text-xl font-extrabold text-blue-900">
+AI, Coding & Robotics
+</h3>
+
+<p class="mt-4 text-gray-600 leading-relaxed">
+Students develop future-ready skills through programming,
+robotics, artificial intelligence and creative technology.
+</p>
+
+</div>
+
+
+
+
+
+<div class="bg-white rounded-3xl shadow-lg p-8 border border-gray-100">
+
+<div class="text-4xl mb-5">
+📚
+</div>
+
+<h3 class="text-xl font-extrabold text-blue-900">
+Strong Academic Foundation
+</h3>
+
+<p class="mt-4 text-gray-600 leading-relaxed">
+We provide balanced education combining conventional
+subjects with practical digital skills.
+</p>
+
+</div>
+
+
+
+
+
+<div class="bg-white rounded-3xl shadow-lg p-8 border border-gray-100">
+
+<div class="text-4xl mb-5">
+🌍
+</div>
+
+<h3 class="text-xl font-extrabold text-blue-900">
+Online Learning Flexibility
+</h3>
+
+<p class="mt-4 text-gray-600 leading-relaxed">
+Students learn through structured online classes,
+resources and a modern digital school environment.
+</p>
+
+</div>
+
+
+
+
+
+<div class="bg-white rounded-3xl shadow-lg p-8 border border-gray-100">
+
+<div class="text-4xl mb-5">
+📊
+</div>
+
+<h3 class="text-xl font-extrabold text-blue-900">
+Smart Parent Monitoring
+</h3>
+
+<p class="mt-4 text-gray-600 leading-relaxed">
+Parents can monitor academic progress, results,
+assignments and important school updates online.
+</p>
+
+</div>
+
+
+</div>
 
 
 {% endfor %}
 
 
 
-
-
 </div>
-
 
 
 </section>
@@ -282,29 +488,17 @@ No information available yet.
 
 
 
-
-
 <!-- ================= PRINCIPAL MESSAGE ================= -->
 
 
-
-<section class="bg-gray-100 py-20">
-
+<section class="bg-gray-50 py-24">
 
 
 <div class="container mx-auto px-6">
 
 
+<div class="grid lg:grid-cols-2 gap-12 items-center">
 
-
-
-<div class="grid md:grid-cols-2 gap-12 items-center">
-
-
-
-
-
-<!-- PHOTO -->
 
 
 <div>
@@ -315,68 +509,49 @@ No information available yet.
 
 <img src="{{ website.principal_photo.url }}"
 
-class="rounded-3xl shadow-2xl w-full object-cover">
+class="rounded-3xl shadow-2xl w-full">
 
 
 {% endif %}
 
 
-
 </div>
 
 
 
 
-
-
-
-
-<!-- MESSAGE -->
 
 
 <div>
 
 
-
-<div class="inline-block bg-blue-100 text-blue-900 px-5 py-2 rounded-full font-bold mb-5">
-
+<span class="bg-blue-100 text-blue-900 px-5 py-2 rounded-full font-bold">
 
 Principal's Message
 
-
-</div>
-
+</span>
 
 
 
-<h2 class="text-4xl font-extrabold text-blue-900">
-
+<h2 class="mt-6 text-4xl font-black text-blue-900">
 
 Welcome To Our School
-
 
 </h2>
 
 
 
-
 <p class="mt-6 text-gray-600 text-lg leading-relaxed">
 
-
 {{ website.principal_message }}
-
 
 </p>
 
 
 
-
-
-<h3 class="mt-8 text-2xl font-bold text-gray-900">
-
+<h3 class="mt-8 text-2xl font-bold">
 
 {{ website.principal_name }}
-
 
 </h3>
 
@@ -389,22 +564,14 @@ Principal
 </p>
 
 
-
-
-
-</div>
-
-
-
-
-
-
 </div>
 
 
 
 </div>
 
+
+</div>
 
 
 </section>
@@ -415,50 +582,35 @@ Principal
 
 
 
+<!-- ================= STATISTICS ================= -->
 
 
-<!-- ================= SCHOOL STATISTICS ================= -->
-
-
-
-<section class="bg-gradient-to-r from-blue-900 to-indigo-800 py-16 text-white">
-
+<section class="bg-gradient-to-r from-blue-950 to-indigo-800 py-20 text-white">
 
 
 <div class="container mx-auto px-6">
 
 
-
-<div class="grid grid-cols-2 md:grid-cols-4 gap-8">
-
-
+<div class="grid grid-cols-2 md:grid-cols-4 gap-6">
 
 
 
 {% for stat in statistics %}
 
 
-
-
-
 <div class="bg-white/10 backdrop-blur rounded-3xl p-8 text-center">
 
 
-<h2 class="text-5xl font-extrabold">
-
+<div class="text-4xl md:text-5xl font-black">
 
 {{ stat.number }}
 
-
-</h2>
-
+</div>
 
 
 <p class="mt-3 text-blue-100 font-semibold">
 
-
 {{ stat.title }}
-
 
 </p>
 
@@ -466,21 +618,14 @@ Principal
 </div>
 
 
-
-
-
 {% endfor %}
 
 
 
-
-
 </div>
 
 
-
 </div>
-
 
 
 </section>
@@ -491,36 +636,36 @@ Principal
 
 
 
+<!-- ================= TECHNOLOGY CTA ================= -->
 
 
-<!-- ================= TECHNOLOGY FEATURE ================= -->
+<section class="container mx-auto px-6 py-24">
+
+
+<div class="rounded-3xl bg-gradient-to-r from-purple-900 via-indigo-900 to-blue-900 text-white p-10 md:p-16 text-center shadow-2xl">
+
+
+<div class="text-5xl mb-5">
+
+🚀
+
+</div>
 
 
 
-<section class="container mx-auto px-6 py-20">
-
-
-
-<div class="bg-gradient-to-r from-purple-900 to-indigo-900 rounded-3xl p-10 md:p-16 text-white text-center shadow-xl">
-
-
-
-<h2 class="text-4xl font-extrabold">
-
+<h2 class="text-4xl md:text-5xl font-black">
 
 Learning For The Future
-
 
 </h2>
 
 
 
+<p class="mt-6 max-w-3xl mx-auto text-purple-100 text-lg">
 
-<p class="mt-5 text-purple-100 text-lg max-w-3xl mx-auto">
 
-
-At Tech International School, students develop digital skills
-through AI, Coding, Robotics and innovative learning experiences.
+At Tech International School, students develop skills in AI,
+Coding, Robotics, Digital Technology and creative innovation.
 
 
 </p>
@@ -528,15 +673,26 @@ through AI, Coding, Robotics and innovative learning experiences.
 
 
 
+<div class="mt-8 flex flex-col sm:flex-row justify-center gap-5">
 
 
 <a href="{% url 'tis_website:academics' school_slug=website.slug %}"
 
-class="inline-block mt-8 bg-white text-purple-900 px-10 py-4 rounded-2xl font-bold">
+class="bg-white text-purple-900 px-10 py-4 rounded-2xl font-bold">
 
 
 Explore Academics
 
+</a>
+
+
+
+<a href="{% url 'tis_website:admissions' school_slug=website.slug %}"
+
+class="bg-green-500 px-10 py-4 rounded-2xl font-bold">
+
+
+Start Application
 
 </a>
 
@@ -545,11 +701,10 @@ Explore Academics
 </div>
 
 
+</div>
+
 
 </section>
-
-
-
 
 
 

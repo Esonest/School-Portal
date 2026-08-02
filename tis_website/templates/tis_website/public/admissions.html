@@ -120,84 +120,194 @@ Fill all required information carefully.
 
 {% if submitted %}
 
-<div class="bg-green-100 border border-green-300 rounded-2xl p-8">
+<div class="max-w-2xl mx-auto">
 
-<h2 class="text-2xl font-bold text-green-700">
+    <!-- Success Header -->
+    <div class="bg-gradient-to-r from-green-600 to-emerald-500 
+                text-white rounded-3xl p-8 text-center shadow-xl">
 
-🎉 Application Submitted Successfully
+        <div class="text-5xl mb-4">
+            🎉
+        </div>
 
-</h2>
+        <h2 class="text-3xl md:text-4xl font-extrabold">
+            Application Submitted Successfully
+        </h2>
 
+        <p class="mt-3 text-green-50 text-lg">
+            Thank you for applying to 
+            <strong>{{ website.school.name }}</strong>.
+        </p>
 
-<p class="mt-4 font-semibold">
-
-Your Application Number
-
-</p>
-
-
-<div class="mt-3 flex">
-
-<input
-id="applicationNumber"
-type="text"
-readonly
-value="{{ application.application_number }}"
-class="flex-1 border rounded-l-xl p-3 bg-white text-2xl font-bold text-blue-900">
+    </div>
 
 
-<button
-type="button"
-onclick="copyApplicationNumber()"
-class="bg-blue-900 text-white px-5 rounded-r-xl">
+    <!-- Application Number Card -->
+    <div class="mt-8 bg-white border-2 border-blue-200 
+                rounded-3xl p-6 shadow-lg">
 
-Copy
+        <div class="flex items-center gap-3 mb-4">
 
-</button>
+            <span class="text-3xl">
+                📝
+            </span>
+
+            <h3 class="text-xl font-bold text-blue-900">
+                Your Application Number
+            </h3>
+
+        </div>
+
+
+        <div class="flex flex-col sm:flex-row gap-3">
+
+            <input
+            id="applicationNumber"
+            type="text"
+            readonly
+            value="{{ application.application_number }}"
+            class="w-full text-center text-2xl font-extrabold 
+                   text-blue-900 bg-blue-50 border-2 
+                   border-blue-300 rounded-xl p-4">
+
+
+            <button
+            type="button"
+            onclick="copyApplicationNumber()"
+            class="bg-blue-900 hover:bg-blue-800 
+                   text-white font-bold px-6 py-4 
+                   rounded-xl transition">
+
+                📋 Copy
+
+            </button>
+
+        </div>
+
+    </div>
+
+
+
+    <!-- Tracking URL Card -->
+    <div class="mt-6 bg-white border-2 border-green-200 
+                rounded-3xl p-6 shadow-lg">
+
+
+        <div class="flex items-center gap-3 mb-4">
+
+            <span class="text-3xl">
+                🔗
+            </span>
+
+
+            <h3 class="text-xl font-bold text-green-800">
+
+                Admission Tracking Link
+
+            </h3>
+
+        </div>
+
+
+
+        <div class="flex flex-col sm:flex-row gap-3">
+
+
+            <input
+            id="trackingUrl"
+            type="text"
+            readonly
+            value="{{ request.scheme }}://{{ request.get_host }}{% url 'tis_website_admin:admission_track' %}"
+            class="w-full text-sm md:text-base 
+                   bg-green-50 border-2 
+                   border-green-300 rounded-xl 
+                   p-4 break-all">
+
+
+            <button
+            type="button"
+            onclick="copyTrackingUrl()"
+            class="bg-green-600 hover:bg-green-700 
+                   text-white font-bold px-6 py-4 
+                   rounded-xl transition">
+
+                🔗 Copy
+
+            </button>
+
+
+        </div>
+
+
+    </div>
+
+
+
+    <!-- Important Message -->
+    <div class="mt-8 bg-yellow-50 border border-yellow-300 
+                rounded-3xl p-6">
+
+
+        <h3 class="font-bold text-yellow-800 text-lg mb-3">
+
+            ⚠ Important Instructions
+
+        </h3>
+
+
+        <ul class="space-y-3 text-gray-700">
+
+
+            <li>
+                ✅ Save your Application Number carefully.
+            </li>
+
+
+            <li>
+                ✅ Save the Tracking URL for future admission updates.
+            </li>
+
+
+            <li>
+                ✅ Use these details to check:
+                <strong>
+                Admission Status, CBT Examination,
+                Results, Admission Letter and Payment Details.
+                </strong>
+            </li>
+
+
+            <li>
+                ✅ Admission updates will also be sent to your registered phone number.
+            </li>
+
+
+        </ul>
+
+
+    </div>
+
+
+
+    <!-- Action Button -->
+    <div class="mt-8 text-center">
+
+
+        <a href="{{ request.scheme }}://{{ request.get_host }}{% url 'tis_website_admin:admission_track' %}"
+           class="inline-block bg-blue-900 hover:bg-blue-800 
+                  text-white font-bold px-10 py-4 
+                  rounded-2xl shadow-lg transition">
+
+            🔍 Track My Application
+
+        </a>
+
+
+    </div>
+
 
 </div>
 
-
-
-<p class="mt-6 font-semibold">
-
-Admission Tracking URL
-
-</p>
-
-
-<div class="mt-3 flex">
-
-<input
-id="trackingUrl"
-type="text"
-readonly
-value="{{ request.scheme }}://{{ request.get_host }}{% url 'tis_website_admin:admission_track' %}"
-class="flex-1 border rounded-l-xl p-3 bg-white text-sm">
-
-
-<button
-type="button"
-onclick="copyTrackingUrl()"
-class="bg-green-600 text-white px-5 rounded-r-xl">
-
-Copy
-
-</button>
-
-</div>
-
-
-
-<p class="mt-5 text-gray-700">
-
-Save both your Application Number and Tracking URL. 
-Use them to check admission status, CBT examination, results, admission letter and payment details.
-
-</p>
-
-
-</div>
 
 {% else %}
 

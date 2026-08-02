@@ -9,11 +9,28 @@
 <meta name="viewport"
 content="width=device-width, initial-scale=1.0">
 
+<style>
+.break-all {
+    word-break: break-all;
+}
+input {
+    max-width: 100%;
+}
+</style>
+
 
 <title>
 
 {% block title %}
-Tech International School
+{% if homepage %}
+
+{{ homepage.hero_title }}
+
+{% else %}
+
+TECH INTERNATIONAL SCHOOL
+
+{% endif %}
 {% endblock %}
 
 </title>

@@ -9,30 +9,53 @@ About Us | Tech International School
 
 
 
+
 {% block content %}
 
 
 
-<!-- HERO -->
-
-<section class="bg-gradient-to-r from-blue-900 to-indigo-700 text-white py-20">
 
 
-<div class="container mx-auto px-6 text-center">
+<!-- ================= HERO SECTION ================= -->
 
 
-<h1 class="text-5xl md:text-6xl font-extrabold">
+<section class="relative overflow-hidden bg-gradient-to-br from-blue-950 via-indigo-900 to-blue-700 text-white">
+
+
+<div class="container mx-auto px-6 py-24 text-center">
+
+
+<div class="max-w-5xl mx-auto">
+
+
+
+<div class="inline-flex items-center bg-white/10 backdrop-blur px-6 py-2 rounded-full mb-8">
+
+🏫 About Our School
+
+</div>
+
+
+
+
+<h1 class="text-4xl md:text-6xl font-black leading-tight">
 
 About Tech International School
 
 </h1>
 
 
-<p class="mt-5 text-xl text-blue-100 max-w-3xl mx-auto">
 
-Discover our story, vision, mission and commitment to excellence.
+<p class="mt-6 text-lg md:text-2xl text-blue-100 max-w-4xl mx-auto leading-relaxed">
+
+Discover our story, vision, mission and commitment to producing
+future-ready students through technology and innovation.
 
 </p>
+
+
+
+</div>
 
 
 </div>
@@ -46,42 +69,66 @@ Discover our story, vision, mission and commitment to excellence.
 
 
 
+
+
 {% if website %}
 
 
 
 
-<!-- HISTORY -->
 
 
-<section class="container mx-auto px-6 py-16">
+
+<!-- ================= SCHOOL HISTORY ================= -->
 
 
-<div class="bg-white rounded-3xl shadow-xl p-8 md:p-12">
+<section class="container mx-auto px-6 py-24">
 
 
-<div class="flex items-center gap-4 mb-6">
+
+<div class="bg-white rounded-3xl shadow-xl border border-gray-100 p-8 md:p-12">
 
 
-<div class="w-14 h-14 rounded-2xl bg-blue-100 flex items-center justify-center text-3xl">
+
+<div class="flex items-center gap-5 mb-8">
+
+
+<div class="w-16 h-16 rounded-3xl bg-blue-100 flex items-center justify-center text-4xl">
 
 📖
 
 </div>
 
 
-<h2 class="text-3xl font-extrabold text-blue-900">
 
-Our History
+<div>
+
+
+<h2 class="text-3xl md:text-4xl font-black text-blue-900">
+
+Our Story
 
 </h2>
+
+
+<p class="text-gray-500">
+
+Building excellence through education and technology.
+
+</p>
 
 
 </div>
 
 
 
-<p class="text-gray-600 leading-relaxed text-lg">
+</div>
+
+
+
+
+
+<p class="text-gray-600 text-lg leading-relaxed">
 
 {{ website.history }}
 
@@ -101,16 +148,47 @@ Our History
 
 
 
-<!-- VISION MISSION -->
+
+<!-- ================= VISION & MISSION ================= -->
 
 
-<section class="bg-gray-100 py-16">
+
+<section class="bg-gray-50 py-24">
+
 
 
 <div class="container mx-auto px-6">
 
 
-<div class="grid md:grid-cols-2 gap-8">
+
+<div class="text-center mb-14">
+
+
+<h2 class="text-4xl font-black text-blue-900">
+
+Our Foundation
+
+</h2>
+
+
+<p class="mt-4 text-gray-500 text-lg">
+
+The principles guiding our educational journey.
+
+</p>
+
+
+</div>
+
+
+
+
+
+
+
+<div class="grid lg:grid-cols-2 gap-10">
+
+
 
 
 
@@ -119,31 +197,39 @@ Our History
 <!-- VISION -->
 
 
-<div class="bg-white rounded-3xl shadow-lg p-8 hover:-translate-y-2 transition">
+<div class="bg-white rounded-3xl shadow-lg p-10 hover:-translate-y-2 transition border border-gray-100">
 
 
-<div class="w-14 h-14 rounded-2xl bg-green-100 flex items-center justify-center text-3xl mb-5">
+
+<div class="w-16 h-16 rounded-3xl bg-green-100 flex items-center justify-center text-4xl mb-6">
 
 🎯
 
 </div>
 
 
-<h2 class="text-3xl font-bold text-green-700 mb-4">
+
+
+<h2 class="text-3xl font-black text-green-700 mb-5">
 
 Our Vision
 
 </h2>
 
 
-<p class="text-gray-600 leading-relaxed">
+
+<p class="text-gray-600 text-lg leading-relaxed">
 
 {{ website.vision }}
 
 </p>
 
 
+
 </div>
+
+
+
 
 
 
@@ -154,31 +240,39 @@ Our Vision
 <!-- MISSION -->
 
 
-<div class="bg-white rounded-3xl shadow-lg p-8 hover:-translate-y-2 transition">
+<div class="bg-white rounded-3xl shadow-lg p-10 hover:-translate-y-2 transition border border-gray-100">
 
 
-<div class="w-14 h-14 rounded-2xl bg-purple-100 flex items-center justify-center text-3xl mb-5">
+
+<div class="w-16 h-16 rounded-3xl bg-purple-100 flex in items-center justify-center text-4xl mb-6">
 
 🚀
 
 </div>
 
 
-<h2 class="text-3xl font-bold text-purple-700 mb-4">
+
+
+<h2 class="text-3xl font-black text-purple-700 mb-5">
 
 Our Mission
 
 </h2>
 
 
-<p class="text-gray-600 leading-relaxed">
+
+<p class="text-gray-600 text-lg leading-relaxed">
 
 {{ website.mission }}
 
 </p>
 
 
+
 </div>
+
+
+
 
 
 
@@ -199,22 +293,33 @@ Our Mission
 
 
 
-<!-- PRINCIPAL MESSAGE -->
+<!-- ================= PRINCIPAL MESSAGE ================= -->
+
 
 
 {% if website.principal_name %}
 
 
-<section class="container mx-auto px-6 py-16">
-
-
-<div class="grid md:grid-cols-2 gap-10 items-center">
 
 
 
+<section class="container mx-auto px-6 py-24">
 
 
-<div>
+
+<div class="grid lg:grid-cols-2 gap-14 items-center">
+
+
+
+
+
+
+
+<!-- PRINCIPAL IMAGE -->
+
+
+<div class="relative">
+
 
 
 {% if website.principal_photo %}
@@ -222,44 +327,25 @@ Our Mission
 
 <img src="{{ website.principal_photo.url }}"
 
-class="rounded-3xl shadow-xl w-full object-cover">
+class="rounded-3xl shadow-2xl w-full object-cover">
 
 
 {% endif %}
 
 
-</div>
 
 
+<div class="absolute bottom-5 left-5 bg-white rounded-2xl shadow-xl px-6 py-4">
 
 
+<p class="font-bold text-blue-900">
 
-<div>
-
-
-<h2 class="text-3xl font-extrabold text-blue-900 mb-5">
-
-Principal's Message
-
-</h2>
-
-
-<p class="text-gray-600 leading-relaxed text-lg">
-
-{{ website.principal_message }}
+{{ website.principal_name }}
 
 </p>
 
 
-
-<h3 class="mt-6 font-bold text-xl">
-
-{{ website.principal_name }}
-
-</h3>
-
-
-<p class="text-gray-500">
+<p class="text-gray-500 text-sm">
 
 Principal
 
@@ -274,11 +360,148 @@ Principal
 </div>
 
 
+
+
+
+
+
+
+
+
+
+<!-- MESSAGE -->
+
+
+<div>
+
+
+
+<span class="bg-blue-100 text-blue-900 px-5 py-2 rounded-full font-bold">
+
+Principal's Message
+
+</span>
+
+
+
+
+
+<h2 class="mt-6 text-4xl font-black text-blue-900">
+
+Leading With Vision & Excellence
+
+</h2>
+
+
+
+
+
+<p class="mt-6 text-gray-600 text-lg leading-relaxed">
+
+{{ website.principal_message }}
+
+</p>
+
+
+
+
+
+
+<div class="mt-8 border-l-4 border-blue-900 pl-5">
+
+
+<h3 class="text-xl font-bold text-gray-900">
+
+{{ website.principal_name }}
+
+</h3>
+
+
+
+<p class="text-gray-500">
+
+Principal, {{ website.school.name }}
+
+</p>
+
+
+
+</div>
+
+
+
+
+
+</div>
+
+
+
+
+
+</div>
+
+
+
 </section>
+
+
 
 
 {% endif %}
 
+
+
+
+
+
+
+
+<!-- ================= TECHNOLOGY IDENTITY ================= -->
+
+
+
+<section class="container mx-auto px-6 pb-24">
+
+
+
+<div class="rounded-3xl bg-gradient-to-r from-indigo-900 to-blue-900 text-white p-10 md:p-16 text-center shadow-2xl">
+
+
+
+<div class="text-5xl mb-5">
+
+💡
+
+</div>
+
+
+
+<h2 class="text-4xl md:text-5xl font-black">
+
+Education Beyond The Classroom
+
+</h2>
+
+
+
+
+<p class="mt-6 text-blue-100 max-w-3xl mx-auto text-lg">
+
+
+Tech International School combines academic excellence,
+digital learning, AI, coding, robotics and modern school technology
+to prepare students for tomorrow.
+
+
+</p>
+
+
+
+
+</div>
+
+
+</section>
 
 
 

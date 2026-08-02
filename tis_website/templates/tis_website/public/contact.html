@@ -11,6 +11,7 @@ Contact Us | Tech International School
 
 
 
+
 {% block content %}
 
 
@@ -18,30 +19,54 @@ Contact Us | Tech International School
 
 
 
-<!-- HERO SECTION -->
+
+<!-- ================= HERO SECTION ================= -->
 
 
-<section class="bg-gradient-to-r from-blue-900 via-indigo-800 to-purple-900 text-white py-20">
+<section class="relative overflow-hidden bg-gradient-to-br from-blue-950 via-indigo-900 to-purple-900 text-white">
 
 
-<div class="container mx-auto px-6 text-center">
+
+<div class="container mx-auto px-6 py-24 text-center">
 
 
-<h1 class="text-5xl md:text-6xl font-extrabold">
 
-Contact Us
+<div class="max-w-5xl mx-auto">
+
+
+
+<div class="inline-flex items-center bg-white/10 backdrop-blur px-6 py-2 rounded-full mb-8">
+
+💬 Contact Our School
+
+</div>
+
+
+
+
+<h1 class="text-4xl md:text-6xl font-black">
+
+Get In Touch With Us
 
 </h1>
 
 
 
-<p class="mt-5 text-xl text-blue-100 max-w-3xl mx-auto">
+
+
+<p class="mt-6 text-lg md:text-2xl text-blue-100 max-w-4xl mx-auto">
+
 
 We are ready to answer your questions and guide you through
 your child's admission journey.
 
+
 </p>
 
+
+
+
+</div>
 
 
 </div>
@@ -63,10 +88,38 @@ your child's admission journey.
 
 
 
-<!-- CONTACT INFORMATION -->
 
 
-<section class="container mx-auto px-6 py-16">
+<!-- ================= CONTACT CARDS ================= -->
+
+
+
+<section class="container mx-auto px-6 py-24">
+
+
+
+<div class="text-center mb-14">
+
+
+<h2 class="text-4xl font-black text-blue-900">
+
+Contact Information
+
+</h2>
+
+
+<p class="mt-4 text-gray-500 text-lg">
+
+Reach us through any of our communication channels.
+
+</p>
+
+
+</div>
+
+
+
+
 
 
 <div class="grid md:grid-cols-3 gap-8">
@@ -75,13 +128,15 @@ your child's admission journey.
 
 
 
+
+
 <!-- ADDRESS -->
 
 
-<div class="bg-white rounded-3xl shadow-xl p-8 text-center hover:-translate-y-2 transition">
+<div class="bg-white rounded-3xl shadow-xl p-8 text-center border border-gray-100 hover:-translate-y-2 transition">
 
 
-<div class="w-16 h-16 mx-auto rounded-2xl bg-blue-100 flex items-center justify-center text-4xl">
+<div class="w-16 h-16 mx-auto rounded-3xl bg-blue-100 flex items-center justify-center text-4xl">
 
 📍
 
@@ -89,15 +144,17 @@ your child's admission journey.
 
 
 
-<h2 class="text-xl font-bold text-blue-900 mt-5">
+
+<h3 class="mt-6 text-2xl font-bold text-blue-900">
 
 Visit Us
 
-</h2>
+</h3>
 
 
 
-<p class="text-gray-600 mt-3 leading-relaxed">
+
+<p class="mt-4 text-gray-600 leading-relaxed">
 
 {{ website.address }}
 
@@ -115,29 +172,32 @@ Visit Us
 
 
 
+
 <!-- PHONE -->
 
 
-<div class="bg-white rounded-3xl shadow-xl p-8 text-center hover:-translate-y-2 transition">
+<div class="bg-white rounded-3xl shadow-xl p-8 text-center border border-gray-100 hover:-translate-y-2 transition">
 
 
-<div class="w-16 h-16 mx-auto rounded-2xl bg-green-100 flex in-center justify-center text-4xl">
+<div class="w-16 h-16 mx-auto rounded-3xl bg-green-100 flex items-center justify-center text-4xl">
 
-☎
+☎️
 
 </div>
 
 
 
-<h2 class="text-xl font-bold text-green-700 mt-5">
+
+<h3 class="mt-6 text-2xl font-bold text-green-700">
 
 Call Us
 
-</h2>
+</h3>
 
 
 
-<p class="text-gray-600 mt-3">
+
+<p class="mt-4 text-gray-600">
 
 {{ website.phone }}
 
@@ -145,18 +205,22 @@ Call Us
 
 
 
+
+
 {% if website.whatsapp %}
+
 
 
 <a href="https://wa.me/{{ website.whatsapp }}"
 
-class="inline-block mt-5 bg-green-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-green-700 transition">
+class="inline-block mt-6 bg-green-600 hover:bg-green-700 text-white px-8 py-3 rounded-xl font-bold transition">
 
 
 💬 WhatsApp Us
 
 
 </a>
+
 
 
 {% endif %}
@@ -176,26 +240,28 @@ class="inline-block mt-5 bg-green-600 text-white px-6 py-3 rounded-xl font-bold 
 <!-- EMAIL -->
 
 
-<div class="bg-white rounded-3xl shadow-xl p-8 text-center hover:-translate-y-2 transition">
+<div class="bg-white rounded-3xl shadow-xl p-8 text-center border border-gray-100 hover:-translate-y-2 transition">
 
 
-<div class="w-16 h-16 mx-auto rounded-2xl bg-purple-100 flex items-center justify-center text-4xl">
+<div class="w-16 h-16 mx-auto rounded-3xl bg-purple-100 flex items-center justify-center text-4xl">
 
-✉
+✉️
 
 </div>
 
 
 
-<h2 class="text-xl font-bold text-purple-700 mt-5">
+
+<h3 class="mt-6 text-2xl font-bold text-purple-700">
 
 Email Us
 
-</h2>
+</h3>
 
 
 
-<p class="text-gray-600 mt-3 break-words">
+
+<p class="mt-4 text-gray-600 break-words">
 
 {{ website.email }}
 
@@ -203,9 +269,11 @@ Email Us
 
 
 
+
+
 <a href="mailto:{{ website.email }}"
 
-class="inline-block mt-5 bg-purple-700 text-white px-6 py-3 rounded-xl font-bold">
+class="inline-block mt-6 bg-purple-700 hover:bg-purple-800 text-white px-8 py-3 rounded-xl font-bold transition">
 
 
 Send Email
@@ -222,7 +290,6 @@ Send Email
 
 
 
-
 </div>
 
 
@@ -236,16 +303,19 @@ Send Email
 
 
 
-<!-- SOCIAL MEDIA -->
+<!-- ================= SOCIAL MEDIA ================= -->
 
 
-<section class="bg-gray-100 py-14">
+
+<section class="bg-gray-50 py-20">
+
 
 
 <div class="container mx-auto px-6 text-center">
 
 
-<h2 class="text-3xl font-extrabold text-blue-900 mb-8">
+
+<h2 class="text-4xl font-black text-blue-900">
 
 Connect With Us
 
@@ -253,8 +323,20 @@ Connect With Us
 
 
 
+<p class="mt-4 text-gray-500">
 
-<div class="flex flex-wrap justify-center gap-5">
+Follow our latest updates and school activities.
+
+</p>
+
+
+
+
+
+
+<div class="mt-10 flex flex-wrap justify-center gap-5">
+
+
 
 
 
@@ -267,7 +349,7 @@ Connect With Us
 
 target="_blank"
 
-class="bg-blue-700 text-white px-8 py-3 rounded-2xl font-bold hover:scale-105 transition">
+class="bg-blue-700 text-white px-10 py-4 rounded-2xl font-bold hover:scale-105 transition">
 
 
 Facebook
@@ -284,6 +366,8 @@ Facebook
 
 
 
+
+
 {% if website.instagram %}
 
 
@@ -291,7 +375,7 @@ Facebook
 
 target="_blank"
 
-class="bg-pink-600 text-white px-8 py-3 rounded-2xl font-bold hover:scale-105 transition">
+class="bg-pink-600 text-white px-10 py-4 rounded-2xl font-bold hover:scale-105 transition">
 
 
 Instagram
@@ -308,6 +392,8 @@ Instagram
 
 
 
+
+
 {% if website.whatsapp %}
 
 
@@ -315,7 +401,7 @@ Instagram
 
 target="_blank"
 
-class="bg-green-600 text-white px-8 py-3 rounded-2xl font-bold hover:scale-105 transition">
+class="bg-green-600 text-white px-10 py-4 rounded-2xl font-bold hover:scale-105 transition">
 
 
 WhatsApp
@@ -330,6 +416,7 @@ WhatsApp
 
 
 
+
 </div>
 
 
@@ -346,30 +433,58 @@ WhatsApp
 
 
 
-<!-- ENQUIRY SECTION -->
-
-
-<section class="container mx-auto px-6 py-16">
-
-
-<div class="bg-gradient-to-r from-blue-700 to-indigo-700 text-white rounded-3xl p-10 md:p-16 text-center shadow-xl">
+<!-- ================= ADMISSION CTA ================= -->
 
 
 
-<h2 class="text-4xl font-extrabold">
+<section class="container mx-auto px-6 py-24">
 
-Have Questions About Admission?
+
+
+<div class="bg-gradient-to-r from-blue-800 via-indigo-800 to-purple-800 text-white rounded-3xl p-10 md:p-16 text-center shadow-2xl">
+
+
+
+
+
+<div class="text-5xl mb-5">
+
+🎓
+
+</div>
+
+
+
+
+
+<h2 class="text-4xl md:text-5xl font-black">
+
+Need Admission Information?
 
 </h2>
 
 
 
-<p class="mt-4 text-blue-100 text-lg max-w-3xl mx-auto">
+
+
+
+<p class="mt-6 text-blue-100 text-lg max-w-3xl mx-auto">
+
 
 Our admission team is available to provide information about
-programmes, fees and enrollment.
+programmes, fees, enrollment and learning opportunities.
+
 
 </p>
+
+
+
+
+
+
+
+<div class="mt-8 flex flex-col sm:flex-row justify-center gap-5">
+
 
 
 
@@ -378,24 +493,51 @@ programmes, fees and enrollment.
 {% if website.phone %}
 
 
+
 <a href="tel:{{ website.phone }}"
 
-class="inline-block mt-8 bg-white text-blue-900 px-10 py-4 rounded-2xl font-bold hover:scale-105 transition">
+class="bg-white text-blue-900 px-10 py-4 rounded-2xl font-bold hover:scale-105 transition">
 
 
-Speak With Admissions
+📞 Speak With Admissions
 
 
 </a>
 
 
+
 {% endif %}
 
 
 
 
 
+
+
+<a href="{% url 'tis_website:admissions' school_slug=website.slug %}"
+
+class="bg-green-500 text-white px-10 py-4 rounded-2xl font-bold hover:bg-green-600 transition">
+
+
+Apply Now
+
+
+</a>
+
+
+
+
+
+
 </div>
+
+
+
+
+
+
+</div>
+
 
 
 </section>
@@ -406,52 +548,10 @@ Speak With Admissions
 
 
 
-<!-- MAP PLACEHOLDER -->
-
-
-<section class="container mx-auto px-6 pb-16">
-
-
-<div class="bg-gray-200 rounded-3xl h-72 flex items-center justify-center">
-
-
-<div class="text-center">
-
-
-<div class="text-5xl">
-
-🗺️
-
-</div>
-
-
-<h3 class="text-xl font-bold text-gray-700 mt-3">
-
-School Location Map
-
-</h3>
-
-
-<p class="text-gray-500">
-
-
-</p>
-
-
-</div>
-
-
-</div>
-
-
-</section>
-
-
-
-
 
 
 {% endif %}
+
 
 
 

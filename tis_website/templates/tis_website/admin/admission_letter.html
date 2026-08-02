@@ -7,87 +7,320 @@
 
 <style>
 
-body {
-    font-family: Arial, sans-serif;
-    font-size: 14px;
-    line-height: 1.6;
+* {
+    box-sizing:border-box;
 }
 
 
+body {
+
+    font-family: Arial, Helvetica, sans-serif;
+    background:#f8fafc;
+    color:#334155;
+    font-size:14px;
+    line-height:1.6;
+    margin:0;
+    padding:30px;
+
+}
+
+
+
+.container {
+
+    max-width:850px;
+    margin:auto;
+    background:white;
+    border-radius:18px;
+    overflow:hidden;
+    box-shadow:0 10px 30px rgba(0,0,0,0.08);
+
+}
+
+
+
+/* HEADER */
+
 .header {
+
+    background:linear-gradient(135deg,#1e3a8a,#2563eb);
+    color:white;
     text-align:center;
+    padding:35px;
+
 }
 
 
 .logo {
-    width:100px;
-    height:100px;
+
+    width:90px;
+    height:90px;
+    object-fit:contain;
+    background:white;
+    padding:5px;
+    border-radius:50%;
+
 }
+
 
 
 .school-name {
-    font-size:22px;
-    font-weight:bold;
-    color:#1e3a8a;
+
+    font-size:26px;
+    font-weight:800;
+    margin-top:15px;
+
 }
+
+
+.motto {
+
+    opacity:.9;
+    margin:8px 0;
+
+}
+
+
+
+.address {
+
+    font-size:13px;
+}
+
+
+
+/* BODY */
+
+
+.content {
+
+    padding:40px;
+
+}
+
 
 
 .title {
 
     text-align:center;
-    margin-top:30px;
-    font-size:20px;
+    font-size:24px;
+    font-weight:800;
+    color:#1e3a8a;
+    margin-bottom:10px;
+
+}
+
+
+.status {
+
+    text-align:center;
+    margin-bottom:30px;
+
+}
+
+
+.status span {
+
+    background:#dcfce7;
+    color:#166534;
+    padding:8px 20px;
+    border-radius:50px;
     font-weight:bold;
 
 }
 
 
-.content {
 
-    margin-top:30px;
+
+
+.message {
+
+    background:#eff6ff;
+    border-left:5px solid #2563eb;
+    padding:20px;
+    border-radius:12px;
+    margin-bottom:30px;
 
 }
 
 
+
+
+
+/* DETAILS TABLE */
+
+
+.section-title {
+
+    color:#1e3a8a;
+    font-size:18px;
+    font-weight:bold;
+    margin-top:30px;
+    margin-bottom:15px;
+
+}
+
+
+
 .details {
 
-    margin-top:20px;
-    border-collapse:collapse;
     width:100%;
+    border-collapse:collapse;
+    margin-bottom:25px;
 
 }
 
 
 .details td {
 
-    border:1px solid #ddd;
-    padding:8px;
+    border:1px solid #e2e8f0;
+    padding:12px;
 
 }
+
+
+
+.details td:first-child {
+
+    width:35%;
+    background:#f8fafc;
+    font-weight:bold;
+    color:#1e3a8a;
+
+}
+
+
+
+
+
+.instructions {
+
+    background:#fefce8;
+    border:1px solid #fde68a;
+    padding:20px;
+    border-radius:15px;
+
+}
+
+
+.instructions li {
+
+    margin-bottom:8px;
+
+}
+
+
+
+
+
+/* ACCEPT BUTTON */
+
+
+.accept-box {
+
+    margin-top:40px;
+    text-align:center;
+
+}
+
+
+.accept-button {
+
+    display:inline-block;
+    background:#16a34a;
+    color:white;
+    text-decoration:none;
+    padding:15px 35px;
+    border-radius:12px;
+    font-weight:bold;
+
+}
+
+
+
 
 
 .signature {
 
-    margin-top:60px;
+    margin-top:50px;
 
 }
+
+
+
 
 
 .footer {
 
+    background:#f1f5f9;
     text-align:center;
-    margin-top:50px;
+    padding:20px;
     font-size:12px;
+    color:#64748b;
 
 }
+
+
+
+
+
+@media(max-width:600px){
+
+
+body {
+
+    padding:10px;
+
+}
+
+
+.content {
+
+    padding:20px;
+
+}
+
+
+.school-name {
+
+    font-size:21px;
+
+}
+
+
+.title {
+
+    font-size:20px;
+
+}
+
+
+.details td {
+
+    padding:8px;
+    font-size:13px;
+
+}
+
+
+}
+
+
 
 </style>
 
 </head>
 
 
+
 <body>
 
+
+<div class="container">
+
+
+
+<!-- SCHOOL HEADER -->
 
 
 <div class="header">
@@ -95,10 +328,10 @@ body {
 
 {% if school.logo %}
 
-<img src="{{ school.logo.url }}"
-class="logo">
+<img src="{{ school.logo.url }}" class="logo">
 
 {% endif %}
+
 
 
 <div class="school-name">
@@ -108,13 +341,88 @@ class="logo">
 </div>
 
 
-<p>
+
+<p class="motto">
+
 {{ school.motto }}
+
 </p>
 
 
-<p>
+
+<p class="address">
+
 {{ school.address }}
+
+</p>
+
+
+
+</div>
+
+
+
+
+
+
+<div class="content">
+
+
+
+<h1 class="title">
+
+🎓 ADMISSION LETTER
+
+</h1>
+
+
+
+<div class="status">
+
+<span>
+ADMISSION OFFERED
+</span>
+
+</div>
+
+
+
+
+
+
+<div class="message">
+
+
+<p>
+
+Dear <strong>{{ application.parent_name }}</strong>,
+
+</p>
+
+
+
+<p>
+
+Congratulations! We are pleased to inform you that your child,
+
+<strong>{{ application.student_name }}</strong>
+
+has successfully been offered admission into
+
+<strong>{{ application.class_applying_for }}</strong>
+
+at
+
+<strong>{{ school.name }}</strong>.
+
+</p>
+
+
+
+<p>
+
+We are delighted to welcome your family into our learning community and look forward to supporting your child's academic journey.
+
 </p>
 
 
@@ -124,44 +432,13 @@ class="logo">
 
 
 
-<h2 class="title">
-
-ADMISSION LETTER
-
-</h2>
 
 
+<h3 class="section-title">
 
+👨‍🎓 Student Information
 
-
-<div class="content">
-
-
-<p>
-
-Dear {{ application.parent_name }},
-
-</p>
-
-
-
-<p>
-
-We are pleased to inform you that your child,
-
-<strong>
-{{ application.student_name }}
-</strong>
-
-has been offered admission into
-
-<strong>
-{{ application.class_applying_for }}
-</strong>
-
-at {{ school.name }}.
-
-</p>
+</h3>
 
 
 
@@ -260,43 +537,71 @@ Resumption Date
 
 
 
-<h3>
-Admission Instructions
+
+
+<h3 class="section-title">
+
+📌 Admission Instructions
+
 </h3>
+
+
+
+<div class="instructions">
 
 
 <ol>
 
-<li>
-Report to the school on the resumption date.
-</li>
 
 <li>
-Bring all required admission documents.
+Report to the school on the approved resumption date.
 </li>
 
-<li>
-Complete all necessary registration procedures.
-</li>
 
 <li>
-Pay all applicable school fees before commencement of classes.
+Submit all required admission documents during registration.
 </li>
+
+
+<li>
+Complete student registration and portal activation.
+</li>
+
+
+<li>
+Pay required admission and school fees before commencement of classes.
+</li>
+
+
+<li>
+Access your student LMS portal after account activation.
+</li>
+
 
 </ol>
 
 
+</div>
 
 
-<p>
 
-We welcome you to {{ school.name }} and look forward to partnering with you in your child's education.
 
-</p>
 
+
+
+<div class="accept-box">
+
+
+<a href="{{ acceptance_link }}"
+class="accept-button">
+
+✅ Accept Admission Offer
+
+</a>
 
 
 </div>
+
 
 
 
@@ -308,20 +613,31 @@ We welcome you to {{ school.name }} and look forward to partnering with you in y
 
 <p>
 
-_________________________
+_____________________________
 
 </p>
 
 
 <p>
 
-Principal
+<strong>Principal</strong>
+
+</p>
+
+
+<p>
+
+{{ school.name }}
 
 </p>
 
 
 </div>
 
+
+
+
+</div>
 
 
 
@@ -329,12 +645,20 @@ Principal
 
 <div class="footer">
 
-Generated electronically by TECHCENTER School Portal
+Generated electronically by <strong>TECHCENTER School Portal</strong><br>
+
+Smart School Management • LMS • CBT • Digital Records
+
+</div>
+
+
+
 
 </div>
 
 
 
 </body>
+
 
 </html>
