@@ -3,8 +3,14 @@
 
 {% block actions %}
 <a href="{% url 'finance:invoice_create' %}"
-   class="px-4 py-2 bg-indigo-600 text-white rounded">
-   + New Invoice
+class="px-4 py-2 bg-indigo-600 text-white rounded">
++ School Invoice
+</a>
+
+
+<a href="{% url 'finance:create_admission_invoice' %}"
+class="px-4 py-2 bg-purple-600 text-white rounded">
++ Admission Invoice
 </a>
 {% endblock %}
 
@@ -74,10 +80,34 @@
 
     <div class="flex justify-between items-start">
       <div>
-        <p class="font-semibold">{{ invoice.student }}</p>
-        <p class="text-xs text-gray-500">
-          {{ invoice.school_class }} · {{ invoice.session }} · {{ invoice.get_term_display }}
-        </p>
+       {% if invoice.is_admission_fee %}
+
+<p class="font-semibold">
+{{ invoice.admission_application.student_name }}
+</p>
+
+<p class="text-xs text-purple-600">
+Admission Fee
+</p>
+
+<p class="text-xs text-gray-500">
+Application No:
+{{ invoice.admission_application.application_number }}
+</p>
+
+{% else %}
+
+<p class="font-semibold">
+{{ invoice.student }}
+</p>
+
+<p class="text-xs text-gray-500">
+{{ invoice.school_class }}
+· {{ invoice.session }}
+· {{ invoice.get_term_display }}
+</p>
+
+{% endif %}
       </div>
 
       {% if invoice.amount_paid >= invoice.total_amount %}
@@ -189,8 +219,9 @@
     <th class="p-3">
         <input type="checkbox" id="select-all">
     </th>
-        <th class="p-3 text-left">Student</th>
-        <th class="p-3 text-left">Class</th>
+        <th class="p-3 text-left">Type</th>
+<th class="p-3 text-left">Student / Applicant</th>
+<th class="p-3 text-left">Class</th>
         <th class="p-3 text-right">Amount</th>
         <th class="p-3 text-right">Paid</th>
         <th class="p-3 text-left">Session</th>
@@ -212,8 +243,63 @@
 {% endif %}
     </td>
 
-        <td class="p-3">{{ invoice.student }}</td>
-        <td class="p-3">{{ invoice.school_class }}</td>
+       <td class="p-3">
+
+{% if invoice.is_admission_fee %}
+
+<span class="px-2 py-1 bg-purple-100 text-purple-700 rounded text-xs font-semibold">
+Admission Fee
+</span>
+
+{% else %}
+
+<span class="px-2 py-1 bg-blue-100 text-blue-700 rounded text-xs font-semibold">
+School Fee
+</span>
+
+{% endif %}
+
+</td>
+
+
+<td class="p-3">
+
+{% if invoice.is_admission_fee %}
+
+<div>
+    <p class="font-semibold">
+        {{ invoice.admission_application.student_name }}
+    </p>
+
+    <p class="text-xs text-gray-500">
+        Application No:
+        {{ invoice.admission_application.application_number }}
+    </p>
+</div>
+
+
+{% else %}
+
+{{ invoice.student }}
+
+{% endif %}
+
+</td>
+
+
+<td class="p-3">
+
+{% if invoice.is_admission_fee %}
+
+N/A
+
+{% else %}
+
+{{ invoice.school_class }}
+
+{% endif %}
+
+</td>
         <td class="p-3 text-right">₦{{ invoice.total_amount|floatformat:2 }}</td>
         <td class="p-3 text-right">₦{{ invoice.amount_paid|floatformat:2 }}</td>
         <td class="p-3">{{ invoice.session }}</td>

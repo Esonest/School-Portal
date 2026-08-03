@@ -126,14 +126,30 @@ Congratulations 🎉
     {% endif %}
 
     <!-- Admission Fee -->
-    {% if application.invoice_generated %}
-    <a href="{% url 'tis_website:admission_payment' application.admission_token %}"
-       class="block text-center bg-purple-600 hover:bg-purple-700 text-white py-4 rounded-xl font-bold transition">
+   {% if application.invoice_generated %}
 
-        💳 Pay Admission Fee
+    {% if admission_paid %}
 
-    </a>
+        <a href="{% url 'accounts:student_login_details' application.admission_token %}"
+           class="block text-center bg-green-600 hover:bg-green-700 text-white py-4 rounded-xl font-bold transition">
+
+            🎓 Complete Admission & Get Login Details
+
+        </a>
+
+
+    {% else %}
+
+        <a href="{% url 'tis_website:admission_payment' application.admission_token %}"
+           class="block text-center bg-purple-600 hover:bg-purple-700 text-white py-4 rounded-xl font-bold transition">
+
+            💳 Pay Admission Fee
+
+        </a>
+
     {% endif %}
+
+{% endif %}
 
     <div class="mt-8 bg-yellow-50 border border-yellow-200 rounded-xl p-6">
 
@@ -147,9 +163,27 @@ Congratulations 🎉
 
         <li>Accept the Admission Offer.</li>
 
-        <li>Pay the Admission Fee.</li>
+       {% if admission_paid %}
 
-        <li>Receive your Student Login Details.</li>
+<li class="text-green-700 font-semibold">
+    ✔ Admission Fee Paid.
+</li>
+
+<li>
+    Complete admission and receive Student Login Details.
+</li>
+
+{% else %}
+
+<li>
+    Pay the Admission Fee.
+</li>
+
+<li>
+    Receive your Student Login Details after payment.
+</li>
+
+{% endif %}
 
         <li>Resume on the scheduled date.</li>
 

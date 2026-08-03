@@ -83,12 +83,30 @@ from django.conf import settings
 
 class Invoice(models.Model):
     school = models.ForeignKey(School, on_delete=models.CASCADE)
-    student = models.ForeignKey(Student, on_delete=models.CASCADE)
+    student = models.ForeignKey(
+        Student,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name="invoices"
+    )
     school_class = models.ForeignKey(SchoolClass, on_delete=models.CASCADE)
 
     title = models.CharField(max_length=255)
     total_amount = models.DecimalField(max_digits=20, decimal_places=2)
     amount_paid = models.DecimalField(max_digits=20, decimal_places=2, default=0)
+
+    is_admission_fee = models.BooleanField(
+        default=False
+    )
+
+    admission_application = models.ForeignKey(
+        "tis_website.AdmissionApplication",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="admission_invoice"
+    )
     
 
     session = models.CharField(max_length=150)
@@ -139,7 +157,7 @@ class Invoice(models.Model):
         """
         Ensure invoice class matches student class if not set.
         """
-        if not self.school_class:
+        if not self.school_class and self.student:
             self.school_class = self.student.school_class
         super().save(*args, **kwargs)
 

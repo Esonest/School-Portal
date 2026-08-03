@@ -250,8 +250,6 @@ from django.shortcuts import render, get_object_or_404
 
 from .models import AdmissionApplication
 
-
-
 def parent_admission_portal(request, token):
 
     application = get_object_or_404(
@@ -259,8 +257,6 @@ def parent_admission_portal(request, token):
         admission_token=token
     )
 
-
-    # Only approved applicants can access letter
 
     if application.status != "approved":
 
@@ -272,7 +268,21 @@ def parent_admission_portal(request, token):
             }
         )
 
-    
+
+    invoice = getattr(
+        application,
+        "admission_invoice",
+        None
+    )
+
+
+    admission_paid = False
+
+    if invoice:
+
+        if invoice.amount_paid >= invoice.total_amount:
+            admission_paid = True
+
 
 
     return render(
@@ -280,7 +290,9 @@ def parent_admission_portal(request, token):
         "tis_website/public/admission_parent_portal.html",
         {
             "application": application,
-            "school": application.school
+            "school": application.school,
+            "invoice": invoice,
+            "admission_paid": admission_paid,
         }
     )
 
@@ -482,9 +494,7 @@ def accept_admission(request, token):
 
                 student=student,
 
-                session=current_session,
-
-                term=current_term,
+                admission_application=application,
 
                 title="Admission Fees",
 
@@ -497,6 +507,15 @@ def accept_admission(request, token):
                     "total_amount": application.school.admission_fee,
 
                     "amount_paid": 0,
+
+                    "session":current_session,
+
+                    "term":current_term,
+
+        
+
+                    "is_admission_fee":True,
+
 
                     "due_date": timezone.now().date(),
 
@@ -570,16 +589,70 @@ def admission_payment(request, token):
     )
 
 
-    school = application.school
+    invoice = get_object_or_404(
+        Invoice,
+        admission_application=application
+    )
 
 
     return render(
         request,
         "tis_website/public/admission_payment.html",
         {
-            "application": application,
-            "school": school,
-            "amount": school.admission_fee,
-            "paystack_key": school.paystack_public_key,
+            "application":application,
+            "invoice":invoice,
+            "school":application.school,
+            "amount":invoice.total_amount,
+            "paystack_key":application.school.paystack_public_key,
         }
-    )    
+    )   
+
+
+from django.shortcuts import render, get_object_or_404
+from django.http import HttpResponse
+from .models import AdmissionApplication
+
+
+def student_login_details(request, token):
+
+    application = get_object_or_404(
+        AdmissionApplication,
+        admission_token=token
+    )
+
+
+    invoice = getattr(
+        application,
+        "admission_invoice",
+        None
+    )
+
+
+    # Ensure payment is completed
+    if not invoice or invoice.amount_paid < invoice.total_amount:
+
+        return HttpResponse(
+            "Admission fee payment required before account creation."
+        )
+
+
+    # Check if student account already exists
+    if not hasattr(application, "student"):
+
+        return HttpResponse(
+            "Student account has not been created yet."
+        )
+
+
+    student = application.student
+
+
+    return render(
+        request,
+        "tis_website/public/student_login_details.html",
+        {
+            "application": application,
+            "student": student,
+            "school": application.school,
+        }
+    )

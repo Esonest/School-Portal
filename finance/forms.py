@@ -4,6 +4,7 @@ from django.forms.widgets import DateInput
 from results.utils import SESSION_LIST
 from results.models import Score
 from students.models import SchoolClass, Student
+from tis_website.models import AdmissionApplication
 
 TAILWIND_INPUT = "w-full border-gray-300 rounded px-3 py-2"
 
@@ -33,10 +34,11 @@ class SchoolTransactionForm(forms.ModelForm):
 from django import forms
 from .models import Invoice, Payment, Expense
 
-
 TAILWIND = "w-full border rounded px-3 py-2"
 
+
 class InvoiceForm(forms.ModelForm):
+
     students = forms.ModelMultipleChoiceField(
         queryset=Student.objects.none(),
         widget=forms.SelectMultiple(
@@ -45,8 +47,9 @@ class InvoiceForm(forms.ModelForm):
                 "size": 10,
             }
         ),
-        required=True,
+        required=False,
     )
+
 
     fee_template = forms.ModelChoiceField(
         queryset=FeeTemplate.objects.none(),
@@ -55,13 +58,27 @@ class InvoiceForm(forms.ModelForm):
         widget=forms.Select(
             attrs={
                 "class": TAILWIND,
-                "id": "fee-template-select",   # Important for JavaScript
+                "id": "fee-template-select",
             }
         ),
     )
 
+    
+    admission_application = forms.ModelMultipleChoiceField(
+        queryset=None,
+        required=False,
+        widget=forms.SelectMultiple(
+            attrs={
+                "class": TAILWIND,
+                "size":10,
+            }
+        ),
+    )
+
+
     class Meta:
         model = Invoice
+
         fields = [
             "school_class",
             "students",
@@ -72,54 +89,140 @@ class InvoiceForm(forms.ModelForm):
             "session",
             "term",
         ]
+
+
         widgets = {
-            "title": forms.TextInput(attrs={"class": TAILWIND}),
-            "total_amount": forms.NumberInput(attrs={"class": TAILWIND}),
+
+            "title": forms.TextInput(
+                attrs={
+                    "class": TAILWIND
+                }
+            ),
+
+
+            "total_amount": forms.NumberInput(
+                attrs={
+                    "class": TAILWIND
+                }
+            ),
+
+
             "due_date": forms.DateInput(
                 attrs={
                     "class": TAILWIND,
                     "type": "date",
                 }
             ),
+
+
             "session": forms.Select(
                 choices=[(s, s) for s in SESSION_LIST],
-                attrs={"class": TAILWIND},
+                attrs={
+                    "class": TAILWIND
+                },
             ),
+
+
             "term": forms.Select(
                 choices=Score.TERM_CHOICES,
-                attrs={"class": TAILWIND},
+                attrs={
+                    "class": TAILWIND
+                },
             ),
         }
 
+
+
     def __init__(self, *args, **kwargs):
-        school = kwargs.pop("school", None)
+
+        school = kwargs.pop(
+            "school",
+            None
+        )
+
+        admission_mode = kwargs.pop(
+            "admission_mode",
+            False
+        )
+
+
         super().__init__(*args, **kwargs)
 
-        if school:
-            # Classes
-            self.fields["school_class"].queryset = SchoolClass.objects.filter(
+
+
+        if admission_mode:
+
+            # Remove normal invoice fields
+
+            self.fields.pop(
+                "school_class"
+            )
+
+            self.fields.pop(
+                "students"
+            )
+
+            self.fields.pop(
+                "fee_template"
+            )
+
+
+            from tis_website.models import AdmissionApplication
+
+
+            self.fields[
+                "admission_application"
+            ].queryset = AdmissionApplication.objects.filter(
                 school=school
             )
 
-            # Students
-            self.fields["students"].queryset = Student.objects.filter(school=school).select_related("user", "school_class")
-            # Add class data attribute to each student option
-            self.fields["students"].choices = [
-                (
-                    student.pk,
-                    student.full_name,
-                    {
-                        "data-class": str(student.school_class_id),
-                    },
-                )
-                for student in self.fields["students"].queryset
-            ]
 
-            # Fee Templates
-            self.fields["fee_template"].queryset = FeeTemplate.objects.filter(
+            self.fields[
+                "total_amount"
+            ].initial = school.admission_fee
+
+
+            self.fields[
+                "title"
+            ].initial = "Admission Fee"
+
+
+
+        elif school:
+
+
+            # NORMAL SCHOOL INVOICE
+
+
+            self.fields[
+                "school_class"
+            ].queryset = SchoolClass.objects.filter(
+                school=school
+            )
+
+
+            students = Student.objects.filter(
+                school=school
+            ).select_related(
+                "user",
+                "school_class"
+            )
+
+
+            self.fields[
+                "students"
+            ].queryset = students
+
+
+
+            self.fields[
+                "fee_template"
+            ].queryset = FeeTemplate.objects.filter(
                 school=school,
                 is_active=True,
-            ).select_related("school_class")
+            ).select_related(
+                "school_class"
+            )
 
             
 

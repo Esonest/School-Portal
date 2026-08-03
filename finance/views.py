@@ -975,7 +975,9 @@ def invoice_list(request):
             Q(student__user__first_name__icontains=search) |
             Q(student__user__last_name__icontains=search) |
             Q(student__user__username__icontains=search) |
-            Q(student__admission_no__icontains=search)
+            Q(student__admission_no__icontains=search) |
+            Q(admission_application__student_name__icontains=search) |
+            Q(admission_application__application_number__icontains=search)
         ).distinct()
 
     if current_class:
@@ -2660,5 +2662,63 @@ def paystack_webhook(request):
     return HttpResponse(status=200)
 
 
+from django.shortcuts import render, redirect
+from django.contrib import messages
+from .forms import InvoiceForm
 
 
+@login_required
+def create_admission_invoice(request):
+
+    school = request.user.school
+
+    form = InvoiceForm(
+        request.POST or None,
+        school=school,
+        admission_mode=True
+    )
+
+
+    if request.method == "POST":
+
+        if form.is_valid():
+
+            applications = form.cleaned_data[
+                "admission_application"
+            ]
+
+
+            for application in applications:
+
+                Invoice.objects.create(
+                    school=school,
+                    student=None,
+                    school_class=application.class_applying_for,
+                    admission_application=application,
+                    is_admission_fee=True,
+                    title="Admission Fee",
+                    total_amount=school.admission_fee,
+                    due_date=date.today() + timedelta(days=30),
+                    session=form.cleaned_data["session"],
+                    term=form.cleaned_data["term"],
+                )
+
+
+            messages.success(
+                request,
+                "Admission invoice(s) created successfully."
+            )
+
+            return redirect(
+                "finance:invoice_list"
+            )
+
+
+    return render(
+        request,
+        "finance/invoice_form.html",
+        {
+            "form": form,
+            "admission_mode": True,
+        }
+    )

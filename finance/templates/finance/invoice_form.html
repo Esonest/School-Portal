@@ -1,166 +1,509 @@
 {% extends "accounts/base.html" %}
 
 {% block content %}
+
 <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-10 space-y-8">
 
-  <h1 class="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-white text-center">
-    🧾 Create Invoice
-  </h1>
+<h1 class="text-2xl sm:text-3xl font-bold text-gray-800 dark:text-white text-center">
 
-  <form method="POST" class="bg-white dark:bg-gray-900 shadow-lg rounded-2xl p-6 sm:p-8 space-y-6">
-    {% csrf_token %}
+{% if admission_mode %}
+🧾 Create Admission Fee Invoice
+{% else %}
+🧾 Create Student Invoice
+{% endif %}
 
-    <!-- Class Dropdown -->
-    <div class="space-y-1">
-      <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200">Class</label>
-      <select id="class-select" name="school_class" class="form-input w-full">
-        <option value="">Select Class</option>
-        {% for cls in classes %}
-          <option value="{{ cls.id }}">{{ cls.name }}</option>
-        {% endfor %}
-      </select>
-      {% if form.school_class.errors %}
-        <p class="text-red-600 text-sm">{{ form.school_class.errors|striptags }}</p>
-      {% endif %}
-    </div>
+</h1>
 
-    <!-- Student Dropdown -->
-    <!-- Student Dropdown -->
+
+<form method="POST"
+class="bg-white dark:bg-gray-900 shadow-lg rounded-2xl p-6 sm:p-8 space-y-6">
+
+{% csrf_token %}
+
+
+
+{% if admission_mode %}
+
+
+<!-- ================= ADMISSION CANDIDATE ================= -->
+
 <div class="space-y-2">
-    <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200">
-        Students
-    </label>
 
-    <div id="students-container" class="space-y-2 border rounded p-3 max-h-64 overflow-y-auto">
-        {% for student in form.students.field.queryset %}
-            <label class="student-item flex items-center gap-2"
-                   data-class="{{ student.school_class_id }}">
-                <input type="checkbox"
-                       name="students"
-                       value="{{ student.id }}"
-                       class="student-checkbox">
-                <span>{{ student.user.get_full_name }}</span>
-            </label>
-        {% endfor %}
-    </div>
+<label class="block text-sm font-semibold text-gray-700 dark:text-gray-200">
+Admission Candidate
+</label>
 
-    <div class="mt-2 flex flex-wrap gap-2">
-        <button type="button"
-                id="select-all-students"
-                class="px-4 py-2 bg-indigo-600 text-white rounded text-sm">
-            Select All in Class
-        </button>
 
-        <button type="button"
-                id="clear-students"
-                class="px-4 py-2 bg-gray-500 text-white rounded text-sm">
-            Clear
-        </button>
-    </div>
+{{ form.admission_application }}
 
-    <p class="text-xs text-gray-500 mt-1">
-        Tick students individually or use “Select All in Class”.
-    </p>
+
+{% if form.admission_application.errors %}
+<p class="text-red-600 text-sm">
+{{ form.admission_application.errors|striptags }}
+</p>
+{% endif %}
+
+
+<p class="text-xs text-gray-500">
+Select applicant whose admission fee is being generated.
+</p>
+
+
 </div>
 
 
-    <!-- Fee Template Dropdown -->
+
+{% else %}
+
+
+
+<!-- ================= NORMAL SCHOOL INVOICE ================= -->
+
+
+<!-- Class -->
+
 <div class="space-y-1">
-    <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200">Fee Template</label>
 
-   <select id="fee-template-select" name="fee_template" class="form-input w-full">
-    <option value="">Select Template</option>
+<label class="block text-sm font-semibold text-gray-700 dark:text-gray-200">
+Class
+</label>
 
-    {% for t in form.fee_template.field.queryset %}
-        <option value="{{ t.id }}"
-                data-class="{{ t.school_class_id }}"
-                data-amount="{{ t.amount }}">
-            {{ t.name }}
-        </option>
-    {% endfor %}
+
+<select id="class-select"
+name="school_class"
+class="form-input w-full">
+
+
+<option value="">
+Select Class
+</option>
+
+
+{% for cls in classes %}
+
+<option value="{{ cls.id }}">
+{{ cls.name }}
+</option>
+
+{% endfor %}
+
+
 </select>
+
+
+{% if form.school_class.errors %}
+
+<p class="text-red-600 text-sm">
+{{ form.school_class.errors|striptags }}
+</p>
+
+{% endif %}
+
 </div>
 
 
-    <!-- Title -->
-    <div class="space-y-1">
-      <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200">Title</label>
-      {{ form.title }}
-      {% if form.title.errors %}
-        <p class="text-red-600 text-sm">{{ form.title.errors|striptags }}</p>
-      {% endif %}
-    </div>
 
-    <!-- Total Amount -->
-    <div class="space-y-1">
-      <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200">Total Amount</label>
-      {{ form.total_amount }}
-      {% if form.total_amount.errors %}
-        <p class="text-red-600 text-sm">{{ form.total_amount.errors|striptags }}</p>
-      {% endif %}
-    </div>
 
-    <!-- Due Date, Session, Term -->
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
-      <div>
-        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200">Due Date</label>
-        {{ form.due_date }}
-      </div>
-      <div>
-        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200">Session</label>
-        {{ form.session }}
-      </div>
-      <div>
-        <label class="block text-sm font-semibold text-gray-700 dark:text-gray-200">Term</label>
-        {{ form.term }}
-      </div>
-    </div>
 
-    <div class="text-center pt-6">
-      <button type="submit" class="px-8 py-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow">
-        Create Invoice
-      </button>
-    </div>
-  </form>
+<!-- Students -->
+
+<div class="space-y-2">
+
+
+<label class="block text-sm font-semibold text-gray-700 dark:text-gray-200">
+
+Students
+
+</label>
+
+
+
+<div id="students-container"
+class="space-y-2 border rounded p-3 max-h-64 overflow-y-auto">
+
+
+{% for student in form.students.field.queryset %}
+
+
+<label class="student-item flex items-center gap-2"
+data-class="{{ student.school_class_id }}">
+
+
+<input type="checkbox"
+name="students"
+value="{{ student.id }}"
+class="student-checkbox">
+
+
+<span>
+{{ student.user.get_full_name }}
+</span>
+
+
+</label>
+
+
+{% endfor %}
+
+
 </div>
 
-<!-- JS for dynamic dropdowns -->
+
+
+
+<div class="mt-2 flex flex-wrap gap-2">
+
+
+<button type="button"
+id="select-all-students"
+class="px-4 py-2 bg-indigo-600 text-white rounded text-sm">
+
+Select All In Class
+
+</button>
+
+
+
+<button type="button"
+id="clear-students"
+class="px-4 py-2 bg-gray-500 text-white rounded text-sm">
+
+Clear
+
+</button>
+
+
+</div>
+
+
+</div>
+
+
+
+
+
+<!-- Fee Template -->
+
+<div class="space-y-1">
+
+
+<label class="block text-sm font-semibold text-gray-700 dark:text-gray-200">
+
+Fee Template
+
+</label>
+
+
+
+<select id="fee-template-select"
+name="fee_template"
+class="form-input w-full">
+
+
+<option value="">
+Select Template
+</option>
+
+
+{% for t in form.fee_template.field.queryset %}
+
+
+<option value="{{ t.id }}"
+data-class="{{ t.school_class_id }}"
+data-amount="{{ t.amount }}">
+
+
+{{ t.name }}
+
+</option>
+
+
+{% endfor %}
+
+
+</select>
+
+
+</div>
+
+
+
+{% endif %}
+
+
+
+
+
+<!-- TITLE -->
+
+<div class="space-y-1">
+
+
+<label class="block text-sm font-semibold text-gray-700 dark:text-gray-200">
+
+Title
+
+</label>
+
+
+{{ form.title }}
+
+
+{% if form.title.errors %}
+
+<p class="text-red-600 text-sm">
+{{ form.title.errors|striptags }}
+</p>
+
+{% endif %}
+
+
+</div>
+
+
+
+
+
+<!-- AMOUNT -->
+
+<div class="space-y-1">
+
+
+<label class="block text-sm font-semibold text-gray-700 dark:text-gray-200">
+
+Total Amount
+
+</label>
+
+
+{{ form.total_amount }}
+
+
+
+{% if form.total_amount.errors %}
+
+<p class="text-red-600 text-sm">
+{{ form.total_amount.errors|striptags }}
+</p>
+
+{% endif %}
+
+
+</div>
+
+
+
+
+
+<!-- DATE SESSION TERM -->
+
+<div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+
+
+<div>
+
+<label class="block text-sm font-semibold text-gray-700 dark:text-gray-200">
+
+Due Date
+
+</label>
+
+
+{{ form.due_date }}
+
+</div>
+
+
+
+<div>
+
+<label class="block text-sm font-semibold text-gray-700 dark:text-gray-200">
+
+Session
+
+</label>
+
+
+{{ form.session }}
+
+</div>
+
+
+
+<div>
+
+<label class="block text-sm font-semibold text-gray-700 dark:text-gray-200">
+
+Term
+
+</label>
+
+
+{{ form.term }}
+
+</div>
+
+
+</div>
+
+
+
+
+
+<div class="text-center pt-6">
+
+
+<button type="submit"
+
+class="px-8 py-3 rounded-lg bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow">
+
+
+{% if admission_mode %}
+
+Create Admission Invoice
+
+{% else %}
+
+Create Invoice
+
+{% endif %}
+
+
+</button>
+
+
+</div>
+
+
+</form>
+
+
+</div>
+
+
+
+
+{% if not admission_mode %}
 
 <script>
-const classSelect = document.getElementById("class-select");
-const studentItems = document.querySelectorAll(".student-item");
-const checkboxes = document.querySelectorAll(".student-checkbox");
 
-// FILTER by class (HIDE / SHOW only)
-classSelect.addEventListener("change", () => {
-    const selectedClass = classSelect.value;
 
-    studentItems.forEach(item => {
-        const match = item.dataset.class === selectedClass;
+const classSelect =
+document.getElementById("class-select");
 
-        item.style.display = match ? "flex" : "none";
-    });
 
-    // optional: clear selection when class changes
-    checkboxes.forEach(cb => cb.checked = false);
+const studentItems =
+document.querySelectorAll(".student-item");
+
+
+const checkboxes =
+document.querySelectorAll(".student-checkbox");
+
+
+
+if(classSelect){
+
+
+classSelect.addEventListener("change",()=>{
+
+
+const selectedClass =
+classSelect.value;
+
+
+
+studentItems.forEach(item=>{
+
+
+item.style.display =
+item.dataset.class === selectedClass
+?
+"flex"
+:
+"none";
+
+
 });
 
-// SELECT ALL IN CLASS
-document.getElementById("select-all-students").addEventListener("click", () => {
-    const selectedClass = classSelect.value;
 
-    checkboxes.forEach(cb => {
-        const parent = cb.closest(".student-item");
 
-        if (parent.dataset.class === selectedClass) {
-            cb.checked = true;
-        }
-    });
+checkboxes.forEach(cb=>cb.checked=false);
+
+
+
 });
 
-// CLEAR ALL
-document.getElementById("clear-students").addEventListener("click", () => {
-    checkboxes.forEach(cb => cb.checked = false);
+
+}
+
+
+
+
+
+const selectAll =
+document.getElementById("select-all-students");
+
+
+if(selectAll){
+
+
+selectAll.addEventListener("click",()=>{
+
+
+const selectedClass =
+classSelect.value;
+
+
+
+checkboxes.forEach(cb=>{
+
+
+const parent =
+cb.closest(".student-item");
+
+
+
+if(parent.dataset.class === selectedClass){
+
+cb.checked=true;
+
+}
+
+
 });
+
+
+});
+
+
+}
+
+
+
+
+
+const clear =
+document.getElementById("clear-students");
+
+
+if(clear){
+
+
+clear.addEventListener("click",()=>{
+
+
+checkboxes.forEach(cb=>cb.checked=false);
+
+
+});
+
+
+}
+
+
 </script>
+
+{% endif %}
+
+
 {% endblock %}

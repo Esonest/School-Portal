@@ -82,6 +82,14 @@ urlpatterns = [
         "admission/payment/<uuid:token>/",
         views.admission_payment,
         name="admission_payment"
+
     ),
+
+    path(
+        "student-login-details/<uuid:token>/",
+        views.student_login_details,
+        name="student_login_details"
+    ),
+
 
 ]
