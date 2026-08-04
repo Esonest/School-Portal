@@ -126,25 +126,20 @@ Congratulations 🎉
     {% endif %}
 
     <!-- Admission Fee -->
-   {% if application.invoice_generated %}
+{% if invoice %}
 
-    {% if admission_paid %}
+    {% if admission_fee_paid %}
 
         <a href="{% url 'accounts:student_login_details' application.admission_token %}"
            class="block text-center bg-green-600 hover:bg-green-700 text-white py-4 rounded-xl font-bold transition">
-
             🎓 Complete Admission & Get Login Details
-
         </a>
-
 
     {% else %}
 
         <a href="{% url 'tis_website:admission_payment' application.admission_token %}"
            class="block text-center bg-purple-600 hover:bg-purple-700 text-white py-4 rounded-xl font-bold transition">
-
             💳 Pay Admission Fee
-
         </a>
 
     {% endif %}
@@ -163,14 +158,18 @@ Congratulations 🎉
 
         <li>Accept the Admission Offer.</li>
 
-       {% if admission_paid %}
+{% if admission_fee_paid %}
 
 <li class="text-green-700 font-semibold">
     ✔ Admission Fee Paid.
 </li>
 
 <li>
-    Complete admission and receive Student Login Details.
+    Click <strong>"Complete Admission & Get Login Details"</strong>.
+</li>
+
+<li>
+    Save your username and password for future login.
 </li>
 
 {% else %}
@@ -180,7 +179,8 @@ Congratulations 🎉
 </li>
 
 <li>
-    Receive your Student Login Details after payment.
+    After successful payment, the payment button will automatically be replaced with the
+    <strong>"Complete Admission & Get Login Details"</strong> button.
 </li>
 
 {% endif %}

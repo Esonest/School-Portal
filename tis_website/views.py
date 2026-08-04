@@ -1,4 +1,5 @@
 from django.shortcuts import render, get_object_or_404
+import uuid
 
 from .models import (
     SchoolWebsite,
@@ -9,14 +10,18 @@ from .models import (
 
 from django.utils import timezone
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 
 from .models import AdmissionApplication
 from students.models import Student
 from accounts.models import User
-from finance.models import Invoice
+from finance.models import Invoice, PaystackTransaction
 from django.contrib.auth.hashers import make_password
 import random
 import string
+from finance.utils import calculate_paystack_fee, send_school_payment_notification
+from django.contrib import messages
+import requests
 
 
 
@@ -250,6 +255,11 @@ from django.shortcuts import render, get_object_or_404
 
 from .models import AdmissionApplication
 
+from django.shortcuts import get_object_or_404, render
+from finance.models import Invoice
+from tis_website.models import AdmissionApplication
+
+
 def parent_admission_portal(request, token):
 
     application = get_object_or_404(
@@ -257,9 +267,8 @@ def parent_admission_portal(request, token):
         admission_token=token
     )
 
-
+    # Only approved applicants can access the portal
     if application.status != "approved":
-
         return render(
             request,
             "tis_website/public/admission_pending.html",
@@ -268,34 +277,35 @@ def parent_admission_portal(request, token):
             }
         )
 
-
-    invoice = getattr(
-        application,
-        "admission_invoice",
-        None
+    # Get the applicant's admission invoice
+    invoice = (
+        Invoice.objects.filter(
+            admission_application=application,
+            is_admission_fee=True
+        )
+        .order_by("-created_at")
+        .first()
     )
 
-
-    admission_paid = False
+    admission_fee_paid = False
 
     if invoice:
+        admission_fee_paid = (
+            invoice.amount_paid >= invoice.total_amount
+        )
 
-        if invoice.amount_paid >= invoice.total_amount:
-            admission_paid = True
-
-
+    context = {
+        "application": application,
+        "school": application.school,
+        "invoice": invoice,
+        "admission_fee_paid": admission_fee_paid,
+    }
 
     return render(
         request,
         "tis_website/public/admission_parent_portal.html",
-        {
-            "application": application,
-            "school": application.school,
-            "invoice": invoice,
-            "admission_paid": admission_paid,
-        }
+        context,
     )
-
 
 from django.http import HttpResponse
 from django.template.loader import render_to_string
@@ -581,6 +591,26 @@ def acceptance_success(request, token):
 
 from django.shortcuts import render, get_object_or_404
 
+from decimal import Decimal
+import requests
+
+from django.shortcuts import (
+    render,
+    get_object_or_404,
+    redirect
+)
+from django.contrib import messages
+from django.urls import reverse
+
+from finance.models import (
+    Invoice,
+    PaystackTransaction
+)
+
+from .models import AdmissionApplication
+
+
+
 def admission_payment(request, token):
 
     application = get_object_or_404(
@@ -591,8 +621,120 @@ def admission_payment(request, token):
 
     invoice = get_object_or_404(
         Invoice,
-        admission_application=application
+        admission_application=application,
+        is_admission_fee=True
     )
+
+
+    if request.method == "POST":
+
+        if invoice.status == "PAID":
+
+            return redirect(
+                "tis_website:parent_admission_portal",
+                token=token
+            )
+
+
+        school = application.school
+
+
+        email = (
+            application.parent_email
+            or "techcenter652@gmail.com"
+        )
+
+
+        amount = invoice.outstanding
+
+
+        transaction = PaystackTransaction.objects.create(
+            school=school,
+            invoice=invoice,
+            amount=amount,
+            status="pending",
+            paystack_reference=f"TEMP-{uuid.uuid4().hex}",
+            metadata={
+                "payment_type": "admission_fee",
+                "application_id": application.id
+            }
+        )
+
+
+        callback_url = request.build_absolute_uri(
+            reverse(
+                "tis_website:admission_payment_verify",
+                args=[invoice.id]
+            )
+        )
+
+
+        payload = {
+
+            "email": email,
+
+            "amount": int(amount * 100),
+
+            "callback_url": callback_url,
+
+            "metadata": {
+
+                "invoice_id": invoice.id,
+
+                "transaction_id": transaction.id,
+
+                "school_id": school.id,
+
+                "payment_type": "admission_fee",
+
+            }
+
+        }
+
+
+        headers = {
+
+            "Authorization":
+            f"Bearer {school.paystack_secret_key}",
+
+            "Content-Type":
+            "application/json"
+
+        }
+
+
+        response = requests.post(
+            "https://api.paystack.co/transaction/initialize",
+            json=payload,
+            headers=headers
+        )
+
+
+        data = response.json()
+
+
+        if data.get("status"):
+
+            transaction.paystack_reference = (
+                data["data"]["reference"]
+            )
+
+            transaction.save(
+                update_fields=[
+                    "paystack_reference"
+                ]
+            )
+
+
+            return redirect(
+                data["data"]["authorization_url"]
+            )
+
+
+        messages.error(
+            request,
+            "Unable to initialize payment."
+        )
 
 
     return render(
@@ -601,11 +743,102 @@ def admission_payment(request, token):
         {
             "application":application,
             "invoice":invoice,
-            "school":application.school,
-            "amount":invoice.total_amount,
-            "paystack_key":application.school.paystack_public_key,
+            "school":application.school
         }
-    )   
+    )
+
+
+
+
+
+def admission_payment_verify(request, invoice_id):
+
+
+    invoice = get_object_or_404(
+        Invoice,
+        id=invoice_id,
+        is_admission_fee=True
+    )
+
+
+    reference = request.GET.get(
+        "reference"
+    )
+
+
+    if not reference:
+
+        messages.warning(
+            request,
+            "Payment reference missing."
+        )
+
+        return redirect(
+            "tis_website:parent_admission_portal",
+            token=invoice.admission_application.admission_token
+        )
+
+
+
+    transaction = get_object_or_404(
+        PaystackTransaction,
+        paystack_reference=reference,
+        invoice=invoice
+    )
+
+
+    school = invoice.school
+
+
+
+    response = requests.get(
+
+        f"https://api.paystack.co/transaction/verify/{reference}",
+
+        headers={
+            "Authorization":
+            f"Bearer {school.paystack_secret_key}"
+        }
+
+    )
+
+
+    data = response.json()
+
+
+    if data.get("status") and data["data"]["status"] == "success":
+
+
+        transaction.status = "success"
+
+        transaction.save(
+            update_fields=[
+                "status"
+            ]
+        )
+
+
+        messages.success(
+            request,
+            "Payment successful. Your admission process will continue."
+        )
+
+
+    else:
+
+        messages.warning(
+            request,
+            "Payment verification pending."
+        )
+
+
+    return redirect(
+
+        "tis_website:parent_admission_portal",
+
+        token=invoice.admission_application.admission_token
+
+    )
 
 
 from django.shortcuts import render, get_object_or_404

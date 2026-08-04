@@ -105,33 +105,20 @@ Payment Pending
 {% if invoice.status != "PAID" %}
 
 
-<form method="POST" action="{% url 'finance:pay_invoice' invoice.id %}">
+<form method="POST"
+      action="{% url 'tis_website:admission_payment' application.admission_token %}">
 
 {% csrf_token %}
 
-
-<input 
-type="hidden"
-name="amount"
-value="{{ invoice.outstanding }}"
->
-
-
 <button
-
 type="submit"
+class="mt-8 w-full bg-green-600 hover:bg-green-700 text-white py-4 rounded-xl font-bold">
 
-class="mt-8 w-full bg-green-600 hover:bg-green-700 text-white py-4 rounded-xl font-bold"
-
->
-
-Pay Admission Fee
+💳 Pay Admission Fee
 
 </button>
 
-
 </form>
-
 
 
 {% else %}
