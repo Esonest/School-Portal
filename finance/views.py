@@ -102,8 +102,17 @@ def get_filtered_payments(school, start_date, session=None, term=None, class_id=
 def activate_student_after_admission_payment(payment):
 
     """
-    Create student account after admission fee payment.
+    Create and activate student account after admission fee payment.
     """
+
+    from django.utils.crypto import get_random_string
+    from accounts.models import User
+    from students.models import Student
+
+
+    # -----------------------------
+    # Validate payment
+    # -----------------------------
 
     invoice = payment.invoice
 
@@ -111,7 +120,7 @@ def activate_student_after_admission_payment(payment):
         return None
 
 
-    # Only admission invoices
+    # Only admission fee payments
     if not invoice.is_admission_fee:
         return None
 
@@ -122,66 +131,146 @@ def activate_student_after_admission_payment(payment):
         return None
 
 
+
+    # -----------------------------
     # Prevent duplicate creation
-    if application.student_created:
-        return getattr(application, "student", None)
+    # -----------------------------
+
+    existing_student = Student.objects.filter(
+        admission_no=application.application_number
+    ).first()
+
+
+    if existing_student:
+
+        # Ensure account is active
+        existing_student.user.is_active = True
+        existing_student.user.save(
+            update_fields=[
+                "is_active"
+            ]
+        )
+
+        existing_student.is_active = True
+        existing_student.save(
+            update_fields=[
+                "is_active"
+            ]
+        )
+
+        return existing_student
 
 
 
-    from accounts.models import User
-    from students.models import Student
+    # -----------------------------
+    # Ensure class exists
+    # -----------------------------
+
+    if not application.class_applying_for:
+
+        raise Exception(
+            "Cannot create student. Admission application has no class assigned."
+        )
 
 
+
+    # -----------------------------
     # Generate login details
+    # -----------------------------
 
     username = application.application_number.lower()
 
     password = get_random_string(8)
 
 
-    # Create user account
+
+    # -----------------------------
+    # Create User Account
+    # -----------------------------
 
     user = User.objects.create_user(
         username=username,
         password=password,
         first_name=application.student_name,
-        email=application.student_email or application.parent_email,
+        email=(
+            application.student_email
+            or application.parent_email
+        ),
         role="student",
         school=application.school,
-        is_active=True,
     )
 
 
-    # Create student profile
+    user.is_active = True
+
+    user.save(
+        update_fields=[
+            "is_active"
+        ]
+    )
+
+
+
+    # -----------------------------
+    # Create Student Profile
+    # -----------------------------
 
     student = Student.objects.create(
+
         user=user,
+
         admission_no=application.application_number,
+
         school=application.school,
+
         school_class=application.class_applying_for,
+
         dob=application.date_of_birth,
+
         gender=(
             "M"
             if application.gender == "Male"
             else "F"
         ),
+
+        photo=application.passport,
         parent_name=application.parent_name,
+
         parent_email=application.parent_email,
+
         parent_phone=application.parent_phone,
+
         student_email=application.student_email,
-        session=application.admission_session,
-        term=application.admission_term or "1",
+
+        session=(
+            application.admission_session
+            or ""
+        ),
+
+        term=(
+            application.admission_term
+            or "1"
+        ),
+
         is_active=True,
     )
 
 
-    # Update admission application
+
+    # -----------------------------
+    # Update Admission Application
+    # -----------------------------
 
     application.student_created = True
+
     application.student_username = username
+
     application.student_password = password
+
     application.payment_completed = True
+
     application.status = "completed"
+
 
     application.save(
         update_fields=[
@@ -194,13 +283,16 @@ def activate_student_after_admission_payment(payment):
     )
 
 
+
     print(
         "NEW STUDENT CREATED:",
-        student.admission_no
+        student.admission_no,
+        "CLASS:",
+        student.school_class
     )
 
 
-    return student  
+    return student
 
 @login_required
 def dashboard(request):

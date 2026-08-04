@@ -430,3 +430,6 @@ def terms_of_service(request):
 
 def data_deletion(request):
     return render(request, 'accounts/data_deletion.html')
+
+
+
