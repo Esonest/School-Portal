@@ -4,6 +4,7 @@ from django.contrib import messages
 from django.db import transaction
 from django.utils import timezone
 from decimal import Decimal
+from django.utils.crypto import get_random_string
 from results.utils import portal_required
 from django.db import models
 from django.db.models import Sum
@@ -98,71 +99,108 @@ def get_filtered_payments(school, start_date, session=None, term=None, class_id=
     return qs
 
 
-
 def activate_student_after_admission_payment(payment):
 
     """
-    Activate newly admitted student after admission invoice payment.
+    Create student account after admission fee payment.
     """
 
     invoice = payment.invoice
 
     if not invoice:
-        return
+        return None
 
 
     # Only admission invoices
-    if invoice.title != "Admission Fees":
-        return
+    if not invoice.is_admission_fee:
+        return None
+
+
+    application = invoice.admission_application
+
+    if not application:
+        return None
+
+
+    # Prevent duplicate creation
+    if application.student_created:
+        return getattr(application, "student", None)
 
 
 
-    student = payment.student
+    from accounts.models import User
+    from students.models import Student
 
 
-    if not student:
-        return
+    # Generate login details
+
+    username = application.application_number.lower()
+
+    password = get_random_string(8)
 
 
+    # Create user account
 
-    # Activate student login
+    user = User.objects.create_user(
+        username=username,
+        password=password,
+        first_name=application.student_name,
+        email=application.student_email or application.parent_email,
+        role="student",
+        school=application.school,
+        is_active=True,
+    )
 
-    student.is_active = True
 
-    student.save(
+    # Create student profile
+
+    student = Student.objects.create(
+        user=user,
+        admission_no=application.application_number,
+        school=application.school,
+        school_class=application.class_applying_for,
+        dob=application.date_of_birth,
+        gender=(
+            "M"
+            if application.gender == "Male"
+            else "F"
+        ),
+        parent_name=application.parent_name,
+        parent_email=application.parent_email,
+        parent_phone=application.parent_phone,
+        student_email=application.student_email,
+        session=application.admission_session,
+        term=application.admission_term or "1",
+        is_active=True,
+    )
+
+
+    # Update admission application
+
+    application.student_created = True
+    application.student_username = username
+    application.student_password = password
+    application.payment_completed = True
+    application.status = "completed"
+
+    application.save(
         update_fields=[
-            "is_active"
+            "student_created",
+            "student_username",
+            "student_password",
+            "payment_completed",
+            "status",
         ]
     )
 
 
-
-    # Find admission application
-
-    application = AdmissionApplication.objects.filter(
-        application_number=student.admission_no
-    ).first()
-
-
-
-    if application:
-
-        application.payment_completed = True
-
-        application.status = "completed"
-
-        application.save(
-            update_fields=[
-                "payment_completed",
-                "status"
-            ]
-        )
-
-
     print(
-        "ADMISSION STUDENT ACTIVATED:",
+        "NEW STUDENT CREATED:",
         student.admission_no
-    )    
+    )
+
+
+    return student  
 
 @login_required
 def dashboard(request):
@@ -2508,9 +2546,15 @@ def paystack_webhook(request):
             tx.save(update_fields=["status"])
 
             invoice = tx.invoice
-            student = invoice.student
             amount = tx.amount
 
+# Normal student invoice
+            if invoice.student:
+                student = invoice.student
+
+# Admission invoice
+            elif invoice.admission_application:
+                student = None
         # ---------------- VA ----------------
         else:
 
@@ -2578,6 +2622,23 @@ def paystack_webhook(request):
             invoice.amount_paid = total_paid
             invoice.save(update_fields=["amount_paid"])
 
+            # ==============================
+# ADMISSION PAYMENT UPDATE
+# ==============================
+
+            if invoice.is_admission_fee and invoice.admission_application:
+
+                application = invoice.admission_application
+
+                if invoice.amount_paid >= invoice.total_amount:
+
+                    application.invoice_generated = True
+                    application.save(
+                        update_fields=[
+                            "invoice_generated"
+                        ]
+                    )
+
             Receipt.objects.get_or_create(
                 payment=payment,
                 defaults={
@@ -2620,20 +2681,32 @@ def paystack_webhook(request):
         try:
 
             from tis_website.models import AdmissionApplication
+            from students.services.admission_notification import (
+                send_student_login_details
+            )
 
-            application = AdmissionApplication.objects.filter(
-                application_number=payment.student.admission_no
-            ).first()
+
+            application = None
+
+
+    # Admission payment
+            if payment.invoice.admission_application:
+
+                application = payment.invoice.admission_application
+
+
+    # Normal student payment
+            elif payment.student:
+
+                application = AdmissionApplication.objects.filter(
+                    application_number=payment.student.admission_no
+                ).first()
+
 
             if application:
 
-                from students.services.admission_notification import (
-                    send_student_login_details
-                )   
+                send_student_login_details(application)
 
-                send_student_login_details(
-                    application
-                )
 
         except Exception as e:
 

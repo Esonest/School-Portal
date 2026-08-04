@@ -415,6 +415,7 @@ class AdmissionApplication(models.Model):
         ("approved", "Approved"),
 
         ("rejected", "Rejected"),
+        ("completed", "Completed"),
 
     )
 

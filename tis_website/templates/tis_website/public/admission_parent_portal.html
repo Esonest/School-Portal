@@ -130,7 +130,7 @@ Congratulations 🎉
 
     {% if admission_fee_paid %}
 
-        <a href="{% url 'accounts:student_login_details' application.admission_token %}"
+        <a href="{% url 'tis_website:student_login_details' application.admission_token %}"
            class="block text-center bg-green-600 hover:bg-green-700 text-white py-4 rounded-xl font-bold transition">
             🎓 Complete Admission & Get Login Details
         </a>

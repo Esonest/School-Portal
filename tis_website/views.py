@@ -8,6 +8,9 @@ from .models import (
     SchoolStatistic
 )
 
+from finance.views import activate_student_after_admission_payment
+from finance.models import Payment
+
 from django.utils import timezone
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
@@ -259,7 +262,6 @@ from django.shortcuts import get_object_or_404, render
 from finance.models import Invoice
 from tis_website.models import AdmissionApplication
 
-
 def parent_admission_portal(request, token):
 
     application = get_object_or_404(
@@ -267,19 +269,24 @@ def parent_admission_portal(request, token):
         admission_token=token
     )
 
-    # Only approved applicants can access the portal
+
+    # Only approved applicants can access portal
     if application.status != "approved":
+
         return render(
             request,
             "tis_website/public/admission_pending.html",
             {
-                "application": application
+                "application": application,
+                "school": application.school,
             }
         )
 
-    # Get the applicant's admission invoice
+
+    # Get admission invoice
     invoice = (
-        Invoice.objects.filter(
+        Invoice.objects
+        .filter(
             admission_application=application,
             is_admission_fee=True
         )
@@ -287,25 +294,37 @@ def parent_admission_portal(request, token):
         .first()
     )
 
+
     admission_fee_paid = False
 
+
     if invoice:
+
         admission_fee_paid = (
             invoice.amount_paid >= invoice.total_amount
         )
 
+
     context = {
+
         "application": application,
+
         "school": application.school,
+
         "invoice": invoice,
+
         "admission_fee_paid": admission_fee_paid,
+
     }
+
 
     return render(
         request,
         "tis_website/public/admission_parent_portal.html",
-        context,
+        context
     )
+
+
 
 from django.http import HttpResponse
 from django.template.loader import render_to_string
@@ -818,9 +837,20 @@ def admission_payment_verify(request, invoice_id):
         )
 
 
+        # Create student account after successful payment
+
+        payment = Payment.objects.filter(
+            invoice=invoice
+        ).first()
+
+
+        if payment:
+
+            activate_student_after_admission_payment(payment)
+
         messages.success(
             request,
-            "Payment successful. Your admission process will continue."
+            "Payment successful. Student Account Created."
         )
 
 
@@ -845,6 +875,7 @@ from django.shortcuts import render, get_object_or_404
 from django.http import HttpResponse
 from .models import AdmissionApplication
 
+from students.models import Student
 
 def student_login_details(request, token):
 
@@ -853,32 +884,28 @@ def student_login_details(request, token):
         admission_token=token
     )
 
-
-    invoice = getattr(
-        application,
-        "admission_invoice",
-        None
+    invoice = (
+        Invoice.objects.filter(
+            admission_application=application,
+            is_admission_fee=True
+        )
+        .order_by("-created_at")
+        .first()
     )
 
-
-    # Ensure payment is completed
     if not invoice or invoice.amount_paid < invoice.total_amount:
-
         return HttpResponse(
             "Admission fee payment required before account creation."
         )
 
+    student = Student.objects.filter(
+        admission_no=application.application_number
+    ).first()
 
-    # Check if student account already exists
-    if not hasattr(application, "student"):
-
+    if not student:
         return HttpResponse(
             "Student account has not been created yet."
         )
-
-
-    student = application.student
-
 
     return render(
         request,
@@ -887,5 +914,6 @@ def student_login_details(request, token):
             "application": application,
             "student": student,
             "school": application.school,
+             "password": application.student_password,
         }
     )

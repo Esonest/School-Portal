@@ -162,7 +162,18 @@ class Invoice(models.Model):
         super().save(*args, **kwargs)
 
     def __str__(self):
-        return f"{self.student} - {self.title} ({self.session} T{self.term})"
+
+        if self.student:
+            name = str(self.student)
+
+        elif self.admission_application:
+            name = self.admission_application.student_name
+   
+        else:
+            name = "Unknown"
+
+        return f"{name} - {self.title} ({self.session} T{self.term})"
+
 
     
 
