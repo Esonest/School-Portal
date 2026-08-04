@@ -65,7 +65,10 @@ def exam_list(request):
 @login_required
 def start_exam_page(request, exam_id):
 
-    exam = get_object_or_404(CBTExam, id=exam_id)
+    exam = get_object_or_404(
+        CBTExam,
+        id=exam_id
+    )
 
     student = None
     application = None
@@ -82,7 +85,9 @@ def start_exam_page(request, exam_id):
         )
 
         if not application_id:
-            raise Http404("Candidate not found")
+            raise Http404(
+                "Candidate not found"
+            )
 
         application = get_object_or_404(
             AdmissionApplication,
@@ -96,20 +101,17 @@ def start_exam_page(request, exam_id):
 
         school = application.school
 
+        # ✅ Candidate has viewed the instruction page
+        request.session["exam_instruction_viewed"] = True
 
     # ==============================
     # NORMAL STUDENT EXAM
     # ==============================
     else:
 
-        student = getattr(
-            request.user,
-            "student_profile",
-            None
-        ) or getattr(
-            request.user,
-            "student",
-            None
+        student = (
+            getattr(request.user, "student_profile", None)
+            or getattr(request.user, "student", None)
         )
 
         if not student:
@@ -124,11 +126,10 @@ def start_exam_page(request, exam_id):
 
         school = student.school
 
-
     already_taken = (
-        submission and submission.completed_on is not None
+        submission is not None
+        and submission.completed_on is not None
     )
-
 
     return render(
         request,
@@ -142,8 +143,6 @@ def start_exam_page(request, exam_id):
             "school": school,
         }
     )
-
-
 # --------------------------------------
 # 🧠 Start Exam Action (Single Attempt Only)
 # --------------------------------------
@@ -949,18 +948,29 @@ def start_admission_exam(request, exam_id):
         exam_type="admission"
     )
 
+
+    # Ensure candidate read instructions first
+    if not request.session.get(
+        "exam_instruction_viewed"
+    ):
+        return redirect(
+            "cbt:start_exam_page",
+            exam_id=exam.id
+        )
+
+
     application = get_object_or_404(
         AdmissionApplication,
-        id=request.session.get("admission_application_id")
+        id=request.session.get(
+            "admission_application_id"
+        )
     )
 
-    print("APPLICATION SCHOOL:", application.school)
-    print("EXAM SCHOOL:", exam.school)
+
     submission, created = CBTSubmission.objects.get_or_create(
         admission_candidate=application,
         exam=exam
     )
-
 
 
     if submission.completed_on:
@@ -980,15 +990,28 @@ def start_admission_exam(request, exam_id):
     random.shuffle(question_order)
 
 
+    exam_start_time = timezone.now().isoformat()
+
+
     submission.raw_answers["_question_order"] = question_order
-    submission.raw_answers["_exam_start_time"] = timezone.now().isoformat()
+    submission.raw_answers["_exam_start_time"] = exam_start_time
+
     submission.save(
-        update_fields=["raw_answers"]
+        update_fields=[
+            "raw_answers"
+        ]
     )
 
 
     request.session["question_order"] = question_order
-    request.session["exam_start_time"] = timezone.now().isoformat()
+    request.session["exam_start_time"] = exam_start_time
+
+
+    # remove instruction flag after starting
+    request.session.pop(
+        "exam_instruction_viewed",
+        None
+    )
 
 
     return redirect(

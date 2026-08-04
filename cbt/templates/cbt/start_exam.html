@@ -23,25 +23,187 @@
 
     <div class="border-t border-gray-200 mb-6"></div>
 
-    <!-- Exam Header -->
-    <div class="text-center mb-5">
-      <h1 class="text-2xl font-semibold text-gray-800">{{ exam.subject.name }} CBT</h1>
-      <p class="text-gray-600 mt-2">
-        {% if admission_mode %}
+   <!-- Exam Header -->
+<div class="text-center mb-6">
 
-<strong>Candidate:</strong> {{ application.student_name }} <br>
+    <h1 class="text-3xl font-bold text-gray-800">
+        {{ exam.subject.name }} CBT Examination
+    </h1>
 
-<strong>Class Applying For:</strong> {{ application.class_applying_for }}
+    <p class="text-gray-500 mt-2">
+        Please verify your details before starting the examination.
+    </p>
+
+</div>
+
+
+{% if admission_mode %}
+
+<div class="bg-white border border-blue-200 rounded-xl overflow-hidden mb-6">
+
+    <div class="bg-blue-700 text-white px-5 py-3 font-semibold">
+        Candidate Information
+    </div>
+
+    <div class="p-5">
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
+
+            <!-- Passport -->
+            <div class="text-center">
+
+                {% if application.passport %}
+
+                    <img
+                        src="{{ application.passport.url }}"
+                        class="w-32 h-32 rounded-xl object-cover mx-auto border shadow">
+
+                {% else %}
+
+                    <img
+                        src="{% static 'images/default-avatar.png' %}"
+                        class="w-32 h-32 rounded-xl object-cover mx-auto border shadow">
+
+                {% endif %}
+
+            </div>
+
+            <!-- Details -->
+            <div class="md:col-span-2">
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-y-3 gap-x-8">
+
+                    <div>
+                        <span class="font-semibold">Candidate:</span><br>
+                        {{ application.student_name }}
+                    </div>
+
+                    <div>
+                        <span class="font-semibold">Application No:</span><br>
+                        {{ application.application_number }}
+                    </div>
+
+                    <div>
+                        <span class="font-semibold">Gender:</span><br>
+                        {{ application.gender }}
+                    </div>
+
+                    <div>
+                        <span class="font-semibold">Date of Birth:</span><br>
+                        {{ application.date_of_birth }}
+                    </div>
+
+                    <div>
+                        <span class="font-semibold">Class Applying For:</span><br>
+
+                        {% if application.class_applying_for %}
+                            {{ application.class_applying_for}}
+                        {% else %}
+                            Not Assigned
+                        {% endif %}
+
+                    </div>
+
+                    <div>
+                        <span class="font-semibold">Admission Session:</span><br>
+                        {{ application.admission_session }}
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
 
 {% else %}
 
-<strong>Student:</strong> {{ request.user.get_full_name }} <br>
+<div class="bg-white border border-green-200 rounded-xl overflow-hidden mb-6">
 
-<strong>Class:</strong> {{ student.school_class }}
+    <div class="bg-green-700 text-white px-5 py-3 font-semibold">
+        Student Information
+    </div>
+
+    <div class="p-5">
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 items-center">
+
+            <!-- Passport -->
+
+            <div class="text-center">
+
+                {% if student.photo %}
+
+                    <img
+                        src="{{ student.photo.url }}"
+                        class="w-32 h-32 rounded-xl object-cover mx-auto border shadow">
+
+                {% else %}
+
+                    <img
+                        src="{% static 'images/default-avatar.png' %}"
+                        class="w-32 h-32 rounded-xl object-cover mx-auto border shadow">
+
+                {% endif %}
+
+            </div>
+
+            <!-- Details -->
+
+            <div class="md:col-span-2">
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-y-3 gap-x-8">
+
+                    <div>
+
+                        <span class="font-semibold">Student:</span><br>
+
+                        {{ request.user.get_full_name }}
+
+                    </div>
+
+                    <div>
+
+                        <span class="font-semibold">Admission No:</span><br>
+
+                        {{ student.admission_no }}
+
+                    </div>
+
+                    <div>
+
+                        <span class="font-semibold">Class:</span><br>
+
+                        {% if student.school_class %}
+                            {{ student.school_class }}
+                        {% else %}
+                            Not Assigned
+                        {% endif %}
+
+                    </div>
+
+                    <div>
+
+                        <span class="font-semibold">Session:</span><br>
+
+                        {{ student.session }}
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
 
 {% endif %}
-      </p>
-    </div>
 
     <!-- Exam Details -->
     <div class="bg-blue-50 rounded-xl p-5 mb-6">
@@ -98,9 +260,34 @@
 
 {% endif %}
         {% csrf_token %}
-        <button class="w-full bg-blue-700 hover:bg-blue-800 text-white font-semibold py-3 rounded-lg shadow-md transition duration-300">
-          Start Exam
-        </button>
+
+        <div class="bg-yellow-50 border border-yellow-300 rounded-xl p-4 mb-6">
+
+    <label class="flex items-start gap-3 cursor-pointer">
+
+        <input
+            type="checkbox"
+            id="agreeCheckbox"
+            class="mt-1 w-5 h-5 text-blue-600 rounded">
+
+        <span class="text-gray-700">
+
+            I have verified that my personal details are correct, have read all the examination instructions, and understand that once I click <strong>Begin Examination</strong>, the timer will start immediately and the examination cannot be restarted.
+
+        </span>
+
+    </label>
+
+</div>
+        <button
+    id="startExamBtn"
+    type="submit"
+    disabled
+    class="w-full bg-gray-400 cursor-not-allowed text-white font-bold text-lg py-4 rounded-xl shadow transition">
+
+    Begin Examination
+
+</button>
       </form>
     {% endif %}
   </div>
@@ -114,5 +301,78 @@
       animation: fadeIn 0.5s ease-in-out;
     }
   </style>
+
+  <script>
+
+const checkbox = document.getElementById("agreeCheckbox");
+const button = document.getElementById("startExamBtn");
+
+if (checkbox && button) {
+
+    checkbox.addEventListener("change", function () {
+
+        if (this.checked) {
+
+            button.disabled = false;
+
+            button.classList.remove(
+                "bg-gray-400",
+                "cursor-not-allowed"
+            );
+
+            button.classList.add(
+                "bg-green-600",
+                "hover:bg-green-700"
+            );
+
+        } else {
+
+            button.disabled = true;
+
+            button.classList.remove(
+                "bg-green-600",
+                "hover:bg-green-700"
+            );
+
+            button.classList.add(
+                "bg-gray-400",
+                "cursor-not-allowed"
+            );
+
+        }
+
+    });
+
+    button.addEventListener("click", function () {
+
+        button.disabled = true;
+
+        button.innerHTML = `
+            <svg class="animate-spin h-5 w-5 inline mr-2"
+                 xmlns="http://www.w3.org/2000/svg"
+                 fill="none"
+                 viewBox="0 0 24 24">
+                <circle
+                    class="opacity-25"
+                    cx="12"
+                    cy="12"
+                    r="10"
+                    stroke="currentColor"
+                    stroke-width="4">
+                </circle>
+                <path
+                    class="opacity-75"
+                    fill="currentColor"
+                    d="M4 12a8 8 0 018-8v8H4z">
+                </path>
+            </svg>
+            Preparing Examination...
+        `;
+
+    });
+
+}
+
+</script>
 </body>
 </html>

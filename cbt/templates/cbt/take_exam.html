@@ -524,7 +524,90 @@ document.addEventListener("DOMContentLoaded", () => {
   setInterval(updateTimer, 1000);
 });
 </script>
+<script>
 
+  /* ============================
+   SIMPLE CLIENT SIDE ANTI-CHEAT
+============================ */
+
+let examLeft = false;
+
+
+function leaveExamSubmit(){
+
+    if(examLeft){
+        return;
+    }
+
+    examLeft = true;
+
+    autoSubmitExam();
+
+}
+
+
+/*
+   Detect switching tab,
+   minimizing browser,
+   changing application
+*/
+document.addEventListener(
+    "visibilitychange",
+    function(){
+
+        if(document.visibilityState === "hidden"){
+
+            leaveExamSubmit();
+
+        }
+
+    }
+);
+
+
+/*
+   Detect closing tab,
+   refreshing,
+   leaving page
+*/
+window.addEventListener(
+    "beforeunload",
+    function(){
+
+        leaveExamSubmit();
+
+    }
+);
+
+
+/*
+   Detect clicking outside browser
+*/
+window.addEventListener(
+    "blur",
+    function(){
+
+        leaveExamSubmit();
+
+    }
+);
+
+document.addEventListener("contextmenu", function(e){
+    e.preventDefault();
+});
+
+document.addEventListener("keydown", function(e){
+
+    if(
+        e.key === "F12" ||
+        (e.ctrlKey && e.shiftKey && e.key === "I") ||
+        (e.ctrlKey && e.key === "r")
+    ){
+        e.preventDefault();
+    }
+
+});
+</script>
 
 
 <style>
