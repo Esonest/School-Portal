@@ -524,91 +524,104 @@ document.addEventListener("DOMContentLoaded", () => {
   setInterval(updateTimer, 1000);
 });
 </script>
+
 <script>
 
-  /* ============================
-   SIMPLE CLIENT SIDE ANTI-CHEAT
-============================ */
 
-let examLeft = false;
+  /* ===================================
+   CLIENT SIDE ANTI-CHEAT
+=================================== */
 
+let examEnded = false;
 
-function leaveExamSubmit(){
+function terminateExam(reason) {
 
-    if(examLeft){
-        return;
-    }
+    if (examEnded) return;
 
-    examLeft = true;
+    examEnded = true;
+
+    alert(reason);
 
     autoSubmitExam();
-
 }
 
 
-/*
-   Detect switching tab,
-   minimizing browser,
-   changing application
-*/
-document.addEventListener(
-    "visibilitychange",
-    function(){
-
-        if(document.visibilityState === "hidden"){
-
-            leaveExamSubmit();
-
-        }
-
-    }
-);
-
-
-/*
-   Detect closing tab,
-   refreshing,
-   leaving page
-*/
-window.addEventListener(
-    "beforeunload",
-    function(){
-
-        leaveExamSubmit();
-
-    }
-);
-
-
-/*
-   Detect clicking outside browser
-*/
-window.addEventListener(
-    "blur",
-    function(){
-
-        leaveExamSubmit();
-
-    }
-);
-
+/* Prevent right click */
 document.addEventListener("contextmenu", function(e){
     e.preventDefault();
 });
 
+
+/* Prevent common shortcuts */
 document.addEventListener("keydown", function(e){
 
     if(
         e.key === "F12" ||
         (e.ctrlKey && e.shiftKey && e.key === "I") ||
-        (e.ctrlKey && e.key === "r")
+        (e.ctrlKey && e.shiftKey && e.key === "J") ||
+        (e.ctrlKey && e.shiftKey && e.key === "C") ||
+        (e.ctrlKey && e.key === "U") ||
+        (e.ctrlKey && e.key === "S") ||
+        (e.ctrlKey && e.key === "P")
     ){
         e.preventDefault();
     }
 
 });
-</script>
 
+
+/* Detect switching tabs */
+document.addEventListener("visibilitychange", function(){
+
+    if(document.hidden){
+        terminateExam(
+            "Exam ended because you left the examination page."
+        );
+    }
+
+});
+
+
+/* Window loses focus */
+window.addEventListener("blur", function(){
+
+    terminateExam(
+        "Exam ended because another application or tab became active."
+    );
+
+});
+
+
+/* Prevent copy */
+document.addEventListener("copy", function(e){
+    e.preventDefault();
+});
+
+
+/* Prevent cut */
+document.addEventListener("cut", function(e){
+    e.preventDefault();
+});
+
+
+/* Prevent paste */
+document.addEventListener("paste", function(e){
+    e.preventDefault();
+});
+
+
+/* Dragging disabled */
+document.addEventListener("dragstart", function(e){
+    e.preventDefault();
+});
+
+
+/* Text selection disabled */
+document.addEventListener("selectstart", function(e){
+    e.preventDefault();
+});
+
+</script>
 
 <style>
 @keyframes fadeIn {

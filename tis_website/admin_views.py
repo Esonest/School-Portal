@@ -16,9 +16,10 @@ from django.template.loader import get_template
 from xhtml2pdf import pisa
 from io import BytesIO
 from .utils import send_admission_email, send_admission_whatsapp
+from results.utils import portal_required
 
 
-
+@portal_required("websiteManagement")
 @login_required
 @website_admin_required
 def website_dashboard(request):

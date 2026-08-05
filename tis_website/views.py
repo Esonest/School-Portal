@@ -25,6 +25,7 @@ import string
 from finance.utils import calculate_paystack_fee, send_school_payment_notification
 from django.contrib import messages
 import requests
+from results.utils import portal_required
 
 
 
@@ -464,6 +465,10 @@ def accept_admission(request, token):
             )
 
 
+           # =====================================
+# ENSURE CLASS EXISTS
+# =====================================
+
 
             student = Student.objects.create(
 
@@ -475,7 +480,7 @@ def accept_admission(request, token):
 
                 # Temporary student
                 # Class assigned after payment confirmation
-                school_class=None,
+                school_class=application.class_applying_for,
 
                 dob=application.date_of_birth,
 

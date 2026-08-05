@@ -60,6 +60,7 @@ def get_user_role_access(user):
 # ------------------------
 # Teacher / Student dashboard
 # ------------------------
+@portal_required("assignments")
 @login_required
 def dashboard(request):
 

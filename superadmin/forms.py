@@ -373,5 +373,7 @@ class SchoolPortalSettingForm(forms.ModelForm):
                 "assignments_enabled",
                 "announcement_enabled",
                 "liveclass_enabled",
+                "websiteManagement_enabled",
+                "visitSchoolWebsite_enabled",
             ]
         }

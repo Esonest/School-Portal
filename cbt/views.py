@@ -645,8 +645,6 @@ def submit_exam(request, exam_id):
 
         application = submission.admission_candidate
 
-    if application:
-
         application.exam_completed = True
         application.exam_score = submission.percentage
 

@@ -10,7 +10,7 @@ def send_student_login_details(application):
 
 
     portal_link = (
-        "https://yourdomain.com/student/login/"
+        "https://techcenter-p2au.onrender.com/login/"
     )
 
 

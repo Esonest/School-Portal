@@ -28,6 +28,12 @@ class SchoolPortalSetting(models.Model):
     assignments_enabled = models.BooleanField(default=True)
     announcement_enabled = models.BooleanField(default=True)
     liveclass_enabled = models.BooleanField(default=True)
+    websiteManagement_enabled = models.BooleanField(default=True)
+    visitSchoolWebsite_enabled = models.BooleanField(default=True)
+
+
+    
+                
 
     updated_at = models.DateTimeField(auto_now=True)
 
