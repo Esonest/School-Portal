@@ -37,7 +37,7 @@ window.MathJax = {
   data-exam-id="{{ exam.id }}"
   data-question-number="{{ current_question_number }}"
   data-total-questions="{{ total_questions }}"
-  data-student-id="{{ request.user.id }}">
+  data-student-id="{% if is_admission %}{{ application.id }}{% else %}{{ student.id }}{% endif %}">
 
   {% block content %}{% endblock %}
   {% block extra_js %}{% endblock %}
@@ -48,6 +48,50 @@ window.MathJax = {
       MathJax.typesetPromise();
     }
   });
+</script>
+
+<script>
+
+// Disable right click
+document.addEventListener(
+"contextmenu",
+function(e){
+    e.preventDefault();
+});
+
+
+// Disable common inspection shortcuts
+document.addEventListener(
+"keydown",
+function(e){
+
+    if(
+        e.key === "F12" ||
+        (e.ctrlKey && e.shiftKey && e.key === "I") ||
+        (e.ctrlKey && e.shiftKey && e.key === "J") ||
+        (e.ctrlKey && e.key === "r")
+    ){
+        e.preventDefault();
+    }
+
+});
+
+
+// Detect leaving exam tab
+document.addEventListener(
+"visibilitychange",
+function(){
+
+    if(document.hidden){
+
+        console.log("Student left exam page");
+
+        // later we can connect this to auto submit
+
+    }
+
+});
+
 </script>
 
 

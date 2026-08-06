@@ -803,6 +803,16 @@ Your child {admission.student_name} has been scheduled for the Admission CBT Exa
 School:
 {admission.school.name}
 
+
+Academic Session:
+{admission.admission_session}
+
+Term:
+{admission.get_admission_term_display()}
+
+Resumption Date:
+{admission.resume_date:%d %B %Y}
+
 Examination:
 {admission.admission_exam.title}
 
@@ -855,6 +865,15 @@ has been scheduled for the Admission CBT Examination.
 {admission.school.name}
 </p>
 
+Academic Session:
+{admission.admission_session}
+
+Term:
+{admission.get_admission_term_display()}
+
+Resumption Date:
+{admission.resume_date:%d %B %Y}
+
 
 <p>
 <strong>Examination:</strong>
@@ -881,12 +900,6 @@ Start Admission Examination
 </a>
 </p>
 
-
-<p>
-Exam Link:
-<br>
-{exam_link}
-</p>
 
 
 <p>

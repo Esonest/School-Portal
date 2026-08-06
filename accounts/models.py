@@ -38,7 +38,15 @@ class School(models.Model):
         blank=True,
         null=True,
     )
-
+    principal_name = models.CharField(
+        max_length=150,
+        blank=True
+    )
+    school_stamp = models.ImageField(
+        upload_to="school/stamps/",
+        blank=True,
+        null=True
+    )
     theme_color = models.CharField(
         max_length=20,
         choices=COLOR_CHOICES,

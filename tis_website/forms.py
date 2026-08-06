@@ -719,8 +719,43 @@ class AdmissionExamAssignmentForm(forms.ModelForm):
         empty_label="Select Admission Exam",
         widget=forms.Select(
             attrs={
-                "class":
-                "w-full border rounded-xl p-3"
+                "class": "w-full border rounded-xl p-3"
+            }
+        )
+    )
+
+
+    admission_session = forms.ChoiceField(
+        choices=[],
+        widget=forms.Select(
+            attrs={
+                "class": "w-full border rounded-xl p-3"
+            }
+        )
+    )
+
+
+    admission_term = forms.ChoiceField(
+        required=True,
+        choices=[
+            ("1", "First Term"),
+            ("2", "Second Term"),
+            ("3", "Third Term"),
+        ],
+        widget=forms.Select(
+            attrs={
+                "class": "w-full border rounded-xl p-3"
+            }
+        )
+    )
+
+
+    resume_date = forms.DateField(
+        required=True,
+        widget=forms.DateInput(
+            attrs={
+                "type": "date",
+                "class": "w-full border rounded-xl p-3"
             }
         )
     )
@@ -730,7 +765,10 @@ class AdmissionExamAssignmentForm(forms.ModelForm):
         model = AdmissionApplication
 
         fields = [
-            "admission_exam"
+            "admission_exam",
+            "admission_session",
+            "admission_term",
+            "resume_date",
         ]
 
 
@@ -738,9 +776,21 @@ class AdmissionExamAssignmentForm(forms.ModelForm):
 
         super().__init__(*args, **kwargs)
 
+
         if school:
 
             self.fields["admission_exam"].queryset = CBTExam.objects.filter(
                 school=school,
                 exam_type="admission"
             )
+
+
+        # Dynamic academic sessions
+        from results.utils import SESSION_LIST
+
+        self.fields["admission_session"].choices = [
+            ("", "Select Academic Session")
+        ] + [
+            (session, session)
+            for session in SESSION_LIST
+        ]

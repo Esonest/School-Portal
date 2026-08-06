@@ -56,7 +56,6 @@ Portal Link:
 
 
 
-Please change the password after your first login.
 
 
 

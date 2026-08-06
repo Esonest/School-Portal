@@ -719,7 +719,20 @@ class AdmissionApplication(models.Model):
         null=True
     )
 
+    resume_date = models.DateField(
+        null=True,
+        blank=True
+    )
 
+    admission_session = models.CharField(
+        max_length=50,
+        blank=True
+    )
+
+    admission_term = models.CharField(
+        max_length=50,
+        blank=True
+    )
     # ==========================
     # TIMESTAMPS
     # ==========================
