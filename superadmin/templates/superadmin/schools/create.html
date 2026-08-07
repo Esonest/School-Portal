@@ -1,190 +1,595 @@
+```html
 {% extends "accounts/base.html" %}
 {% load static %}
+
 {% block content %}
 
-<div class="max-w-4xl mx-auto px-4 sm:px-6 py-6">
+<div class="max-w-5xl mx-auto px-4 sm:px-6 py-6">
 
-<form method="POST" enctype="multipart/form-data" class="space-y-6">
-    {% csrf_token %}
+    <form method="POST"
+          enctype="multipart/form-data"
+          class="space-y-6">
 
-    <!-- Live Preview -->
-    <div class="p-4 border rounded bg-gray-50">
-        <p class="text-sm text-gray-500 mb-2">Live Preview</p>
+        {% csrf_token %}
 
-        <div class="flex flex-col sm:flex-row items-center gap-4">
+        <!-- ========================================= -->
+        <!-- LIVE PREVIEW -->
+        <!-- ========================================= -->
 
-            <!-- Logo Preview -->
-            <img
-                id="logo-preview"
-                src="{% if form.instance.logo %}{{ form.instance.logo.url }}{% else %}{% static 'img/school_logos/default_logo.png' %}{% endif %}"
-                alt="Logo"
-                class="h-20 w-20 sm:h-24 sm:w-24 object-contain border rounded bg-white"
-            >
+        <div class="p-5 border rounded-2xl bg-gray-50">
 
-            <!-- School Name -->
-            <h2
-                id="school-name-preview"
-                class="text-2xl font-bold text-indigo-600 text-center sm:text-left"
-            >
-                {{ form.name.value|default:"School Name" }}
-            </h2>
-
-            <!-- Principal Signature Preview -->
-            <img
-                id="signature-preview"
-                src="{% if form.instance.principal_signature %}{{ form.instance.principal_signature.url }}{% else %}{% static 'img/schools/default_signature.png' %}{% endif %}"
-                alt="Signature"
-                class="h-16 w-28 object-contain"
-            >
-        </div>
-    </div>
-
-    <!-- Form fields -->
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-        <div>
-            {{ form.name.label_tag }}
-            {{ form.name }}
-        </div>
-
-        <div>
-            {{ form.address.label_tag }}
-            {{ form.address }}
-        </div>
-
-        <div>
-            {{ form.motto.label_tag }}
-            {{ form.motto }}
-        </div>
-
-        <div>
-            {{ form.theme_color.label_tag }}
-            {{ form.theme_color }}
-        </div>
-
-        <div>
-            {{ form.logo.label_tag }}
-            {{ form.logo }}
-        </div>
-
-
-
-        <div>
-    {{ form.admission_prefix.label_tag }}
-    {{ form.admission_prefix }}
-    <p class="text-xs text-gray-500 mt-1">
-        Prefix used when generating admission numbers (e.g. TIS, EVTL, GGSS).
-    </p>
-</div>
-
-<div>
-    {{ form.admission_fee.label_tag }}
-    {{ form.admission_fee }}
-    <p class="text-xs text-gray-500 mt-1">
-        Amount every successful admission candidate pays before completing registration.
-    </p>
-</div>
-
-
-        <!-- Notification Email -->
-<div>
-    {{ form.notification_email.label_tag }}
-    {{ form.notification_email }}
-    <p class="text-xs text-gray-500 mt-1">
-        Email used for sending school notifications.
-    </p>
-</div>
-
-<!-- WhatsApp Number -->
-<div>
-    {{ form.whatsapp_number.label_tag }}
-    {{ form.whatsapp_number }}
-    <p class="text-xs text-gray-500 mt-1">
-        School WhatsApp number for messaging.
-    </p>
-</div>
-
-<!-- Email Enabled -->
-<div class="flex items-center gap-2">
-    {{ form.email_enabled }}
-    {{ form.email_enabled.label_tag }}
-</div>
-
-<!-- WhatsApp Enabled -->
-<div class="flex items-center gap-2">
-    {{ form.whatsapp_enabled }}
-    {{ form.whatsapp_enabled.label_tag }}
-</div>
-        <div>
-            {{ form.principal_signature.label_tag }}
-            {{ form.principal_signature }}
-        </div>
-
-        <!-- Paystack Keys -->
-        <div>
-            {{ form.paystack_public_key.label_tag }}
-            {{ form.paystack_public_key }}
-             <p class="text-xs text-gray-500 mt-1">
-                Enter the Paystack <strong>Secret Key</strong> for this school. Used for server-side verification. Keep this private.
+            <p class="text-sm text-gray-500 mb-4">
+                Live Preview
             </p>
+
+            <div class="flex flex-col sm:flex-row
+                        items-center justify-center
+                        gap-6">
+
+                <!-- LOGO -->
+
+                <div class="text-center">
+
+                    <img
+                        id="logo-preview"
+                        src="{% if form.instance.logo %}
+                                {{ form.instance.logo.url }}
+                             {% else %}
+                                {% static 'img/school_logos/default_logo.png' %}
+                             {% endif %}"
+                        alt="School Logo"
+                        class="h-24 w-24 object-contain
+                               border rounded-xl bg-white mx-auto"
+                    >
+
+                    <p class="text-xs text-gray-500 mt-2">
+                        School Logo
+                    </p>
+
+                </div>
+
+
+                <!-- SCHOOL NAME -->
+
+                <div class="text-center">
+
+                    <h2
+                        id="school-name-preview"
+                        class="text-2xl font-bold text-indigo-600"
+                    >
+                        {{ form.name.value|default:"School Name" }}
+                    </h2>
+
+                    <p class="text-sm text-gray-500 mt-1">
+                        {{ form.motto.value|default:"School Motto" }}
+                    </p>
+
+                </div>
+
+
+                <!-- PRINCIPAL SIGNATURE -->
+
+                <div class="text-center">
+
+                    <img
+                        id="signature-preview"
+                        src="{% if form.instance.principal_signature %}
+                                {{ form.instance.principal_signature.url }}
+                             {% else %}
+                                {% static 'img/schools/default_signature.png' %}
+                             {% endif %}"
+                        alt="Principal Signature"
+                        class="h-16 w-32 object-contain mx-auto"
+                    >
+
+                    <p class="text-xs text-gray-500 mt-2">
+                        Principal Signature
+                    </p>
+
+                </div>
+
+
+                <!-- SCHOOL STAMP -->
+
+                <div class="text-center">
+
+                    <img
+                        id="stamp-preview"
+                        src="{% if form.instance.school_stamp %}
+                                {{ form.instance.school_stamp.url }}
+                             {% else %}
+                                {% static 'img/schools/default_stamp.png' %}
+                             {% endif %}"
+                        alt="School Stamp"
+                        class="h-24 w-24 object-contain mx-auto"
+                    >
+
+                    <p class="text-xs text-gray-500 mt-2">
+                        School Stamp
+                    </p>
+
+                </div>
+
+            </div>
+
         </div>
 
-        <div>
-            {{ form.paystack_secret_key.label_tag }}
-            {{ form.paystack_secret_key }}
+
+        <!-- ========================================= -->
+        <!-- SCHOOL INFORMATION -->
+        <!-- ========================================= -->
+
+        <div class="bg-white border rounded-2xl p-5">
+
+            <h3 class="text-lg font-bold text-gray-800 mb-4">
+                School Information
+            </h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                <div>
+                    {{ form.name.label_tag }}
+                    {{ form.name }}
+
+                    {% for error in form.name.errors %}
+                        <p class="text-red-500 text-sm">
+                            {{ error }}
+                        </p>
+                    {% endfor %}
+                </div>
+
+
+                <div>
+                    {{ form.address.label_tag }}
+                    {{ form.address }}
+                </div>
+
+
+                <div>
+                    {{ form.motto.label_tag }}
+                    {{ form.motto }}
+                </div>
+
+
+                <div>
+                    {{ form.theme_color.label_tag }}
+                    {{ form.theme_color }}
+                </div>
+
+
+                <div>
+                    {{ form.logo.label_tag }}
+                    {{ form.logo }}
+                </div>
+
+            </div>
+
         </div>
 
-    </div>
 
-    <button type="submit" class="mt-4 px-4 py-2 rounded bg-indigo-600 text-white">
-        Save School
-    </button>
-</form>
+        <!-- ========================================= -->
+        <!-- PRINCIPAL INFORMATION -->
+        <!-- ========================================= -->
+
+        <div class="bg-white border rounded-2xl p-5">
+
+            <h3 class="text-lg font-bold text-gray-800 mb-4">
+                School Administration
+            </h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                <!-- Principal Name -->
+
+                <div>
+
+                    {{ form.principal_name.label_tag }}
+
+                    {{ form.principal_name }}
+
+                    <p class="text-xs text-gray-500 mt-1">
+                        Name of the principal/head of school.
+                    </p>
+
+                </div>
+
+
+                <!-- Principal Signature -->
+
+                <div>
+
+                    {{ form.principal_signature.label_tag }}
+
+                    {{ form.principal_signature }}
+
+                    <p class="text-xs text-gray-500 mt-1">
+                        Upload the principal's signature.
+                    </p>
+
+                </div>
+
+
+                <!-- School Stamp -->
+
+                <div>
+
+                    {{ form.school_stamp.label_tag }}
+
+                    {{ form.school_stamp }}
+
+                    <p class="text-xs text-gray-500 mt-1">
+                        Upload the official school stamp.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- ========================================= -->
+        <!-- ADMISSION SETTINGS -->
+        <!-- ========================================= -->
+
+        <div class="bg-white border rounded-2xl p-5">
+
+            <h3 class="text-lg font-bold text-gray-800 mb-4">
+                Admission Settings
+            </h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                <div>
+
+                    {{ form.admission_prefix.label_tag }}
+
+                    {{ form.admission_prefix }}
+
+                    <p class="text-xs text-gray-500 mt-1">
+                        Prefix used when generating admission numbers.
+                        Example: TIS, EVTL or GGSS.
+                    </p>
+
+                </div>
+
+
+                <div>
+
+                    {{ form.admission_fee.label_tag }}
+
+                    {{ form.admission_fee }}
+
+                    <p class="text-xs text-gray-500 mt-1">
+                        Admission fee paid by successful admission candidates.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- ========================================= -->
+        <!-- NOTIFICATION SETTINGS -->
+        <!-- ========================================= -->
+
+        <div class="bg-white border rounded-2xl p-5">
+
+            <h3 class="text-lg font-bold text-gray-800 mb-4">
+                Notification Settings
+            </h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                <div>
+
+                    {{ form.notification_email.label_tag }}
+
+                    {{ form.notification_email }}
+
+                    <p class="text-xs text-gray-500 mt-1">
+                        Email used for school notifications.
+                    </p>
+
+                </div>
+
+
+                <div>
+
+                    {{ form.whatsapp_number.label_tag }}
+
+                    {{ form.whatsapp_number }}
+
+                    <p class="text-xs text-gray-500 mt-1">
+                        School WhatsApp number.
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="flex flex-col sm:flex-row gap-5 mt-5">
+
+                <label class="flex items-center gap-2">
+
+                    {{ form.email_enabled }}
+
+                    <span>
+                        Enable Email Notifications
+                    </span>
+
+                </label>
+
+
+                <label class="flex items-center gap-2">
+
+                    {{ form.whatsapp_enabled }}
+
+                    <span>
+                        Enable WhatsApp Notifications
+                    </span>
+
+                </label>
+
+            </div>
+
+        </div>
+
+
+        <!-- ========================================= -->
+        <!-- PAYMENT SETTINGS -->
+        <!-- ========================================= -->
+
+        <div class="bg-white border rounded-2xl p-5">
+
+            <h3 class="text-lg font-bold text-gray-800 mb-4">
+                Payment Settings
+            </h3>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+
+                <div>
+
+                    {{ form.paystack_public_key.label_tag }}
+
+                    {{ form.paystack_public_key }}
+
+                    <p class="text-xs text-gray-500 mt-1">
+                        Paystack Public Key used for frontend transactions.
+                    </p>
+
+                </div>
+
+
+                <div>
+
+                    {{ form.paystack_secret_key.label_tag }}
+
+                    {{ form.paystack_secret_key }}
+
+                    <p class="text-xs text-gray-500 mt-1">
+                        Paystack Secret Key used for server-side verification.
+                        Keep this private.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- ========================================= -->
+        <!-- SAVE -->
+        <!-- ========================================= -->
+
+        <div class="flex justify-end">
+
+            <button
+                type="submit"
+                class="px-6 py-3 rounded-xl
+                       bg-indigo-600 text-white
+                       font-semibold hover:bg-indigo-700
+                       transition"
+            >
+                Save School
+            </button>
+
+        </div>
+
+    </form>
+
 </div>
+
 
 <script>
-    const nameInput = document.getElementById("school-name-input");
-    const namePreview = document.getElementById("school-name-preview");
-    const colorSelect = document.getElementById("theme-color-select");
 
-    const logoInput = document.getElementById("id_logo");
-    const logoPreview = document.getElementById("logo-preview");
+    // =========================================
+    // ELEMENTS
+    // =========================================
 
-    const signatureInput = document.getElementById("id_principal_signature");
-    const signaturePreview = document.getElementById("signature-preview");
+    const nameInput =
+        document.getElementById("school-name-input");
+
+    const namePreview =
+        document.getElementById("school-name-preview");
+
+    const colorSelect =
+        document.getElementById("theme-color-select");
+
+    const logoInput =
+        document.getElementById("id_logo");
+
+    const logoPreview =
+        document.getElementById("logo-preview");
+
+    const signatureInput =
+        document.getElementById("id_principal_signature");
+
+    const signaturePreview =
+        document.getElementById("signature-preview");
+
+    const stampInput =
+        document.getElementById("id_school_stamp");
+
+    const stampPreview =
+        document.getElementById("stamp-preview");
+
+
+    // =========================================
+    // SCHOOL NAME / COLOR
+    // =========================================
 
     function updatePreview() {
-        // Name
-        namePreview.textContent = nameInput.value || "School Name";
 
-        // Color
-        const color = colorSelect.value || "indigo";
-        namePreview.className = `text-2xl font-bold text-${color}-600`;
+        if (nameInput && namePreview) {
+
+            namePreview.textContent =
+                nameInput.value || "School Name";
+
+        }
+
+        if (colorSelect && namePreview) {
+
+            const color =
+                colorSelect.value || "indigo";
+
+            namePreview.className =
+                `text-2xl font-bold text-${color}-600`;
+
+        }
+
     }
 
-    // Logo preview
-    logoInput.addEventListener("change", function () {
-        if (this.files && this.files[0]) {
-            const reader = new FileReader();
-            reader.onload = e => logoPreview.src = e.target.result;
-            reader.readAsDataURL(this.files[0]);
+
+    // =========================================
+    // IMAGE PREVIEW HELPER
+    // =========================================
+
+    function previewImage(input, preview) {
+
+        if (
+            input &&
+            preview &&
+            input.files &&
+            input.files[0]
+        ) {
+
+            const reader =
+                new FileReader();
+
+            reader.onload = function(e) {
+
+                preview.src =
+                    e.target.result;
+
+            };
+
+            reader.readAsDataURL(
+                input.files[0]
+            );
+
         }
-    });
 
-    // Signature preview
-    signatureInput.addEventListener("change", function () {
-        if (this.files && this.files[0]) {
-            const reader = new FileReader();
-            reader.onload = e => signaturePreview.src = e.target.result;
-            reader.readAsDataURL(this.files[0]);
-        }
-    });
+    }
 
-    nameInput.addEventListener("input", updatePreview);
-    colorSelect.addEventListener("change", updatePreview);
 
-    // Initial render
+    // =========================================
+    // LOGO
+    // =========================================
+
+    if (logoInput) {
+
+        logoInput.addEventListener(
+            "change",
+            function() {
+
+                previewImage(
+                    logoInput,
+                    logoPreview
+                );
+
+            }
+        );
+
+    }
+
+
+    // =========================================
+    // PRINCIPAL SIGNATURE
+    // =========================================
+
+    if (signatureInput) {
+
+        signatureInput.addEventListener(
+            "change",
+            function() {
+
+                previewImage(
+                    signatureInput,
+                    signaturePreview
+                );
+
+            }
+        );
+
+    }
+
+
+    // =========================================
+    // SCHOOL STAMP
+    // =========================================
+
+    if (stampInput) {
+
+        stampInput.addEventListener(
+            "change",
+            function() {
+
+                previewImage(
+                    stampInput,
+                    stampPreview
+                );
+
+            }
+        );
+
+    }
+
+
+    // =========================================
+    // EVENTS
+    // =========================================
+
+    if (nameInput) {
+
+        nameInput.addEventListener(
+            "input",
+            updatePreview
+        );
+
+    }
+
+    if (colorSelect) {
+
+        colorSelect.addEventListener(
+            "change",
+            updatePreview
+        );
+
+    }
+
+
+    // =========================================
+    // INITIAL PREVIEW
+    // =========================================
+
     updatePreview();
+
 </script>
 
 {% endblock %}
+```

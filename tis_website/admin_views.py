@@ -735,10 +735,8 @@ from .forms import AdmissionExamAssignmentForm
 
 
 
+@login_required
 def assign_admission_exam(request, pk):
-
-    print("VIEW HIT")
-    print("METHOD:", request.method)
 
     application = get_object_or_404(
         AdmissionApplication,
@@ -746,10 +744,7 @@ def assign_admission_exam(request, pk):
         school=request.user.school
     )
 
-
     if request.method == "POST":
-
-        print("POST:", request.POST)
 
         form = AdmissionExamAssignmentForm(
             request.POST,
@@ -757,28 +752,26 @@ def assign_admission_exam(request, pk):
             school=request.user.school
         )
 
-
-        print("VALID:", form.is_valid())
-
-
         if form.is_valid():
 
             admission = form.save(commit=False)
-
-            print(
-                "Exam selected:",
-                admission.admission_exam
-            )
-
 
             admission.status = "exam_assigned"
 
             admission.save()
 
+            print("================================")
+            print("ADMISSION EXAM ASSIGNED")
+            print("Application:", admission.application_number)
+            print("Exam:", admission.admission_exam)
+            print("Session:", admission.admission_session)
+            print("Term:", admission.admission_term)
+            print("Resume:", admission.resume_date)
+            print("================================")
 
 
             # ============================================
-            # SEND CBT LINK TO PARENT
+            # EXAM LINK
             # ============================================
 
             exam_link = request.build_absolute_uri(
@@ -794,6 +787,9 @@ def assign_admission_exam(request, pk):
             )
 
 
+            # ============================================
+            # WHATSAPP MESSAGE
+            # ============================================
 
             whatsapp_message = f"""
 Dear {admission.parent_name},
@@ -803,7 +799,6 @@ Your child {admission.student_name} has been scheduled for the Admission CBT Exa
 School:
 {admission.school.name}
 
-
 Academic Session:
 {admission.admission_session}
 
@@ -811,7 +806,7 @@ Term:
 {admission.get_admission_term_display()}
 
 Resumption Date:
-{admission.resume_date:%d %B %Y}
+{admission.resume_date.strftime("%d %B %Y")}
 
 Examination:
 {admission.admission_exam.title}
@@ -838,123 +833,27 @@ Thank you.
 """
 
 
-
-            html_message = f"""
-<html>
-<body style="font-family:Arial,sans-serif;line-height:1.7;">
-
-<h2>
-Admission CBT Examination
-</h2>
-
-
-<p>
-Dear <strong>{admission.parent_name}</strong>,
-</p>
-
-
-<p>
-Your child
-<strong>{admission.student_name}</strong>
-has been scheduled for the Admission CBT Examination.
-</p>
-
-
-<p>
-<strong>School:</strong>
-{admission.school.name}
-</p>
-
-Academic Session:
-{admission.admission_session}
-
-Term:
-{admission.get_admission_term_display()}
-
-Resumption Date:
-{admission.resume_date:%d %B %Y}
-
-
-<p>
-<strong>Examination:</strong>
-{admission.admission_exam.title}
-</p>
-
-
-<p>
-<strong>Duration:</strong>
-{admission.admission_exam.duration_minutes}
-Minutes
-</p>
-
-
-<p>
-<strong>Application Number:</strong>
-{admission.application_number}
-</p>
-
-
-<p>
-<a href="{exam_link}">
-Start Admission Examination
-</a>
-</p>
-
-
-
-<p>
-Track Admission:
-<br>
-{tracking_link}
-</p>
-
-
-<p>
-Thank you.
-<br>
-<strong>{admission.school.name}</strong>
-</p>
-
-
-</body>
-</html>
-"""
-
-
-
             # ============================================
-            # WHATSAPP
+            # SEND WHATSAPP
             # ============================================
 
             try:
 
-                from students.services.whatsapp_service import send_whatsapp_message
-
+                from students.services.whatsapp_service import (
+                    send_whatsapp_message
+                )
 
                 success, response = send_whatsapp_message(
                     admission.parent_phone,
                     message=whatsapp_message
                 )
 
-
-                print(
-                    "WHATSAPP SUCCESS:",
-                    success
-                )
-
-                print(
-                    "WHATSAPP RESPONSE:",
-                    response
-                )
-
+                print("WHATSAPP SUCCESS:", success)
+                print("WHATSAPP RESPONSE:", response)
 
             except Exception as e:
 
-                print(
-                    "WHATSAPP ERROR:",
-                    e
-                )
-
+                print("WHATSAPP ERROR:", e)
 
 
             # ============================================
@@ -963,8 +862,79 @@ Thank you.
 
             try:
 
-                from students.services.email_service import send_brevo_email
+                from students.services.email_service import (
+                    send_brevo_email
+                )
 
+                html_message = f"""
+                <h2>Admission CBT Examination</h2>
+
+                <p>Dear {admission.parent_name},</p>
+
+                <p>
+                    Your child
+                    <strong>{admission.student_name}</strong>
+                    has been scheduled for the Admission CBT Examination.
+                </p>
+
+                <p>
+                    <strong>School:</strong>
+                    {admission.school.name}
+                </p>
+
+                <p>
+                    <strong>Academic Session:</strong>
+                    {admission.admission_session}
+                </p>
+
+                <p>
+                    <strong>Term:</strong>
+                    {admission.get_admission_term_display()}
+                </p>
+
+                <p>
+                    <strong>Resumption Date:</strong>
+                    {admission.resume_date.strftime("%d %B %Y")}
+                </p>
+
+                <p>
+                    <strong>Examination:</strong>
+                    {admission.admission_exam.title}
+                </p>
+
+                <p>
+                    <strong>Duration:</strong>
+                    {admission.admission_exam.duration_minutes}
+                    Minutes
+                </p>
+
+                <p>
+                    <strong>Application Number:</strong>
+                    {admission.application_number}
+                </p>
+
+                <p>
+                    <a href="{exam_link}">
+                        Start Admission Examination
+                    </a>
+                </p>
+
+                <p>
+                    <a href="{tracking_link}">
+                        Track Your Admission
+                    </a>
+                </p>
+
+                <p>
+                    Please ensure you have a stable internet connection
+                    before starting the examination.
+                </p>
+
+                <p>
+                    Thank you.<br>
+                    <strong>{admission.school.name}</strong>
+                </p>
+                """
 
                 success, response = send_brevo_email(
 
@@ -977,30 +947,14 @@ Thank you.
                     html_content=html_message,
 
                     school=admission.school
-
                 )
 
-
-                print(
-                    "EMAIL SUCCESS:",
-                    success
-                )
-
-
-                print(
-                    "EMAIL RESPONSE:",
-                    response
-                )
-
-
+                print("EMAIL SUCCESS:", success)
+                print("EMAIL RESPONSE:", response)
 
             except Exception as e:
 
-                print(
-                    "EMAIL ERROR:",
-                    e
-                )
-
+                print("EMAIL ERROR:", e)
 
 
             return redirect(
@@ -1008,42 +962,27 @@ Thank you.
             )
 
 
-
         else:
 
-            print(
-                form.errors
-            )
-
+            print("FORM ERRORS:")
+            print(form.errors)
 
 
     else:
 
-
         form = AdmissionExamAssignmentForm(
-
             instance=application,
-
             school=request.user.school
-
         )
 
 
-
     return render(
-
         request,
-
         "tis_website/admin/assign_admission_exam.html",
-
         {
-
             "application": application,
-
             "form": form
-
         }
-
     )
 
 

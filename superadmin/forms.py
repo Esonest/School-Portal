@@ -81,23 +81,43 @@ from django import forms
 from .models import School
 
 class SchoolForm(forms.ModelForm):
+
     logo = forms.ImageField(
         required=False,
-        widget=forms.ClearableFileInput(attrs={"class": "form-input"}),
+        widget=forms.ClearableFileInput(
+            attrs={
+                "class": "form-input"
+            }
+        ),
         label="School Logo"
+    )
+
+    school_stamp = forms.ImageField(
+        required=False,
+        widget=forms.ClearableFileInput(
+            attrs={
+                "class": "form-input"
+            }
+        ),
+        label="School Stamp"
     )
 
     class Meta:
         model = School
+
         fields = [
             "name",
             "address",
             "motto",
             "logo",
             "theme_color",
-            "principal_signature",
 
-            # NEW
+            # School officials
+            "principal_name",
+            "principal_signature",
+            "school_stamp",
+
+            # Notifications
             "notification_email",
             "whatsapp_number",
             "email_enabled",
@@ -107,81 +127,133 @@ class SchoolForm(forms.ModelForm):
             "admission_prefix",
             "admission_fee",
 
-
+            # Payment
             "paystack_public_key",
             "paystack_secret_key",
         ]
 
         widgets = {
-            "name": forms.TextInput(attrs={
-                "class": "form-input",
-                "id": "school-name-input"
-            }),
 
-            "address": forms.TextInput(attrs={
-                "class": "form-input"
-            }),
+            "name": forms.TextInput(
+                attrs={
+                    "class": "form-input",
+                    "id": "school-name-input"
+                }
+            ),
 
-            "motto": forms.TextInput(attrs={
-                "class": "form-input"
-            }),
+            "address": forms.TextInput(
+                attrs={
+                    "class": "form-input"
+                }
+            ),
 
-            "theme_color": forms.Select(attrs={
-                "class": "form-input",
-                "id": "theme-color-select"
-            }),
+            "motto": forms.TextInput(
+                attrs={
+                    "class": "form-input"
+                }
+            ),
 
-            "principal_signature": forms.ClearableFileInput(attrs={
-                "class": "form-input"
-            }),
+            "theme_color": forms.Select(
+                attrs={
+                    "class": "form-input",
+                    "id": "theme-color-select"
+                }
+            ),
 
-            # NEW
-            "notification_email": forms.EmailInput(attrs={
-                "class": "form-input",
-                "placeholder": "Notification Email"
-            }),
+            # =====================================
+            # PRINCIPAL
+            # =====================================
 
-            "whatsapp_number": forms.TextInput(attrs={
-                "class": "form-input",
-                "placeholder": "WhatsApp Number"
-            }),
+            "principal_name": forms.TextInput(
+                attrs={
+                    "class": "form-input",
+                    "placeholder": "Principal's Full Name"
+                }
+            ),
 
-            "email_enabled": forms.CheckboxInput(attrs={
-                "class": "h-4 w-4"
-            }),
+            "principal_signature": forms.ClearableFileInput(
+                attrs={
+                    "class": "form-input"
+                }
+            ),
 
-            "whatsapp_enabled": forms.CheckboxInput(attrs={
-                "class": "h-4 w-4"
-            }),
+            # =====================================
+            # NOTIFICATIONS
+            # =====================================
 
+            "notification_email": forms.EmailInput(
+                attrs={
+                    "class": "form-input",
+                    "placeholder": "Notification Email"
+                }
+            ),
 
-            "admission_prefix": forms.TextInput(attrs={
-                "class": "form-input",
-                "placeholder": "Example: TIS, EVTL, GGS",
-                "style": "text-transform:uppercase;"
-            }),
+            "whatsapp_number": forms.TextInput(
+                attrs={
+                    "class": "form-input",
+                    "placeholder": "WhatsApp Number"
+                }
+            ),
 
-            "admission_fee": forms.NumberInput(attrs={
-                "class": "form-input",
-                "placeholder": "Admission Fee",
-                "min": "0",
-                "step": "0.01"
-            }),
+            "email_enabled": forms.CheckboxInput(
+                attrs={
+                    "class": "h-4 w-4"
+                }
+            ),
 
-            "paystack_public_key": forms.TextInput(attrs={
-                "class": "form-input",
-                "placeholder": "Paystack Public Key"
-            }),
+            "whatsapp_enabled": forms.CheckboxInput(
+                attrs={
+                    "class": "h-4 w-4"
+                }
+            ),
 
-            "paystack_secret_key": forms.TextInput(attrs={
-                "class": "form-input",
-                "placeholder": "Paystack Secret Key"
-            }),
+            # =====================================
+            # ADMISSION
+            # =====================================
+
+            "admission_prefix": forms.TextInput(
+                attrs={
+                    "class": "form-input",
+                    "placeholder": "Example: TIS, EVTL, GGS",
+                    "style": "text-transform:uppercase;"
+                }
+            ),
+
+            "admission_fee": forms.NumberInput(
+                attrs={
+                    "class": "form-input",
+                    "placeholder": "Admission Fee",
+                    "min": "0",
+                    "step": "0.01"
+                }
+            ),
+
+            # =====================================
+            # PAYSTACK
+            # =====================================
+
+            "paystack_public_key": forms.TextInput(
+                attrs={
+                    "class": "form-input",
+                    "placeholder": "Paystack Public Key"
+                }
+            ),
+
+            "paystack_secret_key": forms.TextInput(
+                attrs={
+                    "class": "form-input",
+                    "placeholder": "Paystack Secret Key"
+                }
+            ),
         }
 
     def clean_admission_prefix(self):
-        prefix = self.cleaned_data.get("admission_prefix", "")
-        return prefix.strip().upper()    
+        prefix = self.cleaned_data.get(
+            "admission_prefix",
+            ""
+        )
+
+        return prefix.strip().upper()   
 
 
 # -------------------------

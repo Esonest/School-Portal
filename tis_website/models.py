@@ -399,6 +399,12 @@ from django.conf import settings
 
 class AdmissionApplication(models.Model):
 
+    TERM_CHOICES = (
+        ("1", "First Term"),
+        ("2", "Second Term"),
+        ("3", "Third Term"),
+    )
+
 
     STATUS_CHOICES = (
 
@@ -504,11 +510,6 @@ class AdmissionApplication(models.Model):
 
     accepted = models.BooleanField(
         default=False
-    )
-
-    accepted_on = models.DateTimeField(
-        null=True,
-        blank=True
     )
 
 
@@ -689,6 +690,7 @@ class AdmissionApplication(models.Model):
 
     admission_term = models.CharField(
         max_length=50,
+        choices=TERM_CHOICES,
         blank=True
     )
 
@@ -719,20 +721,7 @@ class AdmissionApplication(models.Model):
         null=True
     )
 
-    resume_date = models.DateField(
-        null=True,
-        blank=True
-    )
-
-    admission_session = models.CharField(
-        max_length=50,
-        blank=True
-    )
-
-    admission_term = models.CharField(
-        max_length=50,
-        blank=True
-    )
+  
     # ==========================
     # TIMESTAMPS
     # ==========================

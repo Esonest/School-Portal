@@ -711,29 +711,34 @@ from cbt.models import CBTExam
 from .models import AdmissionApplication
 
 
+from django import forms
+from cbt.models import CBTExam
+from results.utils import SESSION_LIST
+from .models import AdmissionApplication
+
 
 class AdmissionExamAssignmentForm(forms.ModelForm):
 
     admission_exam = forms.ModelChoiceField(
         queryset=CBTExam.objects.none(),
         empty_label="Select Admission Exam",
+        required=True,
         widget=forms.Select(
             attrs={
                 "class": "w-full border rounded-xl p-3"
             }
         )
     )
-
 
     admission_session = forms.ChoiceField(
         choices=[],
+        required=True,
         widget=forms.Select(
             attrs={
                 "class": "w-full border rounded-xl p-3"
             }
         )
     )
-
 
     admission_term = forms.ChoiceField(
         required=True,
@@ -749,7 +754,6 @@ class AdmissionExamAssignmentForm(forms.ModelForm):
         )
     )
 
-
     resume_date = forms.DateField(
         required=True,
         widget=forms.DateInput(
@@ -760,10 +764,8 @@ class AdmissionExamAssignmentForm(forms.ModelForm):
         )
     )
 
-
     class Meta:
         model = AdmissionApplication
-
         fields = [
             "admission_exam",
             "admission_session",
@@ -771,23 +773,18 @@ class AdmissionExamAssignmentForm(forms.ModelForm):
             "resume_date",
         ]
 
-
     def __init__(self, *args, school=None, **kwargs):
 
         super().__init__(*args, **kwargs)
 
-
+        # Admission examinations belonging to this school
         if school:
-
             self.fields["admission_exam"].queryset = CBTExam.objects.filter(
                 school=school,
                 exam_type="admission"
             )
 
-
-        # Dynamic academic sessions
-        from results.utils import SESSION_LIST
-
+        # Academic sessions
         self.fields["admission_session"].choices = [
             ("", "Select Academic Session")
         ] + [

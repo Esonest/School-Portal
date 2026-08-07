@@ -79,10 +79,38 @@ def super_admin_dashboard(request):
 
     return render(request, 'superadmin/dashboard.html', context)
 
+from django.db.models import Count
+
+
 @superadmin_required
 def school_list(request):
-    schools = School.objects.all().order_by('name')
-    return render(request, 'superadmin/schools/list.html', {"schools": schools})
+
+    schools = School.objects.annotate(
+        student_total=Count(
+            "students",
+            distinct=True
+        ),
+
+        teacher_total=Count(
+            "teachers",
+            distinct=True
+        ),
+
+        admin_total=Count(
+            "schooladmin",
+            distinct=True
+        )
+
+    ).order_by("name")
+
+
+    return render(
+        request,
+        "superadmin/schools/list.html",
+        {
+            "schools": schools
+        }
+    )
 
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages

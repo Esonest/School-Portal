@@ -16,6 +16,8 @@
             <tr>
                 <th class="p-3 text-left">Name</th>
                 <th class="p-3 text-left">Location</th>
+                <th class="p-3 text-left">Students</th>
+                <th class="p-3 text-left"> Teachers</th>
                 <th class="p-3 text-left">Admins</th>
                 <th class="p-3 text-left">Actions</th>
             </tr>
@@ -25,6 +27,26 @@
             <tr class="border-b">
                 <td class="p-3">{{ school.name }}</td>
                 <td class="p-3">{{ school.address }}</td>
+                <td class="p-3">
+
+<span class="bg-green-100 text-green-700 px-3 py-1 rounded">
+
+{{ school.student_total }}
+
+</span>
+
+</td>
+
+
+<td class="p-3">
+
+<span class="bg-purple-100 text-purple-700 px-3 py-1 rounded">
+
+{{ school.teacher_total }}
+
+</span>
+
+</td>
                 <td class="p-3">
     {% for admin in school.schooladmin_set.all %}
         <span class="inline-block text-sm bg-blue-100 text-blue-700 px-2 py-1 rounded mb-1">
