@@ -1061,6 +1061,102 @@ def admission_track(request):
     )
 
 
+from io import BytesIO
+import base64
+import requests
+
+import urllib3
+
+urllib3.disable_warnings(
+    urllib3.exceptions.InsecureRequestWarning
+)
+
+from django.contrib.auth.decorators import login_required
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
+from django.template.loader import get_template
+
+from PIL import Image
+from xhtml2pdf import pisa
+
+from .models import AdmissionApplication
+
+
+def compress_image_to_data_uri(
+    image_url,
+    max_width=500,
+    max_height=300,
+    quality=65
+):
+    """
+    Download an image, resize it and compress it in memory.
+    Returns a data URI suitable for embedding directly
+    inside an HTML document.
+    """
+
+    try:
+        if not image_url.endswith((".jpg",".jpeg",".png",".webp")):
+            image_url += ".jpg"
+        response = requests.get(
+            image_url,
+            timeout=15,
+            verify=False
+        )
+
+        response.raise_for_status()
+
+        image = Image.open(
+            BytesIO(response.content)
+        )
+
+        # Handle transparent PNG images
+        if image.mode in ("RGBA", "LA"):
+            background = Image.new(
+                "RGB",
+                image.size,
+                "white"
+            )
+
+            background.paste(
+                image,
+                mask=image.getchannel("A")
+            )
+
+            image = background
+
+        else:
+            image = image.convert("RGB")
+
+        # Resize while maintaining aspect ratio
+        image.thumbnail(
+            (max_width, max_height),
+            Image.Resampling.LANCZOS
+        )
+
+        output = BytesIO()
+
+        image.save(
+            output,
+            format="JPEG",
+            quality=quality,
+            optimize=True
+        )
+
+        encoded = base64.b64encode(
+            output.getvalue()
+        ).decode("utf-8")
+
+        return f"data:image/jpeg;base64,{encoded}"
+
+    except Exception as e:
+        print(
+            "IMAGE COMPRESSION ERROR:",
+            e
+        )
+
+        return None
+
+
 @login_required
 def download_admission_letter(request, pk):
 
@@ -1071,39 +1167,94 @@ def download_admission_letter(request, pk):
         status="approved"
     )
 
+    school = application.school
+
+    # ============================================
+    # COMPRESS SCHOOL LOGO
+    # ============================================
+
+    logo_data = None
+
+    if school.logo:
+        try:
+            logo_data = compress_image_to_data_uri(
+                school.logo.url,
+                max_width=300,
+                max_height=300,
+                quality=60
+            )
+
+        except Exception as e:
+            print(
+                "LOGO ERROR:",
+                e
+            )
+
+    # ============================================
+    # COMPRESS PRINCIPAL SIGNATURE
+    # ============================================
+
+    signature_data = None
+
+    if school.principal_signature:
+        try:
+            signature_data = compress_image_to_data_uri(
+                school.principal_signature.url,
+                max_width=400,
+                max_height=150,
+                quality=60
+            )
+
+        except Exception as e:
+            print(
+                "SIGNATURE ERROR:",
+                e
+            )
+
+    # ============================================
+    # RENDER TEMPLATE
+    # ============================================
 
     template = get_template(
         "tis_website/admin/admission_letter.html"
     )
 
-
     html = template.render(
         {
             "application": application,
-            "school": application.school,
+            "school": school,
+            "logo_data": logo_data,
+            "signature_data": signature_data,
         }
     )
 
+    # ============================================
+    # CREATE PDF
+    # ============================================
 
     response = HttpResponse(
         content_type="application/pdf"
     )
 
-    response[
-        "Content-Disposition"
-    ] = (
-        f'attachment; filename="'
-        f'{application.student_name}_Admission_Letter.pdf"'
+    filename = (
+        f"{application.student_name}"
+        f"_Admission_Letter.pdf"
     )
 
+    response["Content-Disposition"] = (
+        f'attachment; filename="{filename}"'
+    )
 
     pisa.CreatePDF(
-        BytesIO(html.encode("UTF-8")),
+        BytesIO(
+            html.encode("UTF-8")
+        ),
         dest=response
     )
 
-
     return response
+
+
 
 
 from django.contrib.auth.decorators import login_required

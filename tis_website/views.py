@@ -14,6 +14,7 @@ from finance.models import Payment
 from django.utils import timezone
 from django.shortcuts import get_object_or_404, redirect, render
 from django.urls import reverse
+from .admin_views import compress_image_to_data_uri
 
 from .models import AdmissionApplication
 from students.models import Student
@@ -331,6 +332,15 @@ from django.http import HttpResponse
 from django.template.loader import render_to_string
 from xhtml2pdf import pisa
 
+from django.http import HttpResponse
+from django.shortcuts import get_object_or_404
+from django.template.loader import render_to_string
+
+from io import BytesIO
+
+from xhtml2pdf import pisa
+
+from .models import AdmissionApplication
 
 
 def download_admission_letter(request, token):
@@ -342,32 +352,107 @@ def download_admission_letter(request, token):
     )
 
 
+    school = application.school
+
+
+    # ============================================
+    # COMPRESS SCHOOL LOGO
+    # ============================================
+
+    logo_data = None
+
+    if school.logo:
+
+        try:
+
+            logo_data = compress_image_to_data_uri(
+                school.logo.url,
+                max_width=300,
+                max_height=300,
+                quality=60
+            )
+
+        except Exception as e:
+
+            print(
+                "PUBLIC LOGO ERROR:",
+                e
+            )
+
+
+    # ============================================
+    # COMPRESS PRINCIPAL SIGNATURE
+    # ============================================
+
+    signature_data = None
+
+    if school.principal_signature:
+
+        try:
+
+            signature_data = compress_image_to_data_uri(
+                school.principal_signature.url,
+                max_width=400,
+                max_height=150,
+                quality=60
+            )
+
+        except Exception as e:
+
+            print(
+                "PUBLIC SIGNATURE ERROR:",
+                e
+            )
+
+
+    # ============================================
+    # RENDER HTML TEMPLATE
+    # ============================================
+
     html = render_to_string(
         "tis_website/public/admission_letter.html",
         {
             "application": application,
-            "school": application.school
+            "school": school,
+
+            "logo_data": logo_data,
+
+            "signature_data": signature_data,
         }
     )
 
+
+    # ============================================
+    # CREATE PDF
+    # ============================================
 
     response = HttpResponse(
         content_type="application/pdf"
     )
 
 
+    filename = (
+        f"{application.student_name}"
+        f"_Admission_Letter.pdf"
+    )
+
+
     response["Content-Disposition"] = (
-        f'attachment; filename="{application.student_name}_Admission_Letter.pdf"'
+        f'attachment; filename="{filename}"'
     )
 
 
     pisa.CreatePDF(
-        html,
+        BytesIO(
+            html.encode("UTF-8")
+        ),
         dest=response
     )
 
 
     return response
+
+
 
 
 from django.shortcuts import render, redirect, get_object_or_404

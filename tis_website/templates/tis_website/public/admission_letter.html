@@ -2,239 +2,336 @@
 
 @page {
     size: A4;
-    margin: 15mm;
+    margin: 12mm;
 }
 
-body{
+body {
     font-family: Arial, sans-serif;
-    font-size: 12px;
+    font-size: 11px;
+    color: #1f2937;
+    line-height: 1.45;
 }
 
-.letter{
-    width:100%;
+.letter {
+    width: 100%;
 }
 
-.header{
-    text-align:center;
-    border-bottom:2px solid #1d4ed8;
-    padding-bottom:8px;
+/* =========================
+   HEADER
+========================= */
+
+.header {
+    text-align: center;
+    border-bottom: 3px solid #2563eb;
+    padding-bottom: 8px;
 }
 
-.logo{
-    width:70px;
-    height:70px;
+.logo {
+    width: 55px;
+    height: 55px;
+    object-fit: contain;
 }
 
-.title{
-    font-size:20px;
-    font-weight:bold;
+.title {
+    font-size: 19px;
+    font-weight: bold;
+    color: #1d4ed8;
+    margin-top: 3px;
 }
 
-.section{
-    margin-top:12px;
+.motto {
+    font-size: 11px;
+    color: #475569;
+    font-style: italic;
 }
 
-.info td{
-    padding:3px;
+.address {
+    font-size: 10px;
+    color: #64748b;
 }
 
-.footer{
-    margin-top:30px;
-    display:flex;
-    justify-content:space-between;
+/* =========================
+   LETTER TITLE
+========================= */
+
+.admission-title {
+    text-align: center;
+    color: #1d4ed8;
+    font-size: 17px;
+    font-weight: bold;
+    margin-top: 15px;
+    margin-bottom: 12px;
 }
 
-.signature{
-    width:100px;
+/* =========================
+   SECTIONS
+========================= */
+
+.section {
+    margin-top: 10px;
 }
 
-.stamp{
-    width:90px;
+.section-title {
+    color: #1d4ed8;
+    font-size: 13px;
+    font-weight: bold;
+    border-bottom: 1px solid #bfdbfe;
+    padding-bottom: 3px;
+    margin-bottom: 5px;
+}
+
+/* =========================
+   STUDENT INFORMATION
+========================= */
+
+.info {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 5px;
+}
+
+.info td {
+    padding: 4px 6px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.info td:first-child {
+    width: 32%;
+    font-weight: bold;
+    color: #1e40af;
+}
+
+/* =========================
+   INSTRUCTIONS
+========================= */
+
+.instructions {
+    margin-top: 5px;
+    padding-left: 18px;
+}
+
+.instructions li {
+    margin-bottom: 3px;
+}
+
+/* =========================
+   SIGNATURE
+========================= */
+
+.signature-area {
+    margin-top: 25px;
+}
+
+.signature {
+    width: 80px;
+    height: 40px;
+    object-fit: contain;
+    display: block;
+    margin-bottom: 0;
+}
+
+.signature-line {
+    width: 120px;
+    border-top: 1px solid #374151;
+    margin-top: 0;
+    padding-top: 3px;
+}
+
+.principal-name {
+    font-weight: bold;
+    color: #1d4ed8;
+    font-size: 11px;
+}
+
+.principal-title {
+    font-size: 10px;
+    color: #475569;
+}
+
+/* =========================
+   FOOTER
+========================= */
+
+.footer {
+    margin-top: 25px;
+    border-top: 1px solid #bfdbfe;
+    padding-top: 7px;
+    text-align: center;
+    font-size: 8px;
+    color: #64748b;
 }
 
 </style>
 
-
 <div class="letter">
-
+<!-- =========================
+     SCHOOL HEADER
+========================== -->
 
 <div class="header">
 
-{% if school.logo %}
-<img src="{{school.logo.url}}" class="logo">
+   {% if logo_data %}
+<img src="{{ logo_data }}" class="logo">
 {% endif %}
 
-<div class="title">
-{{school.name}}
+    <div class="title">
+        {{ school.name }}
+    </div>
+
+    {% if school.motto %}
+        <div class="motto">
+            {{ school.motto }}
+        </div>
+    {% endif %}
+
+    {% if school.address %}
+        <div class="address">
+            {{ school.address }}
+        </div>
+    {% endif %}
+
 </div>
 
-<div>
-{{school.motto}}
+
+<!-- =========================
+     TITLE
+========================== -->
+
+<div class="admission-title">
+    ADMISSION LETTER
 </div>
 
-<div>
-{{school.address}}
-</div>
 
-</div>
-
-
-
-<h2 style="text-align:center">
-ADMISSION LETTER
-</h2>
-
-
+<!-- =========================
+     GREETING
+========================== -->
 
 <p>
-Dear {{application.parent_name}},
+    Dear <strong>{{ application.parent_name }}</strong>,
 </p>
 
 
 <p>
-Congratulations! We are pleased to inform you that
-<strong>
-{{application.student_name}}
-</strong>
-has been offered admission into
-<strong>
-{{application.class_applying_for}}
-</strong>
-for the
-<strong>
-{{application.admission_session}}
-</strong>
-academic session at
-<strong>
-{{school.name}}
-</strong>.
+    Congratulations! We are pleased to inform you that
+    <strong>{{ application.student_name }}</strong>
+    has been offered admission into
+    <strong>{{ application.class_applying_for }}</strong>
+    for the
+    <strong>{{ application.admission_session }}</strong>
+    academic session at
+    <strong>{{ school.name }}</strong>.
 </p>
 
 
 <p>
-We are delighted to welcome your family into our learning
-community and look forward to supporting your child's academic
-journey.
+    We are delighted to welcome your family into our learning
+    community and look forward to supporting your child's
+    academic journey.
 </p>
 
 
+<!-- =========================
+     STUDENT INFORMATION
+========================== -->
 
 <div class="section">
 
-<h3>
-Student Information
-</h3>
+    <div class="section-title">
+        STUDENT INFORMATION
+    </div>
 
+    <table class="info">
 
-<table class="info">
+        <tr>
+            <td>Name</td>
+            <td>{{ application.student_name }}</td>
+        </tr>
 
-<tr>
-<td><b>Name:</b></td>
-<td>{{application.student_name}}</td>
-</tr>
+        <tr>
+            <td>Class</td>
+            <td>{{ application.class_applying_for }}</td>
+        </tr>
 
+        <tr>
+            <td>Academic Session</td>
+            <td>{{ application.admission_session }}</td>
+        </tr>
 
-<tr>
-<td><b>Class:</b></td>
-<td>{{application.class_applying_for}}</td>
-</tr>
+        <tr>
+            <td>Resumption Date</td>
+            <td>
+                {{ application.resume_date|date:"F d, Y" }}
+            </td>
+        </tr>
 
-
-<tr>
-<td><b>Session:</b></td>
-<td>{{application.admission_session}}</td>
-</tr>
-
-
-<tr>
-<td><b>Resumption Date:</b></td>
-<td>
-{{application.resume_date|date:"F d, Y"}}
-</td>
-</tr>
-
-
-</table>
+    </table>
 
 </div>
 
 
-
+<!-- =========================
+     ADMISSION INSTRUCTIONS
+========================== -->
 
 <div class="section">
 
-<h3>
-Admission Instructions
-</h3>
+    <div class="section-title">
+        ADMISSION INSTRUCTIONS
+    </div>
 
-<ul>
+    <ul class="instructions">
 
-<li>Accept the admission offer.</li>
+        <li>
+            Accept the admission offer.
+        </li>
 
-<li>Complete all required payments.</li>
+        <li>
+            Complete all required payments.
+        </li>
 
-<li>Prepare for resumption on the stated date.</li>
+        <li>
+            Prepare for resumption on the stated date.
+        </li>
 
-</ul>
+    </ul>
 
 </div>
 
 
+<!-- =========================
+     PRINCIPAL SIGNATURE
+========================== -->
 
+<div class="signature-area">
+
+   {% if signature_data %}
+<img src="{{ signature_data }}" class="signature">
+{% endif %}
+
+    <div class="signature-line"></div>
+
+    <div class="principal-name">
+        {{ school.principal_name }}
+    </div>
+
+    <div class="principal-title">
+        Principal
+    </div>
+
+</div>
+
+
+<!-- =========================
+     FOOTER
+========================== -->
 
 <div class="footer">
 
+    Generated electronically by TECHCENTER School Portal<br>
 
-<div>
-
-{% if school.principal_signature %}
-
-<img src="{{school.principal_signature.url}}"
-class="signature">
-
-{% endif %}
-
-
-<p>
-____________________
-</p>
-
-<b>
-{{school.principal_name}}
-</b>
-
-<br>
-
-Principal
-
-</div>
-
-
-
-<div>
-
-{% if school.school_stamp %}
-
-<img src="{{school.school_stamp.url}}"
-class="stamp">
-
-{% endif %}
-
+    Smart School Management • LMS • CBT • Digital Records
 
 </div>
 
 
 </div>
-
-
-
-<p style="text-align:center;font-size:10px;margin-top:20px">
-
-Generated electronically by TECHCENTER School Portal
-
-Smart School Management • LMS • CBT • Digital Records
-
-</p>
-
-
-</div>vv
