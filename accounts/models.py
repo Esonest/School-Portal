@@ -96,7 +96,7 @@ class SystemSetting(models.Model):
 
 
 class User(AbstractUser):
-    """
+    """9
     Unified User model for all user types (Admin, Teacher, Student, etc.)
     Roles are distinguished using a role field.
     Each user belongs to a school (except super admins).

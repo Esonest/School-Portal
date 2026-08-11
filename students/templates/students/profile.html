@@ -51,6 +51,105 @@
   </div>
 </div>
 
+<!-- CHANGE PASSWORD -->
+<div class="bg-white shadow rounded p-6 mt-6">
+
+    <h2 class="text-xl font-bold text-gray-800 mb-2">
+        Change Password
+    </h2>
+
+    <p class="text-sm text-gray-500 mb-5">
+        Update your password to keep your account secure.
+    </p>
+
+    <form id="passwordForm" method="post">
+
+        {% csrf_token %}
+
+        <input type="hidden" name="action" value="change_password">
+
+        <div class="space-y-4">
+
+            {% for field in password_form %}
+
+                <div>
+
+                    <label class="block text-sm font-semibold text-gray-700 mb-1">
+                        {{ field.label }}
+                    </label>
+
+                    <div class="relative">
+
+                        {{ field }}
+
+                        <button
+                            type="button"
+                            class="password-toggle absolute right-3 top-1/2
+                                   -translate-y-1/2 text-gray-500
+                                   hover:text-indigo-600"
+                            data-target="{{ field.id_for_label }}"
+                            aria-label="Show password"
+                        >
+                            👁
+                        </button>
+
+                    </div>
+
+                    {% if field.help_text %}
+                        <p class="text-xs text-gray-500 mt-1">
+                            {{ field.help_text }}
+                        </p>
+                    {% endif %}
+
+                    {% for error in field.errors %}
+                        <p class="text-sm text-red-600 mt-1">
+                            {{ error }}
+                        </p>
+                    {% endfor %}
+
+                </div>
+
+            {% endfor %}
+
+        </div>
+
+        <div id="passwordMessage" class="mt-4"></div>
+
+        <button
+            type="submit"
+            class="mt-5 px-5 py-2 bg-indigo-600
+                   hover:bg-indigo-700 text-white rounded"
+        >
+            Change Password
+        </button>
+
+    </form>
+
+</div>
+
+<style>
+    #passwordForm input {
+        width: 100%;
+        padding: 0.65rem 2.75rem 0.65rem 0.75rem;
+        border: 1px solid #d1d5db;
+        border-radius: 0.5rem;
+    }
+
+    #passwordForm input:focus {
+        outline: none;
+        border-color: #4f46e5;
+        box-shadow: 0 0 0 2px rgba(79, 70, 229, 0.15);
+    }
+
+    .password-toggle {
+        background: transparent;
+        border: none;
+        cursor: pointer;
+        padding: 4px;
+    }
+</style>
+
+
 <script>
 const openBtn = document.getElementById('openProfile');
 const closeBtn = document.getElementById('closeProfile');
@@ -139,6 +238,149 @@ profileForm.addEventListener('submit', async (e) => {
     console.error("AJAX error:", err);
     document.getElementById('formErrors').textContent = "An error occurred. Please try again.";
   }
+});
+
+// -----------------------------------------
+// CHANGE PASSWORD
+// -----------------------------------------
+
+const passwordForm = document.getElementById("passwordForm");
+const passwordMessage = document.getElementById("passwordMessage");
+
+passwordForm.addEventListener("submit", async (e) => {
+
+    e.preventDefault();
+
+    passwordMessage.innerHTML = "";
+
+    const formData = new FormData(passwordForm);
+
+    try {
+
+        const response = await fetch("", {
+            method: "POST",
+
+            headers: {
+                "X-CSRFToken": csrfToken,
+                "X-Requested-With": "XMLHttpRequest"
+            },
+
+            body: formData
+        });
+
+        const data = await response.json();
+
+        if (data.success && data.password_changed) {
+
+            passwordMessage.innerHTML = `
+                <div class="bg-green-50 border border-green-200
+                            text-green-700 rounded p-3">
+                    ${data.message}
+                </div>
+            `;
+
+            passwordForm.reset();
+
+        } else {
+
+            let errorHtml = "";
+
+            for (const [field, errors] of Object.entries(data.errors)) {
+
+                errorHtml += `
+                    <p class="text-sm text-red-600 mb-1">
+                        ${field}: ${errors.map(e => e.message).join(", ")}
+                    </p>
+                `;
+
+            }
+
+            passwordMessage.innerHTML = errorHtml;
+        }
+
+    } catch (err) {
+
+        console.error("Password change error:", err);
+
+        passwordMessage.innerHTML = `
+            <div class="bg-red-50 border border-red-200
+                        text-red-700 rounded p-3">
+                An error occurred. Please try again.
+            </div>
+        `;
+    }
+
+});
+
+```javascript
+// -----------------------------------------
+// PASSWORD EYE TOGGLE
+// -----------------------------------------
+
+document.querySelectorAll(".password-toggle").forEach(button => {
+
+    button.addEventListener("click", () => {
+
+        const input = document.getElementById(
+            button.dataset.target
+        );
+
+        if (!input) return;
+
+        if (input.type === "password") {
+
+            input.type = "text";
+            button.textContent = "🙈";
+            button.setAttribute("aria-label", "Hide password");
+
+        } else {
+
+            input.type = "password";
+            button.textContent = "👁";
+            button.setAttribute("aria-label", "Show password");
+
+        }
+
+    });
+
+});
+```
+
+</script>
+
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+
+    document.querySelectorAll(".password-toggle").forEach(function (button) {
+
+        button.addEventListener("click", function (event) {
+
+            event.preventDefault();
+
+            const targetId = button.getAttribute("data-target");
+            const input = document.getElementById(targetId);
+
+            if (!input) {
+                console.error("Password input not found:", targetId);
+                return;
+            }
+
+            if (input.type === "password") {
+
+                input.type = "text";
+                button.textContent = "🙈";
+
+            } else {
+
+                input.type = "password";
+                button.textContent = "👁";
+
+            }
+
+        });
+
+    });
+
 });
 </script>
 {% endblock %}

@@ -49,6 +49,7 @@ Password:
 {application.student_password}
 
 
+IMPORTANT: UPON SUCCESSFUL LOGIN, PLEASE CHANGE YOUR PASSWORD
 
 Portal Link:
 

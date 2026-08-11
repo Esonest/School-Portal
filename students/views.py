@@ -14,6 +14,8 @@ from cbt.models import CBTExam, CBTSubmission
 from results.utils import portal_required
 from django.utils import timezone
 from django.db.models import Q
+from django.contrib.auth.forms import PasswordChangeForm
+from django.contrib.auth import update_session_auth_hash
 
 # ------------------------
 # Helper Decorators
@@ -170,51 +172,160 @@ def profile_view(request):
     student = getattr(request.user, 'student_profile', None)
 
     if request.method == "POST":
-        form = StudentProfileForm(request.POST, request.FILES, instance=student)
-        try:
-            if form.is_valid():
-                profile = form.save(commit=False)
 
-                # Handle Clear/Remove photo
-                if request.POST.get("clear_photo") == "1":
-                    if profile.photo:
-                        profile.photo.delete(save=False)
-                    profile.photo = None
+        # -----------------------------
+        # CHANGE PASSWORD
+        # -----------------------------
+        if request.POST.get("action") == "change_password":
 
-                if not student:
-                    profile.user = request.user
+            password_form = PasswordChangeForm(
+                request.user,
+                request.POST
+            )
 
-                profile.save()
+            if password_form.is_valid():
 
-                # AJAX response
-                photo_url = profile.photo.url if profile.photo else ""
-                data = {
-                    "success": True,
-                    "dob": profile.dob.strftime('%Y-%m-%d') if profile.dob else "",
-                    "gender": profile.get_gender_display() if profile.gender else "",
-                    "photo_url": photo_url,
-                }
+                user = password_form.save()
 
-                if request.headers.get("x-requested-with") == "XMLHttpRequest" or request.META.get("HTTP_X_REQUESTED_WITH") == "XMLHttpRequest":
-                    return JsonResponse(data)
+                # Keep student logged in after password change
+                update_session_auth_hash(request, user)
 
-                return render(request, 'students/profile.html', {"student": profile, "form": form})
+                if (
+                    request.headers.get("x-requested-with") == "XMLHttpRequest"
+                    or request.META.get("HTTP_X_REQUESTED_WITH") == "XMLHttpRequest"
+                ):
+                    return JsonResponse({
+                        "success": True,
+                        "password_changed": True,
+                        "message": "Your password has been changed successfully."
+                    })
+
+                messages.success(
+                    request,
+                    "Your password has been changed successfully."
+                )
+
+                return redirect("profile")
 
             else:
-                errors = form.errors.get_json_data()
-                if request.headers.get("x-requested-with") == "XMLHttpRequest" or request.META.get("HTTP_X_REQUESTED_WITH") == "XMLHttpRequest":
-                    return JsonResponse({"success": False, "errors": errors}, status=400)
 
-        except Exception as e:
-            if request.headers.get("x-requested-with") == "XMLHttpRequest" or request.META.get("HTTP_X_REQUESTED_WITH") == "XMLHttpRequest":
-                return JsonResponse({"success": False, "errors": {"__all__": [str(e)]}}, status=500)
-            else:
+                if (
+                    request.headers.get("x-requested-with") == "XMLHttpRequest"
+                    or request.META.get("HTTP_X_REQUESTED_WITH") == "XMLHttpRequest"
+                ):
+                    return JsonResponse({
+                        "success": False,
+                        "password_changed": True,
+                        "errors": password_form.errors.get_json_data()
+                    }, status=400)
+
+        # -----------------------------
+        # EDIT PROFILE
+        # -----------------------------
+        else:
+
+            form = StudentProfileForm(
+                request.POST,
+                request.FILES,
+                instance=student
+            )
+
+            try:
+                if form.is_valid():
+
+                    profile = form.save(commit=False)
+
+                    # Handle Clear/Remove photo
+                    if request.POST.get("clear_photo") == "1":
+
+                        if profile.photo:
+                            profile.photo.delete(save=False)
+
+                        profile.photo = None
+
+                    if not student:
+                        profile.user = request.user
+
+                    profile.save()
+
+                    photo_url = profile.photo.url if profile.photo else ""
+
+                    data = {
+                        "success": True,
+                        "dob": (
+                            profile.dob.strftime('%Y-%m-%d')
+                            if profile.dob else ""
+                        ),
+                        "gender": (
+                            profile.get_gender_display()
+                            if profile.gender else ""
+                        ),
+                        "photo_url": photo_url,
+                    }
+
+                    if (
+                        request.headers.get("x-requested-with") == "XMLHttpRequest"
+                        or request.META.get("HTTP_X_REQUESTED_WITH") == "XMLHttpRequest"
+                    ):
+                        return JsonResponse(data)
+
+                    return render(
+                        request,
+                        'students/profile.html',
+                        {
+                            "student": profile,
+                            "form": form
+                        }
+                    )
+
+                else:
+
+                    errors = form.errors.get_json_data()
+
+                    if (
+                        request.headers.get("x-requested-with") == "XMLHttpRequest"
+                        or request.META.get("HTTP_X_REQUESTED_WITH") == "XMLHttpRequest"
+                    ):
+                        return JsonResponse(
+                            {
+                                "success": False,
+                                "errors": errors
+                            },
+                            status=400
+                        )
+
+            except Exception as e:
+
+                if (
+                    request.headers.get("x-requested-with") == "XMLHttpRequest"
+                    or request.META.get("HTTP_X_REQUESTED_WITH") == "XMLHttpRequest"
+                ):
+                    return JsonResponse(
+                        {
+                            "success": False,
+                            "errors": {
+                                "__all__": [str(e)]
+                            }
+                        },
+                        status=500
+                    )
+
                 raise
 
     else:
         form = StudentProfileForm(instance=student)
 
-    return render(request, 'students/profile.html', {"student": student, "form": form})
+    password_form = PasswordChangeForm(request.user)
+
+    return render(
+        request,
+        'students/profile.html',
+        {
+            "student": student,
+            "form": form,
+            "password_form": password_form,
+        }
+    )
 
 
 
