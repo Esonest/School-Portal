@@ -954,7 +954,7 @@ def recording_webhook(request):
     if request.method == "GET":
         return JsonResponse({
             "success": True,
-            "message": "Webhook is active"
+            "message": "Recording webhook is active"
         })
 
     if request.method != "POST":
@@ -971,20 +971,50 @@ def recording_webhook(request):
             "error": "Invalid JSON"
         }, status=400)
 
-    print("📩 100ms Webhook:", payload)
+    print("📩 100ms Recording Webhook:")
+    print(json.dumps(payload, indent=2))
 
     event = payload.get("type")
+    data = payload.get("data") or {}
 
-    # ================= SUCCESS =================
-    if event in ["recording.success", "beam.success"]:
-        data = payload.get("data", {})
+    # ==========================================
+    # RECORDING COMPLETED
+    # ==========================================
 
-        recording_id = data.get("id")
-        recording_url = (
-            data.get("url")
-            or data.get("location")
-            or data.get("file")
+    if event == "recording.success":
+
+        recording_id = (
+            data.get("recording_id")
+            or data.get("id")
         )
+
+        recording_url = (
+            data.get("recording_presigned_url")
+            or data.get("URL")
+            or data.get("url")
+            or data.get("recording_path")
+            or data.get("location")
+        )
+
+        room_id = data.get("room_id")
+
+        print(
+            "🎥 RECORDING SUCCESS"
+        )
+        print(
+            "Recording ID:",
+            recording_id
+        )
+        print(
+            "Room ID:",
+            room_id
+        )
+        print(
+            "Recording URL:",
+            recording_url
+        )
+
+        updated = 0
 
         if recording_id:
             updated = LiveClass.objects.filter(
@@ -994,30 +1024,67 @@ def recording_webhook(request):
                 recording_url=recording_url,
             )
 
-            print(
-                f"✅ Recording completed: "
-                f"{recording_id} | "
-                f"Updated: {updated}"
+        # Fallback: match by room if recording ID
+        # isn't included in the webhook.
+        if updated == 0 and room_id:
+            updated = LiveClass.objects.filter(
+                room_id=room_id,
+                recording_status="processing",
+            ).update(
+                recording_status="completed",
+                recording_url=recording_url,
+                recording_id=recording_id or "",
             )
 
-    # ================= FAILED =================
-    elif event in ["recording.failed", "beam.failed"]:
-        data = payload.get("data", {})
-        recording_id = data.get("id")
+        print(
+            f"✅ Recording database update: {updated}"
+        )
+
+    # ==========================================
+    # RECORDING FAILED
+    # ==========================================
+
+    elif event == "recording.failed":
+
+        recording_id = (
+            data.get("recording_id")
+            or data.get("id")
+        )
+
+        room_id = data.get("room_id")
+
+        print(
+            "❌ RECORDING FAILED"
+        )
+        print(
+            "Recording ID:",
+            recording_id
+        )
+        print(
+            "Reason:",
+            data.get("reason")
+        )
+
+        updated = 0
 
         if recording_id:
-            LiveClass.objects.filter(
+            updated = LiveClass.objects.filter(
                 recording_id=recording_id
             ).update(
                 recording_status="failed"
             )
 
-            print(
-                f"❌ Recording failed: "
-                f"{recording_id}"
+        if updated == 0 and room_id:
+            updated = LiveClass.objects.filter(
+                room_id=room_id,
+                recording_status="processing",
+            ).update(
+                recording_status="failed"
             )
 
-    return JsonResponse({"success": True})
+    return JsonResponse({
+        "success": True
+    })
 
 @login_required
 def recording_status_api(request, pk):
