@@ -57,7 +57,7 @@ class LiveClass(models.Model):
         null=True
     )
 
-    recording_url = models.URLField(
+    recording_url = models.TextField(
         blank=True,
         null=True
     )

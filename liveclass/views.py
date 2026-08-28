@@ -989,64 +989,81 @@ def recording_webhook(request):
     # =====================================================
     # FINAL ROOM COMPOSITE RECORDING
     # =====================================================
-    if event == "beam.recording.success":
+    if event in ("recording.success", "beam.recording.success"):
 
-        recording_id = data.get("recording_id")
+        recording_id = (
+            data.get("recording_id")
+            or data.get("id")
+        )
         recording_url = (
             data.get("recording_presigned_url")
             or data.get("recording_url")
             or data.get("URL")
             or data.get("url")
             or data.get("location")
-            or data.get("recording_path")
         )
 
+        recording_path = data.get("recording_path")
+
+        room_id = data.get("room_id")
+        session_id = data.get("session_id")
+
+        print("\n========================================")
         print("🎬 FINAL RECORDING SUCCESS")
         print("Recording ID:", recording_id)
+        print("Room ID:", room_id)
+        print("Session ID:", session_id)
         print("Recording URL:", recording_url)
+        print("Recording Path:", recording_path)
+        print("========================================\n")
+
+        live_class = None
 
         if recording_id:
-
-            updated = LiveClass.objects.filter(
+            live_class = LiveClass.objects.filter(
                 recording_id=recording_id
-            ).update(
-                recording_status="completed",
-                recording_url=recording_url,
-            )
+            ).first()
 
-            print(
-                f"✅ LiveClass updated: {updated}"
-            )
-
-        else:
-            # Fallback using room/session if 100ms payload
-            # doesn't provide the recording job ID.
-            room_id = data.get("room_id")
-            session_id = data.get("session_id")
-
-            print(
-                "⚠️ No recording ID in webhook.",
-                room_id,
-                session_id
-            )
-
+    # -------------------------------------------------
+    # 2. Fallback: room ID
+    # -------------------------------------------------
+        if not live_class and room_id:
             live_class = LiveClass.objects.filter(
                 room_id=room_id
             ).order_by("-id").first()
 
-            if live_class and recording_url:
-                live_class.recording_status = "completed"
-                live_class.recording_url = recording_url
-                live_class.save(
-                    update_fields=[
-                        "recording_status",
-                        "recording_url",
-                    ]
-                )
+    # -------------------------------------------------
+    # 3. Update LiveClass
+    # -------------------------------------------------
+        if live_class:
 
-                print(
-                    f"✅ Updated LiveClass {live_class.id}"
-                )
+            live_class.recording_status = "completed"
+
+            if recording_url:
+                live_class.recording_url = recording_url
+
+            if recording_id:
+                live_class.recording_id = recording_id
+
+            live_class.save(
+                update_fields=[
+                    "recording_status",
+                    "recording_url",
+                    "recording_id",
+                ]
+            )
+
+            print(
+                f"✅ LiveClass {live_class.id} updated successfully"
+            )
+
+        else:
+
+            print(
+                "⚠️ Could not find LiveClass for recording."
+            )
+            print("Recording ID:", recording_id)
+            print("Room ID:", room_id)
 
     # =====================================================
     # FINAL ROOM COMPOSITE RECORDING FAILED
@@ -1074,10 +1091,33 @@ def recording_webhook(request):
     # =====================================================
     # STREAM RECORDING SUCCESS
     # =====================================================
-    elif event == "stream.recording.success":
+    elif event in (
+        "recording.failed",
+        "beam.recording.failure",
+        "beam.recording.failed",
+    ):
 
-        recording_id = data.get("recording_id")
+        recording_id = (
+            data.get("recording_id")
+            or data.get("id")
+        )
 
+        print(
+            "❌ FINAL RECORDING FAILED:",
+            recording_id
+        )
+
+        if recording_id:
+
+            updated = LiveClass.objects.filter(
+                recording_id=recording_id
+            ).update(
+                recording_status="failed"
+            )
+
+            print(
+                f"❌ Failed recording updated: {updated}"
+            )    
         recording_url = (
             data.get("recording_presigned_url")
             or data.get("recording_path")
