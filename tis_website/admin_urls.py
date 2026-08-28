@@ -150,11 +150,6 @@ urlpatterns = [
         name="admission_detail",
     ),
 
-    path(
-        "admission/track/",
-        admin_views.admission_track,
-        name="admission_track"
-    ),
 
     path(
         "admission-letter/<int:pk>/",

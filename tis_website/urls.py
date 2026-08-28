@@ -1,5 +1,6 @@
 from django.urls import path
 from . import views
+from .admin_views import admission_track
 
 
 app_name = "tis_website"
@@ -51,7 +52,13 @@ urlpatterns = [
         name="admission_exam_access"
 
     ),
+    
 
+    path(
+        "admission/track/",
+        admission_track,
+        name="admission_track"
+    ),
 
 
     path(

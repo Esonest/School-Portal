@@ -783,7 +783,9 @@ def assign_admission_exam(request, pk):
 
 
             tracking_link = request.build_absolute_uri(
-                "tis_website:/admission/track/"
+                reverse(
+                    "tis_website:admission_track"
+                )
             )
 
 
