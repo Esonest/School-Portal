@@ -989,9 +989,9 @@ def recording_webhook(request):
     # =====================================================
     # FINAL ROOM COMPOSITE RECORDING
     # =====================================================
-    if event == "recording.success":
+    if event == "beam.recording.success":
 
-        recording_id = data.get("id")
+        recording_id = data.get("recording_id")
         recording_url = (
             data.get("recording_presigned_url")
             or data.get("recording_url")
@@ -1051,7 +1051,7 @@ def recording_webhook(request):
     # =====================================================
     # FINAL ROOM COMPOSITE RECORDING FAILED
     # =====================================================
-    elif event == "recording.failed":
+    elif event == "beam.recording.failed":
 
         recording_id = data.get("id")
 
