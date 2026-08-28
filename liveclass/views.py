@@ -951,16 +951,16 @@ import json
 
 @csrf_exempt
 def recording_webhook(request):
-    print("========================================")
+    print("\n========================================")
     print("📩 100MS WEBHOOK HIT")
     print("METHOD:", request.method)
     print("PATH:", request.path)
-    print("========================================")
+    print("========================================\n")
 
     if request.method == "GET":
         return JsonResponse({
             "success": True,
-            "message": "Webhook is active"
+            "message": "100ms recording webhook is active"
         })
 
     if request.method != "POST":
@@ -973,44 +973,40 @@ def recording_webhook(request):
             request.body.decode("utf-8") or "{}"
         )
     except json.JSONDecodeError:
-        print("❌ Invalid JSON received")
-        print("BODY:", request.body)
-
         return JsonResponse({
             "error": "Invalid JSON"
         }, status=400)
 
-    print("========================================")
-    print("📩 100MS RECORDING WEBHOOK RECEIVED")
-    print("EVENT:", payload.get("type"))
-    print(
-        "PAYLOAD:",
-        json.dumps(payload, indent=2)
-    )
-    print("========================================")
-
     event = payload.get("type")
+    data = payload.get("data", {})
 
-    # ================= SUCCESS =================
-    if event in [
-        "recording.success",
-        "beam.success",
-    ]:
-        data = payload.get("data", {})
+    print("\n========================================")
+    print("📩 100MS RECORDING WEBHOOK RECEIVED")
+    print("EVENT:", event)
+    print("PAYLOAD:", payload)
+    print("========================================\n")
+
+    # =====================================================
+    # FINAL ROOM COMPOSITE RECORDING
+    # =====================================================
+    if event == "recording.success":
 
         recording_id = data.get("id")
-
         recording_url = (
-            data.get("url")
+            data.get("recording_presigned_url")
+            or data.get("recording_url")
+            or data.get("URL")
+            or data.get("url")
             or data.get("location")
-            or data.get("file")
+            or data.get("recording_path")
         )
 
-        print("🎥 RECORDING SUCCESS")
+        print("🎬 FINAL RECORDING SUCCESS")
         print("Recording ID:", recording_id)
         print("Recording URL:", recording_url)
 
         if recording_id:
+
             updated = LiveClass.objects.filter(
                 recording_id=recording_id
             ).update(
@@ -1019,22 +1015,48 @@ def recording_webhook(request):
             )
 
             print(
-                f"✅ Recording completed: "
-                f"{recording_id} | "
-                f"Updated: {updated}"
+                f"✅ LiveClass updated: {updated}"
             )
 
-    # ================= FAILED =================
-    elif event in [
-        "recording.failed",
-        "beam.failed",
-    ]:
-        data = payload.get("data", {})
+        else:
+            # Fallback using room/session if 100ms payload
+            # doesn't provide the recording job ID.
+            room_id = data.get("room_id")
+            session_id = data.get("session_id")
+
+            print(
+                "⚠️ No recording ID in webhook.",
+                room_id,
+                session_id
+            )
+
+            live_class = LiveClass.objects.filter(
+                room_id=room_id
+            ).order_by("-id").first()
+
+            if live_class and recording_url:
+                live_class.recording_status = "completed"
+                live_class.recording_url = recording_url
+                live_class.save(
+                    update_fields=[
+                        "recording_status",
+                        "recording_url",
+                    ]
+                )
+
+                print(
+                    f"✅ Updated LiveClass {live_class.id}"
+                )
+
+    # =====================================================
+    # FINAL ROOM COMPOSITE RECORDING FAILED
+    # =====================================================
+    elif event == "recording.failed":
 
         recording_id = data.get("id")
 
         print(
-            "❌ RECORDING FAILED:",
+            "❌ FINAL RECORDING FAILED:",
             recording_id
         )
 
@@ -1046,12 +1068,81 @@ def recording_webhook(request):
             )
 
             print(
-                f"❌ Recording marked failed: "
-                f"{recording_id} | "
-                f"Updated: {updated}"
+                f"❌ Failed recording updated: {updated}"
             )
 
+    # =====================================================
+    # STREAM RECORDING SUCCESS
+    # =====================================================
+    elif event == "stream.recording.success":
+
+        recording_id = data.get("recording_id")
+
+        recording_url = (
+            data.get("recording_presigned_url")
+            or data.get("recording_path")
+        )
+
+        print("🎥 STREAM RECORDING SUCCESS")
+        print("Recording ID:", recording_id)
+        print("URL:", recording_url)
+
+        # IMPORTANT:
+        # Do NOT mark LiveClass as completed here.
+        #
+        # This is an individual participant stream.
+        # We wait for recording.success for the
+        # final room-composite MP4.
+
+    # =====================================================
+    # STREAM RECORDING FAILED
+    # =====================================================
+    elif event == "stream.recording.failure":
+
+        print(
+            "❌ STREAM RECORDING FAILED:",
+            data.get("recording_id"),
+            data.get("error_message")
+        )
+
+    # =====================================================
+    # TRACK RECORDING SUCCESS
+    # =====================================================
+    elif event == "track.recording.success":
+
+        print(
+            "🎤/🎥 TRACK RECORDING COMPLETED:",
+            data.get("recording_id"),
+            data.get("track_type")
+        )
+
+    # =====================================================
+    # SESSION CLOSED
+    # =====================================================
+    elif event == "session.close.success":
+
+        print(
+            "ℹ️ Session closed:",
+            data.get("session_id"),
+            data.get("reason")
+        )
+
+    # =====================================================
+    # PEER LEFT
+    # =====================================================
+    elif event == "peer.leave.success":
+
+        print(
+            "ℹ️ Peer left:",
+            data.get("user_name"),
+            data.get("peer_id")
+        )
+
+    # =====================================================
+    # OTHER EVENT
+    # =====================================================
     else:
+
         print(
             "ℹ️ Unhandled 100ms webhook event:",
             event
@@ -1070,8 +1161,9 @@ def recording_status_api(request, pk):
     )
 
     return JsonResponse({
-        "status": live_class.recording_status,
-        "url": live_class.recording_url,
+        "status": live_class.recording_status or "idle",
+        "url": live_class.recording_url or "",
+        "recording_id": live_class.recording_id or "",
     })
 
 
