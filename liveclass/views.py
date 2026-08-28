@@ -971,8 +971,12 @@ def recording_webhook(request):
             "error": "Invalid JSON"
         }, status=400)
 
-    print("📩 100ms Recording Webhook:")
-    print(json.dumps(payload, indent=2))
+    print("========================================")
+    print("📩 100MS RECORDING WEBHOOK RECEIVED")
+    print("EVENT:", payload.get("type"))
+    print("PAYLOAD:", json.dumps(payload, indent=2))
+    print("========================================")
+    
 
     event = payload.get("type")
     data = payload.get("data") or {}
