@@ -951,10 +951,16 @@ import json
 
 @csrf_exempt
 def recording_webhook(request):
+    print("========================================")
+    print("📩 100MS WEBHOOK HIT")
+    print("METHOD:", request.method)
+    print("PATH:", request.path)
+    print("========================================")
+
     if request.method == "GET":
         return JsonResponse({
             "success": True,
-            "message": "Recording webhook is active"
+            "message": "Webhook is active"
         })
 
     if request.method != "POST":
@@ -967,6 +973,9 @@ def recording_webhook(request):
             request.body.decode("utf-8") or "{}"
         )
     except json.JSONDecodeError:
+        print("❌ Invalid JSON received")
+        print("BODY:", request.body)
+
         return JsonResponse({
             "error": "Invalid JSON"
         }, status=400)
@@ -974,51 +983,32 @@ def recording_webhook(request):
     print("========================================")
     print("📩 100MS RECORDING WEBHOOK RECEIVED")
     print("EVENT:", payload.get("type"))
-    print("PAYLOAD:", json.dumps(payload, indent=2))
+    print(
+        "PAYLOAD:",
+        json.dumps(payload, indent=2)
+    )
     print("========================================")
-    
 
     event = payload.get("type")
-    data = payload.get("data") or {}
 
-    # ==========================================
-    # RECORDING COMPLETED
-    # ==========================================
+    # ================= SUCCESS =================
+    if event in [
+        "recording.success",
+        "beam.success",
+    ]:
+        data = payload.get("data", {})
 
-    if event == "recording.success":
-
-        recording_id = (
-            data.get("recording_id")
-            or data.get("id")
-        )
+        recording_id = data.get("id")
 
         recording_url = (
-            data.get("recording_presigned_url")
-            or data.get("URL")
-            or data.get("url")
-            or data.get("recording_path")
+            data.get("url")
             or data.get("location")
+            or data.get("file")
         )
 
-        room_id = data.get("room_id")
-
-        print(
-            "🎥 RECORDING SUCCESS"
-        )
-        print(
-            "Recording ID:",
-            recording_id
-        )
-        print(
-            "Room ID:",
-            room_id
-        )
-        print(
-            "Recording URL:",
-            recording_url
-        )
-
-        updated = 0
+        print("🎥 RECORDING SUCCESS")
+        print("Recording ID:", recording_id)
+        print("Recording URL:", recording_url)
 
         if recording_id:
             updated = LiveClass.objects.filter(
@@ -1028,48 +1018,25 @@ def recording_webhook(request):
                 recording_url=recording_url,
             )
 
-        # Fallback: match by room if recording ID
-        # isn't included in the webhook.
-        if updated == 0 and room_id:
-            updated = LiveClass.objects.filter(
-                room_id=room_id,
-                recording_status="processing",
-            ).update(
-                recording_status="completed",
-                recording_url=recording_url,
-                recording_id=recording_id or "",
+            print(
+                f"✅ Recording completed: "
+                f"{recording_id} | "
+                f"Updated: {updated}"
             )
 
-        print(
-            f"✅ Recording database update: {updated}"
-        )
+    # ================= FAILED =================
+    elif event in [
+        "recording.failed",
+        "beam.failed",
+    ]:
+        data = payload.get("data", {})
 
-    # ==========================================
-    # RECORDING FAILED
-    # ==========================================
-
-    elif event == "recording.failed":
-
-        recording_id = (
-            data.get("recording_id")
-            or data.get("id")
-        )
-
-        room_id = data.get("room_id")
+        recording_id = data.get("id")
 
         print(
-            "❌ RECORDING FAILED"
-        )
-        print(
-            "Recording ID:",
+            "❌ RECORDING FAILED:",
             recording_id
         )
-        print(
-            "Reason:",
-            data.get("reason")
-        )
-
-        updated = 0
 
         if recording_id:
             updated = LiveClass.objects.filter(
@@ -1078,13 +1045,17 @@ def recording_webhook(request):
                 recording_status="failed"
             )
 
-        if updated == 0 and room_id:
-            updated = LiveClass.objects.filter(
-                room_id=room_id,
-                recording_status="processing",
-            ).update(
-                recording_status="failed"
+            print(
+                f"❌ Recording marked failed: "
+                f"{recording_id} | "
+                f"Updated: {updated}"
             )
+
+    else:
+        print(
+            "ℹ️ Unhandled 100ms webhook event:",
+            event
+        )
 
     return JsonResponse({
         "success": True
