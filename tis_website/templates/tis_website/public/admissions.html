@@ -217,7 +217,7 @@ Fill all required information carefully.
             id="trackingUrl"
             type="text"
             readonly
-            value="{{ request.scheme }}://{{ request.get_host }}{% url 'tis_website_admin:admission_track' %}"
+            value="{{ request.scheme }}://{{ request.get_host }}{% url 'tis_website:admission_track' %}"
             class="w-full text-sm md:text-base 
                    bg-green-50 border-2 
                    border-green-300 rounded-xl 
@@ -278,7 +278,7 @@ Fill all required information carefully.
 
 
             <li>
-                ✅ Admission updates will also be sent to your registered phone number.
+                ✅ Admission updates will also be sent to your registered email address.
             </li>
 
 
@@ -293,7 +293,7 @@ Fill all required information carefully.
     <div class="mt-8 text-center">
 
 
-        <a href="{{ request.scheme }}://{{ request.get_host }}{% url 'tis_website_admin:admission_track' %}"
+        <a href="{{ request.scheme }}://{{ request.get_host }}{% url 'tis_website:admission_track' %}"
            class="inline-block bg-blue-900 hover:bg-blue-800 
                   text-white font-bold px-10 py-4 
                   rounded-2xl shadow-lg transition">
