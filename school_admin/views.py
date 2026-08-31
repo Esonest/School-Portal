@@ -646,7 +646,10 @@ from django.db.models import Avg  # Add this at the top of your views.py
 
 @school_admin_or_superadmin_required
 def submissions_list(request, school_id, exam_id):
-    school = get_object_or_404(School, id=school_id)
+    school = get_object_or_404(
+        School,
+        id=school_id
+    )
 
     exam = get_object_or_404(
         CBTExam,
@@ -657,31 +660,95 @@ def submissions_list(request, school_id, exam_id):
     submissions = (
         CBTSubmission.objects
         .filter(exam=exam)
-        .select_related('student__user')
+        .select_related(
+            "student__user",
+            "student__school",
+            "admission_candidate"
+        )
+        .order_by("-completed_on")
     )
 
-    # summary
+    # ============================================
+    # PREPARE DISPLAY DATA
+    # FOR BOTH NORMAL STUDENTS AND ADMISSION CANDIDATES
+    # ============================================
+
+    for submission in submissions:
+
+        if submission.admission_candidate:
+
+            submission.display_name = (
+                submission.admission_candidate.student_name
+            )
+
+            submission.display_class = (
+                submission.admission_candidate.class_applying_for
+            )
+
+            submission.display_type = "Admission Candidate"
+
+        elif submission.student:
+
+            submission.display_name = (
+                submission.student.full_name
+            )
+
+            submission.display_class = (
+                submission.student.school_class
+            )
+
+            submission.display_type = "Student"
+
+        else:
+
+            submission.display_name = "Unknown Candidate"
+            submission.display_class = "-"
+            submission.display_type = "Unknown"
+
+
+    # ============================================
+    # SUMMARY
+    # ============================================
+
     total_attempts = submissions.count()
-    avg_percentage = submissions.aggregate(
-        Avg('percentage')
-    )['percentage__avg'] or 0
-    pass_count = submissions.filter(status='Passed').count()
-    fail_count = total_attempts - pass_count
+
+    avg_percentage = (
+        submissions.aggregate(
+            Avg("percentage")
+        )["percentage__avg"]
+        or 0
+    )
+
+    pass_count = submissions.filter(
+        status="Pass"
+    ).count()
+
+    fail_count = submissions.filter(
+        status="Fail"
+    ).count()
+
 
     context = {
-        'school': school,              # ✅ REQUIRED for template
-        'exam': exam,
-        'exam_id': exam_id,
-        'submissions': submissions,
-        'total_attempts': total_attempts,
-        'avg_percentage': avg_percentage,
-        'pass_count': pass_count,
-        'fail_count': fail_count,
+        "school": school,
+        "exam": exam,
+        "exam_id": exam_id,
+        "submissions": submissions,
+
+        "total_attempts": total_attempts,
+
+        "avg_percentage": round(
+            avg_percentage,
+            2
+        ),
+
+        "pass_count": pass_count,
+        "fail_count": fail_count,
     }
+
 
     return render(
         request,
-        'school_admin/admin_exam_submission_list.html',
+        "school_admin/admin_exam_submission_list.html",
         context
     )
 
