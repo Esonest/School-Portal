@@ -1,5 +1,6 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required
+from .models import AdmissionApplication
 
 from .decorators import website_admin_required
 
@@ -19,16 +20,29 @@ from .utils import send_admission_email, send_admission_whatsapp
 from results.utils import portal_required
 
 
+
+
+
 @portal_required("websiteManagement")
 @login_required
 @website_admin_required
 def website_dashboard(request):
 
+    school = request.user.school
+
+    # Count active admission applications
+    applications_count = AdmissionApplication.objects.filter(
+        school=school,
+        is_archived=False
+    ).count()
+
     return render(
         request,
-        "tis_website/admin/dashboard.html"
+        "tis_website/admin/dashboard.html",
+        {
+            "applications_count": applications_count,
+        }
     )
-
 
 
 
@@ -542,7 +556,7 @@ def gallery_delete(request,pk):
     )
 
 
-from .models import AdmissionApplication
+
 
 
 
@@ -997,11 +1011,17 @@ def admission_detail(request, pk):
         school=request.user.school
     )
 
+    exam_pass_mark = None
+
+    if application.admission_exam:
+        exam_pass_mark = application.admission_exam.pass_mark
+
     return render(
         request,
         "tis_website/admin/admission_detail.html",
         {
             "application": application,
+            "exam_pass_mark": exam_pass_mark,
         }
     )
 

@@ -260,8 +260,13 @@ No CBT exam assigned yet.
 
 
 <p>
-<strong>Pass Mark:</strong>
-{{ application.exam_pass_mark }}
+    <strong>Pass Mark:</strong>
+
+    {% if exam_pass_mark is not None %}
+        {{ exam_pass_mark }}%
+    {% else %}
+        Not assigned
+    {% endif %}
 </p>
 
 

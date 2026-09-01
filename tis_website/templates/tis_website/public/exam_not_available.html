@@ -1,0 +1,274 @@
+{% extends "accounts/base.html" %}
+{% load static %}
+
+{% block content %}
+
+<div class="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100 flex items-center justify-center px-4 py-10">
+
+    <div class="w-full max-w-2xl">
+
+        <!-- Main Card -->
+        <div class="bg-white rounded-3xl shadow-2xl overflow-hidden">
+
+            <!-- Header -->
+            <div class="bg-gradient-to-r from-blue-900 to-indigo-700 text-white px-6 py-8 text-center">
+
+                {% if application.school.logo %}
+                    <img
+                        src="{{ application.school.logo.url }}"
+                        alt="{{ application.school.name }}"
+                        class="h-20 w-20 mx-auto object-contain bg-white rounded-full p-2 shadow-lg mb-4"
+                    >
+                {% endif %}
+
+                <h1 class="text-2xl md:text-3xl font-black">
+                    {{ application.school.name }}
+                </h1>
+
+                {% if application.school.motto %}
+                    <p class="mt-2 text-blue-100 italic">
+                        {{ application.school.motto }}
+                    </p>
+                {% endif %}
+
+            </div>
+
+
+            <!-- Content -->
+            <div class="p-6 md:p-10 text-center">
+
+                <!-- Warning Icon -->
+                <div class="mx-auto w-20 h-20 rounded-full bg-yellow-100 flex items-center justify-center mb-6">
+
+                    <span class="text-4xl">
+                        ⏳
+                    </span>
+
+                </div>
+
+
+                <h2 class="text-2xl md:text-3xl font-extrabold text-gray-800">
+
+                    Examination Not Available
+
+                </h2>
+
+
+                <p class="mt-4 text-gray-600 text-base md:text-lg leading-relaxed">
+
+                    Dear
+                    <strong>
+                        {{ application.parent_name }}
+                    </strong>,
+
+                    the admission examination for
+
+                    <strong>
+                        {{ application.student_name }}
+                    </strong>
+
+                    is currently not available.
+
+                </p>
+
+
+                <!-- Exam Information -->
+                {% if exam %}
+
+                <div class="mt-8 bg-blue-50 border border-blue-200 rounded-2xl p-6 text-left">
+
+                    <h3 class="font-bold text-lg text-blue-900 mb-4">
+
+                        📋 Examination Information
+
+                    </h3>
+
+
+                    <div class="space-y-3 text-gray-700">
+
+                        <div class="flex justify-between gap-4">
+
+                            <span class="font-semibold">
+                                Examination:
+                            </span>
+
+                            <span class="text-right">
+                                {{ exam.title }}
+                            </span>
+
+                        </div>
+
+
+                        <div class="flex justify-between gap-4">
+
+                            <span class="font-semibold">
+                                Duration:
+                            </span>
+
+                            <span>
+                                {{ exam.duration_minutes }} minutes
+                            </span>
+
+                        </div>
+
+
+                        {% if exam.start_time %}
+
+                        <div class="flex justify-between gap-4">
+
+                            <span class="font-semibold">
+                                Starts:
+                            </span>
+
+                            <span>
+                                {{ exam.start_time|date:"d F Y, h:i A" }}
+                            </span>
+
+                        </div>
+
+                        {% endif %}
+
+
+                        {% if exam.end_time %}
+
+                        <div class="flex justify-between gap-4">
+
+                            <span class="font-semibold">
+                                Ends:
+                            </span>
+
+                            <span>
+                                {{ exam.end_time|date:"d F Y, h:i A" }}
+                            </span>
+
+                        </div>
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+                {% endif %}
+
+
+                <!-- Application Information -->
+                <div class="mt-6 bg-gray-50 border border-gray-200 rounded-2xl p-5 text-left">
+
+                    <h3 class="font-bold text-gray-800 mb-3">
+
+                        📝 Application Details
+
+                    </h3>
+
+
+                    <p class="text-sm text-gray-600 mb-2">
+
+                        <strong>
+                            Student:
+                        </strong>
+
+                        {{ application.student_name }}
+
+                    </p>
+
+
+                    <p class="text-sm text-gray-600 mb-2">
+
+                        <strong>
+                            Application Number:
+                        </strong>
+
+                        {{ application.application_number }}
+
+                    </p>
+
+
+                    <p class="text-sm text-gray-600">
+
+                        <strong>
+                            Class Applying For:
+                        </strong>
+
+                        {{ application.class_applying_for }}
+
+                    </p>
+
+                </div>
+
+
+                <!-- Notice -->
+                <div class="mt-6 bg-yellow-50 border border-yellow-300 rounded-2xl p-5 text-left">
+
+                    <div class="flex gap-3">
+
+                        <span class="text-xl">
+                            ⚠️
+                        </span>
+
+                        <div>
+
+                            <h3 class="font-bold text-yellow-800">
+
+                                Please Note
+
+                            </h3>
+
+                            <p class="mt-1 text-sm text-yellow-700 leading-relaxed">
+
+                                The examination may not yet have started,
+                                may have already ended, or may temporarily
+                                be unavailable.
+
+                                Please check again during the scheduled
+                                examination period.
+
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+
+                <!-- Actions -->
+                <div class="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
+
+                    <button
+                        onclick="window.location.reload()"
+                        class="bg-blue-900 hover:bg-blue-800 text-white font-bold px-7 py-3 rounded-xl transition shadow"
+                    >
+
+                        🔄 Check Again
+
+                    </button>
+
+
+                    <a
+                        href="/"
+                        class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold px-7 py-3 rounded-xl transition"
+                    >
+
+                        🏠 Return Home
+
+                    </a>
+
+                </div>
+
+
+                <p class="mt-8 text-xs text-gray-400">
+
+                    Please keep your application number for future reference.
+
+                </p>
+
+            </div>
+
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}

@@ -235,10 +235,21 @@ def admission_exam_access(request, token):
 
     exam = application.admission_exam
 
+    # No examination assigned yet
     if not exam:
-        raise Http404("No examination assigned.")
 
+        return render(
+            request,
+            "tis_website/public/exam_not_available.html",
+            {
+                "application": application,
+                "exam": None,
+            },
+        )
+
+    # Examination exists but is not currently available
     if not exam.is_active():
+
         return render(
             request,
             "tis_website/public/exam_not_available.html",
@@ -248,13 +259,13 @@ def admission_exam_access(request, token):
             },
         )
 
-    # Store applicant ID in the session
+    # Store applicant ID in session
     request.session["admission_application_id"] = application.id
 
     return redirect(
         "cbt:start_admission_exam",
         exam_id=exam.id
-    )   
+    )  
 
 from django.shortcuts import render, get_object_or_404
 
