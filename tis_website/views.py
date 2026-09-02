@@ -10,6 +10,7 @@ from .models import (
 
 from finance.views import activate_student_after_admission_payment
 from finance.models import Payment
+from cbt.models import CBTSubmission
 
 from django.utils import timezone
 from django.shortcuts import get_object_or_404, redirect, render
@@ -235,19 +236,48 @@ def admission_exam_access(request, token):
 
     exam = application.admission_exam
 
-    # No examination assigned yet
-    if not exam:
+    # ============================================
+    # NO EXAM ASSIGNED
+    # ============================================
 
+    if not exam:
         return render(
             request,
             "tis_website/public/exam_not_available.html",
             {
                 "application": application,
                 "exam": None,
+                "reason": "not_assigned",
             },
         )
 
-    # Examination exists but is not currently available
+    # ============================================
+    # ALREADY COMPLETED EXAM
+    # ============================================
+
+    previous_submission = CBTSubmission.objects.filter(
+        admission_candidate=application,
+        exam=exam,
+        completed_on__isnull=False
+    ).first()
+
+    if previous_submission:
+
+        return render(
+            request,
+            "tis_website/public/exam_not_available.html",
+            {
+                "application": application,
+                "exam": exam,
+                "submission": previous_submission,
+                "reason": "already_completed",
+            },
+        )
+
+    # ============================================
+    # EXAM NOT ACTIVE
+    # ============================================
+
     if not exam.is_active():
 
         return render(
@@ -256,16 +286,24 @@ def admission_exam_access(request, token):
             {
                 "application": application,
                 "exam": exam,
+                "reason": "not_active",
             },
         )
 
-    # Store applicant ID in session
+    # ============================================
+    # STORE APPLICATION IN SESSION
+    # ============================================
+
     request.session["admission_application_id"] = application.id
+
+    # ============================================
+    # START EXAM
+    # ============================================
 
     return redirect(
         "cbt:start_admission_exam",
         exam_id=exam.id
-    )  
+    ) 
 
 from django.shortcuts import render, get_object_or_404
 

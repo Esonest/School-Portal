@@ -222,11 +222,13 @@
         <p class="text-gray-700 mb-4">
           You cannot retake <strong>{{ exam.subject.name }}</strong> because you have already completed it.
         </p>
-
+          
+        {% if exam.exam_type != "admission" %}
         <a href="{% url 'cbt:cbt_result_analysis' exam.id %}"
            class="bg-blue-700 hover:bg-blue-800 text-white font-semibold py-2 px-5 rounded-lg shadow-md transition">
            View Your Result
         </a>
+        {% endif %}
       </div>
 
     {% else %}

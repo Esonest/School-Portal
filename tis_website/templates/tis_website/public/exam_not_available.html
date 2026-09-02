@@ -1,33 +1,30 @@
 {% extends "accounts/base.html" %}
-{% load static %}
 
 {% block content %}
 
-<div class="min-h-screen bg-gradient-to-br from-slate-100 via-blue-50 to-indigo-100 flex items-center justify-center px-4 py-10">
+<div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-100
+            flex items-center justify-center px-4 py-12">
 
     <div class="w-full max-w-2xl">
 
-        <!-- Main Card -->
-        <div class="bg-white rounded-3xl shadow-2xl overflow-hidden">
+        <div class="bg-white rounded-3xl shadow-2xl border border-gray-200
+                    overflow-hidden">
 
             <!-- Header -->
-            <div class="bg-gradient-to-r from-blue-900 to-indigo-700 text-white px-6 py-8 text-center">
 
-                {% if application.school.logo %}
-                    <img
-                        src="{{ application.school.logo.url }}"
-                        alt="{{ application.school.name }}"
-                        class="h-20 w-20 mx-auto object-contain bg-white rounded-full p-2 shadow-lg mb-4"
-                    >
-                {% endif %}
+            <div class="bg-blue-900 text-white text-center px-6 py-8">
+
+                <div class="text-5xl mb-3">
+                    🎓
+                </div>
 
                 <h1 class="text-2xl md:text-3xl font-black">
-                    {{ application.school.name }}
+                    Admission Examination
                 </h1>
 
-                {% if application.school.motto %}
-                    <p class="mt-2 text-blue-100 italic">
-                        {{ application.school.motto }}
+                {% if application.school %}
+                    <p class="mt-2 text-blue-200">
+                        {{ application.school.name }}
                     </p>
                 {% endif %}
 
@@ -35,233 +32,184 @@
 
 
             <!-- Content -->
+
             <div class="p-6 md:p-10 text-center">
 
-                <!-- Warning Icon -->
-                <div class="mx-auto w-20 h-20 rounded-full bg-yellow-100 flex items-center justify-center mb-6">
+                {% if reason == "already_completed" %}
 
-                    <span class="text-4xl">
-                        ⏳
-                    </span>
+                    <div class="w-20 h-20 mx-auto mb-5
+                                rounded-full bg-green-100
+                                flex items-center justify-center">
 
-                </div>
-
-
-                <h2 class="text-2xl md:text-3xl font-extrabold text-gray-800">
-
-                    Examination Not Available
-
-                </h2>
-
-
-                <p class="mt-4 text-gray-600 text-base md:text-lg leading-relaxed">
-
-                    Dear
-                    <strong>
-                        {{ application.parent_name }}
-                    </strong>,
-
-                    the admission examination for
-
-                    <strong>
-                        {{ application.student_name }}
-                    </strong>
-
-                    is currently not available.
-
-                </p>
-
-
-                <!-- Exam Information -->
-                {% if exam %}
-
-                <div class="mt-8 bg-blue-50 border border-blue-200 rounded-2xl p-6 text-left">
-
-                    <h3 class="font-bold text-lg text-blue-900 mb-4">
-
-                        📋 Examination Information
-
-                    </h3>
-
-
-                    <div class="space-y-3 text-gray-700">
-
-                        <div class="flex justify-between gap-4">
-
-                            <span class="font-semibold">
-                                Examination:
-                            </span>
-
-                            <span class="text-right">
-                                {{ exam.title }}
-                            </span>
-
-                        </div>
-
-
-                        <div class="flex justify-between gap-4">
-
-                            <span class="font-semibold">
-                                Duration:
-                            </span>
-
-                            <span>
-                                {{ exam.duration_minutes }} minutes
-                            </span>
-
-                        </div>
-
-
-                        {% if exam.start_time %}
-
-                        <div class="flex justify-between gap-4">
-
-                            <span class="font-semibold">
-                                Starts:
-                            </span>
-
-                            <span>
-                                {{ exam.start_time|date:"d F Y, h:i A" }}
-                            </span>
-
-                        </div>
-
-                        {% endif %}
-
-
-                        {% if exam.end_time %}
-
-                        <div class="flex justify-between gap-4">
-
-                            <span class="font-semibold">
-                                Ends:
-                            </span>
-
-                            <span>
-                                {{ exam.end_time|date:"d F Y, h:i A" }}
-                            </span>
-
-                        </div>
-
-                        {% endif %}
+                        <span class="text-4xl">
+                            ✅
+                        </span>
 
                     </div>
 
-                </div>
+                    <h2 class="text-2xl font-black text-green-800">
+                        Examination Already Completed
+                    </h2>
 
-                {% endif %}
-
-
-                <!-- Application Information -->
-                <div class="mt-6 bg-gray-50 border border-gray-200 rounded-2xl p-5 text-left">
-
-                    <h3 class="font-bold text-gray-800 mb-3">
-
-                        📝 Application Details
-
-                    </h3>
-
-
-                    <p class="text-sm text-gray-600 mb-2">
-
-                        <strong>
-                            Student:
-                        </strong>
-
-                        {{ application.student_name }}
-
+                    <p class="mt-4 text-gray-600 leading-relaxed">
+                        Dear
+                        <strong>{{ application.parent_name }}</strong>,
+                        the admission examination for
+                        <strong>{{ application.student_name }}</strong>
+                        has already been submitted.
                     </p>
 
 
-                    <p class="text-sm text-gray-600 mb-2">
+                    {% if submission %}
 
-                        <strong>
-                            Application Number:
-                        </strong>
+                        <div class="mt-6 bg-gray-50 border rounded-2xl
+                                    p-5 text-left">
 
-                        {{ application.application_number }}
+                            <p>
+                                <strong>Candidate:</strong>
+                                {{ application.student_name }}
+                            </p>
 
-                    </p>
+                            <p class="mt-2">
+                                <strong>Application Number:</strong>
+                                {{ application.application_number }}
+                            </p>
+
+                            {% if submission.completed_on %}
+
+                                <p class="mt-2">
+                                    <strong>Submitted:</strong>
+                                    {{ submission.completed_on|date:"d F Y, h:i A" }}
+                                </p>
+
+                            {% endif %}
+
+                            {% if submission.percentage != None %}
+
+                                <p class="mt-2">
+                                    <strong>Score:</strong>
+                                    {{ submission.percentage }}%
+                                </p>
+
+                            {% endif %}
+
+                        </div>
+
+                    {% endif %}
 
 
-                    <p class="text-sm text-gray-600">
+                    <div class="mt-6 bg-yellow-50 border border-yellow-200
+                                rounded-2xl p-5 text-left">
 
-                        <strong>
-                            Class Applying For:
-                        </strong>
+                        <p class="font-bold text-yellow-800">
+                            Important
+                        </p>
 
-                        {{ application.class_applying_for }}
+                        <p class="mt-2 text-sm text-yellow-700">
+                            This examination can only be taken once.
+                            A completed examination cannot be restarted.
+                        </p>
 
-                    </p>
-
-                </div>
+                    </div>
 
 
-                <!-- Notice -->
-                <div class="mt-6 bg-yellow-50 border border-yellow-300 rounded-2xl p-5 text-left">
+                {% elif reason == "not_active" %}
 
-                    <div class="flex gap-3">
+                    <div class="w-20 h-20 mx-auto mb-5
+                                rounded-full bg-yellow-100
+                                flex items-center justify-center">
 
-                        <span class="text-xl">
-                            ⚠️
+                        <span class="text-4xl">
+                            ⏳
                         </span>
 
-                        <div>
+                    </div>
 
-                            <h3 class="font-bold text-yellow-800">
+                    <h2 class="text-2xl font-black text-yellow-800">
+                        Examination Not Available
+                    </h2>
 
-                                Please Note
+                    <p class="mt-4 text-gray-600">
+                        The admission examination is currently not available.
+                        Please check again later.
+                    </p>
 
-                            </h3>
 
-                            <p class="mt-1 text-sm text-yellow-700 leading-relaxed">
+                    {% if exam %}
 
-                                The examination may not yet have started,
-                                may have already ended, or may temporarily
-                                be unavailable.
+                        <div class="mt-6 bg-gray-50 border rounded-2xl
+                                    p-5 text-left">
 
-                                Please check again during the scheduled
-                                examination period.
+                            <p>
+                                <strong>Examination:</strong>
+                                {{ exam.title }}
+                            </p>
 
+                            <p class="mt-2">
+                                <strong>Candidate:</strong>
+                                {{ application.student_name }}
                             </p>
 
                         </div>
 
+                    {% endif %}
+
+
+                {% else %}
+
+                    <div class="w-20 h-20 mx-auto mb-5
+                                rounded-full bg-red-100
+                                flex items-center justify-center">
+
+                        <span class="text-4xl">
+                            📋
+                        </span>
+
                     </div>
+
+                    <h2 class="text-2xl font-black text-red-800">
+                        Examination Not Assigned
+                    </h2>
+
+                    <p class="mt-4 text-gray-600">
+                        An admission examination has not yet been assigned
+                        to this application.
+                    </p>
+
+                {% endif %}
+
+
+                <!-- Application information -->
+
+                <div class="mt-8 border-t pt-6">
+
+                    <p class="text-sm text-gray-500">
+                        Application Number
+                    </p>
+
+                    <p class="text-lg font-black text-blue-900 mt-1">
+                        {{ application.application_number }}
+                    </p>
 
                 </div>
 
 
-                <!-- Actions -->
-                <div class="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
+                <!-- Back -->
 
-                    <button
-                        onclick="window.location.reload()"
-                        class="bg-blue-900 hover:bg-blue-800 text-white font-bold px-7 py-3 rounded-xl transition shadow"
-                    >
+                <div class="mt-8">
 
-                        🔄 Check Again
+                    <a href="/"
+                       class="inline-flex items-center justify-center
+                              bg-blue-900 hover:bg-blue-800
+                              text-white font-bold
+                              px-8 py-3 rounded-xl
+                              transition">
 
-                    </button>
-
-
-                    <a
-                        href="/"
-                        class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-bold px-7 py-3 rounded-xl transition"
-                    >
-
-                        🏠 Return Home
+                        ← Return to School Website
 
                     </a>
 
                 </div>
-
-
-                <p class="mt-8 text-xs text-gray-400">
-
-                    Please keep your application number for future reference.
-
-                </p>
 
             </div>
 

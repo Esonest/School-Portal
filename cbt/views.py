@@ -965,16 +965,37 @@ def start_admission_exam(request, exam_id):
     )
 
 
-    submission, created = CBTSubmission.objects.get_or_create(
+    submission = CBTSubmission.objects.filter(
         admission_candidate=application,
         exam=exam
-    )
+    ).first()
 
+# ============================================
+# PREVIOUSLY COMPLETED
+# ============================================
 
-    if submission.completed_on:
-        return redirect(
-            "cbt:student_exam_result",
-            exam_id=exam.id
+    if submission and submission.completed_on:
+
+        return render(
+            request,
+            "tis_website/public/exam_not_available.html",
+            {
+                "application": application,
+                "exam": exam,
+                "submission": submission,
+                "reason": "already_completed",
+            },
+        )
+
+# ============================================
+# CREATE SUBMISSION IF FIRST ATTEMPT
+# ============================================
+
+    if not submission:
+
+        submission = CBTSubmission.objects.create(
+            admission_candidate=application,
+            exam=exam
         )
 
 
