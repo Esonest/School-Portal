@@ -29,6 +29,7 @@ urlpatterns = [
     path("api/liveclass/<int:pk>/waiting-heartbeat/", views.waiting_heartbeat),
     path("api/liveclass/<int:pk>/approve-all/", views.approve_all_students),
     path("api/liveclass/<int:pk>/reject-all/", views.reject_all_students),
+    path("api/liveclass/<int:pk>/remove-student/",views.remove_student,name="remove_student"),
     path("api/liveclass/<int:pk>/start-recording/",views.start_recording_api,name="start_recording_api"),
     path("api/liveclass/<int:pk>/stop-recording/",views.stop_recording_api,name="stop_recording_api"),
     path("webhooks/recording/",views.recording_webhook,name="recording_webhook"),

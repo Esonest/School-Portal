@@ -151,6 +151,15 @@ class LiveClassWaiting(models.Model):
     approved = models.BooleanField(default=False)
     rejected = models.BooleanField(default=False)
 
+    removed = models.BooleanField(default=False)
+    removed_at = models.DateTimeField(null=True, blank=True)
+
+    breakout_room = models.CharField(
+        max_length=100,
+        blank=True,
+        null=True
+    )
+
     requested_at = models.DateTimeField(auto_now_add=True)
     approved_at = models.DateTimeField(null=True, blank=True)
 
@@ -159,5 +168,13 @@ class LiveClassWaiting(models.Model):
         ordering = ["requested_at"]
 
     def __str__(self):
-        status = "Approved" if self.approved else "Waiting"
+        if self.removed:
+            status = "Removed"
+        elif self.rejected:
+            status = "Rejected"
+        elif self.approved:
+            status = "Approved"
+        else:
+            status = "Waiting"
+
         return f"{self.student} → {self.live_class.title} ({status})"

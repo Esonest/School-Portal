@@ -1310,13 +1310,27 @@ def request_join_liveclass(request, pk):
     )
 
     # ✅ SINGLE SOURCE OF TRUTH (NO DUPLICATES)
+    waiting = LiveClassWaiting.objects.filter(
+        live_class=live_class,
+        student=student
+    ).first()
+
+# A teacher has removed this student.
+# Do NOT allow a new waiting request.
+    if waiting and waiting.removed:
+        return JsonResponse({
+            "status": "removed"
+        }, status=403)
+
     obj, created = LiveClassWaiting.objects.update_or_create(
         live_class=live_class,
         student=student,
         defaults={
             "approved": False,
             "rejected": False,
-            "updated_at": timezone.now()
+            "removed": False,
+            "removed_at": None,
+            "updated_at": timezone.now(),
         }
     )
 
@@ -1352,7 +1366,10 @@ def approve_student(request, pk):
     # ✅ approve
     waiting.approved = True
     waiting.rejected = False
+    waiting.removed = False
+    waiting.removed_at = None
     waiting.approved_at = timezone.now()
+
     waiting.save()
 
     # ✅ attendance
@@ -1388,6 +1405,57 @@ def reject_student(request, pk):
 
     return JsonResponse({"status": "rejected"})
 
+
+@login_required
+def remove_student(request, pk):
+    if not is_staff_user(request.user):
+        return JsonResponse({"error": "Forbidden"}, status=403)
+
+    if request.method != "POST":
+        return JsonResponse(
+            {"error": "POST required"},
+            status=405
+        )
+
+    user_id = request.POST.get("user_id")
+
+    if not user_id:
+        return JsonResponse(
+            {"error": "user_id is required"},
+            status=400
+        )
+
+    waiting = LiveClassWaiting.objects.filter(
+        live_class_id=pk,
+        student__user_id=user_id,
+        live_class__school=request.user.school
+    ).first()
+
+    if not waiting:
+        return JsonResponse(
+            {"error": "Student is not registered for this live class"},
+            status=404
+        )
+
+    waiting.approved = False
+    waiting.rejected = False
+    waiting.removed = True
+    waiting.removed_at = timezone.now()
+    waiting.save(
+        update_fields=[
+            "approved",
+            "rejected",
+            "removed",
+            "removed_at",
+            "updated_at",
+        ]
+    )
+
+    return JsonResponse({
+        "status": "removed",
+        "user_id": str(user_id),
+    })   
+
 from datetime import timedelta
 from django.utils import timezone
 
@@ -1410,6 +1478,7 @@ def waiting_list(request, pk):
         live_class_id=pk,
         approved=False,
         rejected=False,
+        removed=False,
         live_class__school=request.user.school
     ).select_related("student__user")
 
@@ -1440,13 +1509,30 @@ def check_waiting_status(request, pk):
     if not waiting:
         return JsonResponse({"status": "none"})
 
+    if waiting.removed:
+        return JsonResponse({
+            "status": "removed"
+        })
+
     if waiting.rejected:
-        return JsonResponse({"status": "rejected"})
+        return JsonResponse({
+            "status": "rejected"
+        })
+
+    if waiting.breakout_room:
+        return JsonResponse({
+            "status": "breakout",
+            "room": waiting.breakout_room
+        })
 
     if waiting.approved:
-        return JsonResponse({"status": "approved"})
+        return JsonResponse({
+            "status": "approved"
+        })
 
-    return JsonResponse({"status": "waiting"})
+    return JsonResponse({
+        "status": "waiting"
+    })
 
 
 @login_required
@@ -1456,10 +1542,23 @@ def waiting_heartbeat(request, pk):
     if not student:
         return JsonResponse({"error": "Only students"}, status=403)
 
-    LiveClassWaiting.objects.filter(
+    waiting = LiveClassWaiting.objects.filter(
         live_class_id=pk,
         student=student
-    ).update(updated_at=timezone.now())
+    ).first()
+
+    if not waiting:
+        return JsonResponse({
+            "error": "Waiting record not found"
+        }, status=404)
+
+    if waiting.removed:
+        return JsonResponse({
+            "status": "removed"
+        }, status=403)
+
+    waiting.updated_at = timezone.now()
+    waiting.save(update_fields=["updated_at"])
 
     return JsonResponse({"status": "alive"})
 
