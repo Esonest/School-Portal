@@ -1381,6 +1381,118 @@ def approve_student(request, pk):
     return JsonResponse({"status": "approved"})
 
 
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from django.shortcuts import get_object_or_404
+
+from .models import LiveClass, LiveClassWaiting
+
+
+@login_required
+def assign_breakout(request, pk):
+    """
+    Assign a student to a breakout room.
+
+    Frontend sends:
+        user_id
+        room
+    """
+
+    # ---------------------------------------------------------
+    # ONLY TEACHERS / STAFF CAN ASSIGN BREAKOUT ROOMS
+    # ---------------------------------------------------------
+    if not is_staff_user(request.user):
+        return JsonResponse(
+            {"error": "Forbidden"},
+            status=403
+        )
+
+    # ---------------------------------------------------------
+    # POST ONLY
+    # ---------------------------------------------------------
+    if request.method != "POST":
+        return JsonResponse(
+            {"error": "POST required"},
+            status=405
+        )
+
+    # ---------------------------------------------------------
+    # GET LIVE CLASS
+    # Make sure it belongs to this staff user's school
+    # ---------------------------------------------------------
+    live_class = get_object_or_404(
+        LiveClass,
+        pk=pk,
+        school=request.user.school
+    )
+
+    # ---------------------------------------------------------
+    # GET FRONTEND DATA
+    # ---------------------------------------------------------
+    user_id = request.POST.get("user_id")
+    room = request.POST.get("room")
+
+    if not user_id:
+        return JsonResponse(
+            {"error": "user_id is required"},
+            status=400
+        )
+
+    if not room:
+        return JsonResponse(
+            {"error": "room is required"},
+            status=400
+        )
+
+    # ---------------------------------------------------------
+    # FIND STUDENT'S WAITING RECORD
+    # ---------------------------------------------------------
+    waiting = LiveClassWaiting.objects.filter(
+        live_class=live_class,
+        student__user_id=user_id
+    ).first()
+
+    if not waiting:
+        return JsonResponse(
+            {
+                "error": "Student is not registered for this live class"
+            },
+            status=404
+        )
+
+    # ---------------------------------------------------------
+    # DO NOT ASSIGN REMOVED STUDENT
+    # ---------------------------------------------------------
+    if waiting.removed:
+        return JsonResponse(
+            {
+                "error": "Student has been removed from this live class"
+            },
+            status=403
+        )
+
+    # ---------------------------------------------------------
+    # ASSIGN BREAKOUT ROOM
+    # ---------------------------------------------------------
+    waiting.breakout_room = room
+
+    waiting.save(
+        update_fields=[
+            "breakout_room",
+            "updated_at",
+        ]
+    )
+
+    # ---------------------------------------------------------
+    # SUCCESS
+    # ---------------------------------------------------------
+    return JsonResponse({
+        "status": "assigned",
+        "user_id": str(user_id),
+        "room": room,
+    })    
+
+
 
 @login_required
 def reject_student(request, pk):
