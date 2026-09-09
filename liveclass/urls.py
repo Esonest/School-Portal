@@ -28,6 +28,7 @@ urlpatterns = [
     path("api/liveclass/<int:pk>/status/", views.check_waiting_status, name="check_status"),
     path("api/liveclass/<int:pk>/waiting-heartbeat/", views.waiting_heartbeat),
     path("api/liveclass/<int:pk>/approve-all/", views.approve_all_students),
+    path("api/liveclass/<int:pk>/assign-breakout/",views.assign_breakout,name="assign_breakout"),
     path("api/liveclass/<int:pk>/reject-all/", views.reject_all_students),
     path("api/liveclass/<int:pk>/remove-student/",views.remove_student,name="remove_student"),
     path("api/liveclass/<int:pk>/start-recording/",views.start_recording_api,name="start_recording_api"),
