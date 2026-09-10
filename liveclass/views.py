@@ -702,11 +702,6 @@ def liveclass_token_api(request, pk):
         if not waiting.approved:
             return JsonResponse({"status": "waiting"})
 
-    # ✅ 🔥 THIS IS THE EXACT PLACE TO DELETE
-        LiveClassWaiting.objects.filter(
-            live_class=live_class,
-            student=student
-        ).delete()
 
     # =========================
     # ENSURE ROOM EXISTS
