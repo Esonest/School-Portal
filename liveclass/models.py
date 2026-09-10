@@ -160,6 +160,13 @@ class LiveClassWaiting(models.Model):
         null=True
     )
 
+    breakout_room_id = models.CharField(
+        max_length=255,
+        blank=True,
+        null=True
+    )
+
+
     requested_at = models.DateTimeField(auto_now_add=True)
     approved_at = models.DateTimeField(null=True, blank=True)
 

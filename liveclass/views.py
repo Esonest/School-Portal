@@ -1279,44 +1279,81 @@ def liveclass_frontend(request, pk=None):
 from django.utils import timezone
 from .models import LiveClass, LiveClassWaiting
 
-@login_required 
+@login_required
 def request_join_liveclass(request, pk):
-    print("USER:", request.user)
-    print("HAS student_profile:", hasattr(request.user, "student_profile"))
-    print("VALUE:", getattr(request.user, "student_profile", None))
-
     user = request.user
 
-    # ✅ FIXED ROLE CHECK (clean)
     if getattr(user, "is_student_user", False) is not True:
-        return JsonResponse({"error": "Only students allowed"}, status=403)
+        return JsonResponse(
+            {"error": "Only students allowed"},
+            status=403
+        )
 
-    # ✅ SAFE student profile
     student = getattr(user, "student_profile", None)
 
     if not student:
-        return JsonResponse({"error": "Student profile missing"}, status=400)
+        return JsonResponse(
+            {"error": "Student profile missing"},
+            status=400
+        )
 
-    # ✅ GET CLASS
     live_class = get_object_or_404(
         LiveClass,
         pk=pk,
         school=user.school
     )
 
-    # ✅ SINGLE SOURCE OF TRUTH (NO DUPLICATES)
     waiting = LiveClassWaiting.objects.filter(
         live_class=live_class,
         student=student
     ).first()
 
-# A teacher has removed this student.
-# Do NOT allow a new waiting request.
+    # ---------------------------------------------------------
+    # TEMPORARY 5-MINUTE REMOVAL
+    # ---------------------------------------------------------
     if waiting and waiting.removed:
-        return JsonResponse({
-            "status": "removed"
-        }, status=403)
 
+        if waiting.removed_at:
+            unlock_time = waiting.removed_at + timedelta(minutes=5)
+
+            if timezone.now() < unlock_time:
+                remaining_seconds = int(
+                    (unlock_time - timezone.now()).total_seconds()
+                )
+
+                return JsonResponse({
+                    "status": "removed",
+                    "remaining_seconds": max(
+                        remaining_seconds,
+                        0
+                    )
+                }, status=403)
+
+        # -----------------------------------------------------
+        # 5 MINUTES HAVE PASSED
+        # ALLOW STUDENT TO REQUEST AGAIN
+        # -----------------------------------------------------
+        waiting.removed = False
+        waiting.removed_at = None
+        waiting.approved = False
+        waiting.rejected = False
+        waiting.breakout_room = None
+        waiting.breakout_room_id = None
+        waiting.updated_at = timezone.now()
+
+        waiting.save(update_fields=[
+            "removed",
+            "removed_at",
+            "approved",
+            "rejected",
+            "breakout_room",
+            "breakout_room_id",
+            "updated_at",
+        ])
+
+    # ---------------------------------------------------------
+    # CREATE / RESET WAITING REQUEST
+    # ---------------------------------------------------------
     obj, created = LiveClassWaiting.objects.update_or_create(
         live_class=live_class,
         student=student,
@@ -1325,11 +1362,11 @@ def request_join_liveclass(request, pk):
             "rejected": False,
             "removed": False,
             "removed_at": None,
+            "breakout_room": None,
+            "breakout_room_id": None,
             "updated_at": timezone.now(),
         }
     )
-
-    print("🔥 WAITING CREATED:", created)
 
     return JsonResponse({
         "status": "waiting",
@@ -1385,45 +1422,25 @@ from .models import LiveClass, LiveClassWaiting
 
 @login_required
 def assign_breakout(request, pk):
-    """
-    Assign a student to a breakout room.
 
-    Frontend sends:
-        user_id
-        room
-    """
-
-    # ---------------------------------------------------------
-    # ONLY TEACHERS / STAFF CAN ASSIGN BREAKOUT ROOMS
-    # ---------------------------------------------------------
     if not is_staff_user(request.user):
         return JsonResponse(
             {"error": "Forbidden"},
             status=403
         )
 
-    # ---------------------------------------------------------
-    # POST ONLY
-    # ---------------------------------------------------------
     if request.method != "POST":
         return JsonResponse(
             {"error": "POST required"},
             status=405
         )
 
-    # ---------------------------------------------------------
-    # GET LIVE CLASS
-    # Make sure it belongs to this staff user's school
-    # ---------------------------------------------------------
     live_class = get_object_or_404(
         LiveClass,
         pk=pk,
         school=request.user.school
     )
 
-    # ---------------------------------------------------------
-    # GET FRONTEND DATA
-    # ---------------------------------------------------------
     user_id = request.POST.get("user_id")
     room = request.POST.get("room")
 
@@ -1439,9 +1456,6 @@ def assign_breakout(request, pk):
             status=400
         )
 
-    # ---------------------------------------------------------
-    # FIND STUDENT'S WAITING RECORD
-    # ---------------------------------------------------------
     waiting = LiveClassWaiting.objects.filter(
         live_class=live_class,
         student__user_id=user_id
@@ -1450,42 +1464,164 @@ def assign_breakout(request, pk):
     if not waiting:
         return JsonResponse(
             {
-                "error": "Student is not registered for this live class"
+                "error":
+                "Student is not registered for this live class"
             },
             status=404
         )
 
-    # ---------------------------------------------------------
-    # DO NOT ASSIGN REMOVED STUDENT
-    # ---------------------------------------------------------
     if waiting.removed:
         return JsonResponse(
             {
-                "error": "Student has been removed from this live class"
+                "error":
+                "Student has been removed from this live class"
             },
             status=403
         )
 
     # ---------------------------------------------------------
-    # ASSIGN BREAKOUT ROOM
+    # CREATE / GET REAL 100MS BREAKOUT ROOM
     # ---------------------------------------------------------
-    waiting.breakout_room = room
 
-    waiting.save(
-        update_fields=[
-            "breakout_room",
-            "updated_at",
-        ]
+    safe_room_name = (
+        f"tc-lc-{live_class.id}-"
+        f"{room.lower().replace(' ', '-')}"
     )
 
+    real_room_id = create_100ms_room_if_missing(
+        safe_room_name
+    )
+
+    if not real_room_id:
+        return JsonResponse(
+            {
+                "error":
+                "Unable to create breakout room"
+            },
+            status=500
+        )
+
     # ---------------------------------------------------------
-    # SUCCESS
+    # SAVE ASSIGNMENT
     # ---------------------------------------------------------
+
+    waiting.breakout_room = room
+    waiting.breakout_room_id = real_room_id
+
+    waiting.save(update_fields=[
+        "breakout_room",
+        "breakout_room_id",
+        "updated_at",
+    ])
+
     return JsonResponse({
         "status": "assigned",
         "user_id": str(user_id),
         "room": room,
-    })    
+        "room_id": real_room_id,
+    })
+
+
+@login_required
+def assign_breakout(request, pk):
+
+    if not is_staff_user(request.user):
+        return JsonResponse(
+            {"error": "Forbidden"},
+            status=403
+        )
+
+    if request.method != "POST":
+        return JsonResponse(
+            {"error": "POST required"},
+            status=405
+        )
+
+    live_class = get_object_or_404(
+        LiveClass,
+        pk=pk,
+        school=request.user.school
+    )
+
+    user_id = request.POST.get("user_id")
+    room = request.POST.get("room")
+
+    if not user_id:
+        return JsonResponse(
+            {"error": "user_id is required"},
+            status=400
+        )
+
+    if not room:
+        return JsonResponse(
+            {"error": "room is required"},
+            status=400
+        )
+
+    waiting = LiveClassWaiting.objects.filter(
+        live_class=live_class,
+        student__user_id=user_id
+    ).first()
+
+    if not waiting:
+        return JsonResponse(
+            {
+                "error":
+                "Student is not registered for this live class"
+            },
+            status=404
+        )
+
+    if waiting.removed:
+        return JsonResponse(
+            {
+                "error":
+                "Student has been removed from this live class"
+            },
+            status=403
+        )
+
+    # ---------------------------------------------------------
+    # CREATE / GET REAL 100MS BREAKOUT ROOM
+    # ---------------------------------------------------------
+
+    safe_room_name = (
+        f"tc-lc-{live_class.id}-"
+        f"{room.lower().replace(' ', '-')}"
+    )
+
+    real_room_id = create_100ms_room_if_missing(
+        safe_room_name
+    )
+
+    if not real_room_id:
+        return JsonResponse(
+            {
+                "error":
+                "Unable to create breakout room"
+            },
+            status=500
+        )
+
+    # ---------------------------------------------------------
+    # SAVE ASSIGNMENT
+    # ---------------------------------------------------------
+
+    waiting.breakout_room = room
+    waiting.breakout_room_id = real_room_id
+
+    waiting.save(update_fields=[
+        "breakout_room",
+        "breakout_room_id",
+        "updated_at",
+    ])
+
+    return JsonResponse({
+        "status": "assigned",
+        "user_id": str(user_id),
+        "room": room,
+        "room_id": real_room_id,
+    })
 
 
 
@@ -1515,8 +1651,12 @@ def reject_student(request, pk):
 
 @login_required
 def remove_student(request, pk):
+
     if not is_staff_user(request.user):
-        return JsonResponse({"error": "Forbidden"}, status=403)
+        return JsonResponse(
+            {"error": "Forbidden"},
+            status=403
+        )
 
     if request.method != "POST":
         return JsonResponse(
@@ -1540,7 +1680,10 @@ def remove_student(request, pk):
 
     if not waiting:
         return JsonResponse(
-            {"error": "Student is not registered for this live class"},
+            {
+                "error":
+                "Student is not registered for this live class"
+            },
             status=404
         )
 
@@ -1548,20 +1691,25 @@ def remove_student(request, pk):
     waiting.rejected = False
     waiting.removed = True
     waiting.removed_at = timezone.now()
-    waiting.save(
-        update_fields=[
-            "approved",
-            "rejected",
-            "removed",
-            "removed_at",
-            "updated_at",
-        ]
-    )
+
+    # Remove breakout assignment too
+    waiting.breakout_room = None
+    waiting.breakout_room_id = None
+
+    waiting.save(update_fields=[
+        "approved",
+        "rejected",
+        "removed",
+        "removed_at",
+        "breakout_room",
+        "breakout_room_id",
+        "updated_at",
+    ])
 
     return JsonResponse({
         "status": "removed",
         "user_id": str(user_id),
-    })   
+    })
 
 from datetime import timedelta
 from django.utils import timezone
@@ -1569,17 +1717,10 @@ from django.utils import timezone
 @login_required
 def waiting_list(request, pk):
     if not is_staff_user(request.user):
-        return JsonResponse({"error": "Forbidden"}, status=403)
-
-    # 🔥 REMOVE STALE USERS (inactive for 10 seconds)
-    timeout = timezone.now() - timedelta(seconds=600)
-
-    LiveClassWaiting.objects.filter(
-        live_class_id=pk,
-        approved=False,
-        rejected=False,
-        updated_at__lt=timeout   # 👈 IMPORTANT
-    ).delete()
+        return JsonResponse(
+            {"error": "Forbidden"},
+            status=403
+        )
 
     waiting = LiveClassWaiting.objects.filter(
         live_class_id=pk,
@@ -1587,26 +1728,218 @@ def waiting_list(request, pk):
         rejected=False,
         removed=False,
         live_class__school=request.user.school
-    ).select_related("student__user")
+    ).select_related(
+        "student__user"
+    )
 
     data = [
         {
             "id": w.student.user.id,
-            "name": w.student.user.get_full_name() or w.student.user.username
+            "name": (
+                w.student.user.get_full_name()
+                or w.student.user.username
+            )
         }
         for w in waiting
     ]
 
-    return JsonResponse(data, safe=False)
+    return JsonResponse(
+        data,
+        safe=False
+    )
 
 
 @login_required
-def check_waiting_status(request, pk):
-    student = getattr(request.user, "student_profile", None)
+def waiting_list(request, pk):
+    if not is_staff_user(request.user):
+        return JsonResponse(
+            {"error": "Forbidden"},
+            status=403
+        )
 
-    # 🔥 FIX: Don't crash for non-students
+    waiting = LiveClassWaiting.objects.filter(
+        live_class_id=pk,
+        approved=False,
+        rejected=False,
+        removed=False,
+        live_class__school=request.user.school
+    ).select_related(
+        "student__user"
+    )
+
+    data = [
+        {
+            "id": w.student.user.id,
+            "name": (
+                w.student.user.get_full_name()
+                or w.student.user.username
+            )
+        }
+        for w in waiting
+    ]
+
+    return JsonResponse(
+        data,
+        safe=False
+    )
+
+@login_required
+def removed_students(request, pk):
+    if not is_staff_user(request.user):
+        return JsonResponse(
+            {"error": "Forbidden"},
+            status=403
+        )
+
+    waiting = LiveClassWaiting.objects.filter(
+        live_class_id=pk,
+        removed=True,
+        live_class__school=request.user.school
+    ).select_related(
+        "student__user"
+    )
+
+    now = timezone.now()
+
+    data = []
+
+    for w in waiting:
+
+        remaining_seconds = 0
+
+        if w.removed_at:
+            unlock_time = (
+                w.removed_at +
+                timedelta(minutes=5)
+            )
+
+            if now < unlock_time:
+                remaining_seconds = int(
+                    (unlock_time - now).total_seconds()
+                )
+
+        data.append({
+            "id": w.student.user.id,
+            "name": (
+                w.student.user.get_full_name()
+                or w.student.user.username
+            ),
+            "remaining_seconds": max(
+                remaining_seconds,
+                0
+            ),
+        })
+
+    return JsonResponse(
+        data,
+        safe=False
+    )
+@login_required
+def breakout_token(request, pk):
+
+    if request.method != "GET":
+        return JsonResponse(
+            {"error": "GET required"},
+            status=405
+        )
+
+    live_class = get_object_or_404(
+        LiveClass,
+        pk=pk,
+        school=request.user.school
+    )
+
+    student = getattr(
+        request.user,
+        "student_profile",
+        None
+    )
+
     if not student:
-        return JsonResponse({"status": "not_student"})
+        return JsonResponse(
+            {"error": "Student profile not found"},
+            status=403
+        )
+
+    waiting = LiveClassWaiting.objects.filter(
+        live_class=live_class,
+        student=student
+    ).first()
+
+    if not waiting:
+        return JsonResponse(
+            {
+                "error":
+                "Student is not registered for this live class"
+            },
+            status=404
+        )
+
+    if waiting.removed:
+        return JsonResponse(
+            {
+                "error":
+                "Student has been removed from this live class"
+            },
+            status=403
+        )
+
+    if not waiting.approved:
+        return JsonResponse(
+            {
+                "error":
+                "Student has not been approved"
+            },
+            status=403
+        )
+
+    if not waiting.breakout_room:
+        return JsonResponse(
+            {
+                "error":
+                "No breakout room assigned"
+            },
+            status=404
+        )
+
+    if not waiting.breakout_room_id:
+        return JsonResponse(
+            {
+                "error":
+                "Breakout room ID is missing"
+            },
+            status=500
+        )
+
+    token = generate_100ms_app_token(
+        request.user.id,
+        "student",
+        waiting.breakout_room_id
+    )
+
+    return JsonResponse({
+        "token": token,
+        "username": (
+            request.user.get_full_name()
+            or request.user.username
+        ),
+        "room": waiting.breakout_room,
+        "room_id": waiting.breakout_room_id,
+    })
+
+    
+@login_required
+def check_waiting_status(request, pk):
+    student = getattr(
+        request.user,
+        "student_profile",
+        None
+    )
+
+    if not student:
+        return JsonResponse({
+            "status": "not_student"
+        })
 
     waiting = LiveClassWaiting.objects.filter(
         live_class_id=pk,
@@ -1614,24 +1947,84 @@ def check_waiting_status(request, pk):
     ).first()
 
     if not waiting:
-        return JsonResponse({"status": "none"})
-
-    if waiting.removed:
         return JsonResponse({
-            "status": "removed"
+            "status": "none"
         })
 
+    # ---------------------------------------------------------
+    # TEMPORARY REMOVAL
+    # ---------------------------------------------------------
+    if waiting.removed:
+
+        if waiting.removed_at:
+            unlock_time = (
+                waiting.removed_at +
+                timedelta(minutes=5)
+            )
+
+            if timezone.now() < unlock_time:
+
+                remaining_seconds = int(
+                    (
+                        unlock_time -
+                        timezone.now()
+                    ).total_seconds()
+                )
+
+                return JsonResponse({
+                    "status": "removed",
+                    "remaining_seconds": max(
+                        remaining_seconds,
+                        0
+                    )
+                })
+
+        # -----------------------------------------------------
+        # COOLDOWN FINISHED
+        # -----------------------------------------------------
+        waiting.removed = False
+        waiting.removed_at = None
+        waiting.approved = False
+        waiting.rejected = False
+        waiting.breakout_room = None
+        waiting.breakout_room_id = None
+        waiting.updated_at = timezone.now()
+
+        waiting.save(update_fields=[
+            "removed",
+            "removed_at",
+            "approved",
+            "rejected",
+            "breakout_room",
+            "breakout_room_id",
+            "updated_at",
+        ])
+
+        return JsonResponse({
+            "status": "waiting"
+        })
+
+    # ---------------------------------------------------------
+    # REJECTED
+    # ---------------------------------------------------------
     if waiting.rejected:
         return JsonResponse({
             "status": "rejected"
         })
 
+    # ---------------------------------------------------------
+    # BREAKOUT
+    # ---------------------------------------------------------
     if waiting.breakout_room:
         return JsonResponse({
             "status": "breakout",
-            "room": waiting.breakout_room
+            "room": waiting.breakout_room,
+            "room_id": waiting.breakout_room_id or ""
         })
 
+    # ---------------------------------------------------------
+    # APPROVED
+    # ---------------------------------------------------------
     if waiting.approved:
         return JsonResponse({
             "status": "approved"
@@ -1660,8 +2053,26 @@ def waiting_heartbeat(request, pk):
         }, status=404)
 
     if waiting.removed:
+
+        remaining_seconds = 0
+
+        if waiting.removed_at:
+            unlock_time = (
+                waiting.removed_at +
+                timedelta(minutes=5)
+            )
+
+            if timezone.now() < unlock_time:
+                remaining_seconds = int(
+                    (unlock_time - timezone.now()).total_seconds()
+                )
+
         return JsonResponse({
-            "status": "removed"
+            "status": "removed",
+            "remaining_seconds": max(
+                remaining_seconds,
+                0
+            )
         }, status=403)
 
     waiting.updated_at = timezone.now()
@@ -1679,7 +2090,8 @@ def approve_all_students(request, pk):
     waiting_list = LiveClassWaiting.objects.filter(
         live_class_id=pk,
         approved=False,
-        rejected=False
+        rejected=False,
+        removed=False
     )
 
     for waiting in waiting_list:
@@ -1704,8 +2116,44 @@ def reject_all_students(request, pk):
     LiveClassWaiting.objects.filter(
         live_class_id=pk,
         approved=False,
-        rejected=False
-    ).update(approved=False, rejected=True)
+        rejected=False,
+        removed=False
+    ).update(
+        approved=False,
+        rejected=True
+    )
 
     return JsonResponse({"status": "all rejected"})
+
+
+@login_required
+def breakout_assignments(request, pk):
+
+    if not is_staff_user(request.user):
+        return JsonResponse(
+            {"error": "Forbidden"},
+            status=403
+        )
+
+    live_class = get_object_or_404(
+        LiveClass,
+        pk=pk,
+        school=request.user.school
+    )
+
+    waiting = LiveClassWaiting.objects.filter(
+        live_class=live_class,
+        breakout_room__isnull=False
+    ).select_related(
+        "student__user"
+    )
+
+    data = {}
+
+    for w in waiting:
+        data[str(w.student.user.id)] = (
+            w.breakout_room
+        )
+
+    return JsonResponse(data)
     
