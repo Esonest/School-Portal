@@ -1522,108 +1522,6 @@ def assign_breakout(request, pk):
     })
 
 
-@login_required
-def assign_breakout(request, pk):
-
-    if not is_staff_user(request.user):
-        return JsonResponse(
-            {"error": "Forbidden"},
-            status=403
-        )
-
-    if request.method != "POST":
-        return JsonResponse(
-            {"error": "POST required"},
-            status=405
-        )
-
-    live_class = get_object_or_404(
-        LiveClass,
-        pk=pk,
-        school=request.user.school
-    )
-
-    user_id = request.POST.get("user_id")
-    room = request.POST.get("room")
-
-    if not user_id:
-        return JsonResponse(
-            {"error": "user_id is required"},
-            status=400
-        )
-
-    if not room:
-        return JsonResponse(
-            {"error": "room is required"},
-            status=400
-        )
-
-    waiting = LiveClassWaiting.objects.filter(
-        live_class=live_class,
-        student__user_id=user_id
-    ).first()
-
-    if not waiting:
-        return JsonResponse(
-            {
-                "error":
-                "Student is not registered for this live class"
-            },
-            status=404
-        )
-
-    if waiting.removed:
-        return JsonResponse(
-            {
-                "error":
-                "Student has been removed from this live class"
-            },
-            status=403
-        )
-
-    # ---------------------------------------------------------
-    # CREATE / GET REAL 100MS BREAKOUT ROOM
-    # ---------------------------------------------------------
-
-    safe_room_name = (
-        f"tc-lc-{live_class.id}-"
-        f"{room.lower().replace(' ', '-')}"
-    )
-
-    real_room_id = create_100ms_room_if_missing(
-        safe_room_name
-    )
-
-    if not real_room_id:
-        return JsonResponse(
-            {
-                "error":
-                "Unable to create breakout room"
-            },
-            status=500
-        )
-
-    # ---------------------------------------------------------
-    # SAVE ASSIGNMENT
-    # ---------------------------------------------------------
-
-    waiting.breakout_room = room
-    waiting.breakout_room_id = real_room_id
-
-    waiting.save(update_fields=[
-        "breakout_room",
-        "breakout_room_id",
-        "updated_at",
-    ])
-
-    return JsonResponse({
-        "status": "assigned",
-        "user_id": str(user_id),
-        "room": room,
-        "room_id": real_room_id,
-    })
-
-
 
 @login_required
 def reject_student(request, pk):
@@ -1927,7 +1825,7 @@ def breakout_token(request, pk):
         "room_id": waiting.breakout_room_id,
     })
 
-    
+
 @login_required
 def check_waiting_status(request, pk):
     student = getattr(
