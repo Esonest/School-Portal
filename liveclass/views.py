@@ -1468,7 +1468,7 @@ def assign_breakout(request, pk):
         )
 
     # ---------------------------------------------------------
-    # CREATE / GET REAL 100MS BREAKOUT ROOM
+    # CREATE / GET THE 100MS BREAKOUT ROOM
     # ---------------------------------------------------------
     safe_room_name = (
         f"tc-lc-{live_class.id}-"
@@ -1481,24 +1481,13 @@ def assign_breakout(request, pk):
 
     if not real_room_id:
         return JsonResponse(
-            {
-                "error":
-                "Unable to create breakout room"
-            },
+            {"error": "Unable to create breakout room"},
             status=500
         )
 
     # =========================================================
     # TEACHER ENTERING BREAKOUT ROOM
     # =========================================================
-    #
-    # The teacher does NOT have a LiveClassWaiting record.
-    #
-    # Therefore we must handle the teacher BEFORE looking for
-    # a student's waiting record.
-    #
-    # =========================================================
-
     if str(user_id) == str(request.user.id):
 
         teacher_token = generate_100ms_app_token(
@@ -1537,9 +1526,6 @@ def assign_breakout(request, pk):
             status=404
         )
 
-    # ---------------------------------------------------------
-    # DO NOT ASSIGN REMOVED STUDENT
-    # ---------------------------------------------------------
     if waiting.removed:
         return JsonResponse(
             {
@@ -1550,7 +1536,7 @@ def assign_breakout(request, pk):
         )
 
     # ---------------------------------------------------------
-    # SAVE BREAKOUT ASSIGNMENT
+    # SAVE BREAKOUT ROOM
     # ---------------------------------------------------------
     waiting.breakout_room = room
     waiting.breakout_room_id = real_room_id
@@ -1563,9 +1549,6 @@ def assign_breakout(request, pk):
         ]
     )
 
-    # ---------------------------------------------------------
-    # SUCCESS
-    # ---------------------------------------------------------
     return JsonResponse({
         "status": "assigned",
         "user_id": str(user_id),
