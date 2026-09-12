@@ -1423,7 +1423,7 @@ from .models import LiveClass, LiveClassWaiting
 def assign_breakout(request, pk):
 
     # ---------------------------------------------------------
-    # STAFF ONLY
+    # ONLY TEACHERS / STAFF CAN ASSIGN OR ENTER BREAKOUT ROOMS
     # ---------------------------------------------------------
     if not is_staff_user(request.user):
         return JsonResponse(
@@ -1431,18 +1431,27 @@ def assign_breakout(request, pk):
             status=403
         )
 
+    # ---------------------------------------------------------
+    # POST ONLY
+    # ---------------------------------------------------------
     if request.method != "POST":
         return JsonResponse(
             {"error": "POST required"},
             status=405
         )
 
+    # ---------------------------------------------------------
+    # GET LIVE CLASS
+    # ---------------------------------------------------------
     live_class = get_object_or_404(
         LiveClass,
         pk=pk,
         school=request.user.school
     )
 
+    # ---------------------------------------------------------
+    # GET FRONTEND DATA
+    # ---------------------------------------------------------
     user_id = request.POST.get("user_id")
     room = request.POST.get("room")
 
@@ -1461,7 +1470,6 @@ def assign_breakout(request, pk):
     # ---------------------------------------------------------
     # CREATE / GET REAL 100MS BREAKOUT ROOM
     # ---------------------------------------------------------
-
     safe_room_name = (
         f"tc-lc-{live_class.id}-"
         f"{room.lower().replace(' ', '-')}"
@@ -1484,9 +1492,10 @@ def assign_breakout(request, pk):
     # TEACHER ENTERING BREAKOUT ROOM
     # =========================================================
     #
-    # The teacher uses the SAME assign-breakout endpoint.
+    # The teacher does NOT have a LiveClassWaiting record.
     #
-    # No LiveClassWaiting record is required for the teacher.
+    # Therefore we must handle the teacher BEFORE looking for
+    # a student's waiting record.
     #
     # =========================================================
 
@@ -1528,6 +1537,9 @@ def assign_breakout(request, pk):
             status=404
         )
 
+    # ---------------------------------------------------------
+    # DO NOT ASSIGN REMOVED STUDENT
+    # ---------------------------------------------------------
     if waiting.removed:
         return JsonResponse(
             {
@@ -1538,9 +1550,8 @@ def assign_breakout(request, pk):
         )
 
     # ---------------------------------------------------------
-    # SAVE STUDENT BREAKOUT ASSIGNMENT
+    # SAVE BREAKOUT ASSIGNMENT
     # ---------------------------------------------------------
-
     waiting.breakout_room = room
     waiting.breakout_room_id = real_room_id
 
@@ -1552,6 +1563,9 @@ def assign_breakout(request, pk):
         ]
     )
 
+    # ---------------------------------------------------------
+    # SUCCESS
+    # ---------------------------------------------------------
     return JsonResponse({
         "status": "assigned",
         "user_id": str(user_id),
@@ -1771,7 +1785,7 @@ def removed_students(request, pk):
         safe=False
     )
 
-
+    
 @login_required
 def breakout_token(request, pk):
 
