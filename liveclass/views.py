@@ -1419,10 +1419,12 @@ from django.shortcuts import get_object_or_404
 
 from .models import LiveClass, LiveClassWaiting
 
-
 @login_required
 def assign_breakout(request, pk):
 
+    # ---------------------------------------------------------
+    # STAFF ONLY
+    # ---------------------------------------------------------
     if not is_staff_user(request.user):
         return JsonResponse(
             {"error": "Forbidden"},
@@ -1456,6 +1458,62 @@ def assign_breakout(request, pk):
             status=400
         )
 
+    # ---------------------------------------------------------
+    # CREATE / GET REAL 100MS BREAKOUT ROOM
+    # ---------------------------------------------------------
+
+    safe_room_name = (
+        f"tc-lc-{live_class.id}-"
+        f"{room.lower().replace(' ', '-')}"
+    )
+
+    real_room_id = create_100ms_room_if_missing(
+        safe_room_name
+    )
+
+    if not real_room_id:
+        return JsonResponse(
+            {
+                "error":
+                "Unable to create breakout room"
+            },
+            status=500
+        )
+
+    # =========================================================
+    # TEACHER ENTERING BREAKOUT ROOM
+    # =========================================================
+    #
+    # The teacher uses the SAME assign-breakout endpoint.
+    #
+    # No LiveClassWaiting record is required for the teacher.
+    #
+    # =========================================================
+
+    if str(user_id) == str(request.user.id):
+
+        teacher_token = generate_100ms_app_token(
+            request.user.id,
+            "teacher",
+            real_room_id
+        )
+
+        return JsonResponse({
+            "status": "teacher_enter",
+            "user_id": str(request.user.id),
+            "room": room,
+            "room_id": real_room_id,
+            "token": teacher_token,
+            "username": (
+                request.user.get_full_name()
+                or request.user.username
+            ),
+        })
+
+    # =========================================================
+    # STUDENT ASSIGNMENT
+    # =========================================================
+
     waiting = LiveClassWaiting.objects.filter(
         live_class=live_class,
         student__user_id=user_id
@@ -1480,39 +1538,19 @@ def assign_breakout(request, pk):
         )
 
     # ---------------------------------------------------------
-    # CREATE / GET REAL 100MS BREAKOUT ROOM
-    # ---------------------------------------------------------
-
-    safe_room_name = (
-        f"tc-lc-{live_class.id}-"
-        f"{room.lower().replace(' ', '-')}"
-    )
-
-    real_room_id = create_100ms_room_if_missing(
-        safe_room_name
-    )
-
-    if not real_room_id:
-        return JsonResponse(
-            {
-                "error":
-                "Unable to create breakout room"
-            },
-            status=500
-        )
-
-    # ---------------------------------------------------------
-    # SAVE ASSIGNMENT
+    # SAVE STUDENT BREAKOUT ASSIGNMENT
     # ---------------------------------------------------------
 
     waiting.breakout_room = room
     waiting.breakout_room_id = real_room_id
 
-    waiting.save(update_fields=[
-        "breakout_room",
-        "breakout_room_id",
-        "updated_at",
-    ])
+    waiting.save(
+        update_fields=[
+            "breakout_room",
+            "breakout_room_id",
+            "updated_at",
+        ]
+    )
 
     return JsonResponse({
         "status": "assigned",
@@ -1732,6 +1770,8 @@ def removed_students(request, pk):
         data,
         safe=False
     )
+
+
 @login_required
 def breakout_token(request, pk):
 
