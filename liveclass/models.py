@@ -5,6 +5,47 @@ from django.utils import timezone
 # models.py
 
 class LiveClass(models.Model):
+
+        # ==========================================================
+    # PUBLIC EVENT SUPPORT
+    # ==========================================================
+
+    LIVECLASS_TYPE_CHOICES = [
+        ("school_class", "School Class"),
+        ("public_event", "Public Event"),
+    ]
+
+    liveclass_type = models.CharField(
+        max_length=20,
+        choices=LIVECLASS_TYPE_CHOICES,
+        default="school_class",
+        db_index=True,
+    )
+
+    event_slug = models.SlugField(
+        max_length=150,
+        blank=True,
+        null=True,
+        db_index=True,
+    )
+
+    allow_guest_access = models.BooleanField(
+        default=False,
+    )
+
+    event_description = models.TextField(
+        blank=True,
+        default="",
+    )
+
+    guest_max_count = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+    )
+
+    record_public_event = models.BooleanField(
+        default=False,
+    )
     school = models.ForeignKey(
         "accounts.School",
         on_delete=models.CASCADE,
@@ -185,3 +226,52 @@ class LiveClassWaiting(models.Model):
             status = "Waiting"
 
         return f"{self.student} → {self.live_class.title} ({status})"
+
+
+# ==========================================================
+# PUBLIC LIVECLASS GUEST
+# ==========================================================
+
+class LiveClassGuest(models.Model):
+    live_class = models.ForeignKey(
+        LiveClass,
+        on_delete=models.CASCADE,
+        related_name="event_guests",
+    )
+
+    name = models.CharField(
+        max_length=150,
+    )
+
+    email = models.EmailField(
+        blank=True,
+        null=True,
+    )
+
+    phone = models.CharField(
+        max_length=30,
+        blank=True,
+    )
+    
+
+    last_seen = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
+    session_key = models.CharField(
+        max_length=100,
+        unique=True,
+    )
+
+    joined_at = models.DateTimeField(
+        auto_now_add=True,
+    )
+
+    left_at = models.DateTimeField(
+        null=True,
+        blank=True,
+    )
+
+    def __str__(self):
+        return f"{self.name} - {self.live_class}"        

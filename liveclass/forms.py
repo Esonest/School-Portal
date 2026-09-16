@@ -61,3 +61,90 @@ class LiveClassForm(forms.ModelForm):
             field.widget.attrs.update({
                 "class": "w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-400"
             })
+
+
+
+
+# ==========================================================
+# PUBLIC EVENT FORM
+# ==========================================================
+
+from django import forms
+from django.utils import timezone
+
+from .models import LiveClass
+
+
+class PublicEventForm(forms.ModelForm):
+
+    class Meta:
+        model = LiveClass
+
+        fields = [
+            "title",
+            "event_description",
+            "start_time",
+            "end_time",
+            "guest_max_count",
+            "record_public_event",
+        ]
+
+        widgets = {
+            "title": forms.TextInput(
+                attrs={
+                    "class": "w-full rounded-xl border border-gray-200 p-3",
+                    "placeholder": "Example: Free JSS1 Mathematics Experience Class",
+                }
+            ),
+
+            "event_description": forms.Textarea(
+                attrs={
+                    "class": "w-full rounded-xl border border-gray-200 p-3",
+                    "rows": 5,
+                    "placeholder": "Describe what guests will learn in this class...",
+                }
+            ),
+
+            "start_time": forms.DateTimeInput(
+                attrs={
+                    "type": "datetime-local",
+                    "class": "w-full rounded-xl border border-gray-200 p-3",
+                }
+            ),
+
+            "end_time": forms.DateTimeInput(
+                attrs={
+                    "type": "datetime-local",
+                    "class": "w-full rounded-xl border border-gray-200 p-3",
+                }
+            ),
+
+            "guest_max_count": forms.NumberInput(
+                attrs={
+                    "class": "w-full rounded-xl border border-gray-200 p-3",
+                    "min": "1",
+                    "placeholder": "Leave blank for unlimited guests",
+                }
+            ),
+
+            "record_public_event": forms.CheckboxInput(
+                attrs={
+                    "class": "h-5 w-5 rounded",
+                }
+            ),
+        }
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        start_time = cleaned_data.get("start_time")
+        end_time = cleaned_data.get("end_time")
+
+        if start_time and end_time:
+
+            if end_time <= start_time:
+                raise forms.ValidationError(
+                    "End time must be later than start time."
+                )
+
+        return cleaned_data

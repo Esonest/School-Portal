@@ -38,6 +38,75 @@ urlpatterns = [
     path("api/liveclass/<int:pk>/stop-recording/",views.stop_recording_api,name="stop_recording_api"),
     path("webhooks/recording/",views.recording_webhook,name="recording_webhook"),
     path("api/liveclass/<int:pk>/recording-status/",views.recording_status_api,name="recording_status_api"),
+    
+
+
+        # ==========================================================
+    # PUBLIC LIVE EVENT
+    # ==========================================================
+
+    path(
+        "events/create/",
+        views.public_event_create,
+        name="public_event_create",
+    ),
+
+    path(
+        "event/<slug:event_slug>/",
+        views.public_event,
+        name="public_event",
+    ),
+
+    path(
+        "event/<slug:event_slug>/manage/",
+        views.public_event_manage,
+        name="public_event_manage",
+    ),
+
+    path(
+        "events/",
+        views.public_event_list,
+        name="public_event_list",
+    ),
+
+    path(
+        "event/<slug:event_slug>/teacher-room/",
+        views.public_event_teacher_room,
+        name="public_event_teacher_room",
+    ),
+
+    path(
+        "api/liveclass/event/<slug:event_slug>/join/",
+        views.public_event_join,
+        name="public_event_join",
+    ),
+
+    path(
+        "api/liveclass/event/<slug:event_slug>/token/",
+        views.public_event_token_api,
+        name="public_event_token_api",
+    ),
+
+    path(
+        "event/<slug:event_slug>/room/",
+        views.public_event_guest_room,
+        name="public_event_guest_room",
+    ),
+
+
+    path(
+        "api/liveclass/event/<slug:event_slug>/heartbeat/",
+        views.public_event_guest_heartbeat,
+        name="public_event_guest_heartbeat",
+    ),
+
+    path(
+        "api/liveclass/event/<slug:event_slug>/leave/",
+        views.public_event_guest_leave,
+        name="public_event_guest_leave",
+    ),
+
+
     path("<int:pk>/", views.liveclass_frontend),
 
 ]

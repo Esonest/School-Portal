@@ -8,8 +8,8 @@ from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 import json
 from django.http import HttpResponse
-from .models import LiveClass,LiveClassAttendance
-from .forms import LiveClassForm
+from .models import LiveClass,LiveClassAttendance, LiveClassGuest
+from .forms import LiveClassForm, PublicEventForm
 from django.shortcuts import get_object_or_404, redirect, render
 from django.conf import settings
 import requests
@@ -25,6 +25,7 @@ import uuid
 import jwt
 from django.conf import settings
 from django.contrib.auth import get_user_model
+from django.utils.text import slugify
 
 User = get_user_model()
 
@@ -2175,4 +2176,677 @@ def breakout_assignments(request, pk):
         )
 
     return JsonResponse(data)
+
+
+# ==========================================================
+# PUBLIC EVENT CREATION
+# ==========================================================
+
+@portal_required("liveclass")
+@login_required
+def public_event_create(request):
+
+    if not (
+        request.user.is_teacher_user
+        or request.user.is_schooladmin
+        or request.user.is_superadmin
+    ):
+        return HttpResponseForbidden()
+
+    school = getattr(request.user, "school", None)
+
+    if not school:
+        return HttpResponseForbidden("School account required.")
+
+    if request.method == "POST":
+
+        form = PublicEventForm(request.POST)
+
+        if form.is_valid():
+
+            live_class = form.save(commit=False)
+
+            # --------------------------------------------------
+            # PUBLIC EVENT IDENTIFICATION
+            # --------------------------------------------------
+
+            live_class.school = school
+            live_class.liveclass_type = "public_event"
+            live_class.allow_guest_access = True
+
+            # --------------------------------------------------
+            # ASSIGN TEACHER
+            # --------------------------------------------------
+
+            if request.user.is_teacher_user:
+                live_class.teacher = request.user.teacher_profile
+
+            # --------------------------------------------------
+            # INITIAL STATUS
+            # --------------------------------------------------
+
+            live_class.status = "scheduled"
+
+            # --------------------------------------------------
+            # GENERATE PUBLIC SLUG
+            # --------------------------------------------------
+
+            base_slug = slugify(live_class.title)
+
+            if not base_slug:
+                base_slug = "public-event"
+
+            event_slug = base_slug
+
+            counter = 2
+
+            while LiveClass.objects.filter(
+                event_slug=event_slug
+            ).exists():
+
+                event_slug = f"{base_slug}-{counter}"
+                counter += 1
+
+            live_class.event_slug = event_slug
+
+            # --------------------------------------------------
+            # IMPORTANT:
+            # DO NOT USE os.getenv("ROOM_ID") HERE
+            #
+            # Public events get their own 100ms room when the
+            # teacher/room actually joins.
+            # --------------------------------------------------
+
+            live_class.room_id = None
+
+            live_class.save()
+
+            return redirect(
+                "liveclass:public_event_manage",
+                event_slug=live_class.event_slug
+            )
+
+    else:
+        form = PublicEventForm()
+
+    return render(
+        request,
+        "liveclass/public_event_form.html",
+        {
+            "form": form,
+        }
+    )
+
+
+# ==========================================================
+# PUBLIC EVENT MANAGEMENT / PRE-ROOM
+# ==========================================================
+
+@portal_required("liveclass")
+@login_required
+def public_event_manage(request, event_slug):
+
+    live_class = get_object_or_404(
+        LiveClass,
+        event_slug=event_slug,
+        liveclass_type="public_event",
+        allow_guest_access=True,
+    )
+
+    user = request.user
+
+    # --------------------------------------------------
+    # PERMISSION
+    # --------------------------------------------------
+
+    allowed = False
+
+    if user.is_superadmin:
+        allowed = True
+
+    elif user.is_schooladmin:
+        allowed = live_class.school_id == user.school_id
+
+    elif user.is_teacher_user:
+        allowed = (
+            live_class.teacher
+            and live_class.teacher.user_id == user.id
+        )
+
+    if not allowed:
+        return HttpResponseForbidden()
+
+    # --------------------------------------------------
+    # UPDATE EVENT STATUS
+    # --------------------------------------------------
+
+    live_class.update_status()
+
+    # --------------------------------------------------
+    # DURATION
+    # --------------------------------------------------
+
+    duration_minutes = None
+
+    if live_class.start_time and live_class.end_time:
+
+        duration_seconds = (
+            live_class.end_time - live_class.start_time
+        ).total_seconds()
+
+        duration_minutes = int(
+            duration_seconds / 60
+        )
+
+    # --------------------------------------------------
+    # GUEST COUNTS
+    # --------------------------------------------------
+
+    guest_count = live_class.event_guests.count()
+
+    online_guest_count = live_class.event_guests.filter(
+        left_at__isnull=True
+    ).count()
+
+    return render(
+        request,
+        "liveclass/public_event_manage.html",
+        {
+            "live_class": live_class,
+            "duration_minutes": duration_minutes,
+            "guest_count": guest_count,
+            "online_guest_count": online_guest_count,
+        }
+    )
+
+# =========================================================
+# PUBLIC EVENT LIST
+# =========================================================
+
+@portal_required("liveclass")
+@login_required
+def public_event_list(request):
+
+    user = request.user
+
+    events = LiveClass.objects.filter(
+        liveclass_type="public_event",
+        allow_guest_access=True,
+    )
+
+    # ---------------------------------------------
+    # School admin sees events in his school
+    # ---------------------------------------------
+
+    if getattr(user, "is_schooladmin", False):
+
+        events = events.filter(
+            school=user.school
+        )
+
+
+    # ---------------------------------------------
+    # Teacher sees only events assigned to him
+    # ---------------------------------------------
+
+    elif getattr(user, "is_teacher_user", False):
+
+        events = events.filter(
+            teacher=user.teacher_profile
+        )
+
+
+    # ---------------------------------------------
+    # Superadmin sees everything
+    # ---------------------------------------------
+
+    elif getattr(user, "is_superadmin", False):
+
+        pass
+
+
+    else:
+
+        return HttpResponseForbidden()
+
+
+    # Update status automatically
+    for event in events:
+        event.update_status()
+
+
+    events = events.order_by(
+        "start_time"
+    )
+
+
+    return render(
+        request,
+        "liveclass/public_event_list.html",
+        {
+            "events": events,
+        }
+    )
+
+
+# =========================================================
+# PUBLIC EVENT — GUEST HEARTBEAT
+# =========================================================
+def public_event_guest_heartbeat(
+    request,
+    event_slug
+):
+
+    live_class = get_object_or_404(
+        LiveClass,
+        event_slug=event_slug,
+        liveclass_type="public_event",
+        allow_guest_access=True,
+    )
+
+    session_key = request.session.get(
+        f"public_event_guest_{live_class.id}"
+    )
+
+    if not session_key:
+        return JsonResponse(
+            {
+                "error": "Guest session not found."
+            },
+            status=403
+        )
+
+    guest = LiveClassGuest.objects.filter(
+        live_class=live_class,
+        session_key=session_key,
+        left_at__isnull=True,
+    ).first()
+
+    if not guest:
+        return JsonResponse(
+            {
+                "error": "Guest session is invalid."
+            },
+            status=403
+        )
+
+    guest.last_seen = timezone.now()
+
+    guest.save(
+        update_fields=["last_seen"]
+    )
+
+    return JsonResponse(
+        {
+            "success": True
+        }
+    )
+
+
+# =========================================================
+# PUBLIC EVENT — GUEST LEAVE
+# =========================================================
+
+def public_event_guest_leave(
+    request,
+    event_slug
+):
+
+    live_class = get_object_or_404(
+        LiveClass,
+        event_slug=event_slug,
+        liveclass_type="public_event",
+    )
+
+    session_key = request.session.get(
+        f"public_event_guest_{live_class.id}"
+    )
+
+    if session_key:
+
+        LiveClassGuest.objects.filter(
+            live_class=live_class,
+            session_key=session_key,
+            left_at__isnull=True,
+        ).update(
+            left_at=timezone.now()
+        )
+
+    return JsonResponse(
+        {
+            "success": True
+        }
+    )    
+# ==========================================================
+# PUBLIC EVENT TEACHER ROOM
+# ==========================================================
+
+@portal_required("liveclass")
+@login_required
+def public_event_teacher_room(request, event_slug):
+
+    live_class = get_object_or_404(
+        LiveClass,
+        event_slug=event_slug,
+        liveclass_type="public_event",
+        allow_guest_access=True,
+    )
+
+    user = request.user
+
+    # --------------------------------------------------
+    # PERMISSION
+    # --------------------------------------------------
+
+    if user.is_teacher_user:
+
+        if not live_class.teacher:
+            return HttpResponseForbidden()
+
+        if live_class.teacher.user_id != user.id:
+            return HttpResponseForbidden()
+
+    elif user.is_schooladmin:
+
+        if live_class.school_id != user.school_id:
+            return HttpResponseForbidden()
+
+    elif not user.is_superadmin:
+
+        return HttpResponseForbidden()
+
+    # --------------------------------------------------
+    # DO NOT FORCE STATUS TO LIVE HERE.
+    #
+    # Teacher can enter the preparation room early.
+    # Existing update_status() remains responsible for
+    # scheduled/live/ended timing.
+    # --------------------------------------------------
+
+    live_class.update_status()
+
+    return render(
+        request,
+        "frontend/index.html",
+        {
+            "public_event": True,
+            "public_event_teacher": True,
+            "event_slug": event_slug,
+            "live_class": live_class,
+        }
+    )
+
+# ==========================================================
+# PUBLIC EVENT LANDING PAGE
+# ==========================================================
+
+def public_event(request, event_slug):
+
+    live_class = get_object_or_404(
+        LiveClass,
+        event_slug=event_slug,
+        liveclass_type="public_event",
+        allow_guest_access=True,
+    )
+
+    live_class.update_status()
+
+    return render(
+        request,
+        "liveclass/public_event.html",
+        {
+            "live_class": live_class,
+            "event_slug": event_slug,
+        }
+    )
+
+# ==========================================================
+# PUBLIC EVENT GUEST REGISTRATION
+# ==========================================================
+
+def public_event_join(request, event_slug):
+
+    if request.method != "POST":
+        return JsonResponse(
+            {"error": "POST required"},
+            status=405
+        )
+
+    live_class = get_object_or_404(
+        LiveClass,
+        event_slug=event_slug,
+        liveclass_type="public_event",
+        allow_guest_access=True,
+    )
+
+    try:
+        data = json.loads(
+            request.body.decode("utf-8") or "{}"
+        )
+
+    except json.JSONDecodeError:
+
+        return JsonResponse(
+            {"error": "Invalid JSON"},
+            status=400
+        )
+
+    name = (data.get("name") or "").strip()
+    email = (data.get("email") or "").strip()
+    phone = (data.get("phone") or "").strip()
+
+    if not name:
+
+        return JsonResponse(
+            {"error": "Name is required."},
+            status=400
+        )
+
+    # --------------------------------------------------
+    # MAXIMUM GUEST CHECK
+    # --------------------------------------------------
+
+    if live_class.guest_max_count:
+
+        current_count = live_class.event_guests.count()
+
+        if current_count >= live_class.guest_max_count:
+
+            return JsonResponse(
+                {
+                    "error": "This event has reached its maximum guest capacity."
+                },
+                status=403
+            )
+
+    # --------------------------------------------------
+    # REUSE EXISTING BROWSER SESSION
+    # --------------------------------------------------
+
+    session_key_name = (
+        f"liveclass_guest_{live_class.id}"
+    )
+
+    existing_key = request.session.get(
+        session_key_name
+    )
+
+    if existing_key:
+
+        existing_guest = LiveClassGuest.objects.filter(
+            live_class=live_class,
+            session_key=existing_key,
+        ).first()
+
+        if existing_guest:
+
+            return JsonResponse(
+                {
+                    "success": True,
+                    "guest_id": existing_guest.id,
+                    "name": existing_guest.name,
+                }
+            )
+
+    # --------------------------------------------------
+    # CREATE GUEST
+    # --------------------------------------------------
+
+    session_key = str(uuid.uuid4())
+
+    guest = LiveClassGuest.objects.create(
+        live_class=live_class,
+        name=name,
+        email=email,
+        phone=phone,
+        session_key=session_key,
+    )
+
+    request.session[session_key_name] = session_key
+    request.session.modified = True
+
+    return JsonResponse(
+        {
+            "success": True,
+            "guest_id": guest.id,
+            "name": guest.name,
+        }
+    )
+
+# ==========================================================
+# PUBLIC EVENT GUEST TOKEN
+# ==========================================================
+
+def public_event_token_api(request, event_slug):
+
+    live_class = get_object_or_404(
+        LiveClass,
+        event_slug=event_slug,
+        liveclass_type="public_event",
+        allow_guest_access=True,
+    )
+
+    live_class.update_status()
+
+    # --------------------------------------------------
+    # EVENT MUST ACTUALLY BE LIVE
+    # --------------------------------------------------
+
+    if live_class.status != "live":
+
+        return JsonResponse(
+            {
+                "error": "This event is not currently live."
+            },
+            status=403
+        )
+
+    # --------------------------------------------------
+    # GET GUEST SESSION
+    # --------------------------------------------------
+
+    session_key = request.session.get(
+        f"liveclass_guest_{live_class.id}"
+    )
+
+    if not session_key:
+
+        return JsonResponse(
+            {
+                "error": "Guest registration required."
+            },
+            status=403
+        )
+
+    guest = LiveClassGuest.objects.filter(
+        live_class=live_class,
+        session_key=session_key,
+    ).first()
+
+    if not guest:
+
+        return JsonResponse(
+            {
+                "error": "Guest session not found."
+            },
+            status=403
+        )
+
+    # --------------------------------------------------
+    # CREATE ROOM IF NEEDED
+    # --------------------------------------------------
+
+    if not live_class.room_id:
+
+        live_class.room_id = str(uuid.uuid4())
+
+        live_class.save(
+            update_fields=["room_id"]
+        )
+
+    real_room_id = create_100ms_room_if_missing(
+        live_class.room_id
+    )
+
+    if not real_room_id:
+
+        return JsonResponse(
+            {
+                "error": "Unable to create or access 100ms room."
+            },
+            status=500
+        )
+
+    if live_class.room_id != real_room_id:
+
+        live_class.room_id = real_room_id
+
+        live_class.save(
+            update_fields=["room_id"]
+        )
+
+    # --------------------------------------------------
+    # GUEST TOKEN
+    # --------------------------------------------------
+
+    token = generate_100ms_app_token(
+        guest.id,
+        "guest",
+        live_class.room_id,
+    )
+
+    return JsonResponse(
+        {
+            "token": token,
+            "role": "guest",
+            "room_id": live_class.room_id,
+            "username": guest.name,
+        }
+    )    
+
+    
+# ==========================================================
+# PUBLIC EVENT GUEST ROOM
+# ==========================================================
+
+def public_event_guest_room(request, event_slug):
+
+    live_class = get_object_or_404(
+        LiveClass,
+        event_slug=event_slug,
+        liveclass_type="public_event",
+        allow_guest_access=True,
+    )
+
+    return render(
+        request,
+        "frontend/index.html",
+        {
+            "public_event": True,
+            "public_event_guest": True,
+            "event_slug": event_slug,
+            "live_class": live_class,
+        }
+    )        
+        
     
