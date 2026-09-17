@@ -64,6 +64,12 @@ urlpatterns = [
     ),
 
     path(
+        "event/<slug:event_slug>/delete/",
+        views.public_event_delete,
+        name="public_event_delete",
+    ),
+
+    path(
         "events/",
         views.public_event_list,
         name="public_event_list",

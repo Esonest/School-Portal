@@ -2465,6 +2465,77 @@ def public_event_list(request):
     )
 
 
+# ==========================================================
+# PUBLIC EVENT DELETE
+# ==========================================================
+
+@portal_required("liveclass")
+@login_required
+def public_event_delete(request, event_slug):
+
+    live_class = get_object_or_404(
+        LiveClass,
+        event_slug=event_slug,
+        liveclass_type="public_event",
+        allow_guest_access=True,
+    )
+
+    user = request.user
+
+
+    # ------------------------------------------
+    # PERMISSION
+    # ------------------------------------------
+
+    allowed = False
+
+
+    if getattr(user, "is_superadmin", False):
+
+        allowed = True
+
+
+    elif getattr(user, "is_schooladmin", False):
+
+        allowed = (
+            live_class.school_id == user.school_id
+        )
+
+
+    elif getattr(user, "is_teacher_user", False):
+
+        allowed = (
+            live_class.teacher
+            and live_class.teacher.user_id == user.id
+        )
+
+
+    if not allowed:
+        return HttpResponseForbidden()
+
+
+
+    # ------------------------------------------
+    # DELETE CONFIRMATION
+    # ------------------------------------------
+
+    if request.method == "POST":
+
+        live_class.delete()
+
+        return redirect(
+            "liveclass:public_event_list"
+        )
+
+
+    return render(
+        request,
+        "liveclass/public_event_delete_confirm.html",
+        {
+            "live_class": live_class,
+        }
+    )
+
 # =========================================================
 # PUBLIC EVENT — GUEST HEARTBEAT
 # =========================================================
@@ -2625,6 +2696,7 @@ def public_event(request, event_slug):
         allow_guest_access=True,
     )
 
+    # Always refresh the event status before displaying the page
     live_class.update_status()
 
     return render(
@@ -2633,6 +2705,7 @@ def public_event(request, event_slug):
         {
             "live_class": live_class,
             "event_slug": event_slug,
+            "event_status": live_class.status,
         }
     )
 

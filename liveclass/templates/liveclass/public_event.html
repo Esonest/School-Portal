@@ -2,124 +2,475 @@
 
 {% block content %}
 
-<div class="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-10">
+<div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-indigo-50 flex items-center justify-center px-4 py-10">
 
-    <div class="w-full max-w-xl">
+    <div class="w-full max-w-2xl">
 
-        <div class="bg-white rounded-2xl shadow-lg border border-gray-100 overflow-hidden">
+        <!-- =====================================================
+             EVENT CARD
+        ====================================================== -->
 
-            <div class="bg-blue-600 text-white p-7">
+        <div class="bg-white rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
 
-                <div class="text-sm font-semibold opacity-90 mb-2">
+            <!-- =================================================
+                 HEADER
+            ================================================== -->
+
+            <div class="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-7 md:p-9">
+
+                <div class="flex items-center gap-2 text-sm font-semibold text-blue-100 mb-3">
+
+                    <span
+                        class="w-2.5 h-2.5 rounded-full bg-white"
+                    ></span>
+
                     LIVE ONLINE EVENT
+
                 </div>
 
-                <h1 class="text-2xl font-bold">
+                <h1 class="text-2xl md:text-3xl font-bold leading-tight">
                     {{ live_class.title }}
                 </h1>
 
-                <div class="mt-4 text-sm opacity-90">
+                <div class="mt-5 text-sm md:text-base text-blue-100">
 
-                    {{ live_class.start_time|date:"l, F j, Y" }}
+                    <div class="flex items-center gap-2">
+                        📅
+                        <span>
+                            {{ live_class.start_time|date:"l, F j, Y" }}
+                        </span>
+                    </div>
 
-                    <br>
-
-                    {{ live_class.start_time|date:"g:i A" }}
-                    –
-                    {{ live_class.end_time|date:"g:i A" }}
+                    <div class="flex items-center gap-2 mt-2">
+                        🕐
+                        <span>
+                            {{ live_class.start_time|date:"g:i A" }}
+                            –
+                            {{ live_class.end_time|date:"g:i A" }}
+                        </span>
+                    </div>
 
                 </div>
 
             </div>
 
-            <div class="p-7">
 
-                {% if live_class.event_description %}
+            <!-- =================================================
+                 CONTENT
+            ================================================== -->
 
-                    <p class="text-gray-600 mb-6">
-                        {{ live_class.event_description }}
-                    </p>
+            <div class="p-7 md:p-9">
+
+
+                <!-- =================================================
+                     EVENT NOT STARTED
+                ================================================== -->
+
+                {% if event_status == "scheduled" %}
+
+                    <div class="text-center">
+
+                        <div
+                            class="mx-auto w-20 h-20 rounded-full
+                                   bg-blue-50
+                                   flex items-center justify-center
+                                   mb-6"
+                        >
+                            <span class="text-4xl">
+                                📅
+                            </span>
+                        </div>
+
+                        <div
+                            class="inline-flex items-center
+                                   px-4 py-2
+                                   rounded-full
+                                   bg-blue-50
+                                   text-blue-700
+                                   text-sm font-bold
+                                   mb-5"
+                        >
+                            UPCOMING CLASS
+                        </div>
+
+                        <h2 class="text-2xl md:text-3xl font-bold text-gray-900">
+                            This class has not started yet
+                        </h2>
+
+                        <p class="mt-4 text-gray-600 leading-relaxed">
+                            The class is scheduled to begin at
+                            <strong>
+                                {{ live_class.start_time|date:"g:i A" }}
+                            </strong>
+                            on
+                            <strong>
+                                {{ live_class.start_time|date:"l, F j, Y" }}
+                            </strong>.
+                        </p>
+
+
+                        {% if live_class.event_description %}
+
+                            <div
+                                class="mt-7 p-5 rounded-2xl
+                                       bg-gray-50
+                                       border border-gray-100
+                                       text-left"
+                            >
+
+                                <h3 class="font-bold text-gray-900 mb-2">
+                                    About this class
+                                </h3>
+
+                                <p class="text-gray-600 leading-relaxed">
+                                    {{ live_class.event_description }}
+                                </p>
+
+                            </div>
+
+                        {% endif %}
+
+
+                        <div
+                            class="mt-7 rounded-2xl
+                                   bg-blue-50
+                                   border border-blue-100
+                                   p-5"
+                        >
+
+                            <p class="text-blue-800 font-semibold">
+                                ⏰ Please return at the scheduled time
+                            </p>
+
+                            <p class="text-blue-700 text-sm mt-1">
+                                The Join Event button will become available
+                                when the class starts.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+
+                <!-- =================================================
+                     EVENT LIVE
+                ================================================== -->
+
+                {% elif event_status == "live" %}
+
+                    <div>
+
+                        <div class="text-center mb-7">
+
+                            <div
+                                class="mx-auto w-20 h-20 rounded-full
+                                       bg-green-50
+                                       flex items-center justify-center
+                                       mb-5"
+                            >
+                                <span class="text-4xl">
+                                    🎥
+                                </span>
+                            </div>
+
+                            <div
+                                class="inline-flex items-center gap-2
+                                       px-4 py-2
+                                       rounded-full
+                                       bg-green-50
+                                       text-green-700
+                                       text-sm font-bold"
+                            >
+
+                                <span
+                                    class="w-2.5 h-2.5
+                                           rounded-full
+                                           bg-green-500
+                                           animate-pulse"
+                                ></span>
+
+                                CLASS IS LIVE
+
+                            </div>
+
+                            <h2
+                                class="mt-5 text-2xl md:text-3xl
+                                       font-bold text-gray-900"
+                            >
+                                Join the class now
+                            </h2>
+
+                            <p class="mt-3 text-gray-600">
+                                Enter your details below to join the
+                                live online class.
+                            </p>
+
+                        </div>
+
+
+                        {% if live_class.event_description %}
+
+                            <div
+                                class="mb-7 p-5 rounded-2xl
+                                       bg-gray-50
+                                       border border-gray-100"
+                            >
+
+                                <h3 class="font-bold text-gray-900 mb-2">
+                                    About this class
+                                </h3>
+
+                                <p class="text-gray-600 leading-relaxed">
+                                    {{ live_class.event_description }}
+                                </p>
+
+                            </div>
+
+                        {% endif %}
+
+
+                        <!-- =============================================
+                             MESSAGE
+                        ============================================== -->
+
+                        <div
+                            id="eventMessage"
+                            class="hidden mb-5 rounded-xl p-4 text-sm"
+                        ></div>
+
+
+                        <!-- =============================================
+                             GUEST FORM
+                        ============================================== -->
+
+                        <form
+                            id="guestForm"
+                            class="space-y-5"
+                        >
+
+                            {% csrf_token %}
+
+
+                            <!-- NAME -->
+
+                            <div>
+
+                                <label
+                                    class="block text-sm font-semibold
+                                           text-gray-700 mb-2"
+                                >
+                                    Your Name
+                                </label>
+
+                                <input
+                                    id="guestName"
+                                    type="text"
+                                    required
+                                    autocomplete="name"
+                                    class="w-full rounded-xl
+                                           border border-gray-200
+                                           p-3.5
+                                           focus:outline-none
+                                           focus:ring-2
+                                           focus:ring-blue-500
+                                           focus:border-transparent"
+                                    placeholder="Enter your name"
+                                >
+
+                            </div>
+
+
+                            <!-- PHONE -->
+
+                            <div>
+
+                                <label
+                                    class="block text-sm font-semibold
+                                           text-gray-700 mb-2"
+                                >
+                                    Phone Number
+                                </label>
+
+                                <input
+                                    id="guestPhone"
+                                    type="tel"
+                                    autocomplete="tel"
+                                    class="w-full rounded-xl
+                                           border border-gray-200
+                                           p-3.5
+                                           focus:outline-none
+                                           focus:ring-2
+                                           focus:ring-blue-500
+                                           focus:border-transparent"
+                                    placeholder="Optional"
+                                >
+
+                            </div>
+
+
+                            <!-- EMAIL -->
+
+                            <div>
+
+                                <label
+                                    class="block text-sm font-semibold
+                                           text-gray-700 mb-2"
+                                >
+                                    Email Address
+                                </label>
+
+                                <input
+                                    id="guestEmail"
+                                    type="email"
+                                    autocomplete="email"
+                                    class="w-full rounded-xl
+                                           border border-gray-200
+                                           p-3.5
+                                           focus:outline-none
+                                           focus:ring-2
+                                           focus:ring-blue-500
+                                           focus:border-transparent"
+                                    placeholder="Optional"
+                                >
+
+                            </div>
+
+
+                            <!-- JOIN -->
+
+                            <button
+                                type="submit"
+                                id="joinButton"
+                                class="w-full rounded-xl
+                                       bg-blue-600
+                                       hover:bg-blue-700
+                                       active:bg-blue-800
+                                       text-white
+                                       font-semibold
+                                       py-3.5 px-5
+                                       transition
+                                       shadow-lg shadow-blue-600/20"
+                            >
+                                🎥 Join Live Class
+                            </button>
+
+                        </form>
+
+                    </div>
+
+
+                <!-- =================================================
+                     EVENT ENDED
+                ================================================== -->
+
+                {% else %}
+
+                    <div class="text-center">
+
+                        <div
+                            class="mx-auto w-20 h-20 rounded-full
+                                   bg-gray-100
+                                   flex items-center justify-center
+                                   mb-6"
+                        >
+                            <span class="text-4xl">
+                                ✓
+                            </span>
+                        </div>
+
+                        <div
+                            class="inline-flex items-center
+                                   px-4 py-2
+                                   rounded-full
+                                   bg-gray-100
+                                   text-gray-600
+                                   text-sm font-bold
+                                   mb-5"
+                        >
+                            CLASS ENDED
+                        </div>
+
+                        <h2 class="text-2xl md:text-3xl font-bold text-gray-900">
+                            This class has ended
+                        </h2>
+
+                        <p class="mt-4 text-gray-600 leading-relaxed">
+                            Thank you for your interest in this live class.
+                            The session has now ended.
+                        </p>
+
+
+                        {% if live_class.event_description %}
+
+                            <div
+                                class="mt-7 p-5 rounded-2xl
+                                       bg-gray-50
+                                       border border-gray-100
+                                       text-left"
+                            >
+
+                                <h3 class="font-bold text-gray-900 mb-2">
+                                    About this class
+                                </h3>
+
+                                <p class="text-gray-600 leading-relaxed">
+                                    {{ live_class.event_description }}
+                                </p>
+
+                            </div>
+
+                        {% endif %}
+
+
+                        <div
+                            class="mt-7 rounded-2xl
+                                   bg-gray-50
+                                   border border-gray-200
+                                   p-5"
+                        >
+
+                            <p class="text-gray-700 font-semibold">
+                                Thank you for joining us.
+                            </p>
+
+                            <p class="text-gray-500 text-sm mt-1">
+                                We hope to see you at another live event.
+                            </p>
+
+                        </div>
+
+                    </div>
 
                 {% endif %}
-
-                <div
-                    id="eventMessage"
-                    class="hidden mb-5 rounded-xl p-4 text-sm"
-                ></div>
-
-                <form id="guestForm" class="space-y-5">
-
-                    {% csrf_token %}
-
-                    <div>
-
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">
-                            Your Name
-                        </label>
-
-                        <input
-                            id="guestName"
-                            type="text"
-                            required
-                            class="w-full rounded-xl border border-gray-200 p-3"
-                            placeholder="Enter your name"
-                        >
-
-                    </div>
-
-                    <div>
-
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">
-                            Phone Number
-                        </label>
-
-                        <input
-                            id="guestPhone"
-                            type="tel"
-                            class="w-full rounded-xl border border-gray-200 p-3"
-                            placeholder="Optional"
-                        >
-
-                    </div>
-
-                    <div>
-
-                        <label class="block text-sm font-semibold text-gray-700 mb-2">
-                            Email Address
-                        </label>
-
-                        <input
-                            id="guestEmail"
-                            type="email"
-                            class="w-full rounded-xl border border-gray-200 p-3"
-                            placeholder="Optional"
-                        >
-
-                    </div>
-
-                    <button
-                        type="submit"
-                        id="joinButton"
-                        class="w-full rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-5"
-                    >
-                        Join Event
-                    </button>
-
-                </form>
 
             </div>
 
         </div>
 
+
+        <!-- FOOTER -->
+
+        <p class="text-center text-sm text-gray-500 mt-6">
+            Powered by TECHCENTER School Portal
+        </p>
+
     </div>
 
 </div>
+
+
+<!-- =========================================================
+     GUEST REGISTRATION SCRIPT
+========================================================== -->
+
+{% if event_status == "live" %}
 
 <script>
 
 const guestForm = document.getElementById("guestForm");
 const joinButton = document.getElementById("joinButton");
 const messageBox = document.getElementById("eventMessage");
+
 
 guestForm.addEventListener("submit", async function(event) {
 
@@ -129,6 +480,7 @@ guestForm.addEventListener("submit", async function(event) {
     joinButton.innerText = "Joining...";
 
     messageBox.classList.add("hidden");
+
 
     try {
 
@@ -147,37 +499,50 @@ guestForm.addEventListener("submit", async function(event) {
                 credentials: "same-origin",
 
                 body: JSON.stringify({
-                    name: document.getElementById("guestName").value,
-                    phone: document.getElementById("guestPhone").value,
-                    email: document.getElementById("guestEmail").value
+                    name: document.getElementById("guestName").value.trim(),
+                    phone: document.getElementById("guestPhone").value.trim(),
+                    email: document.getElementById("guestEmail").value.trim()
                 })
             }
         );
 
+
         const data = await response.json();
 
+
         if (!response.ok) {
+
             throw new Error(
                 data.error || "Unable to join event."
             );
+
         }
 
+
         window.location.href =
-    "{% url 'liveclass:public_event_guest_room' event_slug=event_slug %}";
+            "{% url 'liveclass:public_event_guest_room' event_slug=event_slug %}";
 
-    } catch (error) {
+    }
 
-        messageBox.innerText = error.message;
+    catch (error) {
+
+        messageBox.innerText =
+            error.message || "Unable to join event.";
 
         messageBox.className =
-            "mb-5 rounded-xl p-4 text-sm bg-red-50 text-red-700";
+            "mb-5 rounded-xl p-4 text-sm bg-red-50 text-red-700 border border-red-100";
 
         joinButton.disabled = false;
-        joinButton.innerText = "Join Event";
+
+        joinButton.innerText =
+            "🎥 Join Live Class";
+
     }
 
 });
 
 </script>
+
+{% endif %}
 
 {% endblock %}
