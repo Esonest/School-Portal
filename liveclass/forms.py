@@ -79,10 +79,11 @@ class PublicEventForm(forms.ModelForm):
 
     class Meta:
         model = LiveClass
-
         fields = [
             "title",
             "event_description",
+            "subject",
+            "class_room",
             "start_time",
             "end_time",
             "guest_max_count",
@@ -92,59 +93,92 @@ class PublicEventForm(forms.ModelForm):
         widgets = {
             "title": forms.TextInput(
                 attrs={
-                    "class": "w-full rounded-xl border border-gray-200 p-3",
-                    "placeholder": "Example: Free JSS1 Mathematics Experience Class",
+                    "class": "w-full rounded-lg border-gray-300",
+                    "placeholder": "Event title",
                 }
             ),
 
             "event_description": forms.Textarea(
                 attrs={
-                    "class": "w-full rounded-xl border border-gray-200 p-3",
-                    "rows": 5,
-                    "placeholder": "Describe what guests will learn in this class...",
+                    "class": "w-full rounded-lg border-gray-300",
+                    "rows": 4,
+                    "placeholder": "Describe the event",
+                }
+            ),
+
+            "subject": forms.Select(
+                attrs={
+                    "class": "w-full rounded-lg border-gray-300",
+                }
+            ),
+
+            "class_room": forms.Select(
+                attrs={
+                    "class": "w-full rounded-lg border-gray-300",
                 }
             ),
 
             "start_time": forms.DateTimeInput(
                 attrs={
+                    "class": "w-full rounded-lg border-gray-300",
                     "type": "datetime-local",
-                    "class": "w-full rounded-xl border border-gray-200 p-3",
                 }
             ),
 
             "end_time": forms.DateTimeInput(
                 attrs={
+                    "class": "w-full rounded-lg border-gray-300",
                     "type": "datetime-local",
-                    "class": "w-full rounded-xl border border-gray-200 p-3",
                 }
             ),
 
             "guest_max_count": forms.NumberInput(
                 attrs={
-                    "class": "w-full rounded-xl border border-gray-200 p-3",
+                    "class": "w-full rounded-lg border-gray-300",
                     "min": "1",
-                    "placeholder": "Leave blank for unlimited guests",
+                    "placeholder": "Leave blank for unlimited",
                 }
             ),
 
             "record_public_event": forms.CheckboxInput(
                 attrs={
-                    "class": "h-5 w-5 rounded",
+                    "class": "rounded",
                 }
             ),
         }
 
-    def clean(self):
-        cleaned_data = super().clean()
+    def __init__(self, *args, school=None, user=None, **kwargs):
 
-        start_time = cleaned_data.get("start_time")
-        end_time = cleaned_data.get("end_time")
+        super().__init__(*args, **kwargs)
 
-        if start_time and end_time:
+        self.school = school
+        self.user = user
 
-            if end_time <= start_time:
-                raise forms.ValidationError(
-                    "End time must be later than start time."
+        # ------------------------------------------------------
+        # LIMIT CLASSROOMS TO THIS SCHOOL
+        # ------------------------------------------------------
+
+        if school is not None:
+            self.fields["class_room"].queryset = (
+                self.fields["class_room"].queryset.filter(
+                    school=school
                 )
+            )
 
-        return cleaned_data
+            self.fields["subject"].queryset = (
+                self.fields["subject"].queryset.filter(
+                    school=school
+                )
+            )
+
+               
+
+        # ------------------------------------------------------
+        # TEACHER IS NOT PART OF THE FORM
+        #
+        # For a teacher creating the event, the view will use
+        # that teacher automatically.
+        #
+        # For school admin, we will handle teacher selection
+        # separately.
+        # ------------------------------------------------------

@@ -62,7 +62,9 @@ class LiveClass(models.Model):
     teacher = models.ForeignKey(
         "accounts.Teacher",
         on_delete=models.CASCADE,
-        related_name="live_classes"
+        related_name="live_classes",
+        null=True,
+        blank=True,
     )
 
     title = models.CharField(max_length=255)

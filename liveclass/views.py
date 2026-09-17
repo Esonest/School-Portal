@@ -7,6 +7,7 @@ from django.contrib import messages
 from django.views.decorators.csrf import csrf_exempt
 from django.http import JsonResponse
 import json
+import secrets
 from django.http import HttpResponse
 from .models import LiveClass,LiveClassAttendance, LiveClassGuest
 from .forms import LiveClassForm, PublicEventForm
@@ -2186,58 +2187,89 @@ def breakout_assignments(request, pk):
 @login_required
 def public_event_create(request):
 
+    user = request.user
+
+    # --------------------------------------------------
+    # PERMISSION
+    # --------------------------------------------------
+
     if not (
-        request.user.is_teacher_user
-        or request.user.is_schooladmin
-        or request.user.is_superadmin
+        getattr(user, "is_teacher_user", False)
+        or getattr(user, "is_schooladmin", False)
+        or getattr(user, "is_superadmin", False)
     ):
         return HttpResponseForbidden()
 
-    school = getattr(request.user, "school", None)
+    school = getattr(user, "school", None)
 
-    if not school:
-        return HttpResponseForbidden("School account required.")
+    # --------------------------------------------------
+    # POST
+    # --------------------------------------------------
 
     if request.method == "POST":
 
-        form = PublicEventForm(request.POST)
+        form = PublicEventForm(
+            request.POST,
+            school=school,
+            user=user,
+        )
 
         if form.is_valid():
 
             live_class = form.save(commit=False)
 
-            # --------------------------------------------------
-            # PUBLIC EVENT IDENTIFICATION
-            # --------------------------------------------------
+            # ------------------------------------------
+            # BASIC PUBLIC EVENT SETTINGS
+            # ------------------------------------------
 
             live_class.school = school
             live_class.liveclass_type = "public_event"
             live_class.allow_guest_access = True
-
-            # --------------------------------------------------
-            # ASSIGN TEACHER
-            # --------------------------------------------------
-
-            if request.user.is_teacher_user:
-                live_class.teacher = request.user.teacher_profile
-
-            # --------------------------------------------------
-            # INITIAL STATUS
-            # --------------------------------------------------
-
             live_class.status = "scheduled"
 
-            # --------------------------------------------------
-            # GENERATE PUBLIC SLUG
-            # --------------------------------------------------
+            # ------------------------------------------
+            # TEACHER
+            #
+            # A teacher who creates the event is
+            # automatically assigned to the event.
+            #
+            # School admins and superadmins do NOT
+            # need a teacher assigned.
+            # ------------------------------------------
 
-            base_slug = slugify(live_class.title)
+            if getattr(user, "is_teacher_user", False):
 
-            if not base_slug:
-                base_slug = "public-event"
+                if not getattr(user, "teacher_profile", None):
+
+                    form.add_error(
+                        None,
+                        "Your account is not linked to a teacher profile."
+                    )
+
+                    return render(
+                        request,
+                        "liveclass/public_event_form.html",
+                        {"form": form},
+                    )
+
+                live_class.teacher = user.teacher_profile
+
+            # ------------------------------------------
+            # NO MANDATORY TEACHER CHECK HERE
+            #
+            # Public events may have no assigned
+            # teacher.
+            # ------------------------------------------
+
+            # ------------------------------------------
+            # GENERATE UNIQUE EVENT SLUG
+            # ------------------------------------------
+
+            base_slug = slugify(
+                live_class.title
+            ) or "public-event"
 
             event_slug = base_slug
-
             counter = 2
 
             while LiveClass.objects.filter(
@@ -2249,25 +2281,29 @@ def public_event_create(request):
 
             live_class.event_slug = event_slug
 
-            # --------------------------------------------------
-            # IMPORTANT:
-            # DO NOT USE os.getenv("ROOM_ID") HERE
-            #
-            # Public events get their own 100ms room when the
-            # teacher/room actually joins.
-            # --------------------------------------------------
+            # ------------------------------------------
+            # 100MS ROOM IDENTIFIER
+            # ------------------------------------------
 
-            live_class.room_id = None
+            live_class.room_id = secrets.token_hex(16)
+
+            # ------------------------------------------
+            # SAVE
+            # ------------------------------------------
 
             live_class.save()
 
             return redirect(
                 "liveclass:public_event_manage",
-                event_slug=live_class.event_slug
+                event_slug=live_class.event_slug,
             )
 
     else:
-        form = PublicEventForm()
+
+        form = PublicEventForm(
+            school=school,
+            user=user,
+        )
 
     return render(
         request,
