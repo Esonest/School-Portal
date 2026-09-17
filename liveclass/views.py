@@ -2861,6 +2861,126 @@ def public_event_token_api(request, event_slug):
     )    
 
     
+
+# ==========================================================
+# PUBLIC EVENT TEACHER TOKEN
+# ==========================================================
+
+@portal_required("liveclass")
+@login_required
+def public_event_teacher_token_api(request, event_slug):
+
+    user = request.user
+
+    live_class = get_object_or_404(
+        LiveClass,
+        event_slug=event_slug,
+        liveclass_type="public_event",
+        allow_guest_access=True,
+    )
+
+    # --------------------------------------------------
+    # PERMISSION
+    # --------------------------------------------------
+
+    allowed = False
+
+    # Superadmin
+    if getattr(user, "is_superadmin", False):
+
+        allowed = True
+
+    # School admin
+    elif getattr(user, "is_schooladmin", False):
+
+        allowed = (
+            live_class.school_id == user.school_id
+        )
+
+    # Assigned teacher
+    elif getattr(user, "is_teacher_user", False):
+
+        if (
+            live_class.teacher
+            and live_class.teacher.user_id == user.id
+        ):
+            allowed = True
+
+    # --------------------------------------------------
+    # DENY UNAUTHORIZED USER
+    # --------------------------------------------------
+
+    if not allowed:
+
+        return JsonResponse(
+            {
+                "error": "You are not authorized to enter this public event as a host."
+            },
+            status=403,
+        )
+
+    # --------------------------------------------------
+    # CREATE ROOM ID IF NEEDED
+    # --------------------------------------------------
+
+    if not live_class.room_id:
+
+        live_class.room_id = str(uuid.uuid4())
+
+        live_class.save(
+            update_fields=["room_id"]
+        )
+
+    # --------------------------------------------------
+    # CREATE / GET 100MS ROOM
+    # --------------------------------------------------
+
+    real_room_id = create_100ms_room_if_missing(
+        live_class.room_id
+    )
+
+    if not real_room_id:
+
+        return JsonResponse(
+            {
+                "error": "Unable to create or access 100ms room."
+            },
+            status=500,
+        )
+
+    # --------------------------------------------------
+    # SAVE REAL 100MS ROOM ID
+    # --------------------------------------------------
+
+    if live_class.room_id != real_room_id:
+
+        live_class.room_id = real_room_id
+
+        live_class.save(
+            update_fields=["room_id"]
+        )
+
+    # --------------------------------------------------
+    # GENERATE TEACHER/HOST TOKEN
+    # --------------------------------------------------
+
+    token = generate_100ms_app_token(
+        user.id,
+        "teacher",
+        live_class.room_id,
+    )
+
+    return JsonResponse(
+        {
+            "token": token,
+            "role": "teacher",
+            "room_id": live_class.room_id,
+            "username": (
+                user.get_full_name()
+                or user.username
+            ),
+        }
+    )    
 # ==========================================================
 # PUBLIC EVENT GUEST ROOM
 # ==========================================================

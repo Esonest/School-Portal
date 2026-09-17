@@ -88,6 +88,12 @@ urlpatterns = [
     ),
 
     path(
+        "api/liveclass/event/<slug:event_slug>/teacher-token/",
+        views.public_event_teacher_token_api,
+        name="public_event_teacher_token_api",
+    ),
+
+    path(
         "event/<slug:event_slug>/room/",
         views.public_event_guest_room,
         name="public_event_guest_room",
