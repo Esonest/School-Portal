@@ -1,0 +1,578 @@
+
+{% extends "accounts/base.html" %}
+
+{% block content %}
+
+<div class="min-h-screen bg-slate-50 py-10 px-4 sm:px-6">
+
+    <div class="max-w-4xl mx-auto">
+
+
+        <!-- =========================
+             HEADER
+        ========================== -->
+
+        <div
+            class="bg-gradient-to-r from-indigo-600 to-purple-600
+                   rounded-3xl shadow-xl
+                   p-8 mb-8 text-white"
+        >
+
+            <div class="flex items-center gap-4">
+
+                <div
+                    class="w-14 h-14 rounded-2xl
+                           bg-white/20
+                           flex items-center justify-center
+                           text-3xl"
+                >
+                    ✏️
+                </div>
+
+
+                <div>
+
+                    <h1 class="text-3xl font-extrabold">
+                        Edit Public Event
+                    </h1>
+
+
+                    <p class="mt-2 text-indigo-100 max-w-xl">
+                        Update the details of your public live event.
+                        Your existing event link will remain unchanged.
+                    </p>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+
+
+        <!-- =========================
+             FORM CARD
+        ========================== -->
+
+        <div
+            class="bg-white rounded-3xl
+                   shadow-sm border border-slate-200
+                   overflow-hidden"
+        >
+
+            <form method="POST" class="p-6 sm:p-8 space-y-7">
+
+                {% csrf_token %}
+
+
+
+                <!-- =========================
+                     FORM ERRORS
+                ========================== -->
+
+                {% if form.non_field_errors %}
+
+                <div
+                    class="rounded-xl
+                           bg-red-50
+                           border border-red-200
+                           p-4
+                           text-red-700
+                           text-sm"
+                >
+
+                    <div class="flex gap-3">
+
+                        <span class="text-lg">
+                            ⚠️
+                        </span>
+
+                        <div>
+
+                            {% for error in form.non_field_errors %}
+                                <p>{{ error }}</p>
+                            {% endfor %}
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+                {% endif %}
+
+
+
+
+                <!-- =========================
+                     EVENT INFORMATION
+                ========================== -->
+
+                <div>
+
+                    <h2
+                        class="text-lg font-bold
+                               text-slate-800 mb-4"
+                    >
+                        📝 Event Information
+                    </h2>
+
+
+
+                    <!-- TITLE -->
+
+                    <div class="mb-5">
+
+                        <label
+                            for="{{ form.title.id_for_label }}"
+                            class="block text-sm font-semibold
+                                   text-slate-700 mb-2"
+                        >
+                            Event Title
+                        </label>
+
+
+                        {{ form.title }}
+
+
+                        {% if form.title.errors %}
+
+                        <div
+                            class="text-red-600
+                                   text-sm mt-2"
+                        >
+
+                            {% for error in form.title.errors %}
+                                <p>{{ error }}</p>
+                            {% endfor %}
+
+                        </div>
+
+                        {% endif %}
+
+                    </div>
+
+
+
+
+                    <!-- DESCRIPTION -->
+
+                    <div>
+
+                        <label
+                            for="{{ form.event_description.id_for_label }}"
+                            class="block text-sm font-semibold
+                                   text-slate-700 mb-2"
+                        >
+                            Event Description
+                        </label>
+
+
+                        {{ form.event_description }}
+
+
+                        {% if form.event_description.errors %}
+
+                        <div
+                            class="text-red-600
+                                   text-sm mt-2"
+                        >
+
+                            {% for error in form.event_description.errors %}
+                                <p>{{ error }}</p>
+                            {% endfor %}
+
+                        </div>
+
+                        {% endif %}
+
+                    </div>
+
+                </div>
+
+
+
+
+                <!-- =========================
+                     CLASS DETAILS
+                ========================== -->
+
+                <div
+                    class="pt-5
+                           border-t border-slate-100"
+                >
+
+                    <h2
+                        class="text-lg font-bold
+                               text-slate-800 mb-4"
+                    >
+                        🎓 Class Details
+                    </h2>
+
+
+
+                    <div class="grid md:grid-cols-2 gap-5">
+
+
+                        <!-- SUBJECT -->
+
+                        <div>
+
+                            <label
+                                for="{{ form.subject.id_for_label }}"
+                                class="block text-sm font-semibold
+                                       text-slate-700 mb-2"
+                            >
+                                Subject
+                            </label>
+
+
+                            {{ form.subject }}
+
+
+                            {% if form.subject.errors %}
+
+                            <div
+                                class="text-red-600
+                                       text-sm mt-2"
+                            >
+
+                                {% for error in form.subject.errors %}
+                                    <p>{{ error }}</p>
+                                {% endfor %}
+
+                            </div>
+
+                            {% endif %}
+
+                        </div>
+
+
+
+
+                        <!-- CLASS ROOM -->
+
+                        <div>
+
+                            <label
+                                for="{{ form.class_room.id_for_label }}"
+                                class="block text-sm font-semibold
+                                       text-slate-700 mb-2"
+                            >
+                                Class Room
+                            </label>
+
+
+                            {{ form.class_room }}
+
+
+                            {% if form.class_room.errors %}
+
+                            <div
+                                class="text-red-600
+                                       text-sm mt-2"
+                            >
+
+                                {% for error in form.class_room.errors %}
+                                    <p>{{ error }}</p>
+                                {% endfor %}
+
+                            </div>
+
+                            {% endif %}
+
+                        </div>
+
+
+                    </div>
+
+                </div>
+
+
+
+
+                <!-- =========================
+                     SCHEDULE
+                ========================== -->
+
+                <div
+                    class="pt-5
+                           border-t border-slate-100"
+                >
+
+                    <h2
+                        class="text-lg font-bold
+                               text-slate-800 mb-4"
+                    >
+                        🗓 Event Schedule
+                    </h2>
+
+
+
+                    <div class="grid md:grid-cols-2 gap-5">
+
+
+                        <!-- START TIME -->
+
+                        <div>
+
+                            <label
+                                for="{{ form.start_time.id_for_label }}"
+                                class="block text-sm font-semibold
+                                       text-slate-700 mb-2"
+                            >
+                                Start Time
+                            </label>
+
+
+                            {{ form.start_time }}
+
+
+                            {% if form.start_time.errors %}
+
+                            <div
+                                class="text-red-600
+                                       text-sm mt-2"
+                            >
+
+                                {% for error in form.start_time.errors %}
+                                    <p>{{ error }}</p>
+                                {% endfor %}
+
+                            </div>
+
+                            {% endif %}
+
+                        </div>
+
+
+
+
+                        <!-- END TIME -->
+
+                        <div>
+
+                            <label
+                                for="{{ form.end_time.id_for_label }}"
+                                class="block text-sm font-semibold
+                                       text-slate-700 mb-2"
+                            >
+                                End Time
+                            </label>
+
+
+                            {{ form.end_time }}
+
+
+                            {% if form.end_time.errors %}
+
+                            <div
+                                class="text-red-600
+                                       text-sm mt-2"
+                            >
+
+                                {% for error in form.end_time.errors %}
+                                    <p>{{ error }}</p>
+                                {% endfor %}
+
+                            </div>
+
+                            {% endif %}
+
+                        </div>
+
+
+                    </div>
+
+                </div>
+
+
+
+
+                <!-- =========================
+                     GUEST SETTINGS
+                ========================== -->
+
+                <div
+                    class="pt-5
+                           border-t border-slate-100"
+                >
+
+                    <h2
+                        class="text-lg font-bold
+                               text-slate-800 mb-4"
+                    >
+                        👥 Guest Settings
+                    </h2>
+
+
+
+                    <label
+                        for="{{ form.guest_max_count.id_for_label }}"
+                        class="block text-sm font-semibold
+                               text-slate-700 mb-2"
+                    >
+                        Maximum Guests
+                    </label>
+
+
+                    {{ form.guest_max_count }}
+
+
+                    {% if form.guest_max_count.errors %}
+
+                    <div
+                        class="text-red-600
+                               text-sm mt-2"
+                    >
+
+                        {% for error in form.guest_max_count.errors %}
+                            <p>{{ error }}</p>
+                        {% endfor %}
+
+                    </div>
+
+                    {% endif %}
+
+
+                    <p class="text-xs text-slate-500 mt-2">
+                        Leave blank if there is no guest limit.
+                    </p>
+
+                </div>
+
+
+
+
+                <!-- =========================
+                     RECORDING
+                ========================== -->
+
+                <div
+                    class="flex items-center gap-4
+                           bg-slate-50
+                           border border-slate-100
+                           rounded-2xl
+                           p-4"
+                >
+
+                    <div
+                        class="w-10 h-10 rounded-xl
+                               bg-indigo-100
+                               flex items-center justify-center
+                               text-lg shrink-0"
+                    >
+                        🎥
+                    </div>
+
+
+                    <div class="flex-1">
+
+                        <label
+                            for="{{ form.record_public_event.id_for_label }}"
+                            class="text-sm font-semibold
+                                   text-slate-700 cursor-pointer"
+                        >
+                            Record this public event
+                        </label>
+
+
+                        <p class="text-xs text-slate-500 mt-0.5">
+                            Enable recording for this public session.
+                        </p>
+
+                    </div>
+
+
+                    {{ form.record_public_event }}
+
+                </div>
+
+
+
+
+                <!-- =========================
+                     ACTION BUTTONS
+                ========================== -->
+
+                <div
+                    class="pt-5
+                           border-t border-slate-100
+                           flex flex-col sm:flex-row gap-3"
+                >
+
+
+                    <!-- SAVE -->
+
+                    <button
+                        type="submit"
+                        class="flex-1
+                               inline-flex
+                               items-center
+                               justify-center
+                               gap-2
+                               rounded-xl
+                               bg-indigo-600
+                               hover:bg-indigo-700
+                               text-white
+                               font-bold
+                               py-3.5
+                               px-6
+                               shadow-md
+                               hover:shadow-lg
+                               transition-all
+                               duration-200
+                               hover:-translate-y-0.5"
+                    >
+
+                        <span>✓</span>
+                        Save Changes
+
+                    </button>
+
+
+
+
+                    <!-- CANCEL -->
+
+                    <a
+                        href="{% url 'liveclass:public_event_list' %}"
+                        class="flex-1
+                               inline-flex
+                               items-center
+                               justify-center
+                               gap-2
+                               rounded-xl
+                               border border-slate-200
+                               bg-white
+                               hover:bg-slate-50
+                               text-slate-700
+                               font-semibold
+                               py-3.5
+                               px-6
+                               text-center
+                               transition-all
+                               duration-200"
+                    >
+
+                        ←
+                        Cancel
+
+                    </a>
+
+
+                </div>
+
+
+            </form>
+
+        </div>
+
+
+    </div>
+
+</div>
+
+{% endblock %}
+

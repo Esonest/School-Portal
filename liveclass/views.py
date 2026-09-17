@@ -2395,6 +2395,96 @@ def public_event_manage(request, event_slug):
         }
     )
 
+
+@portal_required("liveclass")
+@login_required
+def public_event_edit(request, event_slug):
+
+    live_class = get_object_or_404(
+        LiveClass,
+        event_slug=event_slug,
+        liveclass_type="public_event",
+        allow_guest_access=True,
+    )
+
+    user = request.user
+
+    # ------------------------------------------
+    # PERMISSION
+    # ------------------------------------------
+
+    allowed = False
+
+    if getattr(user, "is_superadmin", False):
+
+        allowed = True
+
+    elif getattr(user, "is_schooladmin", False):
+
+        allowed = (
+            live_class.school_id == user.school_id
+        )
+
+    elif getattr(user, "is_teacher_user", False):
+
+        allowed = (
+            live_class.teacher
+            and live_class.teacher.user_id == user.id
+        )
+
+    if not allowed:
+        return HttpResponseForbidden()
+
+    # ------------------------------------------
+    # EDIT EVENT
+    # ------------------------------------------
+
+    if request.method == "POST":
+
+        form = PublicEventForm(
+            request.POST,
+            instance=live_class,
+            school=live_class.school,
+            user=user,
+        )
+
+        if form.is_valid():
+
+            updated_event = form.save(commit=False)
+
+            # Keep this as a public event
+            updated_event.liveclass_type = "public_event"
+            updated_event.allow_guest_access = True
+
+            # Keep the existing slug so the public URL
+            # does not change when the title is edited.
+            updated_event.event_slug = live_class.event_slug
+
+            # Keep the existing room ID
+            updated_event.room_id = live_class.room_id
+
+            updated_event.save()
+
+            return redirect(
+                "liveclass:public_event_list"
+            )
+
+    else:
+
+        form = PublicEventForm(
+            instance=live_class,
+            school=live_class.school,
+            user=user,
+        )
+
+    return render(
+        request,
+        "liveclass/public_event_edit.html",
+        {
+            "form": form,
+            "live_class": live_class,
+        }
+    )
 # =========================================================
 # PUBLIC EVENT LIST
 # =========================================================

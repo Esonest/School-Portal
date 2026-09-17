@@ -52,6 +52,12 @@ urlpatterns = [
     ),
 
     path(
+        "event/<slug:event_slug>/edit/",
+        views.public_event_edit,
+        name="public_event_edit",
+    ),
+
+    path(
         "event/<slug:event_slug>/",
         views.public_event,
         name="public_event",
