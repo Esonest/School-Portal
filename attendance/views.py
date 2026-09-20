@@ -40,7 +40,11 @@ def dashboard(request):
     # ----------------------
     if is_teacher(user):
         teacher = user.teacher_profile
-        classes = teacher.classes.all()
+        classes = SchoolClass.objects.filter(
+            Q(teachers=teacher) |
+            Q(subject_teachers__teacher=teacher) |
+            Q(class_teacher=teacher)
+        ).distinct()
 
         return render(request, "attendance/dashboard.html", {
             "teacher": teacher,
@@ -137,7 +141,11 @@ def attendance_report(request):
     selected_session = request.GET.get("session") or ""
     selected_term = request.GET.get("term") or ""
 
-    classes = teacher.classes.all()
+    classes = SchoolClass.objects.filter(
+        Q(teachers=teacher) |
+        Q(subject_teachers__teacher=teacher) |
+        Q(class_teacher=teacher)
+    ).distinct()
     report_data = []
 
     for cls in classes:
@@ -191,7 +199,13 @@ def class_attendance_detail(request, class_id):
     cls = get_object_or_404(SchoolClass, id=class_id)
 
     # Ensure teacher has rights
-    if cls not in teacher.classes.all():
+    has_access = (
+        cls.teachers.filter(id=teacher.id).exists()
+        or cls.subject_teachers.filter(teacher=teacher).exists()
+        or cls.class_teacher_id == teacher.id
+    )
+
+    if not has_access:
         raise Http404("You are not assigned to this class")
 
     students = cls.students.all()

@@ -7,15 +7,26 @@ import uuid
 
 class SchoolClass(models.Model):
     name = models.CharField(max_length=100)
-    school = models.ForeignKey(School, on_delete=models.CASCADE, related_name="classes")
+    school = models.ForeignKey(
+        School,
+        on_delete=models.CASCADE,
+        related_name="classes"
+    )
+
+    class_teacher = models.ForeignKey(
+        'accounts.Teacher',
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='class_teacher_classes'
+    )
 
     class Meta:
-        unique_together = ('name', 'school')  # ensures no duplicate class names within same school
+        unique_together = ('name', 'school')
         verbose_name_plural = "Classes"
 
     def __str__(self):
         return f"{self.name} - {self.school.name}"
-
 
 # students/models.py
 from django.db import models

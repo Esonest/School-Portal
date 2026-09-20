@@ -3651,19 +3651,75 @@ def class_subject_teacher_create(request, school_id):
 
     if request.method == "POST":
         form = ClassSubjectTeacherForm(request.POST, school=school)
+
         if form.is_valid():
-            form.save()
-            messages.success(request, "Subject teacher assigned successfully.")
-            return redirect("school_admin:class_subject_teacher_list", school_id=school.id)
+            selected_classes = form.cleaned_data["school_classes"]
+            selected_subjects = form.cleaned_data["subjects"]
+            subject_teacher = form.cleaned_data.get("teacher")
+            class_teacher = form.cleaned_data.get("class_teacher")
+
+            created_count = 0
+            updated_count = 0
+            class_teacher_count = 0
+
+            # -----------------------------------------
+            # ASSIGN CLASS TEACHER
+            # -----------------------------------------
+            if class_teacher:
+                for school_class in selected_classes:
+                    school_class.class_teacher = class_teacher
+                    school_class.save(update_fields=["class_teacher"])
+                    class_teacher_count += 1
+
+            # -----------------------------------------
+            # ASSIGN SUBJECT TEACHER
+            # -----------------------------------------
+            if subject_teacher:
+                for school_class in selected_classes:
+                    for subject in selected_subjects:
+
+                        assignment, created = (
+                            ClassSubjectTeacher.objects.update_or_create(
+                                school_class=school_class,
+                                subject=subject,
+                                defaults={
+                                    "teacher": subject_teacher
+                                }
+                            )
+                        )
+
+                        if created:
+                            created_count += 1
+                        else:
+                            updated_count += 1
+
+            messages.success(
+                request,
+                (
+                    f"Assignment saved successfully. "
+                    f"{created_count} subject assignment(s) created, "
+                    f"{updated_count} updated, "
+                    f"{class_teacher_count} class teacher assignment(s) saved."
+                )
+            )
+
+            return redirect(
+                "school_admin:class_subject_teacher_list",
+                school_id=school.id
+            )
+
     else:
         form = ClassSubjectTeacherForm(school=school)
 
-    return render(request, "school_admin/teachers/class_subject_teacher_form.html", {
-        "school": school,
-        "form": form,
-        "title": "Assign Subject Teacher",
-    })
-
+    return render(
+        request,
+        "school_admin/teachers/class_subject_teacher_form.html",
+        {
+            "school": school,
+            "form": form,
+            "title": "Assign Teachers",
+        }
+    )
 
 
 @login_required
@@ -3927,4 +3983,4 @@ def subject_list(request, school_id):
         "school": school,
         "subjects": subjects,
         "user_role": "School Admin"
-    })
+    })   

@@ -166,7 +166,7 @@ from .models import GradeSetting, SchoolClass
 
 class GradeSettingForm(forms.ModelForm):
     class Meta:
-        model = GradeSetting
+        model = GradeSetting   
         fields = ['SchoolClass', 'grade', 'min_score', 'interpretation']
 
     def __init__(self, *args, **kwargs):

@@ -659,23 +659,89 @@ from results.models import ClassSubjectTeacher, Subject
 TAILWIND_INPUT = "w-full border border-gray-300 rounded px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-400"
 
 class ClassSubjectTeacherForm(forms.ModelForm):
+    school_classes = forms.ModelMultipleChoiceField(
+        queryset=SchoolClass.objects.none(),
+        required=False,
+        widget=forms.CheckboxSelectMultiple,
+        label="Classes"
+    )
+
+    subjects = forms.ModelMultipleChoiceField(
+        queryset=Subject.objects.none(),
+        required=False,
+        widget=forms.CheckboxSelectMultiple,
+        label="Subjects"
+    )
+
+    class_teacher = forms.ModelChoiceField(
+        queryset=Teacher.objects.none(),
+        required=False,
+        widget=forms.Select(attrs={"class": TAILWIND_INPUT}),
+        label="Class Teacher"
+    )
+
+    teacher = forms.ModelChoiceField(
+        queryset=Teacher.objects.none(),
+        required=False,
+        widget=forms.Select(attrs={"class": TAILWIND_INPUT}),
+        label="Subject Teacher"
+    )
+
     class Meta:
         model = ClassSubjectTeacher
-        fields = ["school_class", "subject", "teacher"]
-        widgets = {
-            "school_class": forms.Select(attrs={"class": TAILWIND_INPUT}),
-            "subject": forms.Select(attrs={"class": TAILWIND_INPUT}),
-            "teacher": forms.Select(attrs={"class": TAILWIND_INPUT}),
-        }
+        fields = []
 
     def __init__(self, *args, **kwargs):
         school = kwargs.pop("school", None)
         super().__init__(*args, **kwargs)
 
         if school:
-            self.fields["school_class"].queryset = SchoolClass.objects.filter(school=school)
-            self.fields["subject"].queryset = Subject.objects.filter(school=school)
-            self.fields["teacher"].queryset = Teacher.objects.filter(school=school)
+            self.fields["school_classes"].queryset = (
+                SchoolClass.objects
+                .filter(school=school)
+                .order_by("name")
+            )
+
+            self.fields["subjects"].queryset = (
+                Subject.objects
+                .filter(school=school)
+                .order_by("name")
+            )
+
+            teachers = (
+                Teacher.objects
+                .filter(school=school)
+                .select_related("user")
+                .order_by("user__first_name", "user__last_name")
+            )
+
+            self.fields["teacher"].queryset = teachers
+            self.fields["class_teacher"].queryset = teachers
+
+    def clean(self):
+        cleaned_data = super().clean()
+
+        selected_classes = cleaned_data.get("school_classes")
+        selected_subjects = cleaned_data.get("subjects")
+        subject_teacher = cleaned_data.get("teacher")
+        class_teacher = cleaned_data.get("class_teacher")
+
+        if not selected_classes:
+            raise forms.ValidationError(
+                "Please select at least one class."
+            )
+
+        if not subject_teacher and not class_teacher:
+            raise forms.ValidationError(
+                "Please select a Subject Teacher or a Class Teacher."
+            )
+
+        if subject_teacher and not selected_subjects:
+            raise forms.ValidationError(
+                "Please select at least one subject when assigning a Subject Teacher."
+            )
+
+        return cleaned_data
 
 
 

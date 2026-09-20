@@ -557,7 +557,9 @@ def bulk_psycho_affective(request, school_id):
 
     elif teacher:
         classes_qs = SchoolClass.objects.filter(
-            subject_teachers__teacher=teacher
+            Q(teachers=teacher) |
+            Q(subject_teachers__teacher=teacher) |
+            Q(class_teacher=teacher)
         ).distinct().order_by("name")
 
     else:  # superadmin
@@ -1779,10 +1781,11 @@ def teacher_portal(request):
     if is_admin:
         classes_qs = SchoolClass.objects.all()
     else:
-        try:
-            classes_qs = teacher.classes.all()
-        except Exception:
-            classes_qs = SchoolClass.objects.filter(teacher=teacher)
+        classes_qs = SchoolClass.objects.filter(
+            Q(teachers=teacher) |
+            Q(subject_teachers__teacher=teacher) |
+            Q(class_teacher=teacher)
+        ).distinct()
 
     # Determine the school for bulk save
     school = None
@@ -1799,6 +1802,14 @@ def teacher_portal(request):
     term = request.GET.get('term')
     session = request.GET.get('session')
     q = request.GET.get('q', '').strip()
+    class_teacher_class_ids = set()
+
+    if teacher and not is_admin:
+        class_teacher_class_ids = set(
+            SchoolClass.objects.filter(
+                class_teacher=teacher
+            ).values_list('id', flat=True)
+        )
 
     TERM_LIST = [('1', 'Term 1'), ('2', 'Term 2'), ('3', 'Term 3')]
 
@@ -1836,12 +1847,21 @@ def teacher_portal(request):
     # GET SUBJECTS ASSIGNED TO TEACHER
     teacher_subject_ids = None
     if teacher and not is_admin:
-        class_ids = list(students_page.object_list.values_list('school_class_id', flat=True))
+        class_ids = list(
+            students_page.object_list.values_list(
+                'school_class_id',
+                flat=True
+            )
+        )
+
         cst_qs = ClassSubjectTeacher.objects.filter(
             teacher=teacher,
             school_class_id__in=class_ids
         )
-        teacher_subject_ids = list(cst_qs.values_list('subject_id', flat=True))
+
+        teacher_subject_ids = list(
+            cst_qs.values_list('subject_id', flat=True)
+        )
 
     # SCORE FILTERS
     score_filters = {"student_id__in": student_ids}
@@ -1918,6 +1938,27 @@ def teacher_portal(request):
             'affective': aff_dict
         })
 
+    class_teacher_classes = SchoolClass.objects.none()
+
+    if teacher and not is_admin:
+        class_teacher_classes = SchoolClass.objects.filter(
+            class_teacher=teacher
+        ).order_by('name')    
+
+    class_teacher_class_ids = set()
+
+    if teacher and not is_admin:
+        class_teacher_class_ids = set(
+            SchoolClass.objects.filter(
+                class_teacher=teacher
+            ).values_list('id', flat=True)
+        )
+
+    is_class_teacher = False
+
+    if teacher and class_id:
+        is_class_teacher = int(class_id) in class_teacher_class_ids    
+
     context = {
         'teacher': teacher,
         'is_admin': is_admin,
@@ -1932,6 +1973,10 @@ def teacher_portal(request):
         'SESSION_LIST': SESSION_LIST,
         'q': q,
         'school': school,  # ✅ This fixes your bulk_save_all URL
+        'class_teacher_classes': class_teacher_classes,
+
+        'is_class_teacher': is_class_teacher,
+        'class_teacher_class_ids': class_teacher_class_ids,
     }
 
     return render(request, 'results/teacher_portal.html', context)
@@ -1946,6 +1991,8 @@ def teacher_portal(request):
 def bulk_save_all(request, school_id):
     school = get_object_or_404(School, id=school_id)
 
+    teacher = getattr(request.user, "teacher_profile", None)
+
     if request.method != "POST":
         messages.error(request, "Invalid request method.")
         return redirect('results:teacher_portal')
@@ -1953,6 +2000,21 @@ def bulk_save_all(request, school_id):
     # Capture session and term from POST
     session = request.POST.get("session")
     term = request.POST.get("term")
+
+    class_id = request.POST.get("class_id")
+    selected_class = None
+    is_class_teacher = False
+
+    if class_id and teacher:
+        selected_class = get_object_or_404(
+            SchoolClass,
+            id=class_id,
+            school=school
+        )
+
+        is_class_teacher = (
+            selected_class.class_teacher_id == teacher.id
+        )
 
     if not session or not term:
         messages.error(request, "Missing session or term.")

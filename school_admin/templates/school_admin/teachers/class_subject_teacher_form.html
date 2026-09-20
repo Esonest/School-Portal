@@ -30,37 +30,142 @@
       <!-- Fields -->
       <div class="grid grid-cols-1 gap-6">
 
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">
-            Class
-          </label>
-          {{ form.school_class|add_class:"w-full rounded-lg border-gray-300 shadow-sm bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 px-3 py-2" }}
-          {% if form.school_class.errors %}
-            <p class="text-red-500 text-sm mt-1">{{ form.school_class.errors }}</p>
-          {% endif %}
-        </div>
+  <!-- CLASSES -->
+  <div>
+    <div class="flex items-center justify-between mb-2">
+      <label class="block text-sm font-medium text-gray-700">
+        Classes
+      </label>
 
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">
-            Subject
-          </label>
-          {{ form.subject|add_class:"w-full rounded-lg border-gray-300 shadow-sm bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 px-3 py-2" }}
-          {% if form.subject.errors %}
-            <p class="text-red-500 text-sm mt-1">{{ form.subject.errors }}</p>
-          {% endif %}
-        </div>
+      <button
+        type="button"
+        onclick="toggleAll('id_school_classes')"
+        class="text-xs text-indigo-600 hover:text-indigo-800 font-medium">
+        Select / Unselect All
+      </button>
+    </div>
 
-        <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">
-            Teacher
+    <div class="border border-gray-300 rounded-lg p-4 bg-gray-50 max-h-64 overflow-y-auto">
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+
+        {% for checkbox in form.school_classes %}
+          <label
+            class="flex items-center gap-3 bg-white border border-gray-200 rounded-lg px-3 py-2 hover:bg-indigo-50 cursor-pointer transition">
+
+            {{ checkbox.tag }}
+
+            <span class="text-sm text-gray-700">
+              {{ checkbox.choice_label }}
+            </span>
+
           </label>
-          {{ form.teacher|add_class:"w-full rounded-lg border-gray-300 shadow-sm bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 px-3 py-2" }}
-          {% if form.teacher.errors %}
-            <p class="text-red-500 text-sm mt-1">{{ form.teacher.errors }}</p>
-          {% endif %}
-        </div>
+        {% empty %}
+          <p class="text-sm text-gray-500">
+            No classes available.
+          </p>
+        {% endfor %}
 
       </div>
+
+    </div>
+
+    {% if form.school_classes.errors %}
+      <p class="text-red-500 text-sm mt-1">
+        {{ form.school_classes.errors }}
+      </p>
+    {% endif %}
+  </div>
+
+
+  <!-- SUBJECTS -->
+  <div>
+    <div class="flex items-center justify-between mb-2">
+      <label class="block text-sm font-medium text-gray-700">
+        Subjects
+      </label>
+
+      <button
+        type="button"
+        onclick="toggleAll('id_subjects')"
+        class="text-xs text-indigo-600 hover:text-indigo-800 font-medium">
+        Select / Unselect All
+      </button>
+    </div>
+
+    <div class="border border-gray-300 rounded-lg p-4 bg-gray-50 max-h-64 overflow-y-auto">
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+
+        {% for checkbox in form.subjects %}
+          <label
+            class="flex items-center gap-3 bg-white border border-gray-200 rounded-lg px-3 py-2 hover:bg-indigo-50 cursor-pointer transition">
+
+            {{ checkbox.tag }}
+
+            <span class="text-sm text-gray-700">
+              {{ checkbox.choice_label }}
+            </span>
+
+          </label>
+        {% empty %}
+          <p class="text-sm text-gray-500">
+            No subjects available.
+          </p>
+        {% endfor %}
+
+      </div>
+
+    </div>
+
+    {% if form.subjects.errors %}
+      <p class="text-red-500 text-sm mt-1">
+        {{ form.subjects.errors }}
+      </p>
+    {% endif %}
+  </div>
+
+
+  <!-- SUBJECT TEACHER -->
+  <div>
+    <label class="block text-sm font-medium text-gray-700 mb-1">
+      Subject Teacher
+    </label>
+
+    {{ form.teacher|add_class:"w-full rounded-lg border-gray-300 shadow-sm bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 px-3 py-2" }}
+
+    {% if form.teacher.errors %}
+      <p class="text-red-500 text-sm mt-1">
+        {{ form.teacher.errors }}
+      </p>
+    {% endif %}
+
+    <p class="text-xs text-gray-500 mt-1">
+      This teacher will be assigned to the selected subjects in the selected classes.
+    </p>
+  </div>
+
+
+  <!-- CLASS TEACHER -->
+  <div>
+    <label class="block text-sm font-medium text-gray-700 mb-1">
+      Class Teacher
+    </label>
+
+    {{ form.class_teacher|add_class:"w-full rounded-lg border-gray-300 shadow-sm bg-white focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 px-3 py-2" }}
+
+    {% if form.class_teacher.errors %}
+      <p class="text-red-500 text-sm mt-1">
+        {{ form.class_teacher.errors }}
+      </p>
+    {% endif %}
+
+    <p class="text-xs text-gray-500 mt-1">
+      This teacher will be assigned as the Class Teacher for the selected classes.
+    </p>
+  </div>
+
+</div>
 
       <!-- Actions -->
       <div class="flex justify-between items-center pt-6 border-t">
@@ -79,4 +184,24 @@
     </form>
   </div>
 </div>
+
+<script>
+function toggleAll(fieldId) {
+    const checkboxes = document.querySelectorAll(
+        '#' + fieldId + ' input[type="checkbox"]'
+    );
+
+    if (!checkboxes.length) {
+        return;
+    }
+
+    const allChecked = Array.from(checkboxes).every(
+        checkbox => checkbox.checked
+    );
+
+    checkboxes.forEach(function(checkbox) {
+        checkbox.checked = !allChecked;
+    });
+}
+</script>
 {% endblock %}

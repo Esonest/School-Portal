@@ -734,13 +734,34 @@ from django.core.exceptions import PermissionDenied
 def class_list(request):
 
     if request.user.is_superadmin:
-        classes = SchoolClass.objects.select_related("school").order_by("name")
-    else:
-        classes = SchoolClass.objects.select_related("school")\
-            .filter(school=request.user.school)\
+        classes = (
+            SchoolClass.objects
+            .select_related(
+                "school",
+                "class_teacher__user"
+            )
             .order_by("name")
+        )
+    else:
+        classes = (
+            SchoolClass.objects
+            .select_related(
+                "school",
+                "class_teacher__user"
+            )
+            .filter(
+                school=request.user.school
+            )
+            .order_by("name")
+        )
 
-    return render(request, "superadmin/classes/class_list.html", {"classes": classes})
+    return render(
+        request,
+        "superadmin/classes/class_list.html",
+        {
+            "classes": classes
+        }
+    )
 
 
 @login_required
