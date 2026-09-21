@@ -2693,10 +2693,14 @@ def public_event_guest_leave(
         LiveClass,
         event_slug=event_slug,
         liveclass_type="public_event",
+        allow_guest_access=True,
     )
 
+    # IMPORTANT:
+    # This must match the session key created in
+    # public_event_join() and used by public_event_token_api().
     session_key = request.session.get(
-        f"public_event_guest_{live_class.id}"
+        f"liveclass_guest_{live_class.id}"
     )
 
     if session_key:
@@ -2713,7 +2717,7 @@ def public_event_guest_leave(
         {
             "success": True
         }
-    )    
+    )
 # ==========================================================
 # PUBLIC EVENT TEACHER ROOM
 # ==========================================================
@@ -2847,7 +2851,9 @@ def public_event_join(request, event_slug):
 
     if live_class.guest_max_count:
 
-        current_count = live_class.event_guests.count()
+        current_count = live_class.event_guests.filter(
+            left_at__isnull=True
+        ).count()
 
         if current_count >= live_class.guest_max_count:
 
@@ -3167,5 +3173,87 @@ def public_event_guest_room(request, event_slug):
             "live_class": live_class,
         }
     )        
-        
+
+
+
+@portal_required("liveclass")
+@login_required
+def public_event_end(request, event_slug):
+
+    if request.method != "POST":
+        return JsonResponse(
+            {"error": "POST required"},
+            status=405
+        )
+
+
+    live_class = get_object_or_404(
+        LiveClass,
+        event_slug=event_slug,
+        liveclass_type="public_event",
+        allow_guest_access=True,
+    )
+
+
+    user = request.user
+
+
+    allowed = False
+
+
+    if getattr(user, "is_superadmin", False):
+        allowed = True
+
+
+    elif getattr(user, "is_schooladmin", False):
+
+        allowed = (
+            live_class.school_id == user.school_id
+        )
+
+
+    elif getattr(user, "is_teacher_user", False):
+
+        allowed = (
+            live_class.teacher
+            and live_class.teacher.user_id == user.id
+        )
+
+
+    if not allowed:
+
+        return JsonResponse(
+            {
+                "error": "Permission denied"
+            },
+            status=403
+        )
+
+
+    # Mark event as completed
+    live_class.status = "completed"
+
+    live_class.save(
+        update_fields=[
+            "status"
+        ]
+    )
+
+
+    # Mark active guests as left
+
+    LiveClassGuest.objects.filter(
+        live_class=live_class,
+        left_at__isnull=True,
+    ).update(
+        left_at=timezone.now()
+    )
+
+
+    return JsonResponse(
+        {
+            "success": True,
+            "message": "Event ended successfully."
+        }
+    )        
     

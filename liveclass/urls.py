@@ -124,6 +124,12 @@ urlpatterns = [
         name="public_event_guest_leave",
     ),
 
+    path(
+        "api/liveclass/event/<slug:event_slug>/end/",
+        views.public_event_end,
+        name="public_event_end",
+    ),
+
 
     path("<int:pk>/", views.liveclass_frontend),
 
