@@ -750,20 +750,42 @@ def start_recording_api(request, pk):
     live_class = get_object_or_404(
         LiveClass,
         pk=pk,
-        school=request.user.school
     )
 
-    if not (
-        request.user.is_teacher_user
-        or request.user.is_schooladmin
-        or request.user.is_superadmin
-    ):
+    user = request.user
+
+    # ==========================================================
+    # PERMISSION
+    # ==========================================================
+
+    allowed = False
+
+    if getattr(user, "is_superadmin", False):
+        allowed = True
+
+    elif getattr(user, "is_schooladmin", False):
+        allowed = (
+            live_class.school_id == user.school_id
+        )
+
+    elif getattr(user, "is_teacher_user", False):
+        allowed = (
+            live_class.teacher
+            and live_class.teacher.user_id == user.id
+        )
+
+    if not allowed:
         return JsonResponse(
-            {"error": "Only teachers can record"},
+            {"error": "You are not authorized to record this class."},
             status=403
         )
 
     try:
+
+        # ======================================================
+        # MAKE SURE 100MS ROOM EXISTS
+        # ======================================================
+
         real_room_id = create_100ms_room_if_missing(
             live_class.room_id
         )
@@ -775,17 +797,34 @@ def start_recording_api(request, pk):
             )
 
         if live_class.room_id != real_room_id:
+
             live_class.room_id = real_room_id
-            live_class.save(update_fields=["room_id"])
 
-        recording_data = start_recording(real_room_id)
+            live_class.save(
+                update_fields=["room_id"]
+            )
 
-        # Save recording details
+
+        # ======================================================
+        # START RECORDING
+        # ======================================================
+
+        recording_data = start_recording(
+            real_room_id
+        )
+
+
+        # ======================================================
+        # SAVE RECORDING DETAILS
+        # ======================================================
+
         live_class.recording_id = (
             recording_data.get("id")
             or live_class.recording_id
         )
+
         live_class.recording_status = "recording"
+
         live_class.save(
             update_fields=[
                 "recording_id",
@@ -793,20 +832,35 @@ def start_recording_api(request, pk):
             ]
         )
 
+
         return JsonResponse({
+
             "success": True,
+
             "recording": recording_data,
-            "already_recording": recording_data.get(
-                "already_recording",
-                False
-            ),
-            "recording_id": live_class.recording_id,
-            "recording_status": live_class.recording_status,
+
+            "already_recording":
+                recording_data.get(
+                    "already_recording",
+                    False
+                ),
+
+            "recording_id":
+                live_class.recording_id,
+
+            "recording_status":
+                live_class.recording_status,
+
         })
 
+
     except Exception as e:
-        print("❌ RECORDING ERROR:", e)
-        
+
+        print(
+            "❌ RECORDING ERROR:",
+            e
+        )
+
         return JsonResponse({
             "error": str(e),
         }, status=500)
@@ -869,30 +923,93 @@ def stop_recording_api(request, pk):
     live_class = get_object_or_404(
         LiveClass,
         pk=pk,
-        school=request.user.school
     )
 
+    user = request.user
+
+    # ==========================================================
+    # PERMISSION
+    # ==========================================================
+
+    allowed = False
+
+    if getattr(user, "is_superadmin", False):
+        allowed = True
+
+    elif getattr(user, "is_schooladmin", False):
+        allowed = (
+            live_class.school_id == user.school_id
+        )
+
+    elif getattr(user, "is_teacher_user", False):
+        allowed = (
+            live_class.teacher
+            and live_class.teacher.user_id == user.id
+        )
+
+    if not allowed:
+        return JsonResponse(
+            {
+                "error":
+                    "You are not authorized to stop this recording."
+            },
+            status=403
+        )
+
+
+    # ==========================================================
+    # CHECK RECORDING
+    # ==========================================================
+
     if not live_class.recording_id:
+
         return JsonResponse({
             "error": "No active recording found"
         }, status=400)
 
+
     try:
+
         result = stop_recording(
             live_class.recording_id
         )
 
+
+        # ======================================================
+        # RECORDING IS NOW PROCESSING
+        # ======================================================
+
         live_class.recording_status = "processing"
-        live_class.save(update_fields=[
-            "recording_status"
-        ])
+
+        live_class.save(
+            update_fields=[
+                "recording_status"
+            ]
+        )
+
 
         return JsonResponse({
+
             "success": True,
+
             "recording": result,
+
+            "recording_id":
+                live_class.recording_id,
+
+            "recording_status":
+                live_class.recording_status,
+
         })
 
+
     except Exception as e:
+
+        print(
+            "❌ RECORDING STOP ERROR:",
+            e
+        )
+
         return JsonResponse({
             "error": str(e)
         }, status=500)
@@ -948,34 +1065,57 @@ import json
 
 @csrf_exempt
 def recording_webhook(request):
+
     print("\n========================================")
     print("📩 100MS WEBHOOK HIT")
     print("METHOD:", request.method)
     print("PATH:", request.path)
     print("========================================\n")
 
+
+    # =====================================================
+    # WEBHOOK TEST
+    # =====================================================
+
     if request.method == "GET":
+
         return JsonResponse({
             "success": True,
             "message": "100ms recording webhook is active"
         })
 
+
+    # =====================================================
+    # ONLY POST IS ALLOWED
+    # =====================================================
+
     if request.method != "POST":
+
         return JsonResponse({
             "error": "Method not allowed"
         }, status=405)
 
+
+    # =====================================================
+    # PARSE JSON
+    # =====================================================
+
     try:
+
         payload = json.loads(
             request.body.decode("utf-8") or "{}"
         )
+
     except json.JSONDecodeError:
+
         return JsonResponse({
             "error": "Invalid JSON"
         }, status=400)
 
+
     event = payload.get("type")
     data = payload.get("data", {})
+
 
     print("\n========================================")
     print("📩 100MS RECORDING WEBHOOK RECEIVED")
@@ -983,15 +1123,21 @@ def recording_webhook(request):
     print("PAYLOAD:", payload)
     print("========================================\n")
 
+
     # =====================================================
-    # FINAL ROOM COMPOSITE RECORDING
+    # 1. FINAL ROOM COMPOSITE RECORDING SUCCESS
     # =====================================================
-    if event in ("recording.success", "beam.recording.success"):
+
+    if event in (
+        "recording.success",
+        "beam.recording.success",
+    ):
 
         recording_id = (
             data.get("recording_id")
             or data.get("id")
         )
+
         recording_url = (
             data.get("recording_presigned_url")
             or data.get("recording_url")
@@ -1000,10 +1146,18 @@ def recording_webhook(request):
             or data.get("location")
         )
 
-        recording_path = data.get("recording_path")
+        recording_path = data.get(
+            "recording_path"
+        )
 
-        room_id = data.get("room_id")
-        session_id = data.get("session_id")
+        room_id = data.get(
+            "room_id"
+        )
+
+        session_id = data.get(
+            "session_id"
+        )
+
 
         print("\n========================================")
         print("🎬 FINAL RECORDING SUCCESS")
@@ -1014,33 +1168,56 @@ def recording_webhook(request):
         print("Recording Path:", recording_path)
         print("========================================\n")
 
+
         live_class = None
 
+
+        # -------------------------------------------------
+        # FIND BY RECORDING ID FIRST
+        # -------------------------------------------------
+
         if recording_id:
+
             live_class = LiveClass.objects.filter(
                 recording_id=recording_id
             ).first()
 
-    # -------------------------------------------------
-    # 2. Fallback: room ID
-    # -------------------------------------------------
+
+        # -------------------------------------------------
+        # FALLBACK: FIND BY ROOM ID
+        # -------------------------------------------------
+
         if not live_class and room_id:
+
             live_class = LiveClass.objects.filter(
                 room_id=room_id
             ).order_by("-id").first()
 
-    # -------------------------------------------------
-    # 3. Update LiveClass
-    # -------------------------------------------------
+
+        # -------------------------------------------------
+        # UPDATE LIVECLASS
+        # -------------------------------------------------
+
         if live_class:
 
-            live_class.recording_status = "completed"
+            live_class.recording_status = (
+                "completed"
+            )
+
 
             if recording_url:
-                live_class.recording_url = recording_url
+
+                live_class.recording_url = (
+                    recording_url
+                )
+
 
             if recording_id:
-                live_class.recording_id = recording_id
+
+                live_class.recording_id = (
+                    recording_id
+                )
+
 
             live_class.save(
                 update_fields=[
@@ -1050,44 +1227,40 @@ def recording_webhook(request):
                 ]
             )
 
+
             print(
-                f"✅ LiveClass {live_class.id} updated successfully"
+                f"✅ LiveClass {live_class.id} "
+                f"updated successfully"
             )
+
+            print(
+                "PUBLIC EVENT:",
+                live_class.liveclass_type == "public_event"
+            )
+
 
         else:
 
             print(
-                "⚠️ Could not find LiveClass for recording."
-            )
-            print("Recording ID:", recording_id)
-            print("Room ID:", room_id)
-
-    # =====================================================
-    # FINAL ROOM COMPOSITE RECORDING FAILED
-    # =====================================================
-    elif event == "beam.recording.failed":
-
-        recording_id = data.get("id")
-
-        print(
-            "❌ FINAL RECORDING FAILED:",
-            recording_id
-        )
-
-        if recording_id:
-            updated = LiveClass.objects.filter(
-                recording_id=recording_id
-            ).update(
-                recording_status="failed"
+                "⚠️ Could not find LiveClass "
+                "for recording."
             )
 
             print(
-                f"❌ Failed recording updated: {updated}"
+                "Recording ID:",
+                recording_id
             )
 
+            print(
+                "Room ID:",
+                room_id
+            )
+
+
     # =====================================================
-    # STREAM RECORDING SUCCESS
+    # 2. FINAL RECORDING FAILED
     # =====================================================
+
     elif event in (
         "recording.failed",
         "beam.recording.failure",
@@ -1099,10 +1272,12 @@ def recording_webhook(request):
             or data.get("id")
         )
 
+
         print(
             "❌ FINAL RECORDING FAILED:",
             recording_id
         )
+
 
         if recording_id:
 
@@ -1112,29 +1287,67 @@ def recording_webhook(request):
                 recording_status="failed"
             )
 
+
             print(
-                f"❌ Failed recording updated: {updated}"
-            )    
+                f"❌ Failed recording updated: "
+                f"{updated}"
+            )
+
+
+    # =====================================================
+    # 3. STREAM RECORDING SUCCESS
+    # =====================================================
+
+    elif event in (
+        "stream.recording.success",
+    ):
+
+        recording_id = (
+            data.get("recording_id")
+            or data.get("id")
+        )
+
         recording_url = (
             data.get("recording_presigned_url")
+            or data.get("recording_url")
             or data.get("recording_path")
         )
 
-        print("🎥 STREAM RECORDING SUCCESS")
-        print("Recording ID:", recording_id)
-        print("URL:", recording_url)
+
+        print(
+            "🎥 STREAM RECORDING SUCCESS"
+        )
+
+        print(
+            "Recording ID:",
+            recording_id
+        )
+
+        print(
+            "URL:",
+            recording_url
+        )
+
 
         # IMPORTANT:
+        #
         # Do NOT mark LiveClass as completed here.
         #
-        # This is an individual participant stream.
-        # We wait for recording.success for the
-        # final room-composite MP4.
+        # This is an individual participant
+        # stream.
+        #
+        # We wait for recording.success
+        # for the final room-composite MP4.
+
 
     # =====================================================
-    # STREAM RECORDING FAILED
+    # 4. STREAM RECORDING FAILED
     # =====================================================
-    elif event == "stream.recording.failure":
+
+    elif event in (
+        "stream.recording.failure",
+        "stream.recording.failed",
+    ):
 
         print(
             "❌ STREAM RECORDING FAILED:",
@@ -1142,9 +1355,11 @@ def recording_webhook(request):
             data.get("error_message")
         )
 
+
     # =====================================================
-    # TRACK RECORDING SUCCESS
+    # 5. TRACK RECORDING SUCCESS
     # =====================================================
+
     elif event == "track.recording.success":
 
         print(
@@ -1153,9 +1368,11 @@ def recording_webhook(request):
             data.get("track_type")
         )
 
+
     # =====================================================
-    # SESSION CLOSED
+    # 6. SESSION CLOSED
     # =====================================================
+
     elif event == "session.close.success":
 
         print(
@@ -1164,9 +1381,11 @@ def recording_webhook(request):
             data.get("reason")
         )
 
+
     # =====================================================
-    # PEER LEFT
+    # 7. PEER LEFT
     # =====================================================
+
     elif event == "peer.leave.success":
 
         print(
@@ -1175,9 +1394,11 @@ def recording_webhook(request):
             data.get("peer_id")
         )
 
+
     # =====================================================
-    # OTHER EVENT
+    # 8. OTHER EVENT
     # =====================================================
+
     else:
 
         print(
@@ -1185,22 +1406,99 @@ def recording_webhook(request):
             event
         )
 
+
+    # =====================================================
+    # ACKNOWLEDGE WEBHOOK
+    # =====================================================
+
     return JsonResponse({
         "success": True
     })
 
 @login_required
 def recording_status_api(request, pk):
+
     live_class = get_object_or_404(
         LiveClass,
         pk=pk,
-        school=request.user.school
     )
 
+    user = request.user
+
+    # ==========================================================
+    # PERMISSION
+    # ==========================================================
+
+    allowed = False
+
+    # ----------------------------------------------------------
+    # SUPERADMIN
+    # ----------------------------------------------------------
+
+    if getattr(user, "is_superadmin", False):
+
+        allowed = True
+
+
+    # ----------------------------------------------------------
+    # SCHOOL ADMIN
+    # ----------------------------------------------------------
+
+    elif getattr(user, "is_schooladmin", False):
+
+        allowed = (
+            live_class.school_id ==
+            user.school_id
+        )
+
+
+    # ----------------------------------------------------------
+    # TEACHER
+    # ----------------------------------------------------------
+
+    elif getattr(user, "is_teacher_user", False):
+
+        allowed = (
+            live_class.teacher
+            and
+            live_class.teacher.user_id ==
+            user.id
+        )
+
+
+    # ----------------------------------------------------------
+    # NOT AUTHORIZED
+    # ----------------------------------------------------------
+
+    if not allowed:
+
+        return JsonResponse(
+            {
+                "error":
+                    "You are not authorized to view this recording status."
+            },
+            status=403
+        )
+
+
+    # ==========================================================
+    # RECORDING STATUS
+    # ==========================================================
+
     return JsonResponse({
-        "status": live_class.recording_status or "idle",
-        "url": live_class.recording_url or "",
-        "recording_id": live_class.recording_id or "",
+
+        "status":
+            live_class.recording_status
+            or "idle",
+
+        "url":
+            live_class.recording_url
+            or "",
+
+        "recording_id":
+            live_class.recording_id
+            or "",
+
     })
 
 
