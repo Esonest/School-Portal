@@ -9,6 +9,23 @@ urlpatterns = [
     path('upload/', views.teacher_upload_note, name='upload_note'),
     path('edit/<int:pk>/', views.teacher_upload_note, name='edit_note'),
     path('delete/<int:pk>/', views.teacher_delete_note, name='delete_note'),
+    path(
+        "approve/<int:pk>/",
+        views.approve_note,
+        name="approve_note"
+    ),
+
+    path(
+        "reject/<int:pk>/",
+        views.reject_note,
+        name="reject_note"
+    ),
+
+    path(
+        "toggle-active/<int:pk>/",
+        views.toggle_note_active,
+        name="toggle_note_active"
+    ),
 
     path('list/', views.student_notes_list, name='student_list'),
 

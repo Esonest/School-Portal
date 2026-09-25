@@ -116,6 +116,37 @@ def teacher_upload_note(request, pk=None):
                 lesson_note.school = school
 
 
+            # --------------------------------
+# TEACHER NOTES REQUIRE APPROVAL
+# --------------------------------
+
+            if teacher_profile:
+
+                lesson_note.teacher = teacher_profile
+                lesson_note.school = teacher_profile.school
+
+    # New teacher uploads and teacher edits
+    # must be reviewed again.
+                lesson_note.approval_status = 'pending'
+                lesson_note.approved_by = None
+                lesson_note.approved_on = None
+                lesson_note.rejection_reason = ''
+
+# --------------------------------
+# SCHOOL ADMIN UPLOAD
+# --------------------------------
+
+            elif school:
+
+                lesson_note.school = school
+
+    # Notes created directly by the
+    # school admin are automatically approved.
+                lesson_note.approval_status = 'approved'
+                lesson_note.approved_by = user
+                lesson_note.approved_on = timezone.now()
+                lesson_note.rejection_reason = ''
+
             lesson_note.save()
             form.save_m2m()
 
@@ -263,6 +294,7 @@ def student_notes_list(request):
     ).filter(
         school=student.school,
         is_active=True,
+        approval_status='approved',
         publish_date__lte=today,
     ).filter(
         Q(expiry_date__isnull=True) |
@@ -302,6 +334,7 @@ def student_notes_list(request):
 
 @login_required
 def note_detail(request, pk):
+
     note = get_object_or_404(
         LessonNote,
         pk=pk,
@@ -309,38 +342,111 @@ def note_detail(request, pk):
     )
 
     user = request.user
-    teacher_profile = getattr(user, "teacher_profile", None)
-    school = getattr(user, "school", None)
+
+    teacher_profile = getattr(
+        user,
+        "teacher_profile",
+        None
+    )
+
+    school = getattr(
+        user,
+        "school",
+        None
+    )
+
     student = (
         getattr(user, "student_profile", None)
         or getattr(user, "student", None)
     )
 
-    # Superadmin
+    # ==========================
+    # SUPERADMIN
+    # ==========================
+
     if user.is_superadmin:
         pass
 
-    # School admin can view every note in their school
-    elif school and note.school == school:
+    # ==========================
+    # SCHOOL ADMIN
+    # ==========================
+
+    elif (
+        user.role == "schooladmin"
+        and school
+        and note.school == school
+    ):
         pass
 
-    # Teacher can view own notes
-    elif teacher_profile and note.teacher == teacher_profile:
+    # ==========================
+    # TEACHER
+    # ==========================
+
+    elif (
+        teacher_profile
+        and note.teacher == teacher_profile
+    ):
         pass
 
-    # Student permission
-    else:
+    # ==========================
+    # STUDENT
+    # ==========================
+
+    elif student:
+
+        # --------------------------------
+        # MUST BE APPROVED
+        # --------------------------------
+
+        if note.approval_status != "approved":
+            raise Http404("Lesson note not available.")
+
+        # --------------------------------
+        # MUST BE ACTIVE
+        # --------------------------------
+
+        if not note.is_active:
+            raise Http404("Lesson note not available.")
+
+        # --------------------------------
+        # CHECK PUBLISH DATE
+        # --------------------------------
+
+        if note.publish_date > timezone.now().date():
+            raise Http404("Lesson note not yet available.")
+
+        # --------------------------------
+        # CHECK EXPIRY
+        # --------------------------------
+
+        if note.expired:
+            raise Http404("Lesson note has expired.")
+
+        # --------------------------------
+        # PRIVATE NOTE
+        # --------------------------------
+
         if note.visibility == "private":
             raise Http404("Not allowed")
+
+        # --------------------------------
+        # CLASS NOTE
+        # --------------------------------
 
         if (
             note.visibility == "classes"
             and (
-                not student
-                or student.school_class not in note.classes.all()
+                not student.school_class
+                or not note.classes.filter(
+                    id=student.school_class.id
+                ).exists()
             )
         ):
             raise Http404("Not allowed")
+
+    else:
+
+        raise Http404("Not allowed")
 
     return render(
         request,
@@ -349,7 +455,6 @@ def note_detail(request, pk):
             "note": note
         }
     )
-
 
 # ------------------------
 # Download note file
@@ -476,7 +581,14 @@ def dashboard(request):
     if school and not teacher_profile and not student:
         notes = LessonNote.objects.filter(
             school=school
-        ).order_by('-publish_date')
+        ).select_related(
+            "subject",
+            "teacher",
+            "approved_by"
+        ).order_by(
+            "approval_status",
+            "-publish_date"
+        )
 
         pending = LessonNoteSubmission.objects.filter(
             note__school=school,
@@ -535,4 +647,201 @@ def dashboard(request):
         'notes/dashboard.html',
         context
     )
+
+
+
+# ------------------------
+# School Admin: approve note
+# ------------------------
+
+@portal_required("lesson_note")
+@login_required
+def approve_note(request, pk):
+
+    user = request.user
+    school = getattr(user, "school", None)
+
+    if user.is_superadmin:
+
+        note = get_object_or_404(
+            LessonNote,
+            pk=pk
+        )
+
+    elif (
+        user.role == "schooladmin"
+        and school
+    ):
+
+        note = get_object_or_404(
+            LessonNote,
+            pk=pk,
+            school=school
+        )
+
+    else:
+
+        raise Http404("Not allowed")
+
+    if request.method != "POST":
+
+        raise Http404("Invalid request.")
+
+    note.approval_status = "approved"
+    note.approved_by = user
+    note.approved_on = timezone.now()
+    note.rejection_reason = ""
+    note.save(
+        update_fields=[
+            "approval_status",
+            "approved_by",
+            "approved_on",
+            "rejection_reason",
+            "updated_on",
+        ]
+    )
+
+    messages.success(
+        request,
+        f'"{note.title}" has been approved and is now available to students.'
+    )
+
+    return redirect(
+        "notes:dashboard"
+    )
+
+
+@portal_required("lesson_note")
+@login_required
+def reject_note(request, pk):
+
+    user = request.user
+    school = getattr(user, "school", None)
+
+    if user.is_superadmin:
+
+        note = get_object_or_404(
+            LessonNote,
+            pk=pk
+        )
+
+    elif (
+        user.role == "schooladmin"
+        and school
+    ):
+
+        note = get_object_or_404(
+            LessonNote,
+            pk=pk,
+            school=school
+        )
+
+    else:
+
+        raise Http404("Not allowed")
+
+    if request.method != "POST":
+
+        raise Http404("Invalid request.")
+
+    reason = request.POST.get(
+        "rejection_reason",
+        ""
+    ).strip()
+
+    note.approval_status = "rejected"
+    note.approved_by = None
+    note.approved_on = None
+    note.rejection_reason = reason
+
+    note.save(
+        update_fields=[
+            "approval_status",
+            "approved_by",
+            "approved_on",
+            "rejection_reason",
+            "updated_on",
+        ]
+    )
+
+    messages.warning(
+        request,
+        f'"{note.title}" was rejected.'
+    )
+
+    return redirect(
+        "notes:dashboard"
+    )
+
+
+# ------------------------
+# School Admin: toggle note active/inactive
+# ------------------------
+
+@portal_required("lesson_note")
+@login_required
+def toggle_note_active(request, pk):
+
+    user = request.user
+    school = getattr(user, "school", None)
+
+    # -------------------------
+    # SUPERADMIN
+    # -------------------------
+
+    if user.is_superadmin:
+
+        note = get_object_or_404(
+            LessonNote,
+            pk=pk
+        )
+
+    # -------------------------
+    # SCHOOL ADMIN
+    # -------------------------
+
+    elif (
+        user.role == "schooladmin"
+        and school
+    ):
+
+        note = get_object_or_404(
+            LessonNote,
+            pk=pk,
+            school=school
+        )
+
+    else:
+
+        raise Http404("Not allowed")
+
+    if request.method != "POST":
+        raise Http404("Invalid request.")
+
+    note.is_active = not note.is_active
+
+    note.save(
+        update_fields=[
+            "is_active",
+            "updated_on",
+        ]
+    )
+
+    if note.is_active:
+
+        messages.success(
+            request,
+            f'"{note.title}" has been activated.'
+        )
+
+    else:
+
+        messages.warning(
+            request,
+            f'"{note.title}" has been deactivated.'
+        )
+
+    return redirect(
+        "notes:dashboard"
+    )    
 

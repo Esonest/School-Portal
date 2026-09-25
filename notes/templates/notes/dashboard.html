@@ -42,61 +42,399 @@
 
             <div class="p-6 space-y-5">
 
-                {% for note in notes %}
+               {% for note in notes %}
 
-                <div class="border rounded-xl p-5 hover:shadow-md transition">
+<div class="border rounded-xl p-5 hover:shadow-md transition">
 
-                    <div class="flex flex-col md:flex-row md:justify-between gap-4">
+    <!-- ========================== -->
+    <!-- NOTE HEADER -->
+    <!-- ========================== -->
 
-                        <div class="flex-1">
+    <div class="flex flex-col lg:flex-row lg:justify-between gap-4">
 
-                            <h3 class="text-lg font-bold text-gray-800">
-                                {{ note.title }}
-                            </h3>
+        <div class="flex-1">
 
-                            <div class="mt-1 text-sm text-gray-500">
-                                {{ note.subject }}
-                                •
-                                {{ note.publish_date|date:"M d, Y" }}
-                            </div>
+            <h3 class="text-lg font-bold text-gray-800">
+                {{ note.title }}
+            </h3>
 
-                            <p class="mt-3 text-gray-600">
-                                {{ note.content|truncatewords:30 }}
-                            </p>
+            <div class="mt-1 text-sm text-gray-500">
 
-                        </div>
+                {% if note.subject %}
+                    {{ note.subject }}
+                {% endif %}
 
-                        <div class="flex flex-wrap gap-2">
+                {% if note.week %}
+                    • Week {{ note.week }}
+                {% endif %}
 
-                            <a href="{% url 'notes:note_detail' note.pk %}"
-                               class="px-3 py-2 rounded-lg bg-blue-600 text-white hover:bg-blue-700">
-                                View
-                            </a>
+                {% if note.term %}
+                    • Term {{ note.get_term_display }}
+                {% endif %}
 
-                            <a href="{% url 'notes:edit_note' note.pk %}"
-                               class="px-3 py-2 rounded-lg bg-amber-500 text-white hover:bg-amber-600">
-                                Edit
-                            </a>
+                {% if note.publish_date %}
+                    • {{ note.publish_date|date:"M d, Y" }}
+                {% endif %}
 
-                            <a href="{% url 'notes:delete_note' note.pk %}"
-                               class="px-3 py-2 rounded-lg bg-red-600 text-white hover:bg-red-700">
-                                Delete
-                            </a>
+            </div>
 
-                        </div>
+            {% if note.teacher %}
 
-                    </div>
+            <div class="mt-2 text-sm text-gray-500">
 
-                </div>
+                Teacher:
+                <span class="font-medium text-gray-700">
+                    {{ note.teacher.user.get_full_name }}
+                </span>
 
-                {% empty %}
+            </div>
 
-                <div class="text-center py-10 text-gray-500">
-                    No lesson notes available.
-                </div>
+            {% endif %}
 
-                {% endfor %}
+        </div>
 
+
+        <!-- ========================== -->
+        <!-- STATUS BADGES -->
+        <!-- ========================== -->
+
+        <div class="flex flex-wrap gap-2">
+
+            <!-- APPROVAL STATUS -->
+
+            {% if note.approval_status == "approved" %}
+
+                <span class="px-3 py-1 text-xs font-semibold rounded-full
+                             bg-green-100 text-green-700">
+
+                    ✓ Approved
+
+                </span>
+
+            {% elif note.approval_status == "pending" %}
+
+                <span class="px-3 py-1 text-xs font-semibold rounded-full
+                             bg-yellow-100 text-yellow-700">
+
+                    ⏳ Pending Approval
+
+                </span>
+
+            {% elif note.approval_status == "rejected" %}
+
+                <span class="px-3 py-1 text-xs font-semibold rounded-full
+                             bg-red-100 text-red-700">
+
+                    ✗ Rejected
+
+                </span>
+
+            {% endif %}
+
+
+            <!-- ACTIVE STATUS -->
+
+            {% if note.is_active %}
+
+                <span class="px-3 py-1 text-xs font-semibold rounded-full
+                             bg-blue-100 text-blue-700">
+
+                    ● Active
+
+                </span>
+
+            {% else %}
+
+                <span class="px-3 py-1 text-xs font-semibold rounded-full
+                             bg-gray-200 text-gray-700">
+
+                    ○ Inactive
+
+                </span>
+
+            {% endif %}
+
+        </div>
+
+    </div>
+
+
+    <!-- ========================== -->
+    <!-- EXPIRY / VISIBILITY -->
+    <!-- ========================== -->
+
+    <div class="flex flex-wrap gap-2 mt-4">
+
+        {% if note.expired %}
+
+            <span class="px-2 py-1 text-xs rounded-full
+                         bg-red-100 text-red-700">
+
+                Expired
+
+            </span>
+
+        {% elif note.expiry_date %}
+
+            <span class="px-2 py-1 text-xs rounded-full
+                         bg-yellow-100 text-yellow-700">
+
+                Expires {{ note.expiry_date|date:"M d, Y" }}
+
+            </span>
+
+        {% else %}
+
+            <span class="px-2 py-1 text-xs rounded-full
+                         bg-gray-100 text-gray-700">
+
+                No Expiry
+
+            </span>
+
+        {% endif %}
+
+
+        <span class="px-2 py-1 text-xs rounded-full
+                     bg-purple-100 text-purple-700">
+
+            {{ note.get_visibility_display }}
+
+        </span>
+
+
+        {% if note.file %}
+
+            <span class="px-2 py-1 text-xs rounded-full
+                         bg-indigo-100 text-indigo-700">
+
+                📄 PDF Attached
+
+            </span>
+
+        {% else %}
+
+            <span class="px-2 py-1 text-xs rounded-full
+                         bg-gray-100 text-gray-500">
+
+                No PDF
+
+            </span>
+
+        {% endif %}
+
+    </div>
+
+
+    <!-- ========================== -->
+    <!-- CONTENT -->
+    <!-- ========================== -->
+
+    <p class="mt-4 text-gray-600">
+
+        {{ note.content|truncatewords:30 }}
+
+    </p>
+
+
+    <!-- ========================== -->
+    <!-- REJECTION REASON -->
+    <!-- ========================== -->
+
+    {% if note.approval_status == "rejected" and note.rejection_reason %}
+
+        <div class="mt-4 p-3 rounded-lg bg-red-50
+                    border border-red-200">
+
+            <p class="text-sm font-semibold text-red-700">
+                Rejection Reason
+            </p>
+
+            <p class="text-sm text-red-600 mt-1">
+                {{ note.rejection_reason }}
+            </p>
+
+        </div>
+
+    {% endif %}
+
+
+    <!-- ========================== -->
+    <!-- APPROVED INFORMATION -->
+    <!-- ========================== -->
+
+    {% if note.approval_status == "approved" and note.approved_by %}
+
+        <div class="mt-3 text-xs text-gray-500">
+
+            Approved by
+            <span class="font-medium">
+                {{ note.approved_by.get_full_name|default:note.approved_by.username }}
+            </span>
+
+            {% if note.approved_on %}
+                on {{ note.approved_on|date:"M d, Y H:i" }}
+            {% endif %}
+
+        </div>
+
+    {% endif %}
+
+
+    <!-- ========================== -->
+    <!-- ACTIONS -->
+    <!-- ========================== -->
+
+    <div class="flex flex-wrap gap-2 mt-5">
+
+        <!-- VIEW -->
+
+        <a href="{% url 'notes:note_detail' note.pk %}"
+           class="px-3 py-2 rounded-lg
+                  bg-blue-600 text-white
+                  hover:bg-blue-700">
+
+            View
+
+        </a>
+
+
+        <!-- EDIT -->
+
+        <a href="{% url 'notes:edit_note' note.pk %}"
+           class="px-3 py-2 rounded-lg
+                  bg-amber-500 text-white
+                  hover:bg-amber-600">
+
+            Edit
+
+        </a>
+
+
+        <!-- ========================== -->
+        <!-- APPROVE -->
+        <!-- ========================== -->
+
+        {% if is_school_admin or request.user.is_superadmin %}
+
+            {% if note.approval_status != "approved" %}
+
+                <form method="post"
+                      action="{% url 'notes:approve_note' note.pk %}"
+                      class="inline">
+
+                    {% csrf_token %}
+
+                    <button type="submit"
+                            class="px-3 py-2 rounded-lg
+                                   bg-green-600 text-white
+                                   hover:bg-green-700">
+
+                        ✓ Approve
+
+                    </button>
+
+                </form>
+
+            {% endif %}
+
+
+            <!-- ========================== -->
+            <!-- REJECT -->
+            <!-- ========================== -->
+
+            {% if note.approval_status != "rejected" %}
+
+                <form method="post"
+                      action="{% url 'notes:reject_note' note.pk %}"
+                      class="inline flex gap-2">
+
+                    {% csrf_token %}
+
+                    <input type="text"
+                           name="rejection_reason"
+                           placeholder="Reason"
+                           class="border border-gray-300
+                                  rounded-lg px-3 py-2
+                                  text-sm">
+
+                    <button type="submit"
+                            class="px-3 py-2 rounded-lg
+                                   bg-red-600 text-white
+                                   hover:bg-red-700">
+
+                        ✗ Reject
+
+                    </button>
+
+                </form>
+
+            {% endif %}
+
+
+            <!-- ========================== -->
+            <!-- ACTIVE / INACTIVE TOGGLE -->
+            <!-- ========================== -->
+
+            <form method="post"
+                  action="{% url 'notes:toggle_note_active' note.pk %}"
+                  class="inline">
+
+                {% csrf_token %}
+
+                {% if note.is_active %}
+
+                    <button type="submit"
+                            class="px-3 py-2 rounded-lg
+                                   bg-gray-600 text-white
+                                   hover:bg-gray-700">
+
+                        Disable
+
+                    </button>
+
+                {% else %}
+
+                    <button type="submit"
+                            class="px-3 py-2 rounded-lg
+                                   bg-indigo-600 text-white
+                                   hover:bg-indigo-700">
+
+                        Activate
+
+                    </button>
+
+                {% endif %}
+
+            </form>
+
+        {% endif %}
+
+
+        <!-- DELETE -->
+
+        <a href="{% url 'notes:delete_note' note.pk %}"
+           class="px-3 py-2 rounded-lg
+                  bg-red-600 text-white
+                  hover:bg-red-700">
+
+            Delete
+
+        </a>
+
+    </div>
+
+</div>
+
+{% empty %}
+
+<div class="text-center py-10 text-gray-500">
+
+    No lesson notes available.
+
+</div>
+
+{% endfor %}
             </div>
 
         </div>

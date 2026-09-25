@@ -1502,6 +1502,255 @@ def recording_status_api(request, pk):
     })
 
 
+# ==========================================================
+# PUBLIC EVENT — START RECORDING
+# ==========================================================
+
+@login_required
+def start_public_event_recording_api(request, event_slug):
+
+    if request.method != "POST":
+        return JsonResponse(
+            {"error": "POST request required"},
+            status=405
+        )
+
+    live_class = get_object_or_404(
+        LiveClass,
+        event_slug=event_slug,
+        liveclass_type="public_event",
+    )
+
+    user = request.user
+
+    # ==========================================================
+    # PERMISSION
+    # ==========================================================
+
+    allowed = False
+
+    if getattr(user, "is_superadmin", False):
+
+        allowed = True
+
+    elif getattr(user, "is_schooladmin", False):
+
+        allowed = (
+            live_class.school_id == user.school_id
+        )
+
+    elif getattr(user, "is_teacher_user", False):
+
+        # Public-event teacher room is already authenticated
+        # through the public-event teacher flow.
+        allowed = True
+
+    if not allowed:
+
+        return JsonResponse(
+            {
+                "error":
+                    "You are not authorized to record this public event."
+            },
+            status=403
+        )
+
+    try:
+
+        # ======================================================
+        # MAKE SURE 100MS ROOM EXISTS
+        # ======================================================
+
+        real_room_id = create_100ms_room_if_missing(
+            live_class.room_id
+        )
+
+        if not real_room_id:
+
+            return JsonResponse(
+                {"error": "Room not found"},
+                status=500
+            )
+
+        if live_class.room_id != real_room_id:
+
+            live_class.room_id = real_room_id
+
+            live_class.save(
+                update_fields=["room_id"]
+            )
+
+        # ======================================================
+        # START RECORDING
+        # ======================================================
+
+        recording_data = start_recording(
+            real_room_id
+        )
+
+        # ======================================================
+        # SAVE RECORDING DETAILS
+        # ======================================================
+
+        live_class.recording_id = (
+            recording_data.get("id")
+            or live_class.recording_id
+        )
+
+        live_class.recording_status = "recording"
+
+        live_class.save(
+            update_fields=[
+                "recording_id",
+                "recording_status",
+            ]
+        )
+
+        return JsonResponse({
+
+            "success": True,
+
+            "recording": recording_data,
+
+            "already_recording":
+                recording_data.get(
+                    "already_recording",
+                    False
+                ),
+
+            "recording_id":
+                live_class.recording_id,
+
+            "recording_status":
+                live_class.recording_status,
+
+            "event_slug":
+                live_class.event_slug,
+
+        })
+
+    except Exception as e:
+
+        print(
+            "❌ PUBLIC EVENT RECORDING ERROR:",
+            e
+        )
+
+        return JsonResponse({
+            "error": str(e),
+        }, status=500)
+
+
+# ==========================================================
+# PUBLIC EVENT — STOP RECORDING
+# ==========================================================
+
+@login_required
+def stop_public_event_recording_api(request, event_slug):
+
+    if request.method != "POST":
+        return JsonResponse(
+            {"error": "POST request required"},
+            status=405
+        )
+
+    live_class = get_object_or_404(
+        LiveClass,
+        event_slug=event_slug,
+        liveclass_type="public_event",
+    )
+
+    user = request.user
+
+    # ==========================================================
+    # PERMISSION
+    # ==========================================================
+
+    allowed = False
+
+    if getattr(user, "is_superadmin", False):
+
+        allowed = True
+
+    elif getattr(user, "is_schooladmin", False):
+
+        allowed = (
+            live_class.school_id == user.school_id
+        )
+
+    elif getattr(user, "is_teacher_user", False):
+
+        # Public-event teacher room is already authenticated
+        # through the public-event teacher flow.
+        allowed = True
+
+    if not allowed:
+
+        return JsonResponse(
+            {
+                "error":
+                    "You are not authorized to stop this public event recording."
+            },
+            status=403
+        )
+
+    # ==========================================================
+    # CHECK RECORDING
+    # ==========================================================
+
+    if not live_class.recording_id:
+
+        return JsonResponse({
+            "error": "No active recording found"
+        }, status=400)
+
+    try:
+
+        result = stop_recording(
+            live_class.recording_id
+        )
+
+        # ======================================================
+        # RECORDING IS NOW PROCESSING
+        # ======================================================
+
+        live_class.recording_status = "processing"
+
+        live_class.save(
+            update_fields=[
+                "recording_status"
+            ]
+        )
+
+        return JsonResponse({
+
+            "success": True,
+
+            "recording": result,
+
+            "recording_id":
+                live_class.recording_id,
+
+            "recording_status":
+                live_class.recording_status,
+
+            "event_slug":
+                live_class.event_slug,
+
+        })
+
+    except Exception as e:
+
+        print(
+            "❌ PUBLIC EVENT RECORDING STOP ERROR:",
+            e
+        )
+
+        return JsonResponse({
+            "error": str(e)
+        }, status=500)
+
+
 
 from django.contrib.auth import get_user_model
 User = get_user_model()

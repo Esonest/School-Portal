@@ -36,6 +36,18 @@ urlpatterns = [
     path("api/liveclass/<int:pk>/breakout-assignments/",views.breakout_assignments,name="breakout_assignments"),
     path("api/liveclass/<int:pk>/start-recording/",views.start_recording_api,name="start_recording_api"),
     path("api/liveclass/<int:pk>/stop-recording/",views.stop_recording_api,name="stop_recording_api"),
+
+    path(
+        "api/liveclass/event/<slug:event_slug>/start-recording/",
+        views.start_public_event_recording_api,
+        name="start_public_event_recording",
+    ),
+
+    path(
+        "api/liveclass/event/<slug:event_slug>/stop-recording/",
+        views.stop_public_event_recording_api,
+        name="stop_public_event_recording",
+    ),
     path("webhooks/recording/",views.recording_webhook,name="recording_webhook"),
     path("api/liveclass/<int:pk>/recording-status/",views.recording_status_api,name="recording_status_api"),
     

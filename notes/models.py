@@ -28,7 +28,10 @@ class NoteCategory(models.Model):
 # -----------------------------
 # LESSON NOTE MODEL
 # -----------------------------
+
+
 class LessonNote(models.Model):
+
     VISIBILITY_CHOICES = (
         ('all', 'All Students'),
         ('classes', 'Specific Classes'),
@@ -39,6 +42,17 @@ class LessonNote(models.Model):
         ('1', 'Term 1'),
         ('2', 'Term 2'),
         ('3', 'Term 3'),
+    ]
+
+    WEEK_CHOICES = [
+        (str(i), f'Week {i}')
+        for i in range(1, 15)
+    ]
+
+    APPROVAL_STATUS_CHOICES = [
+        ('pending', 'Pending Approval'),
+        ('approved', 'Approved'),
+        ('rejected', 'Rejected'),
     ]
 
     school = models.ForeignKey(
@@ -86,6 +100,22 @@ class LessonNote(models.Model):
         null=True
     )
 
+    # ==========================
+    # WEEK
+    # ==========================
+
+    week = models.CharField(
+        max_length=2,
+        choices=WEEK_CHOICES,
+        blank=True,
+        null=True,
+        help_text="Select the teaching week."
+    )
+
+    # ==========================
+    # PDF / FILE
+    # ==========================
+
     file = models.FileField(
         storage=RawMediaCloudinaryStorage(),
         upload_to="lesson_notes/",
@@ -109,10 +139,6 @@ class LessonNote(models.Model):
         default=timezone.now
     )
 
-    # ==========================
-    # NEW FIELDS
-    # ==========================
-
     expiry_date = models.DateField(
         blank=True,
         null=True,
@@ -124,7 +150,35 @@ class LessonNote(models.Model):
         help_text="Inactive notes are hidden from students."
     )
 
+    # ==========================
+    # APPROVAL
+    # ==========================
+
+    approval_status = models.CharField(
+        max_length=20,
+        choices=APPROVAL_STATUS_CHOICES,
+        default='pending'
+    )
+
+    approved_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.SET_NULL,
+        null=True,
+        blank=True,
+        related_name='approved_lesson_notes'
+    )
+
+    approved_on = models.DateTimeField(
+        null=True,
+        blank=True
+    )
+
+    rejection_reason = models.TextField(
+        blank=True
+    )
+
     created_on = models.DateTimeField(auto_now_add=True)
+
     updated_on = models.DateTimeField(auto_now=True)
 
     class Meta:
@@ -139,8 +193,10 @@ class LessonNote(models.Model):
         return f"{self.title} ({self.subject}) - {self.school.name}"
 
     def save(self, *args, **kwargs):
+
         if not self.school_id and self.teacher:
             self.school = self.teacher.school
+
         super().save(*args, **kwargs)
 
     @property
@@ -151,11 +207,20 @@ class LessonNote(models.Model):
         )
 
     @property
+    def approved(self):
+        return self.approval_status == 'approved'
+
+    @property
     def available(self):
         """
-        True if students should still be able to see it.
+        True only when the lesson note is approved,
+        active, published and not expired.
         """
+
         if not self.is_active:
+            return False
+
+        if self.approval_status != 'approved':
             return False
 
         if self.expired:
@@ -165,7 +230,6 @@ class LessonNote(models.Model):
             return False
 
         return True
-
 
 # -----------------------------
 # LESSON NOTE SUBMISSION

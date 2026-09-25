@@ -22,6 +22,7 @@ class LessonNoteForm(forms.ModelForm):
             'file',
             'session',
             'term',
+            'week',
             'visibility',
             'classes',
             'publish_date',
@@ -38,6 +39,11 @@ class LessonNoteForm(forms.ModelForm):
                 }
             ),
 
+            'week': forms.Select(
+                attrs={
+                    'class': 'w-full border border-gray-300 rounded-xl px-4 py-3 focus:ring-2 focus:ring-indigo-500'
+                }
+            ),
 
             'expiry_date': forms.DateInput(
                 attrs={
