@@ -1751,6 +1751,74 @@ def stop_public_event_recording_api(request, event_slug):
         }, status=500)
 
 
+# ==========================================================
+# PUBLIC EVENT — RECORDING STATUS
+# ==========================================================
+
+@login_required
+def public_event_recording_status_api(request, event_slug):
+
+    live_class = get_object_or_404(
+        LiveClass,
+        event_slug=event_slug,
+        liveclass_type="public_event",
+    )
+
+    user = request.user
+
+    # ==========================================================
+    # PERMISSION
+    # ==========================================================
+
+    allowed = False
+
+    if getattr(user, "is_superadmin", False):
+
+        allowed = True
+
+    elif getattr(user, "is_schooladmin", False):
+
+        allowed = (
+            live_class.school_id == user.school_id
+        )
+
+    elif getattr(user, "is_teacher_user", False):
+
+        # Public-event teacher room is already authenticated.
+        allowed = True
+
+    if not allowed:
+
+        return JsonResponse(
+            {
+                "error":
+                    "You are not authorized to view this recording status."
+            },
+            status=403
+        )
+
+    # ==========================================================
+    # RECORDING STATUS
+    # ==========================================================
+
+    return JsonResponse({
+
+        "status":
+            live_class.recording_status
+            or "idle",
+
+        "url":
+            live_class.recording_url
+            or "",
+
+        "recording_id":
+            live_class.recording_id
+            or "",
+
+        "event_slug":
+            live_class.event_slug,
+
+    })
 
 from django.contrib.auth import get_user_model
 User = get_user_model()

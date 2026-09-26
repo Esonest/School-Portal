@@ -50,7 +50,12 @@ urlpatterns = [
     ),
     path("webhooks/recording/",views.recording_webhook,name="recording_webhook"),
     path("api/liveclass/<int:pk>/recording-status/",views.recording_status_api,name="recording_status_api"),
-    
+
+    path(
+        "api/liveclass/event/<slug:event_slug>/recording-status/",
+        views.public_event_recording_status_api,
+        name="public_event_recording_status",
+    ),
 
 
         # ==========================================================
