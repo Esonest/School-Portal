@@ -209,7 +209,10 @@
        class="portal-card bg-gradient-to-r from-green-500 to-green-600">
       📚 Teacher Dashboard
     </a>
-
+     <a href="{% url 'students:profile' %}" 
+   class="portal-card bg-gradient-to-r from-indigo-500 to-indigo-600">
+    👤 My Profile
+</a>
     <a href="{% url 'teachers:teacher_result_dashboard' %}" 
        class="portal-card bg-gradient-to-r from-blue-500 to-blue-600">
       ✍️ Enter Scores & Domains
@@ -247,6 +250,10 @@
        class="portal-card bg-gradient-to-r from-indigo-500 to-indigo-600">
       🏢 School Admin Dashboard
     </a>
+    <a href="{% url 'students:profile' %}" 
+   class="portal-card bg-gradient-to-r from-indigo-500 to-purple-600">
+    👤 My Profile
+</a>
 
     <a href="{% url 'liveclass:liveclass_list' %}" 
        class="portal-card bg-gradient-to-r from-teal-500 to-teal-600">

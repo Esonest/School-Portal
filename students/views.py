@@ -16,6 +16,8 @@ from django.utils import timezone
 from django.db.models import Q
 from django.contrib.auth.forms import PasswordChangeForm
 from django.contrib.auth import update_session_auth_hash
+from school_admin.forms import TeacherForm
+from superadmin.forms import CreateAndAssignAdminForm 
 
 # ------------------------
 # Helper Decorators
@@ -167,37 +169,80 @@ from django.contrib.auth.decorators import login_required
 from django.http import JsonResponse
 
 @login_required
-@student_required
 def profile_view(request):
-    student = getattr(request.user, 'student_profile', None)
+    """
+    Shared profile page for:
+
+    - Students
+    - Teachers
+    - School Admins
+
+    Password changing is handled here for all users.
+    Profile editing uses the appropriate profile form.
+    """
+
+    user = request.user
+
+    # =========================================================
+    # DETERMINE USER TYPE
+    # =========================================================
+
+    student = getattr(
+        user,
+        "student_profile",
+        None
+    )
+
+    teacher = getattr(
+        user,
+        "teacher_profile",
+        None
+    )
+
+    school_admin = getattr(
+        user,
+        "school_admin_profile",
+        None
+    )
+
+    # =========================================================
+    # PASSWORD CHANGE
+    # =========================================================
 
     if request.method == "POST":
 
-        # -----------------------------
-        # CHANGE PASSWORD
-        # -----------------------------
         if request.POST.get("action") == "change_password":
 
             password_form = PasswordChangeForm(
-                request.user,
+                user,
                 request.POST
             )
 
             if password_form.is_valid():
 
-                user = password_form.save()
+                updated_user = password_form.save()
 
-                # Keep student logged in after password change
-                update_session_auth_hash(request, user)
+                # Keep user logged in after password change.
+                update_session_auth_hash(
+                    request,
+                    updated_user
+                )
 
                 if (
-                    request.headers.get("x-requested-with") == "XMLHttpRequest"
-                    or request.META.get("HTTP_X_REQUESTED_WITH") == "XMLHttpRequest"
+                    request.headers.get(
+                        "x-requested-with"
+                    ) == "XMLHttpRequest"
+                    or
+                    request.META.get(
+                        "HTTP_X_REQUESTED_WITH"
+                    ) == "XMLHttpRequest"
                 ):
+
                     return JsonResponse({
                         "success": True,
                         "password_changed": True,
-                        "message": "Your password has been changed successfully."
+                        "message":
+                            "Your password has been changed successfully."
                     })
 
                 messages.success(
@@ -210,118 +255,436 @@ def profile_view(request):
             else:
 
                 if (
-                    request.headers.get("x-requested-with") == "XMLHttpRequest"
-                    or request.META.get("HTTP_X_REQUESTED_WITH") == "XMLHttpRequest"
+                    request.headers.get(
+                        "x-requested-with"
+                    ) == "XMLHttpRequest"
+                    or
+                    request.META.get(
+                        "HTTP_X_REQUESTED_WITH"
+                    ) == "XMLHttpRequest"
                 ):
-                    return JsonResponse({
-                        "success": False,
-                        "password_changed": True,
-                        "errors": password_form.errors.get_json_data()
-                    }, status=400)
 
-        # -----------------------------
-        # EDIT PROFILE
-        # -----------------------------
-        else:
-
-            form = StudentProfileForm(
-                request.POST,
-                request.FILES,
-                instance=student
-            )
-
-            try:
-                if form.is_valid():
-
-                    profile = form.save(commit=False)
-
-                    # Handle Clear/Remove photo
-                    if request.POST.get("clear_photo") == "1":
-
-                        if profile.photo:
-                            profile.photo.delete(save=False)
-
-                        profile.photo = None
-
-                    if not student:
-                        profile.user = request.user
-
-                    profile.save()
-
-                    photo_url = profile.photo.url if profile.photo else ""
-
-                    data = {
-                        "success": True,
-                        "dob": (
-                            profile.dob.strftime('%Y-%m-%d')
-                            if profile.dob else ""
-                        ),
-                        "gender": (
-                            profile.get_gender_display()
-                            if profile.gender else ""
-                        ),
-                        "photo_url": photo_url,
-                    }
-
-                    if (
-                        request.headers.get("x-requested-with") == "XMLHttpRequest"
-                        or request.META.get("HTTP_X_REQUESTED_WITH") == "XMLHttpRequest"
-                    ):
-                        return JsonResponse(data)
-
-                    return render(
-                        request,
-                        'students/profile.html',
+                    return JsonResponse(
                         {
-                            "student": profile,
-                            "form": form
-                        }
+                            "success": False,
+                            "password_changed": True,
+                            "errors":
+                                password_form.errors.get_json_data()
+                        },
+                        status=400
                     )
 
-                else:
+        # =====================================================
+        # EDIT PROFILE
+        # =====================================================
 
-                    errors = form.errors.get_json_data()
+        else:
+
+            # -------------------------------------------------
+            # STUDENT
+            # -------------------------------------------------
+
+            if student:
+
+                form = StudentProfileForm(
+                    request.POST,
+                    request.FILES,
+                    instance=student
+                )
+
+                try:
+
+                    if form.is_valid():
+
+                        profile = form.save(
+                            commit=False
+                        )
+
+                        # Clear/remove photo.
+                        if (
+                            request.POST.get(
+                                "clear_photo"
+                            ) == "1"
+                        ):
+
+                            if profile.photo:
+
+                                profile.photo.delete(
+                                    save=False
+                                )
+
+                            profile.photo = None
+
+                        if not student:
+
+                            profile.user = user
+
+                        profile.save()
+
+                        photo_url = (
+                            profile.photo.url
+                            if profile.photo
+                            else ""
+                        )
+
+                        data = {
+                            "success": True,
+                            "dob": (
+                                profile.dob.strftime(
+                                    "%Y-%m-%d"
+                                )
+                                if profile.dob
+                                else ""
+                            ),
+                            "gender": (
+                                profile.get_gender_display()
+                                if profile.gender
+                                else ""
+                            ),
+                            "photo_url": photo_url,
+                        }
+
+                        if (
+                            request.headers.get(
+                                "x-requested-with"
+                            ) == "XMLHttpRequest"
+                            or
+                            request.META.get(
+                                "HTTP_X_REQUESTED_WITH"
+                            ) == "XMLHttpRequest"
+                        ):
+
+                            return JsonResponse(data)
+
+                        return render(
+                            request,
+                            "students/profile.html",
+                            {
+                                "student": profile,
+                                "form": form,
+                                "password_form":
+                                    PasswordChangeForm(user),
+                            }
+                        )
+
+                    else:
+
+                        errors = (
+                            form.errors.get_json_data()
+                        )
+
+                        if (
+                            request.headers.get(
+                                "x-requested-with"
+                            ) == "XMLHttpRequest"
+                            or
+                            request.META.get(
+                                "HTTP_X_REQUESTED_WITH"
+                            ) == "XMLHttpRequest"
+                        ):
+
+                            return JsonResponse(
+                                {
+                                    "success": False,
+                                    "errors": errors
+                                },
+                                status=400
+                            )
+
+                except Exception as e:
 
                     if (
-                        request.headers.get("x-requested-with") == "XMLHttpRequest"
-                        or request.META.get("HTTP_X_REQUESTED_WITH") == "XMLHttpRequest"
+                        request.headers.get(
+                            "x-requested-with"
+                        ) == "XMLHttpRequest"
+                        or
+                        request.META.get(
+                            "HTTP_X_REQUESTED_WITH"
+                        ) == "XMLHttpRequest"
                     ):
+
                         return JsonResponse(
                             {
                                 "success": False,
-                                "errors": errors
+                                "errors": {
+                                    "__all__": [str(e)]
+                                }
+                            },
+                            status=500
+                        )
+
+                    raise
+
+            # -------------------------------------------------
+            # TEACHER
+            # -------------------------------------------------
+
+            elif teacher:
+
+                form = TeacherForm(
+                    request.POST,
+                    request.FILES,
+                    instance=teacher,
+                    is_edit=True,
+                    school=teacher.school
+                )
+
+                if form.is_valid():
+
+                    profile = form.save()
+
+                    messages.success(
+                        request,
+                        "Your profile has been updated successfully."
+                    )
+
+                    if (
+                        request.headers.get(
+                            "x-requested-with"
+                        ) == "XMLHttpRequest"
+                        or
+                        request.META.get(
+                            "HTTP_X_REQUESTED_WITH"
+                        ) == "XMLHttpRequest"
+                    ):
+
+                        return JsonResponse({
+                            "success": True,
+                            "message":
+                                "Your profile has been updated successfully."
+                        })
+
+                    return redirect("profile")
+
+                else:
+
+                    if (
+                        request.headers.get(
+                            "x-requested-with"
+                        ) == "XMLHttpRequest"
+                        or
+                        request.META.get(
+                            "HTTP_X_REQUESTED_WITH"
+                        ) == "XMLHttpRequest"
+                    ):
+
+                        return JsonResponse(
+                            {
+                                "success": False,
+                                "errors":
+                                    form.errors.get_json_data()
                             },
                             status=400
                         )
 
-            except Exception as e:
+            # -------------------------------------------------
+            # SCHOOL ADMIN
+            # -------------------------------------------------
 
-                if (
-                    request.headers.get("x-requested-with") == "XMLHttpRequest"
-                    or request.META.get("HTTP_X_REQUESTED_WITH") == "XMLHttpRequest"
-                ):
-                    return JsonResponse(
-                        {
-                            "success": False,
-                            "errors": {
-                                "__all__": [str(e)]
-                            }
-                        },
-                        status=500
+            elif school_admin:
+
+                # Use the existing admin form for validation.
+                form = CreateAndAssignAdminForm(
+                    request.POST,
+                    user=user
+                )
+                form.fields["school"].disabled = True
+
+                if form.is_valid():
+
+                    cleaned = form.cleaned_data
+
+                    # -----------------------------------------
+                    # UPDATE EXISTING USER
+                    # -----------------------------------------
+
+                    user.username = (
+                        cleaned["username"]
                     )
 
-                raise
+                    user.first_name = (
+                        cleaned["first_name"]
+                    )
+
+                    user.last_name = (
+                        cleaned["last_name"]
+                    )
+
+                    user.email = (
+                        cleaned.get(
+                            "email",
+                            ""
+                        )
+                    )
+
+                    # -----------------------------------------
+                    # PASSWORD
+                    # -----------------------------------------
+
+                    new_password = (
+                        cleaned.get("password")
+                    )
+
+                    if new_password:
+
+                        user.set_password(
+                            new_password
+                        )
+
+                        update_session_auth_hash(
+                            request,
+                            user
+                        )
+
+                    # -----------------------------------------
+                    # KEEP EXISTING SCHOOL
+                    # -----------------------------------------
+
+                    user.school = (
+                        school_admin.school
+                    )
+
+                    user.role = "schooladmin"
+
+                    user.save()
+
+                    # Keep SchoolAdmin profile linked.
+                    if school_admin.school:
+                        school_admin.school = (
+                            school_admin.school
+                        )
+                        school_admin.save()
+
+                    messages.success(
+                        request,
+                        "Your profile has been updated successfully."
+                    )
+
+                    if (
+                        request.headers.get(
+                            "x-requested-with"
+                        ) == "XMLHttpRequest"
+                        or
+                        request.META.get(
+                            "HTTP_X_REQUESTED_WITH"
+                        ) == "XMLHttpRequest"
+                    ):
+
+                        return JsonResponse({
+                            "success": True,
+                            "message":
+                                "Your profile has been updated successfully."
+                        })
+
+                    return redirect("profile")
+
+                else:
+
+                    if (
+                        request.headers.get(
+                            "x-requested-with"
+                        ) == "XMLHttpRequest"
+                        or
+                        request.META.get(
+                            "HTTP_X_REQUESTED_WITH"
+                        ) == "XMLHttpRequest"
+                    ):
+
+                        return JsonResponse(
+                            {
+                                "success": False,
+                                "errors":
+                                    form.errors.get_json_data()
+                            },
+                            status=400
+                        )
+
+            else:
+
+                raise Http404(
+                    "No profile is associated with this account."
+                )
+
+    # =========================================================
+    # GET REQUEST
+    # =========================================================
 
     else:
-        form = StudentProfileForm(instance=student)
 
-    password_form = PasswordChangeForm(request.user)
+        if student:
+
+            form = StudentProfileForm(
+                instance=student
+            )
+
+        elif teacher:
+
+            form = TeacherForm(
+                instance=teacher,
+                is_edit=True,
+                school=teacher.school
+            )
+
+        elif school_admin:
+
+            form = CreateAndAssignAdminForm(
+                user=user,
+                initial={
+                    "username": user.username,
+                    "first_name": user.first_name,
+                    "last_name": user.last_name,
+                    "email": user.email,
+                    "school": school_admin.school,
+                }
+            )
+            form.fields["school"].disabled = True
+
+        else:
+
+            raise Http404(
+                "No profile is associated with this account."
+            )
+
+    # =========================================================
+    # PASSWORD FORM
+    # =========================================================
+
+    password_form = PasswordChangeForm(user)
+
+    # =========================================================
+    # PROFILE TEMPLATE
+    # =========================================================
+
+    # Keep the existing student template for students.
+    #
+    # For teacher/admin, change these template names if you
+    # already have dedicated profile templates.
+
+    if student:
+
+        template = "students/profile.html"
+
+    elif teacher:
+
+        template = "accounts/profile.html"
+
+    elif school_admin:
+
+        template = "accounts/profile.html"
+
+    else:
+
+        raise Http404(
+            "No profile template available."
+        )
 
     return render(
         request,
-        'students/profile.html',
+        template,
         {
             "student": student,
+            "teacher": teacher,
+            "school_admin": school_admin,
             "form": form,
             "password_form": password_form,
         }

@@ -153,16 +153,65 @@
           <td class="p-3 text-sm">
             {% for s in t.subjects.all %}{{ s.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
           </td>
-          <td class="p-3 space-x-3 text-sm">
-            <a href="{% url 'school_admin:teacher_edit' school.id t.id %}"
-               class="text-indigo-600 hover:underline">
-              Edit
+        <td class="p-3">
+
+    <!-- ACTIONS WRAPPER -->
+    <div class="teacher-actions-wrapper relative inline-block text-left">
+
+        <!-- ACTION BUTTON -->
+        <button
+            type="button"
+            onclick="toggleMenu(this)"
+            class="px-3 py-1 bg-gray-800 text-white rounded-lg
+                   hover:bg-gray-900 text-xs shadow">
+            Actions ▾
+        </button>
+
+        <!-- DROPDOWN MENU -->
+        <div
+            class="teacher-action-menu hidden absolute right-0 mt-2
+                   w-48 bg-white border border-gray-200
+                   rounded-xl shadow-lg z-50 overflow-hidden">
+
+            <!-- EDIT -->
+            <a
+                href="{% url 'school_admin:teacher_edit' school.id t.id %}"
+                class="block px-4 py-2 text-sm text-gray-700
+                       hover:bg-gray-100">
+                ✏️ Edit Teacher
             </a>
-            <a href="{% url 'school_admin:teacher_delete' school.id t.id %}"
-               class="text-red-600 hover:underline">
-              Delete
+
+            <!-- ACTIVATE / DEACTIVATE -->
+            <a
+                href="{% url 'school_admin:toggle_user_status' school.id t.user.id %}"
+                class="block px-4 py-2 text-sm text-gray-700
+                       hover:bg-gray-100">
+
+                {% if t.user.is_active %}
+                    🚫 Deactivate
+                {% else %}
+                    ✅ Activate
+                {% endif %}
+
             </a>
-          </td>
+
+            <!-- DIVIDER -->
+            <div class="border-t border-gray-100"></div>
+
+            <!-- DELETE -->
+            <a
+                href="{% url 'school_admin:teacher_delete' school.id t.id %}"
+                class="block px-4 py-2 text-sm text-red-600
+                       hover:bg-red-50">
+                🗑️ Delete Teacher
+            </a>
+
+        </div>
+
+    </div>
+
+</td>
+
         </tr>
         {% empty %}
         <tr>
@@ -182,8 +231,10 @@
 <!-- CHART.JS -->
 <!-- ========================== -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
 <script>
 const classData = {{ class_chart|safe }};
+
 new Chart(document.getElementById('classChart'), {
   type: 'bar',
   data: {
@@ -196,7 +247,9 @@ new Chart(document.getElementById('classChart'), {
   }
 });
 
+
 const subjectData = {{ subject_chart|safe }};
+
 new Chart(document.getElementById('subjectChart'), {
   type: 'bar',
   data: {
@@ -208,6 +261,101 @@ new Chart(document.getElementById('subjectChart'), {
     }]
   }
 });
+
+
+
+
+/* =========================================================
+   ACTIONS DROPDOWN
+   ========================================================= */
+
+function toggleMenu(button) {
+
+    const wrapper = button.closest(
+        '.teacher-actions-wrapper'
+    );
+
+    if (!wrapper) {
+        return;
+    }
+
+    const currentMenu = wrapper.querySelector(
+        '.teacher-action-menu'
+    );
+
+    if (!currentMenu) {
+        return;
+    }
+
+    /*
+     * Close all other menus
+     */
+    document.querySelectorAll(
+        '.teacher-action-menu'
+    ).forEach(function(menu) {
+
+        if (menu !== currentMenu) {
+            menu.classList.add('hidden');
+        }
+
+    });
+
+    /*
+     * Toggle the selected menu
+     */
+    currentMenu.classList.toggle('hidden');
+}
+
+
+/* =========================================================
+   CLOSE WHEN CLICKING OUTSIDE
+   ========================================================= */
+
+document.addEventListener('click', function(event) {
+
+    if (
+        !event.target.closest(
+            '.teacher-actions-wrapper'
+        )
+    ) {
+
+        document.querySelectorAll(
+            '.teacher-action-menu'
+        ).forEach(function(menu) {
+
+            menu.classList.add('hidden');
+
+        });
+
+    }
+
+});
+
+
+/* =========================================================
+   CLOSE WITH ESCAPE
+   ========================================================= */
+
+document.addEventListener('keydown', function(event) {
+
+    if (event.key === 'Escape') {
+
+        document.querySelectorAll(
+            '.teacher-action-menu'
+        ).forEach(function(menu) {
+
+            menu.classList.add('hidden');
+
+        });
+
+    }
+
+});
+
+
 </script>
+
+
+
 
 {% endblock %}

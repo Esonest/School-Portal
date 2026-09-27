@@ -1,6 +1,6 @@
 from django.shortcuts import render
 from django.contrib.auth.decorators import login_required, user_passes_test
-from accounts.models import School, User
+from accounts.models import School, User, SchoolAdmin
 from attendance.models import Attendance
 from students.models import Announcement
 from results.models import ClassScoreSetting, ClassSubjectTeacher, Subject
@@ -255,29 +255,100 @@ def student_delete(request, school_id, student_id):
 
 @login_required
 @user_passes_test(lambda u: is_schooladmin(u) or is_superadmin(u))
-def toggle_student_status(request, school_id, student_id):
-    school = request.user.school_admin_profile.school
-    student = get_object_or_404(
-        Student,
-        id=student_id,
-        school=school
+def toggle_user_status(request, school_id, user_id):
+
+    # =========================================================
+    # GET SCHOOL
+    # =========================================================
+
+    if is_superadmin(request.user):
+        school = get_object_or_404(
+            School,
+            id=school_id
+        )
+    else:
+        school = request.user.school_admin_profile.school
+
+        if school.id != int(school_id):
+            messages.error(
+                request,
+                "You are not allowed to modify users from this school."
+            )
+
+            return redirect(
+                request.META.get("HTTP_REFERER", "/")
+            )
+
+    # =========================================================
+    # GET THE CORRECT CUSTOM USER MODEL
+    # =========================================================
+
+    UserModel = get_user_model()
+
+    user = get_object_or_404(
+        UserModel,
+        id=user_id
     )
 
-    student.is_active = not student.is_active
-    student.save()
+    # =========================================================
+    # VERIFY THAT THIS USER BELONGS TO THE SELECTED SCHOOL
+    # =========================================================
 
-    status = "activated" if student.is_active else "deactivated"
+    if user.school_id != school.id:
+        messages.error(
+            request,
+            "This user does not belong to the selected school."
+        )
+
+        return redirect(
+            request.META.get("HTTP_REFERER", "/")
+        )
+
+    # =========================================================
+    # PREVENT SELF-DEACTIVATION
+    # =========================================================
+
+    if user.id == request.user.id:
+        messages.error(
+            request,
+            "You cannot deactivate your own account."
+        )
+
+        return redirect(
+            request.META.get("HTTP_REFERER", "/")
+        )
+
+    # =========================================================
+    # TOGGLE LOGIN STATUS
+    # =========================================================
+
+    user.is_active = not user.is_active
+
+    user.save(
+        update_fields=["is_active"]
+    )
+
+    status = (
+        "activated"
+        if user.is_active
+        else "deactivated"
+    )
+
+    name = (
+        user.get_full_name()
+        or user.username
+    )
 
     messages.success(
         request,
-        f"{student.full_name()} has been {status} successfully."
+        f"{name} has been {status} successfully."
     )
 
     return redirect(
-        "school_admin:admin_student_list",
-        school_id=school.id
+        request.META.get("HTTP_REFERER", "/")
     )
 
+    
 @login_required
 @user_passes_test(lambda u: is_schooladmin(u) or is_superadmin(u))
 def change_student_class(request, school_id, student_id):

@@ -1,16 +1,23 @@
-from django.shortcuts import redirect, render
-from django.contrib.auth.decorators import login_required
-from django.core.exceptions import PermissionDenied
-
-
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth import (
+    authenticate,
+    login,
+    logout,
+    get_user_model,
+)
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
-
-from django.shortcuts import render
-from django.contrib.auth.decorators import login_required
+from django.core.exceptions import PermissionDenied
+from django.urls import reverse, NoReverseMatch
 from django.utils import timezone
-from students.models import Announcement
+from django.http import JsonResponse
+
+from students.models import Announcement, Student
+from .models import School, ContactMessage, DemoBooking, Subscriber
+from .contact_email import send_contact_email
+from .demo_email import send_demo_notification
+
+import time
 
 @login_required
 def portal_selection(request):
@@ -82,53 +89,149 @@ def login_view(request):
         return redirect('accounts:portal_selection')
 
     if request.method == "POST":
-        username = request.POST.get("username")
-        password = request.POST.get("password")
-        user = authenticate(request, username=username, password=password)
 
-        if user is not None:
-            # ❌ Block deleted users
-            if getattr(user, 'is_deleted', False):
-                messages.error(request, "This account has been deleted. Contact admin.")
-                return redirect('accounts:login')
+        username = request.POST.get("username", "").strip()
+        password = request.POST.get("password", "")
 
-            # ❌ Block users without profile
-            if user.role == 'teacher' and not hasattr(user, 'teacher_profile'):
-                messages.error(request, "This account has been deleted. Contact admin.")
-                return redirect('accounts:login')
-            
-            # Student profile check
-            # ---------------------------------------
-            if user.role == "student":
-                try:
-                    student = user.student_profile
-                except Student.DoesNotExist:
-                    messages.error(
-                        request,
-                        "Student profile is missing. Contact administrator."
-                    )
-                    return redirect("accounts:login")
+        UserModel = get_user_model()
 
-                # Block inactive students
-                if not student.is_active:
-                    messages.error(
-                        request,
-                        "Your account has been deactivated. Please contact your school administrator."
-                    )
-                    return redirect("accounts:login")
+        # =========================================================
+        # CHECK USERNAME
+        # =========================================================
 
-            
-            
-            if user.role == 'schooladmin' and not hasattr(user, 'school_admin_profile'):
-                messages.error(request, "This account has been deleted. Contact admin.")
-                return redirect('accounts:login')
+        matching_users = UserModel.objects.filter(
+            username=username
+        )
 
-            login(request, user)
-            return redirect('accounts:portal_selection')
-        else:
-            messages.error(request, "Invalid username or password.")
+        user_count = matching_users.count()
 
-    return render(request, "accounts/login.html")
+        # ---------------------------------------------------------
+        # Duplicate username protection
+        # ---------------------------------------------------------
+        if user_count > 1:
+            messages.error(
+                request,
+                "Multiple accounts were found for this username. "
+                "Please contact your administrator."
+            )
+            return redirect("accounts:login")
+
+        # ---------------------------------------------------------
+        # Username does not exist
+        # ---------------------------------------------------------
+        if user_count == 0:
+            messages.error(
+                request,
+                "Invalid username or password."
+            )
+            return redirect("accounts:login")
+
+        user_record = matching_users.first()
+
+        # =========================================================
+        # ACCOUNT STATUS
+        # =========================================================
+
+        # User.is_active is now the main login status
+        if not user_record.is_active:
+            messages.error(
+                request,
+                "Your account has been deactivated. "
+                "Please contact your school administrator."
+            )
+            return redirect("accounts:login")
+
+        # Deleted accounts remain blocked
+        if getattr(user_record, "is_deleted", False):
+            messages.error(
+                request,
+                "This account has been deleted. Contact admin."
+            )
+            return redirect("accounts:login")
+
+        # =========================================================
+        # AUTHENTICATE PASSWORD
+        # =========================================================
+
+        user = authenticate(
+            request,
+            username=username,
+            password=password
+        )
+
+        if user is None:
+            messages.error(
+                request,
+                "Invalid username or password."
+            )
+            return redirect("accounts:login")
+
+        # =========================================================
+        # ROLE PROFILE CHECKS
+        # =========================================================
+
+        # Teacher
+        if user.role == "teacher":
+
+            if not hasattr(user, "teacher_profile"):
+                messages.error(
+                    request,
+                    "Your teacher profile is missing. "
+                    "Please contact your administrator."
+                )
+                return redirect("accounts:login")
+
+        # Student
+        if user.role == "student":
+
+            try:
+                student = user.student_profile
+
+            except Student.DoesNotExist:
+
+                messages.error(
+                    request,
+                    "Student profile is missing. "
+                    "Please contact administrator."
+                )
+                return redirect("accounts:login")
+
+            # Keep the existing Student-level status check
+            if not student.is_active:
+
+                messages.error(
+                    request,
+                    "Your student account has been deactivated. "
+                    "Please contact your school administrator."
+                )
+                return redirect("accounts:login")
+
+        # School Admin
+        if user.role == "schooladmin":
+
+            if not hasattr(user, "school_admin_profile"):
+
+                messages.error(
+                    request,
+                    "Your school administrator profile is missing. "
+                    "Please contact admin."
+                )
+                return redirect("accounts:login")
+
+        # =========================================================
+        # LOGIN
+        # =========================================================
+
+        login(request, user)
+
+        return redirect(
+            "accounts:portal_selection"
+        )
+
+    return render(
+        request,
+        "accounts/login.html"
+    )
 
 
 

@@ -212,14 +212,17 @@
         </a>
 
         <!-- ACTIVATE / DEACTIVATE -->
-        <a href="{% url 'school_admin:toggle_student_status' school.id student.id %}"
-           class="block px-4 py-2 text-sm hover:bg-gray-100">
-            {% if student.is_active %}
-                🚫 Deactivate
-            {% else %}
-                ✅ Activate
-            {% endif %}
-        </a>
+       <!-- ACTIVATE / DEACTIVATE -->
+<a href="{% url 'school_admin:toggle_user_status' school.id student.user.id %}"
+   class="block px-4 py-2 text-sm hover:bg-gray-100">
+
+    {% if student.user.is_active %}
+        🚫 Deactivate
+    {% else %}
+        ✅ Activate
+    {% endif %}
+
+</a>
 
         <hr>
 
