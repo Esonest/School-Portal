@@ -426,7 +426,8 @@ def profile_view(request):
                     request.FILES,
                     instance=teacher,
                     is_edit=True,
-                    school=teacher.school
+                    school=teacher.school,
+                    teacher_self_edit=True
                 )
 
                 if form.is_valid():
@@ -622,7 +623,8 @@ def profile_view(request):
             form = TeacherForm(
                 instance=teacher,
                 is_edit=True,
-                school=teacher.school
+                school=teacher.school,
+                teacher_self_edit=True
             )
 
         elif school_admin:

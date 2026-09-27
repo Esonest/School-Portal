@@ -520,24 +520,49 @@ User = get_user_model()
 
 
 class TeacherForm(forms.ModelForm):
-    # --- User fields ---
+
+    # ----------------------------
+    # USER FIELDS
+    # ----------------------------
+
     username = forms.CharField()
-    first_name = forms.CharField(required=False)
-    last_name = forms.CharField(required=False)
-    email = forms.EmailField(required=False)
-    phone = forms.CharField(required=False)
+
+    first_name = forms.CharField(
+        required=False
+    )
+
+    last_name = forms.CharField(
+        required=False
+    )
+
+    email = forms.EmailField(
+        required=False
+    )
+
+    phone = forms.CharField(
+        required=False
+    )
+
     address = forms.CharField(
         required=False,
-        widget=forms.Textarea(attrs={"rows": 2})
+        widget=forms.Textarea(
+            attrs={
+                "rows": 2
+            }
+        )
     )
+
     password = forms.CharField(
         required=False,
         widget=forms.PasswordInput,
         help_text="Leave blank to keep current password"
     )
 
+
     class Meta:
+
         model = Teacher
+
         fields = [
             "staff_id",
             "school",
@@ -545,83 +570,303 @@ class TeacherForm(forms.ModelForm):
             "subjects",
         ]
 
+
     def __init__(self, *args, **kwargs):
-        self.is_edit = kwargs.pop("is_edit", False)
-        self.school = kwargs.pop("school", None)
-        super().__init__(*args, **kwargs)
 
-        # ---- School scoping ----
+        self.is_edit = kwargs.pop(
+            "is_edit",
+            False
+        )
+
+        self.school = kwargs.pop(
+            "school",
+            None
+        )
+
+        # NEW:
+        # True only when teacher edits own profile
+        self.teacher_self_edit = kwargs.pop(
+            "teacher_self_edit",
+            False
+        )
+
+
+        super().__init__(
+            *args,
+            **kwargs
+        )
+
+
+        # ----------------------------
+        # SCHOOL FILTERING
+        # ----------------------------
+
         if self.school:
-            self.fields["school"].queryset = School.objects.filter(id=self.school.id)
+
+            self.fields["school"].queryset = (
+                School.objects.filter(
+                    id=self.school.id
+                )
+            )
+
+
+            self.fields["classes"].queryset = (
+                SchoolClass.objects.filter(
+                    school=self.school
+                )
+            )
+
+
+            self.fields["subjects"].queryset = (
+                Subject.objects.filter(
+                    school=self.school
+                )
+            )
+
+
             self.fields["school"].initial = self.school
-            self.fields["school"].disabled = True
 
-            self.fields["classes"].queryset = SchoolClass.objects.filter(
-                school=self.school
-            )
-            self.fields["subjects"].queryset = Subject.objects.filter(
-                school=self.school
-            )
 
-        # ---- Populate user data on edit ----
+
+        # ----------------------------
+        # TEACHER PROFILE EDIT MODE
+        # ----------------------------
+
+        if self.teacher_self_edit:
+
+
+            # Teacher cannot modify these
+
+            for field in [
+                "staff_id",
+                "school",
+                "classes",
+                "subjects",
+            ]:
+
+                if field in self.fields:
+
+                    self.fields[field].disabled = True
+
+
+
+        # ----------------------------
+        # LOAD USER DATA
+        # ----------------------------
+
         if self.is_edit and self.instance.pk:
+
+
             user = self.instance.user
 
-            self.fields["username"].initial = user.username
-            self.fields["first_name"].initial = user.first_name
-            self.fields["last_name"].initial = user.last_name
-            self.fields["email"].initial = user.email
-            self.fields["phone"].initial = getattr(user, "phone", "")
-            self.fields["address"].initial = getattr(user, "address", "")
+
+            self.fields["username"].initial = (
+                user.username
+            )
+
+
+            self.fields["first_name"].initial = (
+                user.first_name
+            )
+
+
+            self.fields["last_name"].initial = (
+                user.last_name
+            )
+
+
+            self.fields["email"].initial = (
+                user.email
+            )
+
+
+            self.fields["phone"].initial = (
+                getattr(
+                    user,
+                    "phone",
+                    ""
+                )
+            )
+
+
+            self.fields["address"].initial = (
+                getattr(
+                    user,
+                    "address",
+                    ""
+                )
+            )
+
 
             self.fields["password"].required = False
+
+
         else:
+
             self.fields["password"].required = True
+
+
 
     @transaction.atomic
     def save(self, commit=True):
-        teacher = super().save(commit=False)
+
+
+        teacher = super().save(
+            commit=False
+        )
+
+
+        # ----------------------------
+        # UPDATE USER
+        # ----------------------------
 
         if self.is_edit:
-            # ---- Update existing user ----
+
+
             user = teacher.user
-            user.username = self.cleaned_data["username"]
-            user.first_name = self.cleaned_data.get("first_name", "")
-            user.last_name = self.cleaned_data.get("last_name", "")
-            user.email = self.cleaned_data.get("email", "")
-            user.phone = self.cleaned_data.get("phone", "")
-            user.address = self.cleaned_data.get("address", "")
+
+
+            user.username = (
+                self.cleaned_data["username"]
+            )
+
+
+            user.first_name = (
+                self.cleaned_data.get(
+                    "first_name",
+                    ""
+                )
+            )
+
+
+            user.last_name = (
+                self.cleaned_data.get(
+                    "last_name",
+                    ""
+                )
+            )
+
+
+            user.email = (
+                self.cleaned_data.get(
+                    "email",
+                    ""
+                )
+            )
+
+
+            user.phone = (
+                self.cleaned_data.get(
+                    "phone",
+                    ""
+                )
+            )
+
+
+            user.address = (
+                self.cleaned_data.get(
+                    "address",
+                    ""
+                )
+            )
+
+
             user.school = self.school
 
-            new_password = self.cleaned_data.get("password")
-            if new_password:
-                user.set_password(new_password)
+
+
+            password = (
+                self.cleaned_data.get(
+                    "password"
+                )
+            )
+
+
+            if password:
+
+                user.set_password(
+                    password
+                )
+
 
             user.save()
+
+
+
+        # ----------------------------
+        # CREATE USER
+        # ----------------------------
 
         else:
-            # ---- Create new user ----
+
+
             user = User.objects.create_user(
+
                 username=self.cleaned_data["username"],
+
                 password=self.cleaned_data["password"],
-                first_name=self.cleaned_data.get("first_name", ""),
-                last_name=self.cleaned_data.get("last_name", ""),
-                email=self.cleaned_data.get("email", ""),
+
+                first_name=self.cleaned_data.get(
+                    "first_name",
+                    ""
+                ),
+
+                last_name=self.cleaned_data.get(
+                    "last_name",
+                    ""
+                ),
+
+                email=self.cleaned_data.get(
+                    "email",
+                    ""
+                ),
+
             )
-            user.phone = self.cleaned_data.get("phone", "")
-            user.address = self.cleaned_data.get("address", "")
+
+
+            user.phone = self.cleaned_data.get(
+                "phone",
+                ""
+            )
+
+
+            user.address = self.cleaned_data.get(
+                "address",
+                ""
+            )
+
+
             user.role = "teacher"
+
             user.is_teacher = True
+
             user.school = self.school
+
+
             user.save()
+
 
             teacher.user = user
 
+
+
         teacher.school = self.school
 
+
+
         if commit:
+
             teacher.save()
-            self.save_m2m()  # <-- saves classes & subjects (source of truth)
+
+
+            # IMPORTANT
+            # Only admin can update assignments
+
+            if not self.teacher_self_edit:
+
+                self.save_m2m()
+
+
 
         return teacher
 
