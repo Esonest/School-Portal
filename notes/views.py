@@ -9,6 +9,17 @@ from results.utils import portal_required
 from django.http import HttpResponseRedirect
 from django.contrib import messages
 from django.db.models import Q
+from django.http import Http404, HttpResponseRedirect
+from cloudinary.utils import cloudinary_url
+import requests
+
+import cloudinary
+from cloudinary.utils import cloudinary_url
+
+from django.http import (
+    Http404,
+    HttpResponse,
+)
 
 # ------------------------
 # Teacher: list notes
@@ -463,9 +474,84 @@ def note_detail(request, pk):
 from django.http import Http404, HttpResponseRedirect
 from urllib.parse import quote
 
+def stream_cloudinary_file(file_field):
+
+    try:
+
+        response = requests.get(
+            file_field.url,
+            timeout=30
+        )
+
+
+        if response.status_code != 200:
+
+            print("==============================")
+            print("❌ CLOUDINARY DOWNLOAD FAILED")
+            print("STATUS:", response.status_code)
+            print("URL:", file_field.url)
+            print("CONTENT TYPE:", response.headers.get("content-type"))
+            print("==============================")
+
+            raise Http404(
+                "Unable to retrieve the lesson note."
+            )
+
+
+        filename = (
+            file_field.name
+            .split("/")[-1]
+        )
+
+
+        file_response = HttpResponse(
+            response.content,
+            content_type="application/pdf"
+        )
+
+
+        file_response[
+            "Content-Disposition"
+        ] = (
+            f'attachment; filename="{filename}"'
+        )
+
+
+        return file_response
+
+
+    except Exception as e:
+
+        print(
+            "DOWNLOAD ERROR:",
+            e
+        )
+
+        raise Http404(
+            "Unable to download file."
+        )
+
 
 @login_required
 def download_note_file(request, pk):
+    """
+    Securely download a lesson-note file.
+
+    The lesson note is retrieved directly from Cloudinary's
+    authenticated API and returned by Django as a download.
+
+    This avoids the Cloudinary raw-delivery 401/404 problem.
+    """
+
+    import os
+    import cloudinary
+    from django.http import Http404, HttpResponse
+    from django.shortcuts import get_object_or_404
+    from django.utils import timezone
+
+    # =========================================================
+    # GET LESSON NOTE
+    # =========================================================
 
     note = get_object_or_404(
         LessonNote,
@@ -476,95 +562,369 @@ def download_note_file(request, pk):
 
     teacher_profile = getattr(
         user,
-        'teacher_profile',
+        "teacher_profile",
         None
     )
 
     student = (
-        getattr(user, 'student_profile', None)
-        or getattr(user, 'student', None)
+        getattr(user, "student_profile", None)
+        or getattr(user, "student", None)
     )
 
     school = getattr(
         user,
-        'school',
+        "school",
         None
     )
 
+    # =========================================================
+    # CHECK FILE EXISTS
+    # =========================================================
+
     if not note.file:
-        raise Http404("No file attached.")
-
-
-    # -------------------------
-    # SCHOOL SECURITY CHECK
-    # -------------------------
-
-    # Students, teachers and admins
-    # must belong to same school
-    if school and note.school != school:
-        raise Http404("Not allowed")
-
-
-    # -------------------------
-    # SUPERADMIN
-    # -------------------------
-
-    if user.is_superadmin:
-        return HttpResponseRedirect(
-            note.file.url + "?fl_attachment"
+        raise Http404(
+            "No file attached to this lesson note."
         )
 
-
-    # -------------------------
-    # SCHOOL ADMIN
-    # -------------------------
+    # =========================================================
+    # SCHOOL SECURITY
+    # =========================================================
 
     if (
-        user.role == "schooladmin"
-        and note.school == school
+        school
+        and note.school_id != school.id
+        and not getattr(user, "is_superadmin", False)
     ):
-        return HttpResponseRedirect(
-            note.file.url + "?fl_attachment"
+        raise Http404(
+            "You do not have permission to access this lesson note."
         )
 
+    # =========================================================
+    # PERMISSION CHECK
+    # =========================================================
 
-    # -------------------------
+    allowed = False
+
+    # ---------------------------------------------------------
+    # SUPERADMIN
+    # ---------------------------------------------------------
+
+    if getattr(user, "is_superadmin", False):
+
+        allowed = True
+
+    # ---------------------------------------------------------
+    # SCHOOL ADMIN
+    # ---------------------------------------------------------
+
+    elif (
+        getattr(user, "role", None) == "schooladmin"
+        and school
+        and note.school_id == school.id
+    ):
+
+        allowed = True
+
+    # ---------------------------------------------------------
     # TEACHER
-    # -------------------------
+    # ---------------------------------------------------------
 
-    if teacher_profile:
+    elif (
+        teacher_profile
+        and note.teacher_id == teacher_profile.id
+    ):
 
-        if note.teacher == teacher_profile:
-            return HttpResponseRedirect(
-                note.file.url + "?fl_attachment"
-            )
+        allowed = True
 
-
-    # -------------------------
+    # ---------------------------------------------------------
     # STUDENT
-    # -------------------------
+    # ---------------------------------------------------------
 
-    if student:
+    elif student:
 
-        # Public notes
-        if note.visibility == "all":
-            return HttpResponseRedirect(
-                note.file.url + "?fl_attachment"
+        # Students can only access active notes.
+        if not note.is_active:
+            raise Http404(
+                "This lesson note is not currently available."
             )
 
+        # Students can only access approved notes.
+        if note.approval_status != "approved":
+            raise Http404(
+                "This lesson note has not been approved."
+            )
 
-        # Class notes
+        # Publish date.
         if (
-            note.visibility == "classes"
-            and student.school_class
-            and student.school_class in note.classes.all()
+            note.publish_date
+            and note.publish_date > timezone.now().date()
         ):
-            return HttpResponseRedirect(
-                note.file.url + "?fl_attachment"
+            raise Http404(
+                "This lesson note is not yet available."
             )
 
+        # Expiry date.
+        if (
+            note.expiry_date
+            and note.expiry_date < timezone.now().date()
+        ):
+            raise Http404(
+                "This lesson note has expired."
+            )
 
-    raise Http404("You do not have permission to download this file.")
+        # -----------------------------------------------------
+        # ALL STUDENTS
+        # -----------------------------------------------------
+
+        if note.visibility == "all":
+
+            allowed = True
+
+        # -----------------------------------------------------
+        # SPECIFIC CLASSES
+        # -----------------------------------------------------
+
+        elif note.visibility == "classes":
+
+            if (
+                student.school_class
+                and note.classes.filter(
+                    pk=student.school_class.pk
+                ).exists()
+            ):
+                allowed = True
+
+    # =========================================================
+    # FINAL PERMISSION CHECK
+    # =========================================================
+
+    if not allowed:
+
+        raise Http404(
+            "You do not have permission to download this file."
+        )
+
+    # =========================================================
+    # CLOUDINARY RESOURCE
+    # =========================================================
+
+    try:
+
+        # IMPORTANT:
+        # Keep the "media/" prefix.
+        #
+        # Example:
+        # media/lesson_notes/TOPIC_-___MATTER_jr4yyp.pdf
+
+        public_id = note.file.name
+
+        print(
+            "🔎 CLOUDINARY PUBLIC ID:",
+            public_id
+        )
+
+        # Ask Cloudinary API for the actual resource.
+        resource = cloudinary.api.resource(
+            public_id,
+            resource_type="raw",
+            type="upload",
+        )
+
+        print(
+            "✅ CLOUDINARY RESOURCE FOUND"
+        )
+
+        print(
+            "RESOURCE TYPE:",
+            resource.get("resource_type")
+        )
+
+        print(
+            "DELIVERY TYPE:",
+            resource.get("type")
+        )
+
+        print(
+            "VERSION:",
+            resource.get("version")
+        )
+
+        print(
+            "BYTES:",
+            resource.get("bytes")
+        )
+
+        print(
+            "SECURE URL:",
+            resource.get("secure_url")
+        )
+
+    except Exception as e:
+
+        print(
+            "❌ CLOUDINARY RESOURCE ERROR:",
+            repr(e)
+        )
+
+        raise Http404(
+            "Unable to locate the lesson note in Cloudinary."
+        )
+
+    # =========================================================
+    # DOWNLOAD THE ORIGINAL RESOURCE THROUGH CLOUDINARY API
+    # =========================================================
+
+    try:
+
+        # Cloudinary's API client has access to the authenticated
+        # Cloudinary account. Use the API resource information
+        # to create an authenticated download URL.
+        #
+        # IMPORTANT:
+        # private_download_url() requires the file format.
+
+        from cloudinary.utils import private_download_url
+
+        filename = os.path.basename(
+            public_id
+        )
+
+        # Raw files retain their extension.
+        file_format = ""
+
+        if "." in filename:
+
+            file_format = filename.rsplit(
+                ".",
+                1
+            )[1]
+
+        print(
+            "📄 FILE FORMAT:",
+            file_format
+        )
+
+        download_url = private_download_url(
+            public_id,
+            file_format,
+            resource_type="raw",
+            type="upload",
+            attachment=True,
+        )
+
+        print(
+            "🔐 CLOUDINARY DOWNLOAD URL CREATED"
+        )
+
+    except Exception as e:
+
+        print(
+            "❌ CLOUDINARY DOWNLOAD URL ERROR:",
+            repr(e)
+        )
+
+        raise Http404(
+            "Unable to create the lesson note download."
+        )
+
+    # =========================================================
+    # FETCH THE FILE
+    # =========================================================
+
+    try:
+
+        import requests
+
+        file_response = requests.get(
+            download_url,
+            timeout=60,
+        )
+
+    except requests.RequestException as e:
+
+        print(
+            "❌ CLOUDINARY DOWNLOAD REQUEST ERROR:",
+            repr(e)
+        )
+
+        raise Http404(
+            "Unable to download the lesson note."
+        )
+
+    # =========================================================
+    # CHECK RESPONSE
+    # =========================================================
+
+    if file_response.status_code != 200:
+
+        print(
+            "❌ LESSON NOTE DOWNLOAD FAILED"
+        )
+
+        print(
+            "STATUS:",
+            file_response.status_code
+        )
+
+        print(
+            "CONTENT TYPE:",
+            file_response.headers.get(
+                "Content-Type"
+            )
+        )
+
+        print(
+            "RESPONSE:",
+            file_response.text[:500]
+        )
+
+        raise Http404(
+            "Cloudinary could not retrieve this lesson note."
+        )
+
+    # =========================================================
+    # CONTENT TYPE
+    # =========================================================
+
+    content_type = (
+        file_response.headers.get(
+            "Content-Type"
+        )
+        or "application/octet-stream"
+    )
+
+    # Force PDF content type for PDF lesson notes.
+    if filename.lower().endswith(".pdf"):
+
+        content_type = "application/pdf"
+
+    # =========================================================
+    # RETURN FILE THROUGH DJANGO
+    # =========================================================
+
+    response = HttpResponse(
+        file_response.content,
+        content_type=content_type,
+    )
+
+    response["Content-Disposition"] = (
+        f'attachment; filename="{filename}"'
+    )
+
+    response["Content-Length"] = str(
+        len(file_response.content)
+    )
+
+    response["Cache-Control"] = (
+        "private, no-store"
+    )
+
+    print(
+        "✅ LESSON NOTE DOWNLOAD SUCCESSFUL:",
+        filename
+    )
+
+    return response
 
 # ------------------------
 # Notes dashboard
