@@ -10,7 +10,7 @@ INPUT_CLASS = "w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 f
 TEXTAREA_CLASS = "w-full px-4 py-3 rounded-xl border border-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none transition bg-white"
 
 class AttendanceForm(forms.Form):
-    
+
     session = forms.ChoiceField(
         choices=SESSION_CHOICES,
         widget=forms.Select(attrs={"class": INPUT_CLASS})
@@ -53,12 +53,41 @@ class AttendanceForm(forms.Form):
         })
     )
 
-    def __init__(self, *args, school=None, **kwargs):
+    def __init__(
+        self,
+        *args,
+        school=None,
+        class_queryset=None,
+        selected_class=None,
+        **kwargs
+    ):
         super().__init__(*args, **kwargs)
 
         if school:
-            self.fields["school_class"].queryset = SchoolClass.objects.filter(school=school)
-            self.fields["students"].queryset = Student.objects.filter(school=school)
+
+            # -----------------------------------------
+            # CLASS FIELD
+            # -----------------------------------------
+            if class_queryset is not None:
+                self.fields["school_class"].queryset = class_queryset
+            else:
+                self.fields["school_class"].queryset = (
+                    SchoolClass.objects.filter(school=school)
+                )
+
+            # -----------------------------------------
+            # STUDENT FIELD
+            # -----------------------------------------
+            if selected_class is not None:
+                self.fields["students"].queryset = (
+                    Student.objects.filter(
+                        school=school,
+                        school_class=selected_class
+                    )
+                )
+            else:
+                # Do NOT show all school students initially
+                self.fields["students"].queryset = Student.objects.none()
 
 
 from results.utils import SESSION_CHOICES

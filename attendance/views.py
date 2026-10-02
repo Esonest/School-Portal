@@ -38,19 +38,28 @@ def dashboard(request):
     # ----------------------
     # TEACHER DASHBOARD
     # ----------------------
+    # ----------------------
+# TEACHER DASHBOARD
+# ----------------------
     if is_teacher(user):
+
         teacher = user.teacher_profile
-        classes = SchoolClass.objects.filter(
-            Q(teachers=teacher) |
-            Q(subject_teachers__teacher=teacher) |
-            Q(class_teacher=teacher)
+
+    # Only classes directly assigned to this teacher
+        classes = teacher.classes.filter(
+            school=teacher.school
         ).distinct()
 
-        return render(request, "attendance/dashboard.html", {
-            "teacher": teacher,
-            "classes": classes,
-            "is_teacher": True,
-        })
+        return render(
+            request,
+            "attendance/dashboard.html",
+            {
+                "teacher": teacher,
+                "classes": classes,
+                "school": teacher.school,
+                "is_teacher": True,
+            }
+        )
 
     # ----------------------
     # STUDENT DASHBOARD

@@ -2241,6 +2241,7 @@ def attendance_list(request, school_id):
         classes = teacher_classes
 
         students = Student.objects.filter(
+            school=school,
             school_class__in=teacher_classes
         )
 
@@ -2382,67 +2383,140 @@ def attendance_create(request, school_id):
         id=school_id
     )
 
-    # -----------------------------------
-    # ROLE CHECK
-    # -----------------------------------
     teacher_classes = None
+    selected_class = None
 
-    # ADMIN
+    # =========================================
+    # GET SELECTED CLASS FROM DASHBOARD
+    # =========================================
+
+    selected_class_id = request.GET.get("class")
+
+    if not selected_class_id and request.method == "POST":
+        selected_class_id = request.POST.get("school_class")
+
+    # =========================================
+    # SCHOOL ADMIN
+    # =========================================
+
     if school_admin_required(request.user):
+
+        if selected_class_id:
+
+            selected_class = get_object_or_404(
+                SchoolClass,
+                id=selected_class_id,
+                school=school
+            )
 
         form = AttendanceForm(
             request.POST or None,
-            school=school
+            school=school,
+            selected_class=selected_class
         )
 
         marked_by = None
 
+    # =========================================
     # TEACHER
+    # =========================================
+
     elif hasattr(request.user, "teacher_profile"):
 
         teacher = request.user.teacher_profile
+
         teacher_classes = teacher.classes.filter(
             school=school
         )
 
+        # -----------------------------------------
+        # Verify selected class belongs to teacher
+        # -----------------------------------------
+
+        if selected_class_id:
+
+            selected_class = get_object_or_404(
+                teacher_classes,
+                id=selected_class_id
+            )
+
+        # -----------------------------------------
+        # Build form
+        # -----------------------------------------
+
         form = AttendanceForm(
             request.POST or None,
-            school=school
+            school=school,
+            class_queryset=teacher_classes,
+            selected_class=selected_class
         )
-
-        # Restrict teacher class choices
-        form.fields["school_class"].queryset = teacher_classes
 
         marked_by = request.user
 
     else:
+
         raise PermissionDenied
 
-    # -----------------------------------
+    # =========================================
     # SAVE
-    # -----------------------------------
+    # =========================================
+
     if request.method == "POST":
 
         if form.is_valid():
 
-            school_class = form.cleaned_data["school_class"]
-            students = form.cleaned_data["students"]
+            school_class = form.cleaned_data[
+                "school_class"
+            ]
 
-            # Teacher security check
+            students = form.cleaned_data[
+                "students"
+            ]
+
+            # =====================================
+            # TEACHER SECURITY
+            # =====================================
+
             if teacher_classes is not None:
 
-                if school_class not in teacher_classes:
+                if not teacher_classes.filter(
+                    id=school_class.id
+                ).exists():
+
                     raise PermissionDenied
 
-                students = students.filter(
-                    school_class__in=teacher_classes
-                )
+            # =====================================
+            # STUDENT SECURITY
+            # =====================================
 
-            session = form.cleaned_data["session"]
-            term = form.cleaned_data["term"]
-            date = form.cleaned_data["date"]
-            status = form.cleaned_data["status"]
-            remarks = form.cleaned_data["remarks"]
+            students = students.filter(
+                school=school,
+                school_class=school_class
+            )
+
+            session = form.cleaned_data[
+                "session"
+            ]
+
+            term = form.cleaned_data[
+                "term"
+            ]
+
+            date = form.cleaned_data[
+                "date"
+            ]
+
+            status = form.cleaned_data[
+                "status"
+            ]
+
+            remarks = form.cleaned_data[
+                "remarks"
+            ]
+
+            # =====================================
+            # SAVE ATTENDANCE
+            # =====================================
 
             for student in students:
 
@@ -2467,12 +2541,18 @@ def attendance_create(request, school_id):
                 school_id=school.id
             )
 
+    # =========================================
+    # RENDER
+    # =========================================
+
     return render(
         request,
         "school_admin/attendance/admin_form.html",
         {
             "form": form,
             "school": school,
+            "teacher_classes": teacher_classes,
+            "selected_class": selected_class,
         }
     )
 
@@ -2491,28 +2571,25 @@ def load_students(request, class_id):
         id=class_id
     )
 
-    # --------------------------
-    # ADMIN ACCESS
-    # --------------------------
     if school_admin_required(request.user):
 
         students = Student.objects.filter(
+            school=cls.school,
             school_class=cls
         )
 
-    # --------------------------
-    # TEACHER ACCESS
-    # --------------------------
     elif hasattr(request.user, "teacher_profile"):
 
         teacher = request.user.teacher_profile
 
         if not teacher.classes.filter(
-            id=class_id
+            id=class_id,
+            school=cls.school
         ).exists():
             raise PermissionDenied
 
         students = Student.objects.filter(
+            school=cls.school,
             school_class=cls
         )
 

@@ -104,7 +104,12 @@ urlpatterns = [
     path("<int:school_id>/attendance/add/", views.attendance_create, name="admin_attendance_create"), 
     path("<int:school_id>/attendance/<int:record_id>/edit/", views.attendance_edit, name="admin_attendance_edit"), 
     path("<int:school_id>/attendance/<int:record_id>/delete/", views.attendance_delete, name="admin_attendance_delete"),
-
+    
+    path(
+        "attendance/load-students/<int:class_id>/",
+        views.load_students,
+        name="load_students"
+    ),
     # Teacher 
     path('<int:school_id>/teachers/', views.teacher_list, name='teacher_list'),
     path('<int:school_id>/teachers/create/', views.teacher_create, name='teacher_create'),
