@@ -8,7 +8,7 @@
     "name": "typeof"
   },
   "index.html": {
-    "file": "assets/index-buPwX1Vy.js",
+    "file": "assets/index-DjykEBYW.js",
     "name": "index",
     "src": "index.html",
     "isEntry": true,
@@ -20,6 +20,9 @@
       "node_modules/.pnpm/html2canvas@1.4.1/node_modules/html2canvas/dist/html2canvas.js",
       "node_modules/.pnpm/dompurify@3.4.1/node_modules/dompurify/dist/purify.es.mjs",
       "node_modules/.pnpm/canvg@3.0.11/node_modules/canvg/lib/index.es.js"
+    ],
+    "css": [
+      "assets/index-3At4yjcF.css"
     ]
   },
   "node_modules/.pnpm/canvg@3.0.11/node_modules/canvg/lib/index.es.js": {
