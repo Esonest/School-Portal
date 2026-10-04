@@ -329,107 +329,134 @@ a=extmap-allow-mixed`)!==-1){let n=t.sdp.split(`
       0% { opacity: 1; transform: translateY(0); }
       100% { opacity: 0; transform: translateY(-120px); }
     }
-  `})]}),re&&(0,$.jsxs)(`div`,{style:{position:`fixed`,bottom:90,left:`50%`,transform:`translateX(-50%)`,background:`rgba(0,0,0,0.7)`,padding:`8px 12px`,borderRadius:8,fontSize:14},children:[`🗣 `,re]}),h===`chat`&&(0,$.jsxs)(`div`,{style:{position:`fixed`,bottom:120,left:`50%`,transform:`translateX(-50%)`,background:`rgba(0,0,0,0.8)`,padding:10,borderRadius:8,display:`flex`,gap:5,zIndex:3e3},children:[(0,$.jsx)(`input`,{value:_,onChange:e=>v(e.target.value),style:{width:300,padding:8,fontSize:14}}),(0,$.jsx)(`button`,{style:{padding:`8px 12px`,background:`#1f2937`,color:`#fff`,border:`none`,borderRadius:6,cursor:`pointer`},onClick:function(){var e=E(function*(){if(_)try{let e=yield fetch(`${m}/liveclass/api/translate/`,{method:`POST`,headers:{"Content-Type":`application/json`},body:JSON.stringify({text:_,target:ne})});if(!e.ok)throw Error(`HTTP error! status: ${e.status}`);let t=yield e.json();a.sendBroadcastMessage(JSON.stringify({type:`chat`,original:_,translated:t.translated})),v(``)}catch(e){console.error(`Translation failed`,e),alert(`Translation service is unavailable`)}});return function(){return e.apply(this,arguments)}}(),children:`Send`})]}),(0,$.jsxs)(`div`,{className:`controls`,style:{position:`fixed`,bottom:20,left:`50%`,transform:`translateX(-50%)`,display:`flex`,gap:8,padding:`8px 12px`,background:`rgba(2,6,23,0.85)`,border:`1px solid #1f2937`,borderRadius:14,maxWidth:`95vw`,overflowX:`auto`,whiteSpace:`nowrap`,zIndex:1e3},children:[(0,$.jsx)(qw,{onClick:()=>a.setLocalAudioEnabled(!f),icon:f?(0,$.jsx)(Rw,{}):(0,$.jsx)(Lw,{}),label:`Mic`,color:f?`#16a34a`:`#dc2626`}),(0,$.jsxs)(`select`,{value:(s==null?void 0:s.audioOutputDeviceId)||``,onChange:e=>Ze(e.target.value),style:{background:`#111827`,color:`white`,border:`1px solid #374151`,borderRadius:8,padding:`8px 10px`,maxWidth:220},children:[(0,$.jsx)(`option`,{value:``,children:`🔊 Audio Output`}),o==null||(e=o.audioOutput)==null?void 0:e.map(e=>(0,$.jsx)(`option`,{value:e.deviceId,children:e.label||`Audio device ${e.deviceId.slice(0,5)}`},e.deviceId))]}),(0,$.jsx)(qw,{onClick:()=>a.setLocalVideoEnabled(!p),icon:p?(0,$.jsx)(Gw,{}):(0,$.jsx)(Ww,{}),label:`Camera`,color:p?`#2563eb`:`#dc2626`}),(0,$.jsx)(qw,{onClick:()=>yt(`👍`),icon:`👍`,label:`Like`,color:`#334155`}),(0,$.jsx)(qw,{onClick:()=>yt(`❤️`),icon:`❤️`,label:`Love`,color:`#334155`}),(0,$.jsx)(qw,{onClick:()=>yt(`😂`),icon:`😂`,label:`Laugh`,color:`#334155`}),(0,$.jsx)(qw,{onClick:()=>yt(`🎉`),icon:`🎉`,label:`Celebrate`,color:`#334155`}),(0,$.jsx)(qw,{onClick:()=>yt(`👏`),icon:`👏`,label:`Clap`,color:`#334155`}),(0,$.jsx)(qw,{onClick:()=>R(e=>!e),icon:L?`🎤`:`🎤❌`,label:`Speech`,color:L?`#16a34a`:`#475569`}),(0,$.jsx)(qw,{onClick:mt,icon:pt?`☝️`:`✋`,label:pt?`Lower`:`Raise`,color:pt?`#16a34a`:`#f59e0b`}),(0,$.jsx)(qw,{onClick:function(){var e=E(function*(){P?(yield a.setScreenShareEnabled(!1),F(!1)):(yield a.setScreenShareEnabled(!0),F(!0))});return function(){return e.apply(this,arguments)}}(),icon:(0,$.jsx)(zw,{}),label:P?`Stop Share`:`Share`,color:P?`#22c55e`:`#475569`}),(0,$.jsxs)(`div`,{style:{position:`relative`},children:[(0,$.jsx)(qw,{onClick:()=>g(h===`participants`?null:`participants`),icon:(0,$.jsx)(Uw,{}),label:`Participants`,color:`#334155`}),ce>0&&(0,$.jsx)(`span`,{style:{position:`absolute`,top:-5,right:-5,background:`#dc2626`,color:`white`,borderRadius:`999px`,padding:`2px 6px`,fontSize:`12px`,fontWeight:`bold`},children:ce})]}),(0,$.jsx)(qw,{onClick:()=>{h===`chat`?g(null):(g(`chat`),b(0))},icon:(0,$.jsx)(Iw,{}),label:`Chat ${y>0?`(${y})`:``}`,color:`#334155`}),(0,$.jsxs)(`select`,{onChange:e=>I(e.target.value),value:ne,style:{background:`#020617`,color:`white`,border:`1px solid #334155`,borderRadius:8,padding:`6px 10px`,cursor:`pointer`},children:[(0,$.jsx)(`option`,{value:`en`,children:`English`}),(0,$.jsx)(`option`,{value:`es`,children:`Spanish`}),(0,$.jsx)(`option`,{value:`fr`,children:`French`}),(0,$.jsx)(`option`,{value:`de`,children:`German`}),(0,$.jsx)(`option`,{value:`zh`,children:`Chinese`}),(0,$.jsx)(`option`,{value:`ar`,children:`Arabic`}),(0,$.jsx)(`option`,{value:`hi`,children:`Hindi`})]}),(0,$.jsx)(qw,{onClick:Qe,icon:(0,$.jsx)(Bw,{size:18}),label:`Whiteboard`,color:T?`#a855f7`:`#475569`}),([`teacher`,`schooladmin`,`superadmin`].includes(B)||V)&&(0,$.jsx)(qw,{onClick:(A==null?void 0:A.recording_status)===`recording`?dt:ut,icon:(0,$.jsx)(Nw,{color:(A==null?void 0:A.recording_status)===`recording`?`white`:`#fca5a5`}),label:(A==null?void 0:A.recording_status)===`recording`?`Stop Recording`:`Start Recording`,color:(A==null?void 0:A.recording_status)===`recording`?`#dc2626`:`#475569`,disabled:(A==null?void 0:A.recording_status)===`processing`}),([`teacher`,`schooladmin`,`superadmin`].includes(B)||V)&&(0,$.jsxs)(`div`,{className:`relative`,children:[(0,$.jsx)(qw,{onClick:()=>He(e=>!e),icon:(0,$.jsx)(`span`,{className:`font-black`,children:`A+`}),label:`Recognise`,color:`#4f46e5`}),Ve&&(0,$.jsxs)(`div`,{className:`
-          absolute
-          bottom-full
-          right-0
-          mb-3
+  `})]}),re&&(0,$.jsxs)(`div`,{style:{position:`fixed`,bottom:90,left:`50%`,transform:`translateX(-50%)`,background:`rgba(0,0,0,0.7)`,padding:`8px 12px`,borderRadius:8,fontSize:14},children:[`🗣 `,re]}),h===`chat`&&(0,$.jsxs)(`div`,{style:{position:`fixed`,bottom:120,left:`50%`,transform:`translateX(-50%)`,background:`rgba(0,0,0,0.8)`,padding:10,borderRadius:8,display:`flex`,gap:5,zIndex:3e3},children:[(0,$.jsx)(`input`,{value:_,onChange:e=>v(e.target.value),style:{width:300,padding:8,fontSize:14}}),(0,$.jsx)(`button`,{style:{padding:`8px 12px`,background:`#1f2937`,color:`#fff`,border:`none`,borderRadius:6,cursor:`pointer`},onClick:function(){var e=E(function*(){if(_)try{let e=yield fetch(`${m}/liveclass/api/translate/`,{method:`POST`,headers:{"Content-Type":`application/json`},body:JSON.stringify({text:_,target:ne})});if(!e.ok)throw Error(`HTTP error! status: ${e.status}`);let t=yield e.json();a.sendBroadcastMessage(JSON.stringify({type:`chat`,original:_,translated:t.translated})),v(``)}catch(e){console.error(`Translation failed`,e),alert(`Translation service is unavailable`)}});return function(){return e.apply(this,arguments)}}(),children:`Send`})]}),(0,$.jsxs)(`div`,{className:`controls`,style:{position:`fixed`,bottom:20,left:`50%`,transform:`translateX(-50%)`,display:`flex`,gap:8,padding:`8px 12px`,background:`rgba(2,6,23,0.85)`,border:`1px solid #1f2937`,borderRadius:14,maxWidth:`95vw`,overflowX:`auto`,whiteSpace:`nowrap`,zIndex:1e3},children:[(0,$.jsx)(qw,{onClick:()=>a.setLocalAudioEnabled(!f),icon:f?(0,$.jsx)(Rw,{}):(0,$.jsx)(Lw,{}),label:`Mic`,color:f?`#16a34a`:`#dc2626`}),(0,$.jsxs)(`select`,{value:(s==null?void 0:s.audioOutputDeviceId)||``,onChange:e=>Ze(e.target.value),style:{background:`#111827`,color:`white`,border:`1px solid #374151`,borderRadius:8,padding:`8px 10px`,maxWidth:220},children:[(0,$.jsx)(`option`,{value:``,children:`🔊 Audio Output`}),o==null||(e=o.audioOutput)==null?void 0:e.map(e=>(0,$.jsx)(`option`,{value:e.deviceId,children:e.label||`Audio device ${e.deviceId.slice(0,5)}`},e.deviceId))]}),(0,$.jsx)(qw,{onClick:()=>a.setLocalVideoEnabled(!p),icon:p?(0,$.jsx)(Gw,{}):(0,$.jsx)(Ww,{}),label:`Camera`,color:p?`#2563eb`:`#dc2626`}),(0,$.jsx)(qw,{onClick:()=>yt(`👍`),icon:`👍`,label:`Like`,color:`#334155`}),(0,$.jsx)(qw,{onClick:()=>yt(`❤️`),icon:`❤️`,label:`Love`,color:`#334155`}),(0,$.jsx)(qw,{onClick:()=>yt(`😂`),icon:`😂`,label:`Laugh`,color:`#334155`}),(0,$.jsx)(qw,{onClick:()=>yt(`🎉`),icon:`🎉`,label:`Celebrate`,color:`#334155`}),(0,$.jsx)(qw,{onClick:()=>yt(`👏`),icon:`👏`,label:`Clap`,color:`#334155`}),(0,$.jsx)(qw,{onClick:()=>R(e=>!e),icon:L?`🎤`:`🎤❌`,label:`Speech`,color:L?`#16a34a`:`#475569`}),(0,$.jsx)(qw,{onClick:mt,icon:pt?`☝️`:`✋`,label:pt?`Lower`:`Raise`,color:pt?`#16a34a`:`#f59e0b`}),(0,$.jsx)(qw,{onClick:function(){var e=E(function*(){P?(yield a.setScreenShareEnabled(!1),F(!1)):(yield a.setScreenShareEnabled(!0),F(!0))});return function(){return e.apply(this,arguments)}}(),icon:(0,$.jsx)(zw,{}),label:P?`Stop Share`:`Share`,color:P?`#22c55e`:`#475569`}),(0,$.jsxs)(`div`,{style:{position:`relative`},children:[(0,$.jsx)(qw,{onClick:()=>g(h===`participants`?null:`participants`),icon:(0,$.jsx)(Uw,{}),label:`Participants`,color:`#334155`}),ce>0&&(0,$.jsx)(`span`,{style:{position:`absolute`,top:-5,right:-5,background:`#dc2626`,color:`white`,borderRadius:`999px`,padding:`2px 6px`,fontSize:`12px`,fontWeight:`bold`},children:ce})]}),(0,$.jsx)(qw,{onClick:()=>{h===`chat`?g(null):(g(`chat`),b(0))},icon:(0,$.jsx)(Iw,{}),label:`Chat ${y>0?`(${y})`:``}`,color:`#334155`}),(0,$.jsxs)(`select`,{onChange:e=>I(e.target.value),value:ne,style:{background:`#020617`,color:`white`,border:`1px solid #334155`,borderRadius:8,padding:`6px 10px`,cursor:`pointer`},children:[(0,$.jsx)(`option`,{value:`en`,children:`English`}),(0,$.jsx)(`option`,{value:`es`,children:`Spanish`}),(0,$.jsx)(`option`,{value:`fr`,children:`French`}),(0,$.jsx)(`option`,{value:`de`,children:`German`}),(0,$.jsx)(`option`,{value:`zh`,children:`Chinese`}),(0,$.jsx)(`option`,{value:`ar`,children:`Arabic`}),(0,$.jsx)(`option`,{value:`hi`,children:`Hindi`})]}),(0,$.jsx)(qw,{onClick:Qe,icon:(0,$.jsx)(Bw,{size:18}),label:`Whiteboard`,color:T?`#a855f7`:`#475569`}),([`teacher`,`schooladmin`,`superadmin`].includes(B)||V)&&(0,$.jsx)(qw,{onClick:(A==null?void 0:A.recording_status)===`recording`?dt:ut,icon:(0,$.jsx)(Nw,{color:(A==null?void 0:A.recording_status)===`recording`?`white`:`#fca5a5`}),label:(A==null?void 0:A.recording_status)===`recording`?`Stop Recording`:`Start Recording`,color:(A==null?void 0:A.recording_status)===`recording`?`#dc2626`:`#475569`,disabled:(A==null?void 0:A.recording_status)===`processing`}),([`teacher`,`schooladmin`,`superadmin`].includes(B)||V)&&(0,$.jsxs)(`div`,{className:`relative`,children:[(0,$.jsx)(qw,{onClick:()=>He(e=>!e),icon:(0,$.jsx)(`span`,{className:`font-black`,children:`A+`}),label:`Recognise`,color:`#4f46e5`}),Ve&&(0,$.jsx)(`div`,{className:`
+          fixed
+          bottom-[88px]
+          right-4
+          z-[99999]
           w-[360px]
-          max-h-[75vh]
-          overflow-y-auto
+          max-w-[calc(100vw-32px)]
+          max-h-[calc(100vh-110px)]
+          overflow-hidden
           rounded-2xl
           border
           border-white/10
           bg-slate-950
-          shadow-2xl
-          z-[9999]
-          p-4
-        `,children:[(0,$.jsxs)(`div`,{className:`mb-4`,children:[(0,$.jsx)(`div`,{className:`
-              text-base
-              font-bold
-              text-white
-            `,children:`Student Recognition`}),(0,$.jsx)(`div`,{className:`
-              mt-1
-              text-xs
-              text-slate-400
-            `,children:`Encourage effort, participation and learning.`})]}),(0,$.jsxs)(`div`,{className:`mb-4`,children:[(0,$.jsx)(`div`,{className:`
-              mb-2
-              text-[10px]
-              font-bold
-              uppercase
-              tracking-wider
-              text-slate-500
-            `,children:`Display duration`}),(0,$.jsx)(`div`,{className:`grid grid-cols-3 gap-2`,children:[10,12,15].map(e=>(0,$.jsxs)(`button`,{type:`button`,onClick:()=>We(e),className:`
+          shadow-[0_25px_80px_rgba(0,0,0,0.65)]
+        `,onClick:e=>e.stopPropagation(),children:(0,$.jsxs)(`div`,{className:`
+            max-h-[calc(100vh-110px)]
+            overflow-y-auto
+            overscroll-contain
+            p-4
+          `,style:{scrollbarWidth:`thin`},children:[(0,$.jsxs)(`div`,{className:`mb-4`,children:[(0,$.jsx)(`div`,{className:`
+                text-base
+                font-bold
+                text-white
+              `,children:`Student Recognition`}),(0,$.jsx)(`div`,{className:`
+                mt-1
+                text-xs
+                leading-relaxed
+                text-slate-400
+              `,children:`Encourage effort, participation and learning.`})]}),(0,$.jsxs)(`div`,{className:`mb-4`,children:[(0,$.jsx)(`div`,{className:`
+                mb-2
+                text-[10px]
+                font-bold
+                uppercase
+                tracking-wider
+                text-slate-500
+              `,children:`Display duration`}),(0,$.jsx)(`div`,{className:`grid grid-cols-3 gap-2`,children:[10,12,15].map(e=>(0,$.jsxs)(`button`,{type:`button`,onClick:()=>We(e),className:`
+                    !block
+                    !w-full
+                    !min-h-[36px]
+                    appearance-none
                     rounded-lg
                     border
                     px-3
                     py-2
                     text-xs
                     font-semibold
-                    transition
+                    transition-all
+                    duration-150
                     ${Ue===e?`
                           border-indigo-400
                           bg-indigo-500/20
                           text-white
+                          shadow-sm
                         `:`
                           border-white/10
                           bg-white/5
                           text-slate-400
+                          hover:border-white/20
                           hover:bg-white/10
+                          hover:text-white
                         `}
                   `,children:[e,`s`]},e))})]}),ze.__whole_class__&&(0,$.jsx)(`button`,{type:`button`,onClick:Xe,className:`
-      mb-3
-      w-full
-      rounded-lg
-      border
-      border-red-400/20
-      bg-red-500/10
-      px-3
-      py-2
-      text-xs
-      font-semibold
-      text-red-300
-      transition
-      hover:bg-red-500/20
-    `,children:`Remove whole-class recognition`}),(0,$.jsxs)(`div`,{className:`mb-4`,children:[(0,$.jsx)(`div`,{className:`
-              mb-2
-              text-[10px]
-              font-bold
-              uppercase
-              tracking-wider
-              text-slate-500
-            `,children:`Whole class`}),(0,$.jsxs)(`button`,{type:`button`,onClick:()=>Je(Re.find(e=>e.id===`well-done`)),className:`
-              w-full
-              overflow-hidden
-              rounded-xl
-              border
-              border-white/10
-              bg-gradient-to-r
-              from-indigo-600
-              via-violet-600
-              to-purple-700
-              p-3
-              text-left
-              text-white
-              shadow-lg
-              transition
-              hover:-translate-y-0.5
-            `,children:[(0,$.jsx)(`div`,{className:`
+                !block
+                !w-full
+                !min-h-[38px]
+                mb-4
+                appearance-none
+                rounded-lg
+                border
+                border-red-400/20
+                bg-red-500/10
+                px-3
+                py-2
                 text-xs
-                font-black
-                tracking-wider
-              `,children:`WELL DONE, EVERYONE`}),(0,$.jsx)(`div`,{className:`
-                mt-1
+                font-semibold
+                text-red-300
+                transition-all
+                hover:border-red-400/30
+                hover:bg-red-500/20
+                hover:text-red-200
+              `,children:`Remove whole-class recognition`}),(0,$.jsxs)(`div`,{className:`mb-5`,children:[(0,$.jsx)(`div`,{className:`
+                mb-2
                 text-[10px]
-                text-white/75
-              `,children:`Recognise the entire class.`})]})]}),(0,$.jsxs)(`div`,{children:[(0,$.jsx)(`div`,{className:`
-              mb-2
-              text-[10px]
-              font-bold
-              uppercase
-              tracking-wider
-              text-slate-500
-            `,children:`Select a student`}),l.map(e=>(0,$.jsxs)(`div`,{className:`
+                font-bold
+                uppercase
+                tracking-wider
+                text-slate-500
+              `,children:`Whole class`}),(0,$.jsxs)(`button`,{type:`button`,onClick:()=>{let e=Re.find(e=>e.id===`well-done`);e&&Je(e)},className:`
+                group
+                !block
+                !w-full
+                !min-h-[64px]
+                appearance-none
+                overflow-hidden
+                rounded-xl
+                border
+                border-white/10
+                bg-gradient-to-r
+                from-indigo-600
+                via-violet-600
+                to-purple-700
+                p-3
+                text-left
+                text-white
+                shadow-lg
+                transition-all
+                duration-200
+                hover:-translate-y-0.5
+                hover:border-white/20
+                hover:shadow-xl
+                active:scale-[0.99]
+              `,children:[(0,$.jsx)(`div`,{className:`
+                  text-xs
+                  font-black
+                  tracking-wider
+                `,children:`WELL DONE, EVERYONE`}),(0,$.jsx)(`div`,{className:`
+                  mt-1
+                  text-[10px]
+                  leading-relaxed
+                  text-white/75
+                `,children:`Recognise the entire class.`})]})]}),(0,$.jsxs)(`div`,{children:[(0,$.jsx)(`div`,{className:`
+                mb-2
+                text-[10px]
+                font-bold
+                uppercase
+                tracking-wider
+                text-slate-500
+              `,children:`Select a student`}),l.map(e=>(0,$.jsxs)(`div`,{className:`
                   mb-3
                   overflow-hidden
                   rounded-xl
@@ -454,9 +481,7 @@ a=extmap-allow-mixed`)!==-1){let n=t.sdp.split(`
                       text-xs
                       font-bold
                       text-indigo-300
-                    `,children:(e.name||`?`).charAt(0).toUpperCase()}),(0,$.jsxs)(`div`,{className:`
-                      min-w-0
-                    `,children:[(0,$.jsx)(`div`,{className:`
+                    `,children:(e.name||`?`).charAt(0).toUpperCase()}),(0,$.jsxs)(`div`,{className:`min-w-0`,children:[(0,$.jsx)(`div`,{className:`
                         truncate
                         text-sm
                         font-semibold
@@ -469,49 +494,62 @@ a=extmap-allow-mixed`)!==-1){let n=t.sdp.split(`
                     grid-cols-2
                     gap-2
                   `,children:Re.map(t=>(0,$.jsx)(`button`,{type:`button`,onClick:()=>qe(e.id,t),className:`
-                          group
+                        group
+                        !block
+                        !w-full
+                        !min-h-[72px]
+                        appearance-none
+                        relative
+                        overflow-hidden
+                        rounded-lg
+                        border
+                        border-white/10
+                        bg-slate-800/70
+                        p-1
+                        text-left
+                        transition-all
+                        duration-200
+                        hover:-translate-y-0.5
+                        hover:border-white/25
+                        hover:bg-slate-700
+                        active:scale-[0.98]
+                      `,children:(0,$.jsxs)(`div`,{className:`
                           relative
+                          flex
+                          min-h-[64px]
+                          w-full
+                          flex-col
+                          justify-center
                           overflow-hidden
-                          rounded-lg
-                          border
-                          border-white/10
-                          bg-slate-800/70
-                          p-1
-                          text-left
-                          transition-all
-                          duration-200
-                          hover:-translate-y-0.5
-                          hover:border-white/25
-                          hover:bg-slate-700
-                          active:scale-[0.98]
-                        `,children:(0,$.jsxs)(`div`,{className:`
+                          rounded-md
+                          bg-gradient-to-br
+                          ${t.style}
+                          px-2.5
+                          py-2.5
+                          text-white
+                        `,children:[(0,$.jsx)(`div`,{className:`
+                            pointer-events-none
+                            absolute
+                            -right-2
+                            -top-3
+                            text-4xl
+                            font-black
+                            leading-none
+                            text-white/[0.08]
+                          `,children:t.mark}),(0,$.jsxs)(`div`,{className:`
                             relative
-                            overflow-hidden
-                            rounded-md
-                            bg-gradient-to-br
-                            ${t.style}
-                            px-2.5
-                            py-2.5
-                            text-white
+                            z-10
+                            min-w-0
                           `,children:[(0,$.jsx)(`div`,{className:`
-                              absolute
-                              -right-2
-                              -top-3
-                              text-4xl
+                              truncate
+                              text-[9px]
                               font-black
-                              leading-none
-                              text-white/[0.08]
-                            `,children:t.mark}),(0,$.jsxs)(`div`,{className:`
-                              relative
-                              z-10
-                            `,children:[(0,$.jsx)(`div`,{className:`
-                                text-[9px]
-                                font-black
-                                tracking-wide
-                              `,children:t.title}),(0,$.jsx)(`div`,{className:`
-                                mt-0.5
-                                line-clamp-2
-                                text-[8px]
-                                leading-tight
-                                text-white/75
-                              `,children:t.subtitle})]})]})},t.id))})]},e.id))]})]})]}),(0,$.jsx)(qw,{onClick:()=>k(!0),icon:(0,$.jsx)(Vw,{}),label:`Leave`,color:`#dc2626`}),vt&&(0,$.jsx)(qw,{onClick:()=>N(!0),icon:`⛔`,label:`End`,color:`#7f1d1d`})]}),(0,$.jsx)(Xw,{show:O,text:`Leave meeting?`,onNo:()=>k(!1),onYes:function(){var e=E(function*(){k(!1),yield st()});return function(){return e.apply(this,arguments)}}()}),(0,$.jsx)(Xw,{show:M,text:`End meeting for all?`,onNo:()=>N(!1),onYes:function(){var e=E(function*(){N(!1),yield ct()});return function(){return e.apply(this,arguments)}}()}),(0,$.jsx)(`div`,{style:{position:`fixed`,top:20,right:h?340:20,zIndex:99999,display:`flex`,flexDirection:`column`,alignItems:`flex-end`,gap:6,pointerEvents:`none`},children:pe.map(e=>(0,$.jsxs)(`div`,{style:{background:`#f59e0b`,color:`#000`,padding:`6px 12px`,borderRadius:8,fontWeight:500,boxShadow:`0 4px 10px rgba(0,0,0,0.3)`},children:[`☝️ `,e.name]},e.id))})]})}function Qw(){return(0,$.jsx)(mw,{children:(0,$.jsxs)(Ut,{children:[(0,$.jsx)(Vt,{path:`/`,element:(0,$.jsx)(`div`,{children:`Home`})}),(0,$.jsx)(Vt,{path:`/liveclass/:id`,element:(0,$.jsx)(Zw,{})}),(0,$.jsx)(Vt,{path:`/liveclass/event/:eventSlug/room/`,element:(0,$.jsx)(Zw,{})}),(0,$.jsx)(Vt,{path:`/liveclass/event/:eventSlug/teacher-room/`,element:(0,$.jsx)(Zw,{})})]})})}w.createRoot(document.getElementById(`root`)).render((0,$.jsx)(Nn,{children:(0,$.jsx)(Qw,{})}));
+                              tracking-wide
+                              text-white
+                            `,children:t.title}),(0,$.jsx)(`div`,{className:`
+                              mt-0.5
+                              line-clamp-2
+                              text-[8px]
+                              leading-tight
+                              text-white/75
+                            `,children:t.subtitle})]})]})},t.id))})]},e.id))]})]})})]}),(0,$.jsx)(qw,{onClick:()=>k(!0),icon:(0,$.jsx)(Vw,{}),label:`Leave`,color:`#dc2626`}),vt&&(0,$.jsx)(qw,{onClick:()=>N(!0),icon:`⛔`,label:`End`,color:`#7f1d1d`})]}),(0,$.jsx)(Xw,{show:O,text:`Leave meeting?`,onNo:()=>k(!1),onYes:function(){var e=E(function*(){k(!1),yield st()});return function(){return e.apply(this,arguments)}}()}),(0,$.jsx)(Xw,{show:M,text:`End meeting for all?`,onNo:()=>N(!1),onYes:function(){var e=E(function*(){N(!1),yield ct()});return function(){return e.apply(this,arguments)}}()}),(0,$.jsx)(`div`,{style:{position:`fixed`,top:20,right:h?340:20,zIndex:99999,display:`flex`,flexDirection:`column`,alignItems:`flex-end`,gap:6,pointerEvents:`none`},children:pe.map(e=>(0,$.jsxs)(`div`,{style:{background:`#f59e0b`,color:`#000`,padding:`6px 12px`,borderRadius:8,fontWeight:500,boxShadow:`0 4px 10px rgba(0,0,0,0.3)`},children:[`☝️ `,e.name]},e.id))})]})}function Qw(){return(0,$.jsx)(mw,{children:(0,$.jsxs)(Ut,{children:[(0,$.jsx)(Vt,{path:`/`,element:(0,$.jsx)(`div`,{children:`Home`})}),(0,$.jsx)(Vt,{path:`/liveclass/:id`,element:(0,$.jsx)(Zw,{})}),(0,$.jsx)(Vt,{path:`/liveclass/event/:eventSlug/room/`,element:(0,$.jsx)(Zw,{})}),(0,$.jsx)(Vt,{path:`/liveclass/event/:eventSlug/teacher-room/`,element:(0,$.jsx)(Zw,{})})]})})}w.createRoot(document.getElementById(`root`)).render((0,$.jsx)(Nn,{children:(0,$.jsx)(Qw,{})}));
