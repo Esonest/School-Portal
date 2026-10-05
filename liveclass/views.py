@@ -2358,14 +2358,57 @@ def waiting_list(request, pk):
             status=403
         )
 
-    waiting = LiveClassWaiting.objects.filter(
-        live_class_id=pk,
+    print("\n================ WAITING DEBUG ================")
+    print("Teacher:", request.user)
+    print("Teacher school:", request.user.school)
+    print("LiveClass ID:", pk)
+
+    live_class = LiveClass.objects.filter(pk=pk).first()
+
+    if not live_class:
+        print("❌ LIVE CLASS NOT FOUND")
+        return JsonResponse([], safe=False)
+
+    print("LiveClass:", live_class)
+    print("LiveClass school:", live_class.school)
+
+    waiting_all = LiveClassWaiting.objects.filter(
+        live_class_id=pk
+    ).select_related("student__user")
+
+    print(
+        "TOTAL WAITING RECORDS FOR THIS CLASS:",
+        waiting_all.count()
+    )
+
+    for w in waiting_all:
+        print(
+            "WAITING RECORD:",
+            {
+                "id": w.id,
+                "student": w.student,
+                "user": w.student.user,
+                "user_id": w.student.user.id,
+                "approved": w.approved,
+                "rejected": w.rejected,
+                "removed": w.removed,
+                "live_class_school": (
+                    w.live_class.school
+                    if w.live_class
+                    else None
+                ),
+            }
+        )
+
+    waiting = waiting_all.filter(
         approved=False,
         rejected=False,
         removed=False,
-        live_class__school=request.user.school
-    ).select_related(
-        "student__user"
+    )
+
+    print(
+        "UNAPPROVED / NOT REMOVED:",
+        waiting.count()
     )
 
     data = [
@@ -2378,6 +2421,9 @@ def waiting_list(request, pk):
         }
         for w in waiting
     ]
+
+    print("FINAL WAITING DATA:", data)
+    print("================================================\n")
 
     return JsonResponse(
         data,
