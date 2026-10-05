@@ -1898,17 +1898,38 @@ from .models import LiveClass, LiveClassWaiting
 
 @login_required
 def request_join_liveclass(request, pk):
+    print("\n================ STUDENT JOIN DEBUG ================")
+    print("REQUEST METHOD:", request.method)
+    print("USER:", request.user)
+    print("USER ID:", request.user.id)
+    print("USER SCHOOL:", getattr(request.user, "school", None))
+    print("LIVE CLASS ID:", pk)
+
     user = request.user
 
     if getattr(user, "is_student_user", False) is not True:
+        print("❌ NOT RECOGNIZED AS STUDENT")
+        print(
+            "is_student_user:",
+            getattr(user, "is_student_user", None)
+        )
+
         return JsonResponse(
             {"error": "Only students allowed"},
             status=403
         )
 
-    student = getattr(user, "student_profile", None)
+    student = getattr(
+        user,
+        "student_profile",
+        None
+    )
+
+    print("STUDENT PROFILE:", student)
 
     if not student:
+        print("❌ STUDENT PROFILE MISSING")
+
         return JsonResponse(
             {"error": "Student profile missing"},
             status=400
@@ -1920,22 +1941,36 @@ def request_join_liveclass(request, pk):
         school=user.school
     )
 
+    print("LIVE CLASS FOUND:", live_class)
+    print("LIVE CLASS SCHOOL:", live_class.school)
+
     waiting = LiveClassWaiting.objects.filter(
         live_class=live_class,
         student=student
     ).first()
 
-    # ---------------------------------------------------------
-    # TEMPORARY 5-MINUTE REMOVAL
-    # ---------------------------------------------------------
+    print("EXISTING WAITING RECORD:", waiting)
+
     if waiting and waiting.removed:
+        print("⚠️ EXISTING RECORD IS REMOVED")
 
         if waiting.removed_at:
-            unlock_time = waiting.removed_at + timedelta(minutes=5)
+            unlock_time = (
+                waiting.removed_at +
+                timedelta(minutes=5)
+            )
 
             if timezone.now() < unlock_time:
                 remaining_seconds = int(
-                    (unlock_time - timezone.now()).total_seconds()
+                    (
+                        unlock_time -
+                        timezone.now()
+                    ).total_seconds()
+                )
+
+                print(
+                    "❌ STILL IN REMOVAL COOLDOWN:",
+                    remaining_seconds
                 )
 
                 return JsonResponse({
@@ -1946,10 +1981,6 @@ def request_join_liveclass(request, pk):
                     )
                 }, status=403)
 
-        # -----------------------------------------------------
-        # 5 MINUTES HAVE PASSED
-        # ALLOW STUDENT TO REQUEST AGAIN
-        # -----------------------------------------------------
         waiting.removed = False
         waiting.removed_at = None
         waiting.approved = False
@@ -1968,9 +1999,8 @@ def request_join_liveclass(request, pk):
             "updated_at",
         ])
 
-    # ---------------------------------------------------------
-    # CREATE / RESET WAITING REQUEST
-    # ---------------------------------------------------------
+        print("✅ REMOVED STATUS RESET")
+
     obj, created = LiveClassWaiting.objects.update_or_create(
         live_class=live_class,
         student=student,
@@ -1984,6 +2014,17 @@ def request_join_liveclass(request, pk):
             "updated_at": timezone.now(),
         }
     )
+
+    print("============================================")
+    print("✅ WAITING RECORD SAVED")
+    print("WAITING ID:", obj.id)
+    print("CREATED:", created)
+    print("LIVE CLASS:", obj.live_class_id)
+    print("STUDENT:", obj.student_id)
+    print("APPROVED:", obj.approved)
+    print("REJECTED:", obj.rejected)
+    print("REMOVED:", obj.removed)
+    print("============================================\n")
 
     return JsonResponse({
         "status": "waiting",
