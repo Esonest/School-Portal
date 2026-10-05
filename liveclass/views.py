@@ -2348,39 +2348,6 @@ def remove_student(request, pk):
 from datetime import timedelta
 from django.utils import timezone
 
-@login_required
-def waiting_list(request, pk):
-    if not is_staff_user(request.user):
-        return JsonResponse(
-            {"error": "Forbidden"},
-            status=403
-        )
-
-    waiting = LiveClassWaiting.objects.filter(
-        live_class_id=pk,
-        approved=False,
-        rejected=False,
-        removed=False,
-        live_class__school=request.user.school
-    ).select_related(
-        "student__user"
-    )
-
-    data = [
-        {
-            "id": w.student.user.id,
-            "name": (
-                w.student.user.get_full_name()
-                or w.student.user.username
-            )
-        }
-        for w in waiting
-    ]
-
-    return JsonResponse(
-        data,
-        safe=False
-    )
 
 
 @login_required
