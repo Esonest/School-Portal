@@ -368,29 +368,62 @@ def liveclass_update(request, pk):
         }
     )
 
-
 @login_required
 def liveclass_delete(request, pk):
     school = request.user.school
 
     live_class = get_object_or_404(
-        LiveClass.objects.select_related("teacher"),
+        LiveClass,
         pk=pk,
         school=school
     )
 
+    # ==========================================
+    # TEACHER PERMISSION
+    # ==========================================
     if request.user.is_teacher_user:
-        if live_class.teacher.user != request.user:
+
+        teacher_profile = getattr(
+            request.user,
+            "teacher_profile",
+            None
+        )
+
+        if not teacher_profile:
             return HttpResponseForbidden()
 
-    elif not (request.user.is_schooladmin or request.user.is_superadmin):
+        # Teacher must be one of the assigned teachers
+        if not live_class.teachers.filter(
+            pk=teacher_profile.pk
+        ).exists():
+            return HttpResponseForbidden()
+
+    # ==========================================
+    # SCHOOL ADMIN / SUPER ADMIN
+    # ==========================================
+    elif not (
+        request.user.is_schooladmin
+        or request.user.is_superadmin
+    ):
         return HttpResponseForbidden()
 
+    # ==========================================
+    # DELETE
+    # ==========================================
     if request.method == "POST":
         live_class.delete()
-        return redirect("liveclass:liveclass_list")
 
-    return render(request, "liveclass/delete.html", {"live_class": live_class})
+        return redirect(
+            "liveclass:liveclass_list"
+        )
+
+    return render(
+        request,
+        "liveclass/delete.html",
+        {
+            "live_class": live_class
+        }
+    )
 
 
 from django.contrib.auth.decorators import login_required
