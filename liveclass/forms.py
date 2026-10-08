@@ -7,15 +7,29 @@ Subject = apps.get_model("results", "Subject")
 SchoolClass = apps.get_model("students", "SchoolClass")
 Teacher = apps.get_model("accounts", "Teacher")
 
-
 class LiveClassForm(forms.ModelForm):
-    teacher = forms.ModelChoiceField(
+
+    subject = forms.ModelMultipleChoiceField(
+        queryset=Subject.objects.none(),
+        required=True,
+        widget=forms.CheckboxSelectMultiple()
+    )
+
+    class_room = forms.ModelMultipleChoiceField(
+        queryset=SchoolClass.objects.none(),
+        required=True,
+        widget=forms.CheckboxSelectMultiple()
+    )
+
+    teacher = forms.ModelMultipleChoiceField(
         queryset=Teacher.objects.none(),
-        required=False
+        required=False,
+        widget=forms.CheckboxSelectMultiple()
     )
 
     class Meta:
         model = LiveClass
+
         fields = [
             "subject",
             "class_room",
@@ -25,43 +39,193 @@ class LiveClassForm(forms.ModelForm):
             "start_time",
             "end_time",
         ]
+
         widgets = {
-            "start_time": forms.DateTimeInput(attrs={"type": "datetime-local"}),
-            "end_time": forms.DateTimeInput(attrs={"type": "datetime-local"}),
+            "start_time": forms.DateTimeInput(
+                attrs={"type": "datetime-local"}
+            ),
+            "end_time": forms.DateTimeInput(
+                attrs={"type": "datetime-local"}
+            ),
         }
 
     def __init__(self, *args, **kwargs):
+
         school = kwargs.pop("school", None)
         user = kwargs.pop("user", None)
+
         super().__init__(*args, **kwargs)
 
-        # Filter queryset by school
+        self._user = user
+
+        # ======================================================
+        # FILTER BY SCHOOL
+        # ======================================================
+
         if school:
-            self.fields["subject"].queryset = Subject.objects.filter(school=school)
-            self.fields["class_room"].queryset = SchoolClass.objects.filter(school=school)
-            self.fields["teacher"].queryset = Teacher.objects.filter(school=school)
 
-        # If user is a teacher, auto-assign them
-        if user and getattr(user, "is_teacher_user", False):
-            # Hide the field
-            self.fields["teacher"].widget = forms.HiddenInput()
-            self.fields["teacher"].required = False
+            self.fields["subject"].queryset = (
+                Subject.objects.filter(
+                    school=school
+                )
+            )
 
-            # If creating a new instance, set teacher automatically
-            if not self.instance.pk:
-                teacher_profile = getattr(user, "teacher_profile", None)
-                if teacher_profile:
-                    self.instance.teacher = teacher_profile
+            self.fields["class_room"].queryset = (
+                SchoolClass.objects.filter(
+                    school=school
+                )
+            )
 
-        # Apply Tailwind styling to remaining fields
+            self.fields["teacher"].queryset = (
+                Teacher.objects.filter(
+                    school=school
+                )
+            )
+
+        # ======================================================
+        # TEACHER USER
+        # ======================================================
+
+        if user and getattr(
+            user,
+            "is_teacher_user",
+            False
+        ):
+
+            teacher_profile = getattr(
+                user,
+                "teacher_profile",
+                None
+            )
+
+            if teacher_profile:
+
+                self.fields["teacher"].queryset = (
+                    self.fields["teacher"].queryset.filter(
+                        pk=teacher_profile.pk
+                    )
+                )
+
+                self.fields["teacher"].initial = [
+                    teacher_profile.pk
+                ]
+
+                self.fields["teacher"].widget = (
+                    forms.MultipleHiddenInput()
+                )
+
+        # ======================================================
+        # EDITING
+        # ======================================================
+
+        if self.instance.pk:
+
+            self.fields["subject"].initial = (
+                self.instance.subject.all()
+            )
+
+            self.fields["class_room"].initial = (
+                self.instance.class_room.all()
+            )
+
+            self.fields["teacher"].initial = (
+                self.instance.teacher.all()
+            )
+
         self.apply_tailwind()
 
-    def apply_tailwind(self):
-        for field in self.fields.values():
-            field.widget.attrs.update({
-                "class": "w-full border rounded-lg p-2 focus:ring-2 focus:ring-blue-400"
-            })
+    # ==========================================================
+    # TEACHER SECURITY VALIDATION
+    # ==========================================================
 
+    def clean_teacher(self):
+
+        teachers = self.cleaned_data.get(
+            "teacher"
+        )
+
+        user = getattr(
+            self,
+            "_user",
+            None
+        )
+
+        if user and getattr(
+            user,
+            "is_teacher_user",
+            False
+        ):
+
+            teacher_profile = getattr(
+                user,
+                "teacher_profile",
+                None
+            )
+
+            if teacher_profile:
+
+                if set(
+                    teachers.values_list(
+                        "id",
+                        flat=True
+                    )
+                ) != {teacher_profile.id}:
+
+                    raise forms.ValidationError(
+                        "You can only assign yourself as the teacher."
+                    )
+
+        return teachers
+
+    # ==========================================================
+    # TAILWIND
+    # ==========================================================
+
+    def apply_tailwind(self):
+
+        normal_class = (
+            "w-full border border-gray-300 rounded-xl "
+            "p-3 bg-white "
+            "focus:ring-2 focus:ring-blue-400 "
+            "focus:border-blue-400 outline-none"
+        )
+
+        multiple_class = (
+            "w-full border border-gray-200 rounded-2xl "
+            "p-4 bg-gray-50 "
+            "focus:ring-2 focus:ring-blue-400"
+        )
+
+        for name, field in self.fields.items():
+
+            if isinstance(
+                field.widget,
+                (
+                    forms.CheckboxSelectMultiple,
+                    forms.MultipleHiddenInput,
+                )
+            ):
+
+                field.widget.attrs.update({
+                    "class": multiple_class
+                })
+
+            else:
+
+                field.widget.attrs.update({
+                    "class": normal_class
+                })
+
+    def save(
+        self,
+        commit=True
+    ):
+
+        instance = super().save(
+            commit=commit
+        )
+
+        return instance
 
 
 
@@ -77,8 +241,21 @@ from .models import LiveClass
 
 class PublicEventForm(forms.ModelForm):
 
+    subject = forms.ModelMultipleChoiceField(
+        queryset=Subject.objects.none(),
+        required=False,
+        widget=forms.CheckboxSelectMultiple()
+    )
+
+    class_room = forms.ModelMultipleChoiceField(
+        queryset=SchoolClass.objects.none(),
+        required=False,
+        widget=forms.CheckboxSelectMultiple()
+    )
+
     class Meta:
         model = LiveClass
+
         fields = [
             "title",
             "event_description",
@@ -91,6 +268,7 @@ class PublicEventForm(forms.ModelForm):
         ]
 
         widgets = {
+
             "title": forms.TextInput(
                 attrs={
                     "class": "w-full rounded-lg border-gray-300",
@@ -103,18 +281,6 @@ class PublicEventForm(forms.ModelForm):
                     "class": "w-full rounded-lg border-gray-300",
                     "rows": 4,
                     "placeholder": "Describe the event",
-                }
-            ),
-
-            "subject": forms.Select(
-                attrs={
-                    "class": "w-full rounded-lg border-gray-300",
-                }
-            ),
-
-            "class_room": forms.Select(
-                attrs={
-                    "class": "w-full rounded-lg border-gray-300",
                 }
             ),
 
@@ -147,7 +313,13 @@ class PublicEventForm(forms.ModelForm):
             ),
         }
 
-    def __init__(self, *args, school=None, user=None, **kwargs):
+    def __init__(
+        self,
+        *args,
+        school=None,
+        user=None,
+        **kwargs
+    ):
 
         super().__init__(*args, **kwargs)
 
@@ -155,30 +327,33 @@ class PublicEventForm(forms.ModelForm):
         self.user = user
 
         # ------------------------------------------------------
-        # LIMIT CLASSROOMS TO THIS SCHOOL
+        # LIMIT TO THIS SCHOOL
         # ------------------------------------------------------
 
         if school is not None:
+
             self.fields["class_room"].queryset = (
-                self.fields["class_room"].queryset.filter(
+                SchoolClass.objects.filter(
                     school=school
                 )
             )
 
             self.fields["subject"].queryset = (
-                self.fields["subject"].queryset.filter(
+                Subject.objects.filter(
                     school=school
                 )
             )
 
-               
+        # ------------------------------------------------------
+        # EDITING
+        # ------------------------------------------------------
 
-        # ------------------------------------------------------
-        # TEACHER IS NOT PART OF THE FORM
-        #
-        # For a teacher creating the event, the view will use
-        # that teacher automatically.
-        #
-        # For school admin, we will handle teacher selection
-        # separately.
-        # ------------------------------------------------------
+        if self.instance.pk:
+
+            self.fields["subject"].initial = (
+                self.instance.subject.all()
+            )
+
+            self.fields["class_room"].initial = (
+                self.instance.class_room.all()
+            )

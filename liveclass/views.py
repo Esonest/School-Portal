@@ -89,12 +89,12 @@ def liveclass_list(request):
     LiveClass.objects.filter(
         start_time__lte=now,
         end_time__gte=now,
-        status="scheduled"
+        status="upcoming"
     ).update(status="live")
 
     LiveClass.objects.filter(
         end_time__lt=now,
-        status__in=["scheduled", "live"]
+        status__in=["upcoming", "live"]
     ).update(status="ended")
 
     # ===============================
@@ -102,58 +102,104 @@ def liveclass_list(request):
     # ===============================
     if getattr(user, "is_superadmin", False):
         classes = LiveClass.objects.all()
+
     else:
-        classes = LiveClass.objects.filter(school=school)
+        classes = LiveClass.objects.filter(
+            school=school
+        )
 
-        # Teacher sees only their own classes
+        # ===============================
+        # TEACHER
+        # ===============================
         if getattr(user, "is_teacher_user", False):
-            classes = classes.filter(teacher=user.teacher_profile)
 
-        # Student sees only their own class
-        elif getattr(user, "is_student_user", False):
-            student_class = getattr(user.student_profile, "school_class", None)
-            if student_class:
-                classes = classes.filter(class_room=student_class)
+            teacher_profile = getattr(
+                user,
+                "teacher_profile",
+                None
+            )
+
+            if teacher_profile:
+                classes = classes.filter(
+                    teacher=teacher_profile
+                )
             else:
                 classes = classes.none()
 
-    # Annotate attendance and student counts
+        # ===============================
+        # STUDENT
+        # ===============================
+        elif getattr(user, "is_student_user", False):
+
+            student_profile = getattr(
+                user,
+                "student_profile",
+                None
+            )
+
+            student_class = getattr(
+                student_profile,
+                "school_class",
+                None
+            )
+
+            if student_class:
+                classes = classes.filter(
+                    class_room=student_class
+                )
+            else:
+                classes = classes.none()
+
+    # ===============================
+    # ATTENDANCE / STUDENT COUNTS
+    # ===============================
     classes = classes.annotate(
-        attendance_count=Count('attendances__student', distinct=True),
-        student_count=Count("class_room__students", distinct=True)
-    ).select_related(
-        "teacher",
-        "subject",
-        "class_room"
+        attendance_count=Count(
+            "attendances__student",
+            distinct=True
+        ),
+        student_count=Count(
+            "class_room__students",
+            distinct=True
+        )
     ).order_by("-start_time")
 
-    # Calculate attendance percent safely
+    # ===============================
+    # CALCULATE ATTENDANCE PERCENT
+    # ===============================
     for cls in classes:
         cls.attendance_percent = (
             (cls.attendance_count / cls.student_count) * 100
-            if cls.student_count > 0 else 0
+            if cls.student_count > 0
+            else 0
         )
 
     # ===============================
     # PASS ROLES TO TEMPLATE
     # ===============================
     roles = []
+
     if getattr(user, "is_teacher_user", False):
         roles.append("teacher")
+
     if getattr(user, "is_student_user", False):
         roles.append("student")
+
     if getattr(user, "is_schooladmin", False):
         roles.append("schooladmin")
+
     if getattr(user, "is_superadmin", False):
         roles.append("superadmin")
 
-    return render(request, "liveclass/list.html", {
-        "classes": classes,
-        "roles": roles,
-        "now": now
-    })
-
-
+    return render(
+        request,
+        "liveclass/list.html",
+        {
+            "classes": classes,
+            "roles": roles,
+            "now": now
+        }
+    )
 # ========================
 # CREATE
 # ========================
@@ -163,69 +209,164 @@ import os
 @login_required
 def liveclass_create(request):
 
-    if not (request.user.is_teacher_user or request.user.is_schooladmin):
+    if not (
+        request.user.is_teacher_user
+        or request.user.is_schooladmin
+    ):
         return HttpResponseForbidden()
 
     school = request.user.school
 
     if request.method == "POST":
-        form = LiveClassForm(request.POST, school=school, user=request.user)
+
+        form = LiveClassForm(
+            request.POST,
+            school=school,
+            user=request.user
+        )
 
         if form.is_valid():
-            live_class = form.save(commit=False)
+
+            live_class = form.save(
+                commit=False
+            )
+
             live_class.school = school
 
-            if request.user.is_teacher_user:
-                live_class.teacher = request.user.teacher_profile
+            # ==================================================
+            # ROOM ID
+            # ==================================================
 
-            # ✅ ASSIGN ROOM ID HERE
-            live_class.room_id = os.getenv("ROOM_ID")
+            live_class.room_id = os.getenv(
+                "ROOM_ID"
+            )
 
             live_class.save()
-            return redirect("liveclass:liveclass_list")
-    else:
-        form = LiveClassForm(school=school, user=request.user)
 
-    return render(request, "liveclass/form.html", {"form": form})
+            # ==================================================
+            # SAVE MANY-TO-MANY RELATIONSHIPS
+            # ==================================================
+
+            form.save_m2m()
+
+            # ==================================================
+            # TEACHER CREATION SAFETY
+            # ==================================================
+
+            if request.user.is_teacher_user:
+
+                teacher_profile = getattr(
+                    request.user,
+                    "teacher_profile",
+                    None
+                )
+
+                if teacher_profile:
+
+                    live_class.teachers.set([
+                        teacher_profile
+                    ])
+
+            # ==================================================
+            # SET CORRECT STATUS
+            # ==================================================
+
+            live_class.update_status()
+
+            return redirect(
+                "liveclass:liveclass_list"
+            )
+
+    else:
+
+        form = LiveClassForm(
+            school=school,
+            user=request.user
+        )
+
+    return render(
+        request,
+        "liveclass/form.html",
+        {
+            "form": form
+        }
+    )
 
 
 
 @login_required
 def liveclass_update(request, pk):
+
     school = request.user.school
 
     live_class = get_object_or_404(
-        LiveClass.objects.select_related("teacher"),
+        LiveClass,
         pk=pk,
         school=school
     )
 
-    # Only teacher-owner OR school admin OR superadmin can edit
+    # ==========================================================
+    # PERMISSION
+    # ==========================================================
+
     if request.user.is_teacher_user:
-        if live_class.teacher.user != request.user:
+
+        if not live_class.teachers.filter(
+            user=request.user
+        ).exists():
             return HttpResponseForbidden()
 
-    elif not (request.user.is_schooladmin or request.user.is_superadmin):
+    elif not (
+        request.user.is_schooladmin
+        or request.user.is_superadmin
+    ):
         return HttpResponseForbidden()
 
+    # ==========================================================
+    # UPDATE
+    # ==========================================================
+
     if request.method == "POST":
+
         form = LiveClassForm(
             request.POST,
             instance=live_class,
             school=school,
             user=request.user
         )
+
         if form.is_valid():
-            form.save()
-            return redirect("liveclass:liveclass_list")
+
+            live_class = form.save()
+
+            # Recalculate status AFTER editing.
+            #
+            # This means:
+            # - future start -> scheduled
+            # - currently running -> live
+            # - past end -> ended
+            #
+            live_class.update_status()
+
+            return redirect(
+                "liveclass:liveclass_list"
+            )
+
     else:
+
         form = LiveClassForm(
             instance=live_class,
             school=school,
             user=request.user
         )
 
-    return render(request, "liveclass/form.html", {"form": form})
+    return render(
+        request,
+        "liveclass/form.html",
+        {
+            "form": form
+        }
+    )
 
 
 @login_required

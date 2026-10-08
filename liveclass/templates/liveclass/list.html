@@ -74,37 +74,60 @@
 
                 <!-- Student -->
                 {% if 'student' in roles %}
-                    {% if cls.status == "live" %}
-                        <a href="/liveclass/{{ cls.id }}/"
-                           class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded">
-                            ▶ Join Class
-                        </a>
-                    {% else %}
-                        <span class="text-gray-400 border px-3 py-1 rounded">
-                            Not Live Yet
-                        </span>
-                    {% endif %}
+                   {% if cls.status == "live" %}
+
+    <a
+        href="/liveclass/{{ cls.id }}/"
+        class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded"
+    >
+        ▶ Join Class
+    </a>
+
+{% elif cls.status == "scheduled" %}
+
+    <span class="text-yellow-600 bg-yellow-50 border border-yellow-200 px-3 py-1 rounded-lg">
+        ⏳ UPCOMING
+    </span>
+
+{% else %}
+
+    <span class="text-gray-400 bg-gray-50 border border-gray-200 px-3 py-1 rounded-lg">
+        ✓ Class Ended
+    </span>
+
+{% endif %}
                 {% endif %}
 
                 <!-- Teacher & School Admin -->
-                {% if 'teacher' in roles or 'schooladmin' in roles %}
+    {% if 'teacher' in roles or 'schooladmin' in roles %}
 
-                    {% if cls.status == "live" %}
-                        <a href="/liveclass/{{ cls.id }}/"
-                           class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded">
-                            ▶ Join / Start
-                        </a>
+    {% if cls.status == "live" %}
 
-                    {% elif cls.status == "upcoming" or cls.status == "scheduled" %}
-                        <a href="{% url 'liveclass:liveclass_start' cls.id %}"
-                           class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded">
-                            ⏯ Start Class
-                        </a>
-                    {% else %}
-                        <span class="text-gray-400 border px-3 py-1 rounded">
-                            Ended
-                        </span>
-                    {% endif %}
+        <a
+            href="/liveclass/{{ cls.id }}/"
+            class="bg-green-500 hover:bg-green-600 text-white px-3 py-1 rounded"
+        >
+            ▶ Join / Start
+        </a>
+
+    {% elif cls.status == "upcoming" %}
+
+        <a
+            href="{% url 'liveclass:liveclass_start' cls.id %}"
+            class="bg-yellow-500 hover:bg-yellow-600 text-white px-3 py-1 rounded"
+        >
+            ⏳ UPCOMING
+        </a>
+
+    {% else %}
+
+        <span class="text-gray-400 border px-3 py-1 rounded">
+            ✓ Ended
+        </span>
+
+    {% endif %}
+
+
 
                     <a href="{% url 'liveclass:attendance_dashboard' cls.id %}"
                        class="bg-indigo-500 hover:bg-indigo-600 text-white px-3 py-1 rounded">
