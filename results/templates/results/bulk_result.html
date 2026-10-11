@@ -179,8 +179,10 @@
           <th class="border border-black p-1 text-center">Class Avg</th>
           <th class="border border-black p-1 text-center">Grade</th>
           <th class="border border-black p-1 text-center">Grade Interpretation</th>
-          <th class="border border-black p-1 text-center">Teacher</th>
-        </tr>
+          {% if show_teacher_on_result %}
+  <th class="border border-black p-1 text-center">Teacher</th>
+{% endif %}
+          
       </thead>
       <tbody>
         {% for s in r.scores %}
@@ -194,7 +196,11 @@
           <td class="border border-black p-1 text-center">{{ s.class_average }}</td>
           <td class="border border-black p-1 text-center">{{ s.grade }}</td>
           <td class="border border-black p-1 text-center">{{ s.grade_interpretation }}</td>
-          <td class="border border-black p-1 text-center">{{ s.teacher }}</td>
+
+          {% if show_teacher_on_result %}
+  <td class="border border-black p-1 text-center">{{ s.teacher }}</td>
+{% endif %}
+          
         </tr>
         {% endfor %}
       </tbody>

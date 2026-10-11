@@ -12,7 +12,11 @@ class SchoolClass(models.Model):
         on_delete=models.CASCADE,
         related_name="classes"
     )
-
+    show_teacher_on_result = models.BooleanField(
+        default=True,
+        verbose_name="Show subject teacher names on result sheets",
+        help_text="Controls whether subject teacher names appear on results for this class."
+    )
     class_teacher = models.ForeignKey(
         'accounts.Teacher',
         on_delete=models.SET_NULL,

@@ -7,31 +7,31 @@
 
 <script src="https://cdn.tailwindcss.com"></script>
 
+
 <style>
-
-@media print {
-    body {
-        background: white;
-    }
-    .no-print {
-        display: none;
-    }
-}
-
-/* PAGE FRAME */
+/* SCREEN DISPLAY */
 .page-frame {
     padding: 18px;
     border-radius: 35px;
-    background: linear-gradient(135deg, #6366f1, #ec4899, #10b981, #f59e0b);
+    background: linear-gradient(
+        135deg,
+        #6366f1,
+        #ec4899,
+        #10b981,
+        #f59e0b
+    );
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
 }
 
 .page-inner {
     background: #f9fafb;
     border-radius: 28px;
     padding: 30px;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
 }
 
-/* CARD WATERMARK */
 .card-watermark {
     position: absolute;
     inset: 0;
@@ -42,7 +42,90 @@
     z-index: 0;
 }
 
+/* PRESERVE COLOURS AND LAYOUT WHEN PRINTING */
+@media print {
+    @page {
+        size: A4;
+        margin: 10mm;
+    }
+
+    html,
+    body {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: white !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    *,
+    *::before,
+    *::after {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        box-sizing: border-box;
+    }
+
+    /* Hide buttons and other non-card controls */
+    .no-print {
+        display: none !important;
+    }
+
+    /* Remove the decorative outer page frame */
+    .page-frame {
+        width: 100% !important;
+        max-width: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+    }
+
+    .page-inner {
+        padding: 0 !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+    }
+
+    /* Preserve card dimensions, colours and alignment */
+    .id-card {
+        display: block !important;
+        position: relative !important;
+        width: 340px !important;
+        min-width: 340px !important;
+        max-width: 340px !important;
+        margin: 0 auto !important;
+        overflow: hidden !important;
+        border-radius: 24px !important;
+        background: #ffffff !important;
+        box-shadow: 0 0 0 1px #e5e7eb !important;
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+    }
+
+    /* Avoid splitting the card across printed pages */
+    .id-card,
+    .id-card * {
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+    }
+
+    /* Keep the logo, photo and QR code at their screen sizes */
+    .id-card img {
+        max-width: none;
+    }
+
+    /* Do not print empty space reserved for the button */
+    .no-print {
+        visibility: hidden !important;
+        height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+}
 </style>
+
 
 </head>
 
@@ -55,7 +138,7 @@
 <!-- CARD WRAPPER -->
 <div class="flex justify-center">
 
-<div class="relative w-[340px] bg-white rounded-3xl overflow-hidden shadow-2xl border border-gray-200">
+<div class="id-card relative w-[340px] bg-white rounded-3xl overflow-hidden shadow-2xl border border-gray-200">
 
     <!-- WATERMARK -->
     {% if school.logo %}

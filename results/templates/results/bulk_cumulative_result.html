@@ -167,7 +167,9 @@
         {% endfor %}
         <th rowspan="2" class="border border-black p-1">Average</th>
         <th rowspan="2" class="border border-black p-1">Grade</th>
-        <th rowspan="2" class="border border-black p-1">Teacher</th>
+       {% if r.show_teacher_on_result %}
+    <th rowspan="2" class="border border-black p-1">Teacher</th>
+{% endif %}
       </tr>
 
       <tr class="bg-gray-100">
@@ -201,11 +203,13 @@
   <td class="border border-black p-1 font-semibold">{{ data.Average|floatformat:2 }}</td>
   <td class="border border-black p-1 font-semibold">{{ data.AverageGrade }}</td>
 
-  <td class="border border-black p-1">
-    {% with t=data|get_item:r.terms.0 %}
-      {{ t.teacher }}
-    {% endwith %}
-  </td>
+ {% if r.show_teacher_on_result %}
+    <td class="border border-black p-1">
+        {% with t=data|get_item:r.terms.0 %}
+            {{ t.teacher }}
+        {% endwith %}
+    </td>
+{% endif %}
 </tr>
 {% endfor %}
 <tr class="bg-gray-200 font-semibold">
@@ -225,7 +229,8 @@
     {{ r.overall_avg_grade }}
   </td>
 
-  <td class="border border-black p-1 text-left text-xs">
+ <td class="border border-black p-1 text-left text-xs"
+    {% if not r.show_teacher_on_result %}colspan="1"{% endif %}>
     <div>Total: {{ r.overall_total }}</div>
     <div>Best: {{ r.best_subject }}</div>
     <div>Weak: {{ r.weak_subject }}</div>

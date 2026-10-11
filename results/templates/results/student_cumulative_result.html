@@ -170,7 +170,9 @@
         {% endfor %}
         <th rowspan="2" class="border border-black p-1">Average</th>
         <th rowspan="2" class="border border-black p-1">Grade</th>
-        <th rowspan="2" class="border border-black p-1">Teacher</th>
+        {% if show_teacher_on_result %}
+    <th rowspan="2" class="border border-black p-1">Teacher</th>
+{% endif %}
       </tr>
 
       <tr class="bg-gray-100">
@@ -203,11 +205,13 @@
 
         <td class="border border-black p-1 font-semibold">{{ data.Average|floatformat:2 }}</td>
         <td class="border border-black p-1 font-semibold">{{ data.AverageGrade }}</td>
-        <td class="border border-black p-1">
-          {% with tdata=data|get_item:terms.0 %}
+       {% if show_teacher_on_result %}
+    <td class="border border-black p-1">
+        {% with tdata=data|get_item:terms.0 %}
             {{ tdata.teacher }}
-          {% endwith %}
-        </td>
+        {% endwith %}
+    </td>
+{% endif %}
       </tr>
       {% endfor %}
 

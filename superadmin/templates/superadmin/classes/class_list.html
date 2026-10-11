@@ -1,3 +1,4 @@
+
 {% extends "accounts/base.html" %}
 {% block content %}
 
@@ -6,52 +7,99 @@
     <div class="flex justify-between items-center mb-4">
         <h2 class="text-2xl font-bold">School Classes</h2>
 
-        <a href="{% url 'superadmin:class_create' %}" 
+        <a href="{% url 'superadmin:class_create' %}"
            class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
             + Add Class
         </a>
     </div>
 
-    <table class="w-full border rounded-xl">
-        <thead class="bg-gray-200 text-left">
-            <tr>
-                <th class="p-3">Name</th>
-                <th class="p-3">School</th>
-                <th class="p-3">Class Teacher</th>
-                <th class="p-3">Actions</th>
-            </tr>
-        </thead>
+    <div class="overflow-x-auto">
+        <table class="w-full border rounded-xl">
+            <thead class="bg-gray-200 text-left">
+                <tr>
+                    <th class="p-3">Name</th>
+                    <th class="p-3">School</th>
+                    <th class="p-3">Class Teacher</th>
+                    <th class="p-3">Teacher Names on Results</th>
+                    <th class="p-3">Actions</th>
+                </tr>
+            </thead>
 
-        <tbody>
-            {% for cls in classes %}
-            <tr class="border-b">
-                <td class="p-3">{{ cls.name }}</td>
-                <td class="p-3">{{ cls.school.name }}</td>
-                <td class="p-3">
-                    {% if cls.class_teacher %}
-                        {{ cls.class_teacher.user.get_full_name }}
-                    {% else %}
-                        <span class="text-gray-400">Not Assigned</span>
-                    {% endif %}
-                </td>
-                <td class="p-3 flex gap-3">
-                    <a href="{% url 'superadmin:class_edit' cls.id %}" 
-                       class="text-blue-600 hover:underline">Edit</a>
+            <tbody>
+                {% for cls in classes %}
+                <tr class="border-b hover:bg-gray-50">
 
-                    <a href="{% url 'superadmin:class_delete' cls.id %}" 
-                       class="text-red-600 hover:underline">Delete</a>
-                </td>
-            </tr>
+                    <td class="p-3">{{ cls.name }}</td>
 
-            {% empty %}
-            <tr>
-                <td colspan="4" class="text-center p-4 text-gray-500">
-                    No classes found
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+                    <td class="p-3">{{ cls.school.name }}</td>
+
+                    <td class="p-3">
+                        {% if cls.class_teacher %}
+                            {{ cls.class_teacher.user.get_full_name }}
+                        {% else %}
+                            <span class="text-gray-400">Not Assigned</span>
+                        {% endif %}
+                    </td>
+
+                    <td class="p-3">
+                        <div class="flex items-center gap-3">
+                            <span
+                                class="relative inline-flex h-6 w-11 shrink-0 rounded-full
+                                transition-colors duration-200
+                                {% if cls.show_teacher_on_result %}
+                                    bg-blue-600
+                                {% else %}
+                                    bg-gray-300
+                                {% endif %}"
+                                role="img"
+                                aria-label="{% if cls.show_teacher_on_result %}Teacher names shown{% else %}Teacher names hidden{% endif %}"
+                            >
+                                <span
+                                    class="absolute top-0.5 left-0.5 h-5 w-5 rounded-full
+                                    bg-white shadow transition-transform duration-200
+                                    {% if cls.show_teacher_on_result %}
+                                        translate-x-5
+                                    {% endif %}"
+                                ></span>
+                            </span>
+
+                            {% if cls.show_teacher_on_result %}
+                                <span class="text-sm font-medium text-blue-700">
+                                    Enabled
+                                </span>
+                            {% else %}
+                                <span class="text-sm font-medium text-gray-500">
+                                    Disabled
+                                </span>
+                            {% endif %}
+                        </div>
+                    </td>
+
+                    <td class="p-3">
+                        <div class="flex gap-3">
+                            <a href="{% url 'superadmin:class_edit' cls.id %}"
+                               class="text-blue-600 hover:underline">
+                                Edit
+                            </a>
+
+                            <a href="{% url 'superadmin:class_delete' cls.id %}"
+                               class="text-red-600 hover:underline">
+                                Delete
+                            </a>
+                        </div>
+                    </td>
+
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="5" class="text-center p-4 text-gray-500">
+                        No classes found
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
 
 </div>
 

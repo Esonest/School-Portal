@@ -332,24 +332,61 @@ class TeacherImportForm(forms.Form):
 
 
 
+
 class SchoolClassForm(forms.ModelForm):
 
     class Meta:
         model = SchoolClass
-        fields = ["name", "school"]
+        fields = [
+            "name",
+            "school",
+            "class_teacher",
+            "show_teacher_on_result",
+        ]
 
         widgets = {
             "name": forms.TextInput(attrs={
                 "class": "form-input w-full border rounded p-2",
                 "placeholder": "Enter class name (e.g., JSS 1A)",
             }),
+
             "school": forms.Select(attrs={
                 "class": "form-select w-full border rounded p-2",
             }),
-        
+
+            "class_teacher": forms.Select(attrs={
+                "class": "form-select w-full border rounded p-2",
+            }),
+
+            "show_teacher_on_result": forms.CheckboxInput(attrs={
+                "class": "sr-only",
+            }),
         }
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
 
+    # No teachers until the school is identified.
+        self.fields["class_teacher"].queryset = Teacher.objects.none()
+
+        school_id = None
+
+        if self.is_bound:
+            school_id = self.data.get(self.add_prefix("school"))
+        elif self.instance and self.instance.pk:
+            school_id = self.instance.school_id
+        else:
+            school_id = self.initial.get("school")
+
+        if hasattr(school_id, "pk"):
+            school_id = school_id.pk
+
+        if school_id:
+            self.fields["class_teacher"].queryset = Teacher.objects.filter(
+                school_id=school_id,
+                user__is_deleted=False,
+                user__is_active=True,
+            ).select_related("user").order_by("user__first_name", "user__last_name")
 
 
 class SubjectForm(forms.ModelForm):

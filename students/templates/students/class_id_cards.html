@@ -7,31 +7,31 @@
 
 <script src="https://cdn.tailwindcss.com"></script>
 
+
 <style>
-
-@media print {
-    body {
-        background: white;
-    }
-    .no-print {
-        display: none;
-    }
-}
-
-/* PAGE WRAPPER */
+/* SCREEN DESIGN */
 .page-frame {
     padding: 18px;
     border-radius: 35px;
-    background: linear-gradient(135deg, #6366f1, #ec4899, #10b981, #f59e0b);
+    background: linear-gradient(
+        135deg,
+        #6366f1,
+        #ec4899,
+        #10b981,
+        #f59e0b
+    );
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
 }
 
 .page-inner {
     background: #f9fafb;
     border-radius: 28px;
     padding: 30px;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
 }
 
-/* CARD WATERMARK FIX */
 .card-watermark {
     position: absolute;
     inset: 0;
@@ -42,7 +42,106 @@
     z-index: 0;
 }
 
+/* PRINT SETTINGS */
+@media print {
+    @page {
+        size: A4;
+        margin: 10mm;
+    }
+
+    html,
+    body {
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #ffffff !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    *,
+    *::before,
+    *::after {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        box-sizing: border-box;
+    }
+
+    /* Hide the print button */
+    .no-print {
+        display: none !important;
+    }
+
+    /* Remove decorative outer frame for printing */
+    .page-frame {
+        width: 100% !important;
+        max-width: none !important;
+        padding: 0 !important;
+        margin: 0 !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+        box-shadow: none !important;
+    }
+
+    .page-inner {
+        padding: 0 !important;
+        border-radius: 0 !important;
+        background: transparent !important;
+    }
+
+    /* Maintain a consistent grid of cards */
+    .cards-grid {
+        display: grid !important;
+        grid-template-columns: repeat(2, 340px) !important;
+        justify-content: center !important;
+        align-items: start !important;
+        gap: 12mm 8mm !important;
+        width: 100% !important;
+    }
+
+    /* Preserve each card's dimensions and appearance */
+    .id-card {
+        position: relative !important;
+        display: block !important;
+        width: 340px !important;
+        min-width: 340px !important;
+        max-width: 340px !important;
+        margin: 0 !important;
+        overflow: hidden !important;
+        border-radius: 24px !important;
+        background: #ffffff !important;
+        box-shadow: 0 0 0 1px #e5e7eb !important;
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+    }
+
+    .id-card,
+    .id-card * {
+        break-inside: avoid !important;
+        page-break-inside: avoid !important;
+    }
+
+    .id-card img {
+        display: inline-block;
+        object-fit: contain;
+    }
+
+    /* Keep the card contents above the watermark */
+    .id-card .card-content {
+        position: relative !important;
+        z-index: 1 !important;
+    }
+}
+
+/* For narrower print areas, use one card per row */
+@media print and (max-width: 750px) {
+    .cards-grid {
+        grid-template-columns: 340px !important;
+    }
+}
 </style>
+
 
 </head>
 
@@ -61,12 +160,12 @@
 </div>
 
 <!-- CARDS GRID -->
-<div class="flex flex-wrap justify-center gap-8">
+<div class="cards-grid flex flex-wrap justify-center gap-8">
 
 {% for card in cards %}
 
 <!-- CARD -->
-<div class="relative w-[340px] bg-white rounded-3xl overflow-hidden shadow-2xl border border-gray-200">
+<div class="id-card relative w-[340px] bg-white rounded-3xl overflow-hidden shadow-2xl border border-gray-200">
 
     <!-- WATERMARK -->
     {% if school.logo %}
@@ -76,7 +175,7 @@
     {% endif %}
 
     <!-- CONTENT -->
-    <div class="relative z-10">
+   <div class="card-content relative z-10">
 
         <!-- HEADER -->
         <div class="bg-gradient-to-r from-{{ school.theme_color }}-600 to-{{ school.theme_color }}-800 text-center p-4 border-b-4 border-white/30">

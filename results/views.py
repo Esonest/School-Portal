@@ -2940,6 +2940,12 @@ def build_student_result_context(student, term, session, exam_class):
     ).filter(Q(ca__gt=0) | Q(exam__gt=0)).select_related("subject", "school")
 
     school = student.school
+    # Use the setting for the student's class in the selected session
+    show_teacher_on_result = getattr(
+        exam_class,
+        "show_teacher_on_result",
+        True
+    )
 
     next_term_begins = get_next_term_begins(
         school=school,
@@ -3163,6 +3169,7 @@ def build_student_result_context(student, term, session, exam_class):
         "selected_term": term,
         "exam_class": exam_class,
         "class_has_ca": class_has_ca,
+        "show_teacher_on_result": show_teacher_on_result,
         "attendance_total": total_days,
         "attendance_present": present_days,
         "attendance_percent": attendance_percent,
@@ -3352,6 +3359,8 @@ from students.models import PromotionHistory
 def build_cumulative_result_context(student, session=None):
 # ---------- USE SESSION_LIST ----------
     school = student.school
+    # Use the setting for the student's class in the selected session
+    
     if not session:
         raise ValueError("Session is required")
 
@@ -3488,6 +3497,11 @@ def build_cumulative_result_context(student, session=None):
         if term_context.get("scores"):
             last_term_context = term_context
             exam_class = term_context["exam_class"]
+            show_teacher_on_result = getattr(
+                exam_class,
+                "show_teacher_on_result",
+                True
+            )
             class_size_at_session = term_context["class_size"]
             position = term_context["position"]
 
@@ -3665,6 +3679,7 @@ def build_cumulative_result_context(student, session=None):
         "show_ca": show_ca,
         "promotion_history": promotion_history,
         "exam_class": exam_class,
+        "show_teacher_on_result": show_teacher_on_result,
         "is_cumulative": True, 
         "attendance_map": attendance_map,
         "attendance_overall_total": attendance_overall_total,

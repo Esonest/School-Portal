@@ -105,7 +105,10 @@
                 <th>Exam ({{ term }})</th>
                 <th>Total ({{ term }})</th>
                 <th>Grade ({{ term }})</th>
-                <th>Teacher ({{ term }})</th>
+                 {% if show_teacher_on_result %}
+             <th>Teacher ({{ term }})</th>
+        {% endif %}
+               
               {% endfor %}
               <th>Average</th>
               <th>Grade</th>
@@ -124,6 +127,7 @@
           {% if is_cumulative %}
             {% for subj, data in subjects.items %}
               <tr>
+                
                 <td>{{ subj }}</td>
                 {% for term in terms %}
                   {% with term_data=data|dict_get:term %}
@@ -131,7 +135,9 @@
                     <td>{{ term_data.exam|default:"0" }}</td>
                     <td>{{ term_data.total|default:"0" }}</td>
                     <td>{{ term_data.grade|default:"N/A" }}</td>
-                    <td>{{ term_data.teacher|default:"N/A" }}</td>
+                     {% if show_teacher_on_result %}
+            <td>{{ term_data.teacher|default:"N/A" }}</td>
+        {% endif %}
                   {% endwith %}
                 {% endfor %}
                 <td>{{ data.Average|floatformat:2 }}</td>

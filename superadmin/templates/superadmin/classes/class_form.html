@@ -18,11 +18,60 @@
                 {{ form.school }}
             </div>
 
-            <div>
-                <label class="font-semibold">Class Teacher</label>
-                {{ form.class_teacher }}
-            </div>
+   <div class="border border-gray-200 rounded-lg p-4 bg-gray-50">
+    <div class="flex items-center justify-between gap-4">
+        <div>
+            <p class="font-semibold text-gray-800">
+                Show teacher names on results
+            </p>
+            <p class="text-sm text-gray-500 mt-1">
+                Enable or hide the Teacher column on this class's result sheets.
+            </p>
         </div>
+
+        <label class="relative inline-flex items-center cursor-pointer shrink-0">
+            {{ form.show_teacher_on_result }}
+
+            <span class="toggle-track relative w-12 h-7 rounded-full transition-colors duration-200">
+                <span class="toggle-thumb absolute top-1 left-1 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200"></span>
+            </span>
+        </label>
+    </div>
+
+    {% if form.show_teacher_on_result.errors %}
+        <p class="text-sm text-red-600 mt-2">
+            {{ form.show_teacher_on_result.errors }}
+        </p>
+    {% endif %}
+</div>
+
+<style>
+    input[name="show_teacher_on_result"] {
+        position: absolute;
+        width: 1px;
+        height: 1px;
+        opacity: 0;
+    }
+
+    .toggle-track {
+        background-color: #9ca3af;
+    }
+
+    input[name="show_teacher_on_result"]:checked + .toggle-track {
+        background-color: #2563eb;
+    }
+
+    input[name="show_teacher_on_result"]:checked
+    + .toggle-track .toggle-thumb {
+        transform: translateX(20px);
+    }
+
+    input[name="show_teacher_on_result"]:focus-visible
+    + .toggle-track {
+        outline: 2px solid #2563eb;
+        outline-offset: 3px;
+    }
+</style>
 
         <div class="flex justify-between mt-6">
             <a href="{% url 'superadmin:class_list'  %}" class="px-4 py-2 bg-gray-200 rounded-lg">
