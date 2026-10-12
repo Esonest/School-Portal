@@ -4333,6 +4333,11 @@ def bulk_class_cumulative_results_view(request, school_id, class_id):
     system = SystemSetting.objects.first()
     current_session = system.current_session if system else None
 
+    grade_legend = GradeSetting.objects.filter(
+        school=school,
+        SchoolClass=selected_class
+    ).order_by("-min_score")
+
     results = []
 
     for student in students:
@@ -4357,8 +4362,9 @@ def bulk_class_cumulative_results_view(request, school_id, class_id):
                 )
                 exam_class = last_promotion.new_class if last_promotion else student.school_class
 
-        # 🚫 Skip if not the selected class
-        if exam_class.id != selected_class.id:
+        
+        # Skip students with no class, or students not in the selected class.
+        if not exam_class or exam_class.id != selected_class.id:
             continue
 
     # Build cumulative result context as before
@@ -4416,10 +4422,7 @@ def bulk_class_cumulative_results_view(request, school_id, class_id):
         ctx["attendance_overall_present"] = attendance_overall_present
         ctx["attendance_overall_percent"] = attendance_overall_percent
 
-        grade_legend = GradeSetting.objects.filter(
-            school=school,
-            SchoolClass=exam_class
-        ).order_by("-min_score") 
+        
 
         results.append(ctx)
 

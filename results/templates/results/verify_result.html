@@ -119,8 +119,10 @@
               <th>Class Avg</th>
               <th>Grade</th>
               <th>Grade Interpretation</th>
+               {% if show_teacher_on_result %}
               <th>Teacher</th>
-            {% endif %}
+        {% endif %}
+                         {% endif %}
           </tr>
         </thead>
         <tbody>
@@ -154,7 +156,9 @@
                 <td>{{ s.class_average }}</td>
                 <td>{{ s.grade }}</td>
                 <td>{{ s.grade_interpretation }}</td>
-                <td>{{ s.teacher }}</td>
+                                 {% if show_teacher_on_result %}
+             <td>{{ s.teacher }}</td>
+        {% endif %}
               </tr>
             {% empty %}
               <tr>
@@ -199,7 +203,7 @@
           <h3 class="font-semibold text-green-700 mb-2">Affective</h3>
           {% if affective %}
             <ul class="space-y-1">
-              {% for attr in "punctuality,cooperation,behavior,attentiveness,perseverance"|split:"," %}
+              {% for attr in "punctuality,cooperation,behaviour,attentiveness,perseverance"|split:"," %}
                 <li class="flex justify-between">
                   <span>{{ attr|capfirst }}</span>
                   <span>{% for i in "12345" %}{% if i|add:"0" <= affective|get_attr:attr %}⭐{% else %}☆{% endif %}{% endfor %}</span>
