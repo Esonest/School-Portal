@@ -1,27 +1,122 @@
 {% extends "accounts/base.html" %}
 
 {% block content %}
-<div class="max-w-7xl mx-auto p-6">
+<<div class="w-full min-w-0 max-w-7xl mx-auto px-2 py-3 sm:px-4 sm:py-6 lg:px-6">
+
+    <style>
+        .lesson-dashboard,
+        .lesson-dashboard * {
+            box-sizing: border-box;
+        }
+
+        .lesson-dashboard {
+            width: 100%;
+            min-width: 0;
+            overflow-wrap: anywhere;
+        }
+
+        .lesson-dashboard .dashboard-card {
+            min-width: 0;
+            width: 100%;
+            max-width: 100%;
+        }
+
+        .lesson-dashboard .note-card {
+            min-width: 0;
+            padding: 12px;
+        }
+
+        .lesson-dashboard .note-actions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            min-width: 0;
+        }
+
+        .lesson-dashboard .note-actions > a,
+        .lesson-dashboard .note-actions > form {
+            min-width: 0;
+            max-width: 100%;
+        }
+
+        .lesson-dashboard .note-actions button {
+            min-height: 40px;
+            white-space: normal;
+        }
+
+        .lesson-dashboard .rejection-form {
+            display: flex;
+            flex: 1 1 100%;
+            flex-wrap: wrap;
+            gap: 8px;
+            min-width: 0;
+        }
+
+        .lesson-dashboard .rejection-form input {
+            flex: 1 1 140px;
+            width: 100%;
+            min-width: 0;
+            max-width: 100%;
+        }
+
+        .lesson-dashboard .rejection-form button {
+            flex: 0 1 auto;
+        }
+
+        .lesson-dashboard h1,
+        .lesson-dashboard h2,
+        .lesson-dashboard h3,
+        .lesson-dashboard p {
+            overflow-wrap: anywhere;
+        }
+
+        @media (max-width: 380px) {
+            .lesson-dashboard .note-card {
+                padding: 10px;
+            }
+
+            .lesson-dashboard .section-heading {
+                padding: 12px;
+            }
+
+            .lesson-dashboard .section-content {
+                padding: 10px;
+            }
+
+            .lesson-dashboard .note-actions > a,
+            .lesson-dashboard .note-actions > form button {
+                font-size: 13px;
+            }
+        }
+    </style>
+
+    <div class="lesson-dashboard">
 
     <!-- Header -->
-    <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-8">
-        <div>
-            <h1 class="text-3xl font-bold text-{{ school.theme_color }}-600">
-                Lesson Notes Dashboard
-            </h1>
-            <p class="text-gray-500 mt-1">
-                Manage and access lesson notes.
-            </p>
-        </div>
+    <!-- Header -->
+<div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-5 sm:mb-8">
 
-        {% if is_teacher or is_school_admin or request.user.is_superadmin %}
-        <a href="{% url 'notes:upload_note' %}"
-           class="mt-4 md:mt-0 px-5 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow transition">
-            + Upload Lesson Note
-        </a>
-        {% endif %}
+    <div class="min-w-0 flex-1">
+        <h1 class="text-2xl sm:text-3xl font-bold text-{{ school.theme_color }}-600 leading-tight">
+            Lesson Notes Dashboard
+        </h1>
+
+        <p class="text-sm sm:text-base text-gray-500 mt-2">
+            Manage and access lesson notes.
+        </p>
     </div>
 
+    {% if is_teacher or is_school_admin or request.user.is_superadmin %}
+    <a href="{% url 'notes:upload_note' %}"
+       class="inline-flex items-center justify-center w-full sm:w-auto
+              min-h-[44px] px-4 py-3
+              bg-indigo-600 hover:bg-indigo-700 text-white
+              text-sm sm:text-base font-medium rounded-xl shadow transition">
+        + Upload Lesson Note
+    </a>
+    {% endif %}
+
+</div>
 
     {% if is_teacher or is_school_admin or request.user.is_superadmin %}
 
@@ -29,10 +124,10 @@
     <!-- Teacher / School Admin -->
     <!-- ========================= -->
 
-    <div class="grid lg:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-6 min-w-0">
 
         <!-- Notes -->
-        <div class="lg:col-span-2 bg-white rounded-2xl shadow border border-gray-200">
+        <div class="dashboard-card lg:col-span-2 bg-white rounded-2xl shadow border border-gray-200">
 
             <div class="border-b px-6 py-4">
                 <h2 class="text-xl font-semibold text-gray-800">
@@ -346,8 +441,8 @@
             {% if note.approval_status != "rejected" %}
 
                 <form method="post"
-                      action="{% url 'notes:reject_note' note.pk %}"
-                      class="inline flex gap-2">
+      action="{% url 'notes:reject_note' note.pk %}"
+      class="rejection-form">
 
                     {% csrf_token %}
 
@@ -441,9 +536,9 @@
 
 
         <!-- Pending -->
-        <div class="bg-white rounded-2xl shadow border border-gray-200">
+        <div class="dashboard-card bg-white rounded-2xl shadow border border-gray-200">
 
-            <div class="border-b px-6 py-4">
+            <div class="section-heading border-b px-3 sm:px-6 py-3 sm:py-4">
                 <h2 class="text-xl font-semibold text-gray-800">
                     Pending Grading
                 </h2>
@@ -507,11 +602,11 @@
                 </h2>
             </div>
 
-            <div class="p-6 space-y-5">
+            <div class="section-content p-3 sm:p-6 space-y-4 sm:space-y-5">
 
                 {% for note in notes %}
 
-                <div class="border rounded-xl p-5 hover:shadow-md transition">
+                <div class="note-card border rounded-xl hover:shadow-md transition">
 
                     <h3 class="font-bold text-lg">
                         {{ note.title }}
@@ -523,7 +618,7 @@
     {{ note.publish_date|date:"M d, Y" }}
 </div>
 
-<div class="flex flex-wrap gap-2 mt-3">
+<div class="note-actions mt-3">
 
     {% if note.is_active %}
         <span class="px-2 py-1 text-xs rounded-full bg-green-100 text-green-700">
@@ -625,4 +720,5 @@
     {% endif %}
 
 </div>
+    </div>
 {% endblock %}

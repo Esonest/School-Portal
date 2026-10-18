@@ -28,6 +28,17 @@ urlpatterns = [
     
     path("webhooks/whatsapp/", views.whatsapp_webhook,name="whatsapp_webhook"),
 
+    path(
+        "api/push/csrf/",
+        views.push_csrf_token,
+        name="push_csrf_token",
+    ),
+
+    path(
+        "api/push/register/",
+        views.register_push_device,
+        name="register_push_device",
+    ),
 
 ]
 

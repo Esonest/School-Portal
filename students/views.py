@@ -872,6 +872,15 @@ from .models import Announcement
 
 from students.services.tasks import process_announcement
 from students.services.async_runner import run_async
+from students.services.firebase_push import send_announcement_push
+import json
+
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from django.middleware.csrf import get_token
+from django.views.decorators.http import require_GET, require_POST
+
+from students.models import DevicePushToken
 
 
 
@@ -901,6 +910,7 @@ def announcement_create(request):
             
 
             run_async(process_announcement, announcement)
+            run_async(send_announcement_push,announcement.pk,)
 
             messages.success(
                 request,
@@ -1212,4 +1222,77 @@ def class_id_cards(
             "school_class": school_class,
             "cards": cards,
         }
-    )    
+    )  
+
+@require_GET
+@login_required
+def push_csrf_token(request):
+    """
+    Return a CSRF token to the authenticated WebView.
+    Django will also set its CSRF cookie when required.
+    """
+
+    return JsonResponse({
+        "csrfToken": get_token(request),
+    })
+
+
+@require_POST
+@login_required
+def register_push_device(request):
+    """
+    Associate the Firebase token with the currently
+    authenticated Django user.
+    """
+
+    if not request.user.is_active:
+        return JsonResponse(
+            {"error": "Account is inactive."},
+            status=403,
+        )
+
+    try:
+        payload = json.loads(
+            request.body.decode("utf-8")
+        )
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return JsonResponse(
+            {"error": "Invalid JSON."},
+            status=400,
+        )
+
+    token = payload.get("token")
+
+    if not isinstance(token, str):
+        return JsonResponse(
+            {"error": "A valid Firebase token is required."},
+            status=400,
+        )
+
+    token = token.strip()
+
+    if not token or len(token) > 4096:
+        return JsonResponse(
+            {"error": "Invalid Firebase token."},
+            status=400,
+        )
+
+    # If the same device previously belonged to another
+    # logged-in user, associate it with the current user.
+    DevicePushToken.objects.update_or_create(
+        token=token,
+        defaults={
+            "user": request.user,
+            "school": getattr(
+                request.user,
+                "school",
+                None,
+            ),
+            "is_active": True,
+        },
+    )
+
+    return JsonResponse({
+        "success": True,
+        "message": "Push device registered.",
+    })      

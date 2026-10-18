@@ -88,6 +88,20 @@
         </button>
       </div>
 
+      <!-- REMEMBER USERNAME ONLY -->
+<div class="flex items-center justify-between text-sm">
+  <label for="rememberUsername"
+         class="flex items-center gap-2 text-gray-300 cursor-pointer">
+    <input
+      type="checkbox"
+      id="rememberUsername"
+      class="rounded border-white/20 bg-black/40 text-indigo-500 focus:ring-indigo-500"
+    >
+    Remember my username
+  </label>
+
+  <span class="text-xs text-gray-500">Password not saved</span>
+</div>
       <p id="capsWarning" class="text-xs text-yellow-300 hidden">⚠️ Caps Lock is ON</p>
 
       <!-- FORGOT -->
@@ -155,6 +169,50 @@ const loginButton = document.getElementById('loginButton');
 const loadingSpinner = document.getElementById('loadingSpinner');
 const buttonText = document.getElementById('buttonText');
 const capsWarning = document.getElementById('capsWarning');
+
+// Remember username only; never store the password.
+const usernameInput = document.getElementById('id_username');
+const rememberUsername = document.getElementById('rememberUsername');
+const savedUsernameKey = 'techcenter_remembered_username';
+
+// Restore the username when the login page opens.
+try {
+  const savedUsername = localStorage.getItem(savedUsernameKey);
+
+  if (savedUsername) {
+    usernameInput.value = savedUsername;
+    rememberUsername.checked = true;
+  }
+} catch (error) {
+  // Login should still work if browser storage is unavailable.
+  console.warn('Username storage is unavailable.');
+}
+
+// Save or remove the username when the user changes the checkbox.
+rememberUsername.addEventListener('change', () => {
+  try {
+    if (rememberUsername.checked) {
+      localStorage.setItem(savedUsernameKey, usernameInput.value.trim());
+    } else {
+      localStorage.removeItem(savedUsernameKey);
+    }
+  } catch (error) {
+    console.warn('Could not update remembered username.');
+  }
+});
+
+// Save only the username when the login form is submitted.
+loginForm.addEventListener('submit', () => {
+  try {
+    if (rememberUsername.checked) {
+      localStorage.setItem(savedUsernameKey, usernameInput.value.trim());
+    } else {
+      localStorage.removeItem(savedUsernameKey);
+    }
+  } catch (error) {
+    console.warn('Could not save username.');
+  }
+});
 
 togglePassword.addEventListener('click', () => {
   passwordInput.type =
