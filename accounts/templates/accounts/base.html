@@ -2,8 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport"
-      content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}TECHCENTER School Portal{% endblock %}</title>
 
     <!-- Tailwind -->
@@ -46,11 +45,10 @@
     <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
 </head>
 
-<body class="flex flex-col min-h-screen min-h-dvh w-full
-             text-gray-800 overflow-x-clip
-             bg-gradient-to-br from-gray-50 via-white to-gray-100
-             dark:from-gray-900 dark:via-gray-800 dark:to-gray-900
-             scroll-smooth">
+<body class="flex flex-col min-h-screen text-gray-800 
+bg-gradient-to-br from-gray-50 via-white to-gray-100 
+dark:from-gray-900 dark:via-gray-800 dark:to-gray-900 
+scroll-smooth">
 
 <!-- FLASH -->
 {% if messages %}
@@ -84,29 +82,26 @@
             {% if user.is_authenticated %}
 
                 <!-- SCHOOL LOGO + NAME -->
-                <div class="flex items-center gap-2 sm:gap-3 min-w-0 flex-1">
+                <div class="flex items-center gap-3 min-w-0 flex-1">
 
-    {% if school and school.logo %}
-        <img src="{{ school.logo.url }}"
-             alt="School logo"
-             class="h-10 w-10 sm:h-12 sm:w-12
-                    shrink-0 rounded-full object-cover border">
-    {% else %}
-        <img src="{% static 'images/techcenter-logo.png' %}"
-             alt="TECHCENTER logo"
-             class="h-10 w-10 sm:h-12 sm:w-12
-                    shrink-0 object-contain">
-    {% endif %}
+                    {% if school and school.logo %}
+                        <img src="{{ school.logo.url }}"
+                             class="h-12 w-12 rounded-full object-cover border">
+                    {% else %}
+                        <img src="{% static 'images/techcenter-logo.png' %}"
+                             class="h-12 w-12 object-contain">
+                    {% endif %}
 
-    <div class="flex-1 min-w-0">
-        <div class="text-xs sm:text-lg md:text-xl lg:text-2xl
-                    font-bold text-white leading-tight
-                    break-words line-clamp-2">
-            {{ school.name|default:"School Portal" }}
-        </div>
+                   <div class="flex-1 min-w-0">
+    <div class="text-sm sm:text-lg md:text-xl lg:text-2xl
+                font-bold text-{{ school.theme_color }}-600
+                leading-tight break-words
+                max-w-[140px] sm:max-w-[220px] md:max-w-none">
+        {{ school.name|default:"School Portal" }}
     </div>
-
 </div>
+
+                </div>
 
                 <!-- DESKTOP LOGOUT -->
                 <div class="hidden md:flex items-center">
@@ -207,14 +202,10 @@
 </nav>
 
 <!-- CONTENT -->
-<main id="main-content"
-      class="flex-grow min-w-0 w-full max-w-7xl mx-auto
-             px-3 sm:px-6 lg:px-8
-             py-4 sm:py-8">
-
+<main class="flex-grow max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
     {% block content %}{% endblock %}
-
 </main>
+
 <!-- FOOTER -->
 <!-- FOOTER -->
 <footer class="bg-slate-950 border-t border-white/10 mt-20">
@@ -233,8 +224,7 @@
                     Empowering education through technology
                 </p>
             </div>
-
-            <!-- CENTER LINKS -->
+      <!-- CENTER LINKS -->
             <div class="flex flex-wrap items-center justify-center gap-4 text-xs sm:text-sm">
 
                 <a href="{% url 'accounts:privacy_policy' %}"
@@ -316,192 +306,12 @@
     from { opacity: 0; }
     to { opacity: 1; }
 }
-
-
-
-/* =====================================================
-   MOBILE AND ANDROID WEBVIEW RESPONSIVENESS
-   ===================================================== */
-
-*,
-*::before,
-*::after {
-    box-sizing: border-box;
-}
-
-html {
-    width: 100%;
-    min-height: 100%;
-    -webkit-text-size-adjust: 100%;
-    text-size-adjust: 100%;
-    scroll-padding-top: 5rem;
-}
-
-body {
-    width: 100%;
-    min-width: 0;
-    margin: 0;
-    overflow-wrap: anywhere;
-    -webkit-overflow-scrolling: touch;
-}
-
-/* Main page must not force a wider screen */
-#main-content {
-    min-width: 0;
-    width: 100%;
-    max-width: 80rem;
-}
-
-/* Prevent media from extending beyond the screen */
-img,
-video,
-iframe,
-canvas,
-svg {
-    max-width: 100%;
-}
-
-img,
-video {
-    height: auto;
-}
-
-/* Keep forms within their containers */
-input,
-select,
-textarea,
-button {
-    max-width: 100%;
-    font-size: 16px;
-}
-
-input,
-select,
-textarea {
-    min-width: 0;
-}
-
-/* Allow wide tables to scroll instead of cutting off the page */
-table {
-    max-width: 100%;
-}
-
-.overflow-x-auto,
-.table-responsive {
-    max-width: 100%;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-}
-
-/* Long text, equations and code must not widen the page */
-pre,
-code {
-    overflow-wrap: anywhere;
-}
-
-pre {
-    max-width: 100%;
-    overflow-x: auto;
-}
-
-mjx-container {
-    max-width: 100%;
-    overflow-x: auto;
-    overflow-y: hidden;
-}
-
-/* Prevent flex and grid children from forcing overflow */
-.flex,
-.grid {
-    min-width: 0;
-}
-
-.flex > *,
-.grid > * {
-    min-width: 0;
-}
-
-/* Mobile navigation */
-nav {
-    max-width: 100%;
-}
-
-#mobile-menu-button {
-    flex-shrink: 0;
-    min-width: 44px;
-    min-height: 44px;
-    color: white;
-    touch-action: manipulation;
-}
-
-#mobile-menu {
-    max-width: 100%;
-    max-height: 75dvh;
-    overflow-y: auto;
-    overscroll-behavior: contain;
-}
-
-.mobile-link {
-    min-height: 44px;
-}
-
-/* Flash notifications should respect display cutouts */
-#flash-container {
-    padding-top: max(1rem, env(safe-area-inset-top));
-}
-
-/* Footer should not force horizontal scrolling */
-footer {
-    width: 100%;
-    min-width: 0;
-}
-
-footer > div {
-    min-width: 0;
-}
-
-/* Small phones */
-@media (max-width: 380px) {
-    #main-content {
-        padding-left: 10px;
-        padding-right: 10px;
-    }
-
-    nav > div {
-        max-width: 100%;
-    }
-
-    footer .flex {
-        gap: 1rem;
-    }
-}
-
-/* Respect devices with bottom safe areas */
-@supports (padding-bottom: env(safe-area-inset-bottom)) {
-    footer > div {
-        padding-bottom: max(2.5rem, env(safe-area-inset-bottom));
-    }
-}
-
 </style>
 
 <!-- MOBILE SCRIPT -->
 <script>
-document.addEventListener("DOMContentLoaded", function () {
-    const menuButton = document.getElementById("mobile-menu-button");
-    const mobileMenu = document.getElementById("mobile-menu");
-
-    if (menuButton && mobileMenu) {
-        menuButton.addEventListener("click", function () {
-            const isHidden = mobileMenu.classList.toggle("hidden");
-
-            menuButton.setAttribute("aria-expanded", String(!isHidden));
-            menuButton.setAttribute(
-                "aria-label",
-                isHidden ? "Open navigation menu" : "Close navigation menu"
-            );
-        });
-    }
+document.getElementById("mobile-menu-button").addEventListener("click", () => {
+    document.getElementById("mobile-menu").classList.toggle("hidden");
 });
 </script>
 
