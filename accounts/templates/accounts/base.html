@@ -369,5 +369,16 @@ resetTimers();
 });
 </script>
 
+
+
+{% if user.is_authenticated %}
+<div
+    id="techcenter-android-user"
+    hidden
+    data-role="{{ user.role|default:''|escape }}"
+    data-school-id="{{ user.school_id|default:''|escape }}"
+></div>
+{% endif %}
+
 </body>
 </html>
