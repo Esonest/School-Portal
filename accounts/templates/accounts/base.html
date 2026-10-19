@@ -316,9 +316,11 @@ document.getElementById("mobile-menu-button").addEventListener("click", () => {
 </script>
 
 <!-- AUTO LOGOUT -->
+
+<!-- AUTO LOGOUT -->
 <script>
-let timeout = 600000;
-let warningTime = 540000;
+let timeout = 600000;       // 10 minutes
+let warningTime = 540000;   // 9 minutes
 
 let logoutTimer;
 let warningTimer;
@@ -327,8 +329,9 @@ function resetTimers() {
     clearTimeout(logoutTimer);
     clearTimeout(warningTimer);
 
+    // No browser alert: automatic logout still happens after 10 minutes.
     warningTimer = setTimeout(() => {
-        alert("You will be logged out in 1 minute due to inactivity.");
+        console.log("Your session is approaching its inactivity timeout.");
     }, warningTime);
 
     logoutTimer = setTimeout(() => {
@@ -336,12 +339,13 @@ function resetTimers() {
     }, timeout);
 }
 
-['click','mousemove','keypress','scroll'].forEach(e => {
-    window.addEventListener(e, resetTimers);
+['click', 'mousemove', 'keypress', 'scroll', 'touchstart'].forEach(eventName => {
+    window.addEventListener(eventName, resetTimers, { passive: true });
 });
 
 resetTimers();
 </script>
+
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
