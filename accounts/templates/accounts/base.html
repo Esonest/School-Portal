@@ -11,6 +11,14 @@
     {% load static %}
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
 
+    <script>
+(function () {
+    if (window.TechcenterBridge) {
+        document.documentElement.classList.add('techcenter-android-app');
+    }
+})();
+</script>
+
     {% block extra_head %}{% endblock %}
     {{ form.media }}
 
@@ -261,6 +269,12 @@ scroll-smooth">
 
 <!-- STYLES -->
 <style>
+
+    /* Hide public website navigation and footer only in the Android app */
+html.techcenter-android-app body > nav,
+html.techcenter-android-app body > footer {
+    display: none !important;
+}
 
     .flash-message {
     transition: opacity .5s ease, transform .5s ease;
