@@ -12,24 +12,27 @@
 </div>
 
 <!-- MAIN WRAPPER -->
-<div class="min-h-screen flex items-center justify-center px-4">
+
+<!-- MAIN WRAPPER -->
+<div class="login-page">
 
   <!-- LOGIN CARD -->
-  <div class="w-full max-w-md p-8 rounded-3xl
-              bg-slate-900/80 backdrop-blur-xl
-              border border-white/10 shadow-2xl text-white">
+  <div class="login-card">
 
     <!-- LOGO -->
-    <div class="flex flex-col items-center mb-6">
-      <img src="{% static 'images/techcenter-logo.png' %}"
-           class="w-20 mb-3 drop-shadow-lg">
-      <h2 class="text-2xl font-bold">TECHCENTER</h2>
-      <p class="text-sm text-gray-400">School Portal Login</p>
+    <div class="login-brand">
+      <img
+        src="{% static 'images/techcenter-logo.png' %}"
+        class="login-logo"
+        alt="TECHCENTER Logo"
+      >
+      <h2 class="login-title">TECHCENTER</h2>
+      <p class="login-subtitle">School Portal Login</p>
     </div>
 
     <!-- MESSAGES -->
     {% if messages %}
-      <div class="mb-4 space-y-2 text-center">
+      <div class="login-messages">
         {% for message in messages %}
           <p class="text-red-300 text-sm">{{ message }}</p>
         {% endfor %}
@@ -41,89 +44,98 @@
     </div>
 
     <!-- ROLE SELECT -->
-    <div class="flex justify-center gap-2 mb-6">
-      <button type="button" class="role-btn active" data-role="student">Student</button>
-      <button type="button" class="role-btn" data-role="teacher">Teacher</button>
-      <button type="button" class="role-btn" data-role="admin">Admin</button>
+    <div class="login-roles">
+      <button type="button" class="role-btn active" data-role="student">
+        Student
+      </button>
+      <button type="button" class="role-btn" data-role="teacher">
+        Teacher
+      </button>
+      <button type="button" class="role-btn" data-role="admin">
+        Admin
+      </button>
     </div>
 
     <input type="hidden" name="role" id="roleInput" value="student">
 
     <!-- FORM -->
-    <form method="post" action="{% url 'accounts:login' %}" id="loginForm" class="space-y-6">
+    <form method="post"
+          action="{% url 'accounts:login' %}"
+          id="loginForm"
+          class="login-form">
+
       {% csrf_token %}
 
       <!-- USERNAME -->
-      <div class="relative">
-        <span class="absolute left-3 top-3 text-gray-400">👤</span>
-       <input
-    type="text"
-    name="username"
-    id="id_username"
-    autocomplete="username"
-    autocapitalize="none"
-    spellcheck="false"
-    required
-    class="w-full pl-10 pr-3 py-3 rounded-xl
-           bg-black/40 border border-white/10 text-white
-           focus:outline-none focus:ring-2 focus:ring-indigo-500">
+      <div class="login-field">
+        <span class="field-icon">👤</span>
+        <input
+          type="text"
+          name="username"
+          id="id_username"
+          placeholder="Username"
+          autocomplete="username"
+          autocapitalize="none"
+          spellcheck="false"
+          required
+        >
       </div>
 
       <!-- PASSWORD -->
-      <div class="relative">
-        <span class="absolute left-3 top-3 text-gray-400">🔒</span>
+      <div class="login-field">
+        <span class="field-icon">🔒</span>
         <input
-    type="password"
-    name="password"
-    id="id_password"
-    autocomplete="current-password"
-    required
-    class="w-full pl-10 pr-10 py-3 rounded-xl
-           bg-black/40 border border-white/10 text-white
-           focus:outline-none focus:ring-2 focus:ring-indigo-500">
+          type="password"
+          name="password"
+          id="id_password"
+          placeholder="Password"
+          autocomplete="current-password"
+          required
+        >
 
-        <button type="button" id="togglePassword"
-                class="absolute right-3 top-3 text-gray-400 hover:text-white">
+        <button type="button"
+                id="togglePassword"
+                class="password-toggle"
+                aria-label="Show password">
           👁️
         </button>
       </div>
 
-      <!-- REMEMBER USERNAME ONLY -->
-<div class="flex items-center justify-between text-sm">
-  <label for="rememberUsername"
-         class="flex items-center gap-2 text-gray-300 cursor-pointer">
-    <input
-      type="checkbox"
-      id="rememberUsername"
-      class="rounded border-white/20 bg-black/40 text-indigo-500 focus:ring-indigo-500"
-    >
-    Remember my username
-  </label>
+      <!-- REMEMBER USERNAME -->
+      <div class="remember-row">
+        <label for="rememberUsername" class="remember-label">
+          <input
+            type="checkbox"
+            id="rememberUsername"
+          >
+          <span>Remember username</span>
+        </label>
 
-  <span class="text-xs text-gray-500">Password not saved</span>
-</div>
-      <p id="capsWarning" class="text-xs text-yellow-300 hidden">⚠️ Caps Lock is ON</p>
-
-      <!-- FORGOT -->
-      <div class="text-right">
-        <a href="#" class="text-sm text-indigo-300 hover:underline">
-          Forgot Password?
-        </a>
+        <span class="password-note">Password not saved</span>
       </div>
 
-      <!-- BUTTON -->
-      <button type="submit" id="loginButton"
-              class="w-full py-3 rounded-xl font-semibold
-                     bg-gradient-to-r from-indigo-600 to-purple-600
-                     hover:from-indigo-500 hover:to-purple-500
-                     transition transform hover:scale-[1.02]
-                     flex items-center justify-center gap-2">
+      <p id="capsWarning" class="text-xs text-yellow-300 hidden">
+        ⚠️ Caps Lock is ON
+      </p>
 
+      <!-- FORGOT PASSWORD -->
+      <div class="forgot-row">
+        <a href="#" class="forgot-link">Forgot Password?</a>
+      </div>
+
+      <!-- SIGN IN -->
+      <button type="submit" id="loginButton" class="login-submit">
         <span id="buttonText">Sign In</span>
 
-        <svg id="loadingSpinner" class="hidden animate-spin h-5 w-5 text-white"
-             xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-          <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+        <svg id="loadingSpinner"
+             class="hidden animate-spin h-5 w-5 text-white"
+             xmlns="http://www.w3.org/2000/svg"
+             fill="none"
+             viewBox="0 0 24 24">
+          <circle cx="12" cy="12" r="10"
+                  stroke="currentColor"
+                  stroke-width="4">
+          </circle>
         </svg>
       </button>
 
@@ -131,23 +143,315 @@
   </div>
 </div>
 
+
 <!-- ROLE BUTTON STYLE -->
+
 <style>
+/* LOGIN PAGE */
+.login-page {
+    min-height: 100vh;
+    min-height: 100dvh;
+    box-sizing: border-box;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 16px;
+    color: white;
+}
+
+/* LOGIN CARD */
+.login-card {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 390px;
+    padding: 24px;
+    border-radius: 22px;
+    background: rgba(15, 23, 42, 0.90);
+    border: 1px solid rgba(255,255,255,.12);
+    box-shadow: 0 18px 45px rgba(0,0,0,.30);
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+}
+
+/* BRAND */
+.login-brand {
+    text-align: center;
+    margin-bottom: 20px;
+}
+
+.login-logo {
+    display: block;
+    width: 62px;
+    height: 62px;
+    object-fit: contain;
+    margin: 0 auto 7px;
+    filter: drop-shadow(0 4px 10px rgba(0,0,0,.25));
+}
+
+.login-title {
+    margin: 0;
+    font-size: 22px;
+    line-height: 1.25;
+    font-weight: 800;
+    letter-spacing: .5px;
+}
+
+.login-subtitle {
+    margin: 4px 0 0;
+    font-size: 12px;
+    color: #9ca3af;
+}
+
+.login-messages {
+    margin-bottom: 12px;
+    text-align: center;
+}
+
+/* ROLE SELECTOR */
+.login-roles {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 7px;
+    margin-bottom: 16px;
+}
+
 .role-btn {
-  padding: 8px 14px;
-  border-radius: 10px;
-  background: rgba(255,255,255,0.05);
-  color: white;
-  cursor: pointer;
-  transition: 0.3s;
-  border: 1px solid rgba(255,255,255,0.1);
+    min-width: 0;
+    padding: 9px 5px;
+    border-radius: 9px;
+    background: rgba(255,255,255,.05);
+    color: white;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    border: 1px solid rgba(255,255,255,.12);
+    transition: background .2s ease;
 }
 
 .role-btn.active {
-  background: linear-gradient(to right, #6366f1, #8b5cf6);
-  border-color: transparent;
+    background: linear-gradient(110deg, #4f46e5, #9333ea);
+    border-color: transparent;
+}
+
+/* FORM */
+.login-form {
+    display: flex;
+    flex-direction: column;
+    gap: 13px;
+}
+
+.login-field {
+    position: relative;
+    width: 100%;
+    min-width: 0;
+}
+
+.field-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 14px;
+    pointer-events: none;
+}
+
+.login-field input {
+    box-sizing: border-box;
+    display: block;
+    width: 100%;
+    min-width: 0;
+    height: 44px;
+    padding: 10px 40px 10px 38px;
+    border-radius: 11px;
+    background: rgba(0,0,0,.35);
+    border: 1px solid rgba(255,255,255,.12);
+    color: white;
+    font-size: 14px;
+    outline: none;
+}
+
+.login-field input:focus {
+    border-color: #818cf8;
+    box-shadow: 0 0 0 2px rgba(99,102,241,.20);
+}
+
+.login-field input::placeholder {
+    color: #9ca3af;
+    opacity: 1;
+}
+
+.password-toggle {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    padding: 5px;
+    color: #9ca3af;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    font-size: 15px;
+}
+
+/* REMEMBER USERNAME */
+.remember-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.remember-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 7px;
+    color: #d1d5db;
+    font-size: 12px;
+    cursor: pointer;
+}
+
+.remember-label input {
+    width: 15px;
+    height: 15px;
+    accent-color: #6366f1;
+}
+
+.password-note {
+    font-size: 10px;
+    color: #9ca3af;
+}
+
+.forgot-row {
+    text-align: right;
+}
+
+.forgot-link {
+    color: #c7d2fe;
+    font-size: 12px;
+    text-decoration: none;
+}
+
+.forgot-link:hover {
+    text-decoration: underline;
+}
+
+/* SIGN IN BUTTON */
+.login-submit {
+    width: 100%;
+    min-height: 44px;
+    padding: 10px 14px;
+    border: none;
+    border-radius: 11px;
+    background: linear-gradient(110deg, #4f46e5, #9333ea);
+    color: white;
+    font-size: 14px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 9px;
+    cursor: pointer;
+}
+
+.login-submit:disabled {
+    opacity: .75;
+    cursor: wait;
+}
+
+/* SMALL ANDROID SCREENS */
+@media (max-width: 480px) {
+    .login-page {
+        padding: 10px;
+    }
+
+    .login-card {
+        max-width: 360px;
+        padding: 19px 17px;
+        border-radius: 18px;
+    }
+
+    .login-brand {
+        margin-bottom: 15px;
+    }
+
+    .login-logo {
+        width: 52px;
+        height: 52px;
+        margin-bottom: 5px;
+    }
+
+    .login-title {
+        font-size: 20px;
+    }
+
+    .login-roles {
+        margin-bottom: 13px;
+    }
+
+    .role-btn {
+        padding: 8px 4px;
+    }
+
+    .login-form {
+        gap: 11px;
+    }
+
+    .login-field input {
+        height: 42px;
+        font-size: 14px;
+    }
+}
+
+/* SHORT PHONE SCREENS: avoid unnecessary vertical stretching */
+@media (max-height: 700px) {
+    .login-page {
+        align-items: flex-start;
+        padding-top: 8px;
+        padding-bottom: 8px;
+    }
+
+    .login-card {
+        padding-top: 13px;
+        padding-bottom: 13px;
+    }
+
+    .login-brand {
+        margin-bottom: 10px;
+    }
+
+    .login-logo {
+        width: 40px;
+        height: 40px;
+        margin-bottom: 3px;
+    }
+
+    .login-title {
+        font-size: 19px;
+    }
+
+    .login-subtitle {
+        margin-top: 2px;
+    }
+
+    .login-roles {
+        margin-bottom: 10px;
+    }
+
+    .login-form {
+        gap: 9px;
+    }
+}
+
+/* ACCESSIBILITY: REDUCE ANIMATION WHEN REQUESTED */
+@media (prefers-reduced-motion: reduce) {
+    .role-btn {
+        transition: none;
+    }
 }
 </style>
+
 
 <!-- SCRIPT -->
 <script>
@@ -214,10 +518,18 @@ loginForm.addEventListener('submit', () => {
   }
 });
 
+
 togglePassword.addEventListener('click', () => {
-  passwordInput.type =
-    passwordInput.type === 'password' ? 'text' : 'password';
+  const showing = passwordInput.type === 'password';
+
+  passwordInput.type = showing ? 'text' : 'password';
+
+  togglePassword.setAttribute(
+    'aria-label',
+    showing ? 'Hide password' : 'Show password'
+  );
 });
+
 
 loginForm.addEventListener('submit', () => {
   loadingSpinner.classList.remove('hidden');

@@ -342,11 +342,104 @@
 
 /* LINKS */
 
-.sidebar-menu{
-    display:flex;
-    flex-direction:column;
-    gap:10px;
+
+/* COMPACT SIDEBAR MENU */
+.sidebar-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
 }
+
+/* Smaller menu items */
+.sidebar-link {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 9px 11px;
+    border-radius: 10px;
+    text-decoration: none;
+    color: #e5e7eb;
+    font-size: 13px;
+    font-weight: 600;
+    line-height: 1.35;
+    transition: background .2s ease;
+}
+
+/* Smaller badges */
+.sidebar-badge {
+    min-width: 23px;
+    padding: 2px 7px;
+    border-radius: 999px;
+    background: #4338ca;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    text-align: center;
+}
+
+/* More Actions button */
+.sidebar-more-btn {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 10px 12px;
+    margin-top: 5px;
+    border: 1px solid rgba(255,255,255,.12);
+    border-radius: 10px;
+    background: rgba(99,102,241,.16);
+    color: #c7d2fe;
+    font-size: 12px;
+    font-weight: 700;
+    cursor: pointer;
+    transition: background .2s ease;
+}
+
+.sidebar-more-btn:hover {
+    background: rgba(99,102,241,.30);
+}
+
+.sidebar-more-btn .more-arrow {
+    transition: transform .25s ease;
+}
+
+.sidebar-more-btn[aria-expanded="true"] .more-arrow {
+    transform: rotate(180deg);
+}
+
+/* Hidden menu actions */
+.sidebar-extra {
+    display: none;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.sidebar-extra.show {
+    display: flex;
+}
+
+/* Compact sidebar */
+.sidebar {
+    width: 250px;
+    padding: 16px;
+}
+
+@media (max-width: 1024px) {
+    .sidebar {
+        width: 225px;
+        padding: 14px;
+    }
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        width: 270px;
+        padding: 16px;
+    }
+}
+
 
 .sidebar-link{
     display:flex;
@@ -620,217 +713,154 @@
      {{ school.name }}
 </div>
 
+
 <div class="sidebar-menu">
 
-<a href="{% url 'school_admin:school_admin_dashboard' school.id %}" 
-   class="sidebar-link active">
-    🏠 Dashboard
-</a>
+    <!-- ALWAYS VISIBLE -->
+    <a href="{% url 'school_admin:school_admin_dashboard' school.id %}"
+       class="sidebar-link active">
+        <span>🏠 Dashboard</span>
+    </a>
 
-<!-- 1 -->
-<a href="{% url 'school_admin:admin_student_list' school.id %}" class="sidebar-link">
+    <a href="{% url 'school_admin:admin_student_list' school.id %}"
+       class="sidebar-link">
+        <span>👨‍🎓 Students</span>
+        <span class="sidebar-badge">{{ student_count }}</span>
+    </a>
 
-<span>
-👨‍🎓 Students
-</span>
+    <a href="{% url 'school_admin:teacher_list' school.id %}"
+       class="sidebar-link">
+        <span>👨‍🏫 Teachers</span>
+        <span class="sidebar-badge">{{ teacher_count }}</span>
+    </a>
 
-<span class="sidebar-badge">
-{{ student_count }}
-</span>
+    <a href="{% url 'school_admin:class_list' school.id %}"
+       class="sidebar-link">
+        <span>🏫 Classes</span>
+        <span class="sidebar-badge">{{ class_count }}</span>
+    </a>
 
-</a>
+    <a href="{% url 'school_admin:admin_attendance_list' school.id %}"
+       class="sidebar-link">
+        <span>📊 Attendance</span>
+        <span class="sidebar-badge">{{ attendance_count }}</span>
+    </a>
 
+    <a href="{% url 'school_admin:admin_dashboard' school.id %}"
+       class="sidebar-link">
+        <span>💻 CBT</span>
+        <span class="sidebar-badge">{{ cbt_count }}</span>
+    </a>
 
+    <!-- MORE ACTIONS: HIDDEN UNTIL CLICKED -->
+    <div id="sidebarExtra" class="sidebar-extra">
 
-<!-- 2 -->
-<a href="{% url 'school_admin:teacher_list' school.id %}" class="sidebar-link">
+        <a href="{% url 'school_admin:class_subject_teacher_list' school.id %}"
+           class="sidebar-link">
+            <span>📘 Subject Teachers</span>
+            <span class="sidebar-badge">{{ class_subject_teacher_count }}</span>
+        </a>
 
-<span>
-👨‍🏫 Teachers
-</span>
+        <a href="{% url 'school_admin:admin-class-list' %}"
+           class="sidebar-link">
+            <span>📋 Class List</span>
+        </a>
 
-<span class="sidebar-badge">
-{{ teacher_count }}
-</span>
+        <a href="{% url 'school_admin:subject_list' school.id %}"
+           class="sidebar-link">
+            <span>📚 Subjects</span>
+            <span class="sidebar-badge">{{ subject_count }}</span>
+        </a>
 
-</a>
+        <a href="{% url 'school_admin:accountant_list' school.id %}"
+           class="sidebar-link">
+            <span>💰 Accountants</span>
+        </a>
 
+        <a href="{% url 'notes:dashboard' %}"
+           class="sidebar-link">
+            <span>📝 Lesson Notes</span>
+            <span class="sidebar-badge">{{ lesson_count }}</span>
+        </a>
 
-<!-- 3 -->
-<a href="{% url 'school_admin:class_subject_teacher_list' school.id %}" class="sidebar-link">
+        <a href="{% url 'assignments:dashboard' %}"
+           class="sidebar-link">
+            <span>📌 Assignments</span>
+            <span class="sidebar-badge">{{ assignment_count }}</span>
+        </a>
 
-<span>
-📘 Subject Teachers
-</span>
+        <a href="{% url 'school_admin:admin-class-list' %}"
+           class="sidebar-link">
+            <span>📈 Results</span>
+            <span class="sidebar-badge">{{ result_count }}</span>
+        </a>
 
-<span class="sidebar-badge">
-{{ class_subject_teacher_count }}
-</span>
+        <a href="{% url 'results:bulk_score_entry' school.id %}"
+           class="sidebar-link">
+            <span>✏️ Bulk Scores</span>
+        </a>
 
-</a>
+        <a href="{% url 'results:bulk_psycho_affective' school.id %}"
+           class="sidebar-link">
+            <span>🧠 Psychomotor</span>
+        </a>
 
-<!-- 4 -->
-<a href="{% url 'school_admin:class_list' school.id %}" class="sidebar-link">
+        <a href="{% url 'results:grade_settings' school.id %}"
+           class="sidebar-link">
+            <span>🎯 Grade Settings</span>
+        </a>
 
-<span>
-🏫 Classes
-</span>
+        <a href="{% url 'results:class_score_settings' school.id %}"
+           class="sidebar-link">
+            <span>⚙️ Class Settings</span>
+        </a>
 
-<span class="sidebar-badge">
-{{ class_count }}
-</span>
+        <a href="{% url 'results:grade_settings_overview' school.id %}"
+           class="sidebar-link">
+            <span>📊 Grade Summary</span>
+        </a>
 
-</a>
+        <a href="{% url 'school_admin:block_unblock_students' school.id %}"
+           class="sidebar-link">
+            <span>🔐 Result Control</span>
+        </a>
 
+        <a href="{% url 'school_admin:school_term_settings' %}"
+           class="sidebar-link">
+            <span>📅 Term Settings</span>
+        </a>
 
+        <a href="{% url 'results:bulk_class_select' school.id %}"
+           class="sidebar-link">
+            <span>⬇️ Download Results</span>
+        </a>
 
-<!-- 5 -->
-<a href="{% url 'school_admin:admin-class-list' %}" class="sidebar-link">
-📋 Class List
-</a>
+        <a href="{% url 'students:announcement_list' %}"
+           class="sidebar-link">
+            <span>📢 Announcements</span>
+        </a>
 
-<!-- 6 -->
-<a href="{% url 'school_admin:subject_list' school.id %}" class="sidebar-link">
+        <a href="{% url 'tis_website_admin:dashboard' %}"
+           class="sidebar-link">
+            <span>🌐 Website Management</span>
+        </a>
 
-<span>
-📚 Subjects
-</span>
+    </div>
 
-<span class="sidebar-badge">
-{{ subject_count }}
-</span>
+    <!-- MORE BUTTON -->
+    <button type="button"
+            id="sidebarMoreBtn"
+            class="sidebar-more-btn"
+            aria-expanded="false"
+            aria-controls="sidebarExtra">
 
-</a>
+        <span id="sidebarMoreLabel">••• More Actions</span>
+        <span class="more-arrow">⌄</span>
 
-<!-- 7 -->
-<a href="{% url 'school_admin:accountant_list' school.id %}" class="sidebar-link">
-💰 Accountants
-</a>
-
-<!-- 8 -->
-<a href="{% url 'notes:dashboard' %}" class="sidebar-link">
-
-    <span>
-📝 Lesson Notes
-</span>
-
-<span class="sidebar-badge">
-{{ lesson_count }}
-</span>
-
-</a>
-
-<!-- 9 -->
-<a href="{% url 'assignments:dashboard' %}" class="sidebar-link">
-
-    <span>
-        📌 Assignments
-    </span>
-
-    <span class="sidebar-badge">
-        {{ assignment_count }}
-    </span>
-
-</a>
-<!-- 10 -->
-<a href="{% url 'school_admin:admin_dashboard' school.id %}" class="sidebar-link">
-
-    
-    <span>
-💻 CBT
-</span>
-
-<span class="sidebar-badge">
-{{ cbt_count }}
-</span>
-
-</a>
-
-<!-- 11 -->
-<a href="{% url 'school_admin:admin_attendance_list' school.id %}" class="sidebar-link">
-
-    
-    <span>
-📊 Attendance
-</span>
-
-<span class="sidebar-badge">
-{{ attendance_count }}
-</span>
-
-</a>
-
-<!-- 12 -->
-<a href="{% url 'school_admin:admin-class-list' %}" class="sidebar-link">
-
-    
-    <span>
-📈 Results
-</span>
-
-<span class="sidebar-badge">
-{{ result_count }}
-</span>
-
-</a>
-
-<!-- 13 -->
-<a href="{% url 'results:bulk_score_entry' school.id %}" class="sidebar-link">
-✏️ Bulk Scores
-</a>
-
-<!-- 14 -->
-<a href="{% url 'results:bulk_psycho_affective' school.id %}" class="sidebar-link">
-🧠 Psychomotor
-</a>
-
-<!-- 15 -->
-<a href="{% url 'results:grade_settings' school.id %}" class="sidebar-link">
-🎯 Grade Settings
-</a>
-
-<!-- 16 -->
-<a href="{% url 'results:class_score_settings' school.id %}" class="sidebar-link">
-⚙️ Class Settings
-</a>
-
-<!-- 17 -->
-<a href="{% url 'results:grade_settings_overview' school.id %}" class="sidebar-link">
-📊 Grade Summary
-</a>
-
-<!-- 18 -->
-<a href="{% url 'school_admin:block_unblock_students' school.id %}" class="sidebar-link">
-🔐 Result Control
-</a>
-
-<!-- 19 -->
-<a href="{% url 'school_admin:school_term_settings' %}" class="sidebar-link">
-📅 Term Settings
-</a>
-
-<!-- 20 -->
-<a href="{% url 'results:bulk_class_select' school.id %}" class="sidebar-link">
-⬇️ Download Results
-</a>
-
-<!-- 21 -->
-<a href="{% url 'students:announcement_list' %}" class="sidebar-link">
-📢 Announcements
-</a>
-
-<!-- 22 -->
-<a href="{% url 'tis_website_admin:dashboard' %}" 
-   class="sidebar-link">
-
-<span>
-🌐 Website Management
-</span>
-
-</a>
-
+    </button>
 
 </div>
+
 
 </aside>
 
@@ -1155,4 +1185,40 @@ if(closeSidebar){
     closeSidebar.addEventListener('click', closeMenu);
 }
 </script>
+
+
+<script>
+(function () {
+    const moreButton = document.getElementById('sidebarMoreBtn');
+    const extraMenu = document.getElementById('sidebarExtra');
+    const moreLabel = document.getElementById('sidebarMoreLabel');
+
+    if (!moreButton || !extraMenu || !moreLabel) return;
+
+    moreButton.addEventListener('click', function () {
+        const isExpanded = moreButton.getAttribute('aria-expanded') === 'true';
+
+        extraMenu.classList.toggle('show', !isExpanded);
+        moreButton.setAttribute('aria-expanded', String(!isExpanded));
+
+        moreLabel.textContent = isExpanded
+            ? '••• More Actions'
+            : '••• Show Less';
+    });
+
+    // Close the mobile sidebar when a menu destination is selected.
+    extraMenu.querySelectorAll('a').forEach(function (link) {
+        link.addEventListener('click', function () {
+            const sidebar = document.getElementById('sidebar');
+            const overlay = document.getElementById('sidebarOverlay');
+
+            if (window.innerWidth <= 768) {
+                sidebar?.classList.remove('show');
+                overlay?.classList.remove('show');
+            }
+        });
+    });
+})();
+</script>
+
 {% endblock %}
