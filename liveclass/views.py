@@ -2032,33 +2032,97 @@ from django.http import JsonResponse
 from django.views.decorators.csrf import csrf_exempt
 import json
 
+
+import json
+import logging
+import requests
+
+from django.http import JsonResponse
+from django.views.decorators.csrf import csrf_exempt
+
+logger = logging.getLogger(__name__)
+
+
 @csrf_exempt
 def translate(request):
-    if request.method == "POST":
-        data = json.loads(request.body)
-        text = data.get("text", "")
-        target = data.get("target", "en")
+    if request.method != "POST":
+        return JsonResponse(
+            {"error": "Invalid method"},
+            status=405,
+        )
 
-        try:
-            url = "https://translate.googleapis.com/translate_a/single"
-            params = {
+    try:
+        data = json.loads(request.body or b"{}")
+    except (json.JSONDecodeError, UnicodeDecodeError):
+        return JsonResponse(
+            {"error": "Invalid JSON request"},
+            status=400,
+        )
+
+    text = str(data.get("text") or "").strip()
+    target = str(data.get("target") or "en").strip().lower()
+
+    if not text:
+        return JsonResponse(
+            {"error": "Please enter a message to translate"},
+            status=400,
+        )
+
+    # Restrict target to valid language-code characters.
+    if not target or len(target) > 10 or not target.replace("-", "").isalpha():
+        return JsonResponse(
+            {"error": "Invalid target language"},
+            status=400,
+        )
+
+    try:
+        response = requests.get(
+            "https://translate.googleapis.com/translate_a/single",
+            params={
                 "client": "gtx",
                 "sl": "auto",
                 "tl": target,
                 "dt": "t",
                 "q": text,
-            }
+            },
+            timeout=12,
+        )
 
-            response = requests.get(url, params=params)
-            result = response.json()
+        response.raise_for_status()
+        result = response.json()
 
-            translated = result[0][0][0]
+        # Google may return several translated text segments.
+        segments = result[0] if result and result[0] else []
+        translated = "".join(
+            segment[0]
+            for segment in segments
+            if segment and isinstance(segment[0], str)
+        ).strip()
 
-            return JsonResponse({"translated": translated})
-        except Exception as e:
-            return JsonResponse({"translated": text, "error": str(e)})
+        if not translated:
+            raise ValueError("Translation service returned no translated text")
 
-    return JsonResponse({"error": "Invalid method"}, status=400)
+        return JsonResponse({
+            "translated": translated,
+            "target": target,
+        })
+
+    except (
+        requests.RequestException,
+        ValueError,
+        IndexError,
+        TypeError,
+        KeyError,
+    ) as exc:
+        logger.warning("TIS translation failed: %s", exc)
+
+        return JsonResponse(
+            {
+                "error": "Translation is temporarily unavailable. Please try again."
+            },
+            status=502,
+        )
+
 
 
 
