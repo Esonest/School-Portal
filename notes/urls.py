@@ -7,11 +7,7 @@ urlpatterns = [
     path('', views.dashboard, name='dashboard'),
 
     path('upload/', views.teacher_upload_note, name='upload_note'),
-    path(
-        'teacher-notes/',
-        views.teacher_notes_list,
-        name='teacher_notes_list'
-    ),
+    
     path('edit/<int:pk>/', views.teacher_upload_note, name='edit_note'),
     path('delete/<int:pk>/', views.teacher_delete_note, name='delete_note'),
     path(

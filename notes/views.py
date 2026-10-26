@@ -22,41 +22,6 @@ from django.http import (
 )
 
 # ------------------------
-# Teacher: list notes
-# ------------------------
-
-@login_required
-def teacher_notes_list(request):
-    user = request.user
-    teacher_profile = getattr(user, 'teacher_profile', None)
-    school = getattr(user, 'school', None)
-
-    # Superadmin → all notes
-    if user.is_superadmin:
-        notes = LessonNote.objects.all()
-
-    # School admin → all notes in school
-    elif school:
-        notes = LessonNote.objects.filter(
-            school=school
-        ).order_by('-publish_date')
-
-    # Teacher → only their own notes
-    elif teacher_profile:
-        notes = LessonNote.objects.filter(
-            teacher=teacher_profile
-        ).order_by('-publish_date')
-
-    else:
-        raise Http404("Not allowed")
-
-    return render(
-        request,
-        'notes/teacher_notes_list.html',
-        {'notes': notes}
-    )
-
-# ------------------------
 # Teacher: upload/edit note
 @portal_required("lesson_note")
 @login_required
@@ -258,7 +223,7 @@ def teacher_delete_note(request, pk):
 
     if request.method == 'POST':
         note.delete()
-        return redirect('notes:teacher_notes_list')
+        return redirect('notes:dashboard')
 
     return render(
         request,
