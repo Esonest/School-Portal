@@ -1,50 +1,159 @@
+
 {% extends 'accounts/base.html' %}
 {% block content %}
+
 <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 
+<style>
+  .rating-card {
+    min-width: 0;
+    overflow: hidden;
+  }
 
+  .rating-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 6px;
+    padding: 10px 0;
+    border-bottom: 1px solid #f1f5f9;
+  }
 
-<div class="max-w-7xl mx-auto p-4 sm:p-6">
+  .rating-row:last-child {
+    border-bottom: none;
+  }
+
+  .rating-label {
+    flex: 1;
+    min-width: 0;
+    font-size: 13px;
+    font-weight: 500;
+    color: #374151;
+  }
+
+  .star-group {
+    display: flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 1px;
+  }
+
+  .star-btn {
+    padding: 2px;
+    font-size: 21px;
+    line-height: 1.2;
+    color: #d1d5db;
+    background: transparent;
+    border: none;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .star-btn:focus {
+    outline: 2px solid #93c5fd;
+    border-radius: 4px;
+  }
+
+  .rating-value {
+    display: none;
+  }
+
+  @media (max-width: 380px) {
+    .rating-label {
+      font-size: 12px;
+    }
+
+    .star-btn {
+      font-size: 19px;
+      padding: 1px;
+    }
+  }
+
+  @media (min-width: 640px) {
+    .rating-label {
+      font-size: 14px;
+    }
+
+    .star-btn {
+      font-size: 23px;
+      padding: 2px;
+    }
+  }
+</style>
+
+<div class="w-full max-w-7xl mx-auto px-3 py-4 sm:px-6 sm:py-6">
+
+  <!-- Messages -->
   {% if messages %}
     <div class="mb-4 space-y-2">
       {% for message in messages %}
-        <div class="p-3 rounded {{ message.tags|default:'bg-green-50 border-green-400 text-green-800' }}">
+        <div class="p-3 rounded-lg {{ message.tags|default:'bg-green-50 border border-green-400 text-green-800' }}">
           {{ message }}
         </div>
       {% endfor %}
     </div>
   {% endif %}
 
-  <!-- Top Bar: Class + Term Selector -->
-  <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-4 gap-4">
-    <h1 class="text-xl sm:text-2xl font-semibold text-{{ school.theme_color }}-600">Bulk Psychomotor & Affective — {{ selected_class.name }}</h1>
-    <form method="get" class="flex flex-col sm:flex-row sm:items-end gap-2 md:gap-3 w-full md:w-auto">
-      <input type="hidden" name="page" value="{{ page_obj.number }}">
+  <!-- Heading and selectors -->
+  <div class="mb-5">
+    <h1 class="text-xl sm:text-2xl font-bold text-{{ school.theme_color }}-600 leading-tight mb-4">
+      Bulk Psychomotor &amp; Affective Entry
+    </h1>
 
-      <!-- SESSION selector -->
-      <select name="session" onchange="this.form.submit()" class="px-3 py-2 border rounded w-full sm:w-auto">
-        <option value="">-- Select session --</option>
-        {% for ses in session_choices %}
-          <option value="{{ ses }}" {% if selected_session == ses %}selected{% endif %}>
-            {{ ses }}
-          </option>
-        {% endfor %}
-      </select>
+    <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-3 sm:p-4">
+      <form method="get" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
 
-      <!-- Class Selector -->
-      <select name="class_id" onchange="this.form.submit()" class="px-3 py-2 border rounded w-full sm:w-auto">
-        {% for cls in classes %}
-          <option value="{{ cls.id }}" {% if selected_class and selected_class.id == cls.id %}selected{% endif %}>{{ cls.name }}</option>
-        {% endfor %}
-      </select>
+        <input type="hidden" name="page" value="{{ page_obj.number }}">
 
-      <!-- Term Selector -->
-      <select name="term" onchange="this.form.submit()" class="px-3 py-2 border rounded w-full sm:w-auto">
-        {% for key, value in term_choices.items %}
-          <option value="{{ key }}" {% if selected_term == key %}selected{% endif %}>{{ value }}</option>
-        {% endfor %}
-      </select>
-    </form>
+        <div class="min-w-0">
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            Academic Session
+          </label>
+          <select name="session"
+                  onchange="this.form.submit()"
+                  class="w-full min-w-0 border border-gray-300 rounded-lg p-3 text-sm bg-white">
+            <option value="">-- Select Session --</option>
+            {% for ses in session_choices %}
+              <option value="{{ ses }}" {% if selected_session == ses %}selected{% endif %}>
+                {{ ses }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="min-w-0">
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            Class
+          </label>
+          <select name="class_id"
+                  onchange="this.form.submit()"
+                  class="w-full min-w-0 border border-gray-300 rounded-lg p-3 text-sm bg-white">
+            {% for cls in classes %}
+              <option value="{{ cls.id }}"
+                {% if selected_class and selected_class.id == cls.id %}selected{% endif %}>
+                {{ cls.name }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+        <div class="min-w-0">
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            Term
+          </label>
+          <select name="term"
+                  onchange="this.form.submit()"
+                  class="w-full min-w-0 border border-gray-300 rounded-lg p-3 text-sm bg-white">
+            {% for key, value in term_choices.items %}
+              <option value="{{ key }}" {% if selected_term == key %}selected{% endif %}>
+                {{ value }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+
+      </form>
+    </div>
   </div>
 
   <form method="post" id="bulk-psy-aff-form">
@@ -52,217 +161,379 @@
     <input type="hidden" name="class_id" value="{{ selected_class.id }}">
     <input type="hidden" name="term" value="{{ selected_term }}">
 
-    <!-- Psychomotor Section -->
-    <div class="bg-white shadow rounded mb-6 overflow-x-auto">
-      <div class="p-4 border-b">
-        <h2 class="text-lg font-semibold">Psychomotor Ratings</h2>
-        <p class="text-sm text-gray-500">Rate 1–5 stars (click a star to choose rating)</p>
+    <!-- ================= PSYCHOMOTOR CARDS ================= -->
+
+    <section class="mb-7">
+
+      <div class="flex items-center gap-3 mb-3">
+        <div class="w-1.5 h-9 bg-blue-600 rounded-full"></div>
+        <div>
+          <h2 class="text-lg sm:text-xl font-bold text-gray-800">
+            Psychomotor Ratings
+          </h2>
+          <p class="text-xs sm:text-sm text-gray-500">
+            Tap a star to rate each skill from 1 to 5.
+          </p>
+        </div>
       </div>
-      <div class="overflow-x-auto">
-        <table class="w-full min-w-max table-auto">
-          <thead class="bg-gray-100">
-            <tr>
-              <th class="p-3 text-left">#</th>
-              <th class="p-3 text-left">Student</th>
-              <th class="p-3 text-center">Neatness</th>
-              <th class="p-3 text-center">Agility</th>
-              <th class="p-3 text-center">Creativity</th>
-              <th class="p-3 text-center">Sports</th>
-              <th class="p-3 text-center">Handwriting</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for r in rows %}
-              <tr class="border-b">
-                <td class="p-3 text-sm text-gray-700">{{ forloop.counter0|add:page_obj.start_index }}</td>
-                <td class="p-3">
-                  <div class="font-medium">{{ r.student.full_name }}</div>
-                  <div class="text-sm text-gray-500">{{ r.student.school_class.name }}</div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+
+        {% for r in rows %}
+
+          <div class="rating-card bg-white border border-gray-200 rounded-xl shadow-sm">
+
+            <div class="bg-blue-50 border-b border-blue-100 p-3">
+              <div class="flex items-start gap-2">
+                <span class="flex-shrink-0 flex items-center justify-center w-7 h-7 rounded-full bg-blue-600 text-white text-xs font-bold">
+                  {{ forloop.counter0|add:page_obj.start_index }}
+                </span>
+
+                <div class="min-w-0 flex-1">
+                  <h3 class="font-semibold text-gray-800 text-sm sm:text-base break-words">
+                    {{ r.student.full_name }}
+                  </h3>
+                  <p class="text-xs text-gray-500 mt-1">
+                    {{ r.student.school_class.name }}
+                  </p>
                   {{ r.psy_form.student }}
-                </td>
+                </div>
+              </div>
+            </div>
 
-                <td class="p-3 text-center">
-                  <div class="inline-flex gap-1 justify-center" data-input-name="{{ r.psy_prefix }}-neatness" data-tooltip="Neatness">
-                    {% for i in "12345" %}
-                      <button type="button" class="psy-star star-btn px-1 text-2xl" data-value="{{ forloop.counter }}">☆</button>
-                    {% endfor %}
-                  </div>
-                  {{ r.psy_form.neatness }}
-                </td>
+            <div class="px-3 py-1">
 
-                <td class="p-3 text-center">
-                  <div class="inline-flex gap-1 justify-center" data-input-name="{{ r.psy_prefix }}-agility" data-tooltip="Agility">
-                    {% for i in "12345" %}
-                      <button type="button" class="psy-star star-btn px-1 text-2xl" data-value="{{ forloop.counter }}">☆</button>
-                    {% endfor %}
-                  </div>
-                  {{ r.psy_form.agility }}
-                </td>
+              <div class="rating-row">
+                <label class="rating-label">Neatness</label>
+                <div class="star-group"
+                     data-input-name="{{ r.psy_prefix }}-neatness"
+                     data-tooltip="Neatness">
+                  {% for i in "12345" %}
+                    <button type="button" class="psy-star star-btn"
+                            data-value="{{ forloop.counter }}"
+                            aria-label="Rate neatness {{ forloop.counter }} out of 5">☆</button>
+                  {% endfor %}
+                </div>
+                {{ r.psy_form.neatness }}
+              </div>
 
-                <td class="p-3 text-center">
-                  <div class="inline-flex gap-1 justify-center" data-input-name="{{ r.psy_prefix }}-creativity" data-tooltip="Creativity">
-                    {% for i in "12345" %}
-                      <button type="button" class="psy-star star-btn px-1 text-2xl" data-value="{{ forloop.counter }}">☆</button>
-                    {% endfor %}
-                  </div>
-                  {{ r.psy_form.creativity }}
-                </td>
+              <div class="rating-row">
+                <label class="rating-label">Agility</label>
+                <div class="star-group"
+                     data-input-name="{{ r.psy_prefix }}-agility"
+                     data-tooltip="Agility">
+                  {% for i in "12345" %}
+                    <button type="button" class="psy-star star-btn"
+                            data-value="{{ forloop.counter }}"
+                            aria-label="Rate agility {{ forloop.counter }} out of 5">☆</button>
+                  {% endfor %}
+                </div>
+                {{ r.psy_form.agility }}
+              </div>
 
-                <td class="p-3 text-center">
-                  <div class="inline-flex gap-1 justify-center" data-input-name="{{ r.psy_prefix }}-sports" data-tooltip="Sports">
-                    {% for i in "12345" %}
-                      <button type="button" class="psy-star star-btn px-1 text-2xl" data-value="{{ forloop.counter }}">☆</button>
-                    {% endfor %}
-                  </div>
-                  {{ r.psy_form.sports }}
-                </td>
+              <div class="rating-row">
+                <label class="rating-label">Creativity</label>
+                <div class="star-group"
+                     data-input-name="{{ r.psy_prefix }}-creativity"
+                     data-tooltip="Creativity">
+                  {% for i in "12345" %}
+                    <button type="button" class="psy-star star-btn"
+                            data-value="{{ forloop.counter }}"
+                            aria-label="Rate creativity {{ forloop.counter }} out of 5">☆</button>
+                  {% endfor %}
+                </div>
+                {{ r.psy_form.creativity }}
+              </div>
 
-                <td class="p-3 text-center">
-                  <div class="inline-flex gap-1 justify-center" data-input-name="{{ r.psy_prefix }}-handwriting" data-tooltip="Handwriting">
-                    {% for i in "12345" %}
-                      <button type="button" class="psy-star star-btn px-1 text-2xl" data-value="{{ forloop.counter }}">☆</button>
-                    {% endfor %}
-                  </div>
-                  {{ r.psy_form.handwriting }}
-                </td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+              <div class="rating-row">
+                <label class="rating-label">Sports</label>
+                <div class="star-group"
+                     data-input-name="{{ r.psy_prefix }}-sports"
+                     data-tooltip="Sports">
+                  {% for i in "12345" %}
+                    <button type="button" class="psy-star star-btn"
+                            data-value="{{ forloop.counter }}"
+                            aria-label="Rate sports {{ forloop.counter }} out of 5">☆</button>
+                  {% endfor %}
+                </div>
+                {{ r.psy_form.sports }}
+              </div>
+
+              <div class="rating-row">
+                <label class="rating-label">Handwriting</label>
+                <div class="star-group"
+                     data-input-name="{{ r.psy_prefix }}-handwriting"
+                     data-tooltip="Handwriting">
+                  {% for i in "12345" %}
+                    <button type="button" class="psy-star star-btn"
+                            data-value="{{ forloop.counter }}"
+                            aria-label="Rate handwriting {{ forloop.counter }} out of 5">☆</button>
+                  {% endfor %}
+                </div>
+                {{ r.psy_form.handwriting }}
+              </div>
+
+            </div>
+          </div>
+
+        {% empty %}
+          <div class="col-span-full bg-white border rounded-xl p-5 text-center text-gray-500 text-sm">
+            No students found for this class.
+          </div>
+        {% endfor %}
+
       </div>
-    </div>
+    </section>
 
-    <!-- Affective Section -->
-    <div class="bg-white shadow rounded mb-6 overflow-x-auto">
-      <div class="p-4 border-b">
-        <h2 class="text-lg font-semibold">Affective Ratings</h2>
-        <p class="text-sm text-gray-500">Rate 1–5 stars (click a star to choose rating)</p>
+    <!-- ================= AFFECTIVE CARDS ================= -->
+
+    <section class="mb-7">
+
+      <div class="flex items-center gap-3 mb-3">
+        <div class="w-1.5 h-9 bg-purple-600 rounded-full"></div>
+        <div>
+          <h2 class="text-lg sm:text-xl font-bold text-gray-800">
+            Affective Ratings
+          </h2>
+          <p class="text-xs sm:text-sm text-gray-500">
+            Rate each student's attitude and behaviour from 1 to 5.
+          </p>
+        </div>
       </div>
-      <div class="overflow-x-auto">
-        <table class="w-full min-w-max table-auto">
-          <thead class="bg-gray-100">
-            <tr>
-              <th class="p-3 text-left">#</th>
-              <th class="p-3 text-left">Student</th>
-              <th class="p-3 text-center">Punctuality</th>
-              <th class="p-3 text-center">Cooperation</th>
-              <th class="p-3 text-center">Behavior</th>
-              <th class="p-3 text-center">Attentiveness</th>
-              <th class="p-3 text-center">Perseverance</th>
-            </tr>
-          </thead>
-          <tbody>
-            {% for r in rows %}
-              <tr class="border-b">
-                <td class="p-3 text-sm text-gray-700">{{ forloop.counter0|add:page_obj.start_index }}</td>
-                <td class="p-3">
-                  <div class="font-medium">{{ r.student.full_name }}</div>
-                  <div class="text-sm text-gray-500">{{ r.student.school_class.name }}</div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+
+        {% for r in rows %}
+
+          <div class="rating-card bg-white border border-gray-200 rounded-xl shadow-sm">
+
+            <div class="bg-purple-50 border-b border-purple-100 p-3">
+              <div class="flex items-start gap-2">
+                <span class="flex-shrink-0 flex items-center justify-center w-7 h-7 rounded-full bg-purple-600 text-white text-xs font-bold">
+                  {{ forloop.counter0|add:page_obj.start_index }}
+                </span>
+
+                <div class="min-w-0 flex-1">
+                  <h3 class="font-semibold text-gray-800 text-sm sm:text-base break-words">
+                    {{ r.student.full_name }}
+                  </h3>
+                  <p class="text-xs text-gray-500 mt-1">
+                    {{ r.student.school_class.name }}
+                  </p>
                   {{ r.aff_form.student }}
-                </td>
+                </div>
+              </div>
+            </div>
 
-                <td class="p-3 text-center">
-                  <div class="inline-flex gap-1 justify-center" data-input-name="{{ r.aff_prefix }}-punctuality" data-tooltip="Punctuality">
-                    {% for i in "12345" %}
-                      <button type="button" class="aff-star star-btn px-1 text-2xl" data-value="{{ forloop.counter }}">☆</button>
-                    {% endfor %}
-                  </div>
-                  {{ r.aff_form.punctuality }}
-                </td>
+            <div class="px-3 py-1">
 
-                <td class="p-3 text-center">
-                  <div class="inline-flex gap-1 justify-center" data-input-name="{{ r.aff_prefix }}-cooperation" data-tooltip="Cooperation">
-                    {% for i in "12345" %}
-                      <button type="button" class="aff-star star-btn px-1 text-2xl" data-value="{{ forloop.counter }}">☆</button>
-                    {% endfor %}
-                  </div>
-                  {{ r.aff_form.cooperation }}
-                </td>
+              <div class="rating-row">
+                <label class="rating-label">Punctuality</label>
+                <div class="star-group"
+                     data-input-name="{{ r.aff_prefix }}-punctuality"
+                     data-tooltip="Punctuality">
+                  {% for i in "12345" %}
+                    <button type="button" class="aff-star star-btn"
+                            data-value="{{ forloop.counter }}"
+                            aria-label="Rate punctuality {{ forloop.counter }} out of 5">☆</button>
+                  {% endfor %}
+                </div>
+                {{ r.aff_form.punctuality }}
+              </div>
 
-                <td class="p-3 text-center">
-                  <div class="inline-flex gap-1 justify-center" data-input-name="{{ r.aff_prefix }}-behavior" data-tooltip="Behavior">
-                    {% for i in "12345" %}
-                      <button type="button" class="aff-star star-btn px-1 text-2xl" data-value="{{ forloop.counter }}">☆</button>
-                    {% endfor %}
-                  </div>
-                  {{ r.aff_form.behavior }}
-                </td>
+              <div class="rating-row">
+                <label class="rating-label">Cooperation</label>
+                <div class="star-group"
+                     data-input-name="{{ r.aff_prefix }}-cooperation"
+                     data-tooltip="Cooperation">
+                  {% for i in "12345" %}
+                    <button type="button" class="aff-star star-btn"
+                            data-value="{{ forloop.counter }}"
+                            aria-label="Rate cooperation {{ forloop.counter }} out of 5">☆</button>
+                  {% endfor %}
+                </div>
+                {{ r.aff_form.cooperation }}
+              </div>
 
-                <td class="p-3 text-center">
-                  <div class="inline-flex gap-1 justify-center" data-input-name="{{ r.aff_prefix }}-attentiveness" data-tooltip="Attentiveness">
-                    {% for i in "12345" %}
-                      <button type="button" class="aff-star star-btn px-1 text-2xl" data-value="{{ forloop.counter }}">☆</button>
-                    {% endfor %}
-                  </div>
-                  {{ r.aff_form.attentiveness }}
-                </td>
+              <div class="rating-row">
+                <label class="rating-label">Behavior</label>
+                <div class="star-group"
+                     data-input-name="{{ r.aff_prefix }}-behavior"
+                     data-tooltip="Behavior">
+                  {% for i in "12345" %}
+                    <button type="button" class="aff-star star-btn"
+                            data-value="{{ forloop.counter }}"
+                            aria-label="Rate behavior {{ forloop.counter }} out of 5">☆</button>
+                  {% endfor %}
+                </div>
+                {{ r.aff_form.behavior }}
+              </div>
 
-                <td class="p-3 text-center">
-                  <div class="inline-flex gap-1 justify-center" data-input-name="{{ r.aff_prefix }}-perseverance" data-tooltip="Perseverance">
-                    {% for i in "12345" %}
-                      <button type="button" class="aff-star star-btn px-1 text-2xl" data-value="{{ forloop.counter }}">☆</button>
-                    {% endfor %}
-                  </div>
-                  {{ r.aff_form.perseverance }}
-                </td>
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
+              <div class="rating-row">
+                <label class="rating-label">Attentiveness</label>
+                <div class="star-group"
+                     data-input-name="{{ r.aff_prefix }}-attentiveness"
+                     data-tooltip="Attentiveness">
+                  {% for i in "12345" %}
+                    <button type="button" class="aff-star star-btn"
+                            data-value="{{ forloop.counter }}"
+                            aria-label="Rate attentiveness {{ forloop.counter }} out of 5">☆</button>
+                  {% endfor %}
+                </div>
+                {{ r.aff_form.attentiveness }}
+              </div>
+
+              <div class="rating-row">
+                <label class="rating-label">Perseverance</label>
+                <div class="star-group"
+                     data-input-name="{{ r.aff_prefix }}-perseverance"
+                     data-tooltip="Perseverance">
+                  {% for i in "12345" %}
+                    <button type="button" class="aff-star star-btn"
+                            data-value="{{ forloop.counter }}"
+                            aria-label="Rate perseverance {{ forloop.counter }} out of 5">☆</button>
+                  {% endfor %}
+                </div>
+                {{ r.aff_form.perseverance }}
+              </div>
+
+            </div>
+          </div>
+
+        {% empty %}
+          <div class="col-span-full bg-white border rounded-xl p-5 text-center text-gray-500 text-sm">
+            No students found for this class.
+          </div>
+        {% endfor %}
+
       </div>
-    </div>
+    </section>
 
-    <!-- Buttons + Pagination -->
-    <div class="flex flex-col sm:flex-row justify-between items-center mt-4 p-4 gap-3">
-      <div class="flex flex-wrap gap-2">
-        <button type="submit" name="save" class="bg-yellow-500 text-white px-4 py-2 rounded">Save & Continue Later</button>
-        <button type="submit" name="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Submit All</button>
+    <!-- ================= SAVE AND PAGINATION ================= -->
+
+    <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-3 sm:p-4 mb-5">
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+
+        <button type="submit"
+                name="save"
+                class="w-full min-h-12 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold px-4 py-3 rounded-lg">
+          Save &amp; Continue Later
+        </button>
+
+        <button type="submit"
+                name="submit"
+                class="w-full min-h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-3 rounded-lg">
+          Submit All
+        </button>
+
       </div>
 
-      <div class="flex flex-wrap items-center gap-3">
-        <span>Page {{ page_obj.number }} of {{ paginator.num_pages }}</span>
-        <div class="flex flex-wrap items-center gap-1">
+      <div class="flex flex-wrap justify-between items-center gap-3 mt-4 text-sm">
+
+        <span class="text-gray-600">
+          Page {{ page_obj.number }} of {{ paginator.num_pages }}
+        </span>
+
+        <div class="flex gap-2">
+
           {% if page_obj.has_previous %}
-            <a href="?class_id={{ selected_class.id }}&term={{ selected_term }}&page={{ page_obj.previous_page_number }}" class="px-2 py-1 border rounded">Previous</a>
+            <a href="?class_id={{ selected_class.id }}&session={{ selected_session|urlencode }}&term={{ selected_term }}&page={{ page_obj.previous_page_number }}"
+               class="inline-block border border-gray-300 rounded-lg px-4 py-2 text-gray-700 hover:bg-gray-50">
+              Previous
+            </a>
           {% endif %}
+
           {% if page_obj.has_next %}
-            <a href="?class_id={{ selected_class.id }}&term={{ selected_term }}&page={{ page_obj.next_page_number }}" class="px-2 py-1 border rounded">Next</a>
+            <a href="?class_id={{ selected_class.id }}&session={{ selected_session|urlencode }}&term={{ selected_term }}&page={{ page_obj.next_page_number }}"
+               class="inline-block border border-gray-300 rounded-lg px-4 py-2 text-gray-700 hover:bg-gray-50">
+              Next
+            </a>
           {% endif %}
+
         </div>
       </div>
     </div>
+
   </form>
 </div>
 
-<!-- JS: progressive star fill + sync to hidden inputs + tooltips -->
+<!-- ================= STAR RATING JAVASCRIPT ================= -->
+
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-  const labelMap = ['Poor','Fair','Good','Very good','Excellent'];
+
+  const labelMap = [
+    'Poor',
+    'Fair',
+    'Good',
+    'Very good',
+    'Excellent'
+  ];
 
   function setStars(group, value) {
     const buttons = Array.from(group.querySelectorAll('.star-btn'));
-    buttons.forEach((btn, idx) => btn.textContent = (idx < value) ? '⭐' : '☆');
+
+    buttons.forEach((btn, idx) => {
+      const selected = idx < value;
+
+      btn.textContent = selected ? '★' : '☆';
+      btn.style.color = selected ? '#f59e0b' : '#d1d5db';
+      btn.setAttribute('aria-pressed', selected && idx === value - 1 ? 'true' : 'false');
+    });
+
+    group.setAttribute(
+      'aria-label',
+      (group.getAttribute('data-tooltip') || 'Rating') +
+      ': ' + (value ? labelMap[value - 1] : 'Not rated')
+    );
   }
 
   function initGroup(group) {
+
     const inputName = group.getAttribute('data-input-name');
-    const hiddenInput = document.querySelector(`input[name="${inputName}"]`);
-    let initial = hiddenInput ? parseInt(hiddenInput.value || '0', 10) : 0;
-    setStars(group, initial);
+    const hiddenInput = document.querySelector(
+      `input[name="${inputName}"]`
+    );
+
+    const initial = hiddenInput
+      ? parseInt(hiddenInput.value || '0', 10)
+      : 0;
+
+    setStars(group, Number.isFinite(initial) ? initial : 0);
 
     group.querySelectorAll('.star-btn').forEach((btn, idx) => {
+
       btn.addEventListener('click', function () {
-        const val = parseInt(this.getAttribute('data-value'), 10);
-        setStars(group, val);
-        if (hiddenInput) hiddenInput.value = val;
+
+        const value = parseInt(
+          this.getAttribute('data-value'),
+          10
+        );
+
+        setStars(group, value);
+
+        if (hiddenInput) {
+          hiddenInput.value = value;
+          hiddenInput.dispatchEvent(
+            new Event('change', { bubbles: true })
+          );
+        }
       });
+
       btn.addEventListener('mouseenter', function () {
-        btn.setAttribute('title', `${labelMap[idx]} (${idx+1}) — ${group.getAttribute('data-tooltip') || ''}`);
+        btn.setAttribute(
+          'title',
+          `${labelMap[idx]} (${idx + 1}) — ${group.getAttribute('data-tooltip') || ''}`
+        );
       });
+
     });
   }
 
   document.querySelectorAll('[data-input-name]').forEach(initGroup);
+
 });
 </script>
+
 {% endblock %}

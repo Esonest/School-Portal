@@ -1,14 +1,152 @@
+
 {% extends 'accounts/base.html' %}
 {% load custom_filters %}
 {% block content %}
+
 <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
 
-<div class="max-w-full mx-auto p-4 sm:p-6">
-  <!-- messages -->
+<style>
+  .score-student-card {
+    min-width: 0;
+    overflow: hidden;
+  }
+
+  .subject-score-card {
+    min-width: 0;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    padding: 12px;
+    background: #fff;
+  }
+
+  .score-entry-grid {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .score-field {
+    min-width: 0;
+  }
+
+  .score-field label {
+    display: block;
+    font-size: 12px;
+    font-weight: 600;
+    color: #4b5563;
+    margin-bottom: 5px;
+  }
+
+  .score-field input[type="number"] {
+    width: 100%;
+    min-width: 0;
+    height: 46px;
+    padding: 8px;
+    border: 1px solid #d1d5db;
+    border-radius: 9px;
+    text-align: center;
+    font-size: 17px;
+    font-weight: 600;
+    background: #fff;
+    color: #111827;
+  }
+
+  .score-field input:focus {
+    outline: 2px solid #93c5fd;
+    border-color: #2563eb;
+  }
+
+  .score-total-box {
+    margin-top: 12px;
+    padding: 10px;
+    border-radius: 9px;
+    background: #eff6ff;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+  }
+
+  .score-total-box input {
+    width: 76px;
+    max-width: 45%;
+    text-align: center;
+    font-size: 17px;
+    font-weight: 700;
+    color: #1d4ed8;
+    background: transparent;
+    border: none;
+  }
+
+  .score-subject-heading {
+    overflow-wrap: anywhere;
+  }
+
+  .score-delete-btn {
+    min-height: 42px;
+    padding: 8px 12px;
+    font-size: 13px;
+    border-radius: 8px;
+  }
+
+  .filter-select {
+    width: 100%;
+    min-width: 0;
+    min-height: 44px;
+    padding: 10px;
+    border: 1px solid #d1d5db;
+    border-radius: 9px;
+    background: white;
+    font-size: 14px;
+  }
+
+  .score-action-btn {
+    width: 100%;
+    min-height: 48px;
+    padding: 12px;
+    border-radius: 9px;
+    font-weight: 600;
+  }
+
+  @media (min-width: 640px) {
+    .score-subjects-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .score-field label {
+      font-size: 13px;
+    }
+  }
+
+  @media (min-width: 1024px) {
+    .score-subjects-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+
+  @media (max-width: 360px) {
+    .subject-score-card {
+      padding: 9px;
+    }
+
+    .score-entry-grid {
+      gap: 7px;
+    }
+
+    .score-field input[type="number"] {
+      height: 43px;
+      font-size: 16px;
+    }
+  }
+</style>
+
+<div class="w-full max-w-7xl mx-auto px-3 py-4 sm:px-6 sm:py-6">
+
+  <!-- Messages -->
   {% if messages %}
-    <div class="mb-4">
+    <div class="mb-4 space-y-2">
       {% for message in messages %}
-        <div class="p-3 rounded {{ message.tags|default:'bg-green-50 border-green-400 text-green-800' }}">
+        <div class="p-3 rounded-lg {{ message.tags|default:'bg-green-50 border-green-400 text-green-800' }}">
           {{ message }}
         </div>
       {% endfor %}
@@ -16,187 +154,342 @@
   {% endif %}
 
   <!-- Toast container -->
-  <div id="toast-container" class="fixed top-5 right-5 space-y-2 z-50"></div>
+  <div id="toast-container"
+       class="fixed top-3 left-3 right-3 sm:left-auto sm:right-5 space-y-2 z-50">
+  </div>
 
-  <div class="flex flex-col sm:flex-row sm:items-end sm:justify-between mb-4 gap-3">
-    <form method="get" class="flex flex-col sm:flex-row gap-3 w-full sm:w-auto flex-wrap">
+  <!-- Filters -->
+  <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-3 sm:p-4 mb-5">
+
+    <h1 class="text-xl sm:text-2xl font-bold text-gray-800 mb-4">
+      Bulk Scores Entry
+    </h1>
+
+    <form method="get"
+          class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+
       <input type="hidden" name="page" value="{{ page_obj.number }}">
 
-      <!-- SCHOOL selector for admin -->
-{% if request.user.is_superuser or request.user.is_school_admin %}
-<select name="school_id" onchange="this.form.submit()" class="px-3 py-2 border rounded w-full sm:w-auto">
-    <option value="">-- Select school --</option>
-    {% for sch in schools %}
-        <option value="{{ sch.id }}" {% if selected_school and selected_school.id == sch.id %}selected{% endif %}>
-            {{ sch.name }}
-        </option>
-    {% endfor %}
-</select>
-{% endif %}
+      {% if request.user.is_superuser or request.user.is_school_admin %}
+        <div class="min-w-0">
+          <label class="block text-sm font-medium text-gray-700 mb-1">
+            School
+          </label>
+          <select name="school_id"
+                  onchange="this.form.submit()"
+                  class="filter-select">
+            <option value="">-- Select school --</option>
+            {% for sch in schools %}
+              <option value="{{ sch.id }}"
+                {% if selected_school and selected_school.id == sch.id %}selected{% endif %}>
+                {{ sch.name }}
+              </option>
+            {% endfor %}
+          </select>
+        </div>
+      {% endif %}
 
-      <!-- SESSION selector -->
-      <select name="session" onchange="this.form.submit()" class="px-3 py-2 border rounded w-full sm:w-auto">
-        <option value="">-- Select session --</option>
-        {% for ses in session_choices %}
-          <option value="{{ ses }}" {% if selected_session == ses %}selected{% endif %}>{{ ses }}</option>
-        {% endfor %}
-      </select>
+      <div class="min-w-0">
+        <label class="block text-sm font-medium text-gray-700 mb-1">
+          Academic Session
+        </label>
+        <select name="session"
+                onchange="this.form.submit()"
+                class="filter-select">
+          <option value="">-- Select session --</option>
+          {% for ses in session_choices %}
+            <option value="{{ ses }}"
+              {% if selected_session == ses %}selected{% endif %}>
+              {{ ses }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
 
-      <!-- Class selector -->
-      <select name="class_id" onchange="this.form.submit()" class="px-3 py-2 border rounded w-full sm:w-auto">
-        <option value="">-- Select class --</option>
-        {% for cls in classes %}
-          <option value="{{ cls.id }}" {% if selected_class and selected_class.id == cls.id %}selected{% endif %}>
-            {{ cls.name }}
-          </option>
-        {% endfor %}
-      </select>
+      <div class="min-w-0">
+        <label class="block text-sm font-medium text-gray-700 mb-1">
+          Class
+        </label>
+        <select name="class_id"
+                onchange="this.form.submit()"
+                class="filter-select">
+          <option value="">-- Select class --</option>
+          {% for cls in classes %}
+            <option value="{{ cls.id }}"
+              {% if selected_class and selected_class.id == cls.id %}selected{% endif %}>
+              {{ cls.name }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
 
-      <!-- Subject selector -->
-      <select name="subject_id" multiple size="4" class="px-3 py-2 border rounded w-full sm:w-auto">
-    {% for subj in subjects %}
-      <option value="{{ subj.id }}" {% if subj.id in selected_subject_ids %}selected{% endif %}>
-        {{ subj.name }}
-      </option>
-    {% endfor %}
-</select>
+      <div class="min-w-0">
+        <label class="block text-sm font-medium text-gray-700 mb-1">
+          Subjects
+        </label>
+        <select name="subject_id"
+                multiple
+                size="4"
+                class="filter-select"
+                style="height:auto; min-height:100px;">
+          {% for subj in subjects %}
+            <option value="{{ subj.id }}"
+              {% if subj.id in selected_subject_ids %}selected{% endif %}>
+              {{ subj.name }}
+            </option>
+          {% endfor %}
+        </select>
+        <p class="text-xs text-gray-500 mt-1">
+          Select multiple subjects if needed.
+        </p>
+      </div>
 
-      <!-- Term selector -->
-      <select name="term" onchange="this.form.submit()" class="px-3 py-2 border rounded w-full sm:w-auto">
-        <option value="">-- Select term --</option>
-        {% for key, value in term_choices.items %}
-          <option value="{{ key }}" {% if selected_term == key %}selected{% endif %}>{{ value }}</option>
-        {% endfor %}
-      </select>
+      <div class="min-w-0">
+        <label class="block text-sm font-medium text-gray-700 mb-1">
+          Term
+        </label>
+        <select name="term"
+                onchange="this.form.submit()"
+                class="filter-select">
+          <option value="">-- Select term --</option>
+          {% for key, value in term_choices.items %}
+            <option value="{{ key }}"
+              {% if selected_term == key %}selected{% endif %}>
+              {{ value }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
 
-      <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded w-full sm:w-auto">Load</button>
+      <div class="flex items-end">
+        <button type="submit"
+                class="score-action-btn bg-blue-600 hover:bg-blue-700 text-white">
+          Load Scores
+        </button>
+      </div>
+
     </form>
   </div>
 
   {% if not selected_class %}
-    <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4">Please select a class to load students.</div>
+
+    <div class="bg-yellow-50 border-l-4 border-yellow-500 text-yellow-800 p-4 rounded">
+      Please select a class to load students.
+    </div>
+
   {% elif not selected_subjects %}
-    <div class="bg-yellow-100 border-l-4 border-yellow-500 text-yellow-700 p-4">Please select at least one subject.</div>
+
+    <div class="bg-yellow-50 border-l-4 border-yellow-500 text-yellow-800 p-4 rounded">
+      Please select at least one subject.
+    </div>
+
   {% else %}
-    <div class="bg-white shadow rounded overflow-x-auto">
-      <form method="post" id="bulk-scores-form" class="min-w-full">
-        {% csrf_token %}
-        <input type="hidden" name="class_id" value="{{ selected_class.id }}">
-        <input type="hidden" name="session" value="{{ selected_session }}">
-        {% for subj in selected_subjects %}
-          <input type="hidden" name="subject_id" value="{{ subj.id }}">
-        {% endfor %}
 
-        <table class="w-full table-auto border-collapse">
-          <thead class="bg-gray-100 sticky top-0 z-10">
-            <tr>
-              <th class="p-3 text-left border-b">#</th>
-              <th class="p-3 text-left border-b">Student</th>
-              {% for subj in selected_subjects %}
-                {% if is_ca_enabled %}
-                  <th class="p-3 text-center border-b" colspan="3">{{ subj.name }}</th>
-                {% else %}
-                  <th class="p-3 text-center border-b" colspan="2">{{ subj.name }}</th>
-                {% endif %}
-              {% endfor %}
-            </tr>
-            <tr>
-              <th></th>
-              <th></th>
-              {% for subj in selected_subjects %}
-                {% if is_ca_enabled %}
-                  <th class="p-2 text-center border-b">CA<br><span class="text-xs text-gray-500">({{ ca_max }})</span></th>
-                {% endif %}
-                <th class="p-2 text-center border-b">Exam<br><span class="text-xs text-gray-500">({{ exam_max }})</span></th>
-                <th class="p-2 text-center border-b">Total / Delete</th>
-              {% endfor %}
-            </tr>
-          </thead>
+    <form method="post" id="bulk-scores-form">
+      {% csrf_token %}
 
-          <tbody>
-            {% for student in students_page.object_list %}
-              <tr class="border-b">
-                <td class="p-3 text-sm text-gray-700">{{ forloop.counter0|add:page_obj.start_index }}</td>
-                <td class="p-3 whitespace-nowrap">
-                  <div class="font-medium">{{ student.full_name }}</div>
-                  <div class="text-sm text-gray-500">{{ student.school_class.name }}</div>
-                </td>
+      <input type="hidden" name="class_id" value="{{ selected_class.id }}">
+      <input type="hidden" name="session" value="{{ selected_session }}">
+
+      {% for subj in selected_subjects %}
+        <input type="hidden" name="subject_id" value="{{ subj.id }}">
+      {% endfor %}
+
+      <!-- Student score cards -->
+      <div class="space-y-5">
+
+        {% for student in students_page.object_list %}
+
+          <section class="score-student-card bg-white border border-gray-200 rounded-xl shadow-sm">
+
+            <!-- Student heading -->
+            <div class="bg-gray-50 border-b border-gray-200 p-3 sm:p-4">
+              <div class="flex items-start gap-3">
+
+                <div class="flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-full bg-blue-100 text-blue-700 font-bold text-sm">
+                  {{ forloop.counter0|add:page_obj.start_index }}
+                </div>
+
+                <div class="min-w-0 flex-1">
+                  <h2 class="font-bold text-gray-900 text-base sm:text-lg break-words">
+                    {{ student.full_name }}
+                  </h2>
+                  <p class="text-sm text-gray-500 mt-1">
+                    {{ student.school_class.name }}
+                  </p>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- One card per subject -->
+            <div class="p-3 sm:p-4">
+
+              <div class="grid grid-cols-1 score-subjects-grid gap-3">
 
                 {% for subj in selected_subjects %}
+
                   {% with score=scores_map|get_item:student.id|get_item:subj.id %}
-                    {% if is_ca_enabled %}
-                      <td class="p-2 text-center align-middle">
-                        <input type="number"
-                               name="ca_{{ student.id }}_{{ subj.id }}"
-                               id="ca_{{ student.id }}_{{ subj.id }}"
-                               value="{{ score.ca|default_if_none:0 }}"
-                               min="0" max="{{ ca_max }}" step="1"
-                               class="ca-input w-16 sm:w-20 px-2 py-1 border rounded text-center"
-                               data-student="{{ student.id }}" data-subject="{{ subj.id }}">
-                      </td>
-                    {% endif %}
 
-                    <td class="p-2 text-center align-middle">
-                      <input type="number"
-                             name="exam_{{ student.id }}_{{ subj.id }}"
-                             id="exam_{{ student.id }}_{{ subj.id }}"
-                             value="{{ score.exam|default_if_none:0 }}"
-                             min="0" max="{{ exam_max }}" step="1"
-                             class="exam-input w-16 sm:w-20 px-2 py-1 border rounded text-center"
-                             data-student="{{ student.id }}" data-subject="{{ subj.id }}">
-                    </td>
+                    <div class="subject-score-card">
 
-                    <td class="p-2 text-center align-middle" id="score-cell-{{ student.id }}-{{ subj.id }}">
-                      <div class="flex flex-col items-center space-y-1">
+                      <h3 class="score-subject-heading font-bold text-gray-800 text-sm sm:text-base mb-3">
+                        {{ subj.name }}
+                      </h3>
+
+                      <!-- Score entry fields -->
+                      <div class="score-entry-grid">
+
+                        {% if is_ca_enabled %}
+                          <div class="score-field">
+                            <label for="ca_{{ student.id }}_{{ subj.id }}">
+                              CA (Max {{ ca_max }})
+                            </label>
+                            <input type="number"
+                                   name="ca_{{ student.id }}_{{ subj.id }}"
+                                   id="ca_{{ student.id }}_{{ subj.id }}"
+                                   value="{{ score.ca|default_if_none:0 }}"
+                                   min="0"
+                                   max="{{ ca_max }}"
+                                   step="1"
+                                   inputmode="numeric"
+                                   class="ca-input"
+                                   data-student="{{ student.id }}"
+                                   data-subject="{{ subj.id }}">
+                          </div>
+                        {% endif %}
+
+                        <div class="score-field">
+                          <label for="exam_{{ student.id }}_{{ subj.id }}">
+                            Exam (Max {{ exam_max }})
+                          </label>
+                          <input type="number"
+                                 name="exam_{{ student.id }}_{{ subj.id }}"
+                                 id="exam_{{ student.id }}_{{ subj.id }}"
+                                 value="{{ score.exam|default_if_none:0 }}"
+                                 min="0"
+                                 max="{{ exam_max }}"
+                                 step="1"
+                                 inputmode="numeric"
+                                 class="exam-input"
+                                 data-student="{{ student.id }}"
+                                 data-subject="{{ subj.id }}">
+                        </div>
+
+                      </div>
+
+                      <!-- Total and delete -->
+                      <div class="score-total-box"
+                           id="score-cell-{{ student.id }}-{{ subj.id }}">
+
+                        <div>
+                          <span class="block text-xs text-blue-700 font-semibold">
+                            TOTAL SCORE
+                          </span>
+                          <span class="text-xs text-gray-500">
+                            {% if is_ca_enabled %}
+                              CA + Exam
+                            {% else %}
+                              Exam score
+                            {% endif %}
+                          </span>
+                        </div>
+
                         <input readonly
-                               class="total-input w-20 sm:w-24 px-2 py-1 bg-gray-50 border rounded text-center"
+                               class="total-input"
                                id="total_{{ student.id }}_{{ subj.id }}"
-                               value="{% if score %}
-          {% if is_ca_enabled %}
-            {{ score.ca|default_if_none:0|add:score.exam|default_if_none:0 }}
-          {% else %}
-            {{ score.exam|default_if_none:0 }}
-          {% endif %}
-       {% else %}0{% endif %}"
+                               aria-label="{{ subj.name }} total score"
+                               value="{% if score %}{% if is_ca_enabled %}{{ score.ca|default_if_none:0|add:score.exam|default_if_none:0 }}{% else %}{{ score.exam|default_if_none:0 }}{% endif %}{% else %}0{% endif %}">
 
                         <button type="button"
-                                class="delete-score-btn bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded flex items-center gap-1"
+                                class="delete-score-btn score-delete-btn flex-shrink-0 bg-red-50 hover:bg-red-100 text-red-600 border border-red-200 flex items-center gap-1"
                                 data-student="{{ student.id }}"
-                                data-subject="{{ subj.id }}">
-                          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5-4h4m-4 0a1 1 0 00-1 1v1h6V4a1 1 0 00-1-1m-4 0h4"/>
+                                data-subject="{{ subj.id }}"
+                                aria-label="Delete {{ subj.name }} score for {{ student.full_name }}">
+
+                          <svg xmlns="http://www.w3.org/2000/svg"
+                               class="h-4 w-4"
+                               fill="none"
+                               viewBox="0 0 24 24"
+                               stroke="currentColor">
+                            <path stroke-linecap="round"
+                                  stroke-linejoin="round"
+                                  stroke-width="2"
+                                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5-4h4m-4 0a1 1 0 00-1 1v1h6V4a1 1 0 00-1-1m-4 0h4"/>
                           </svg>
                           Delete
                         </button>
-                      </div>
-                    </td>
-                  {% endwith %}
-                {% endfor %}
-              </tr>
-            {% endfor %}
-          </tbody>
-        </table>
 
-        <div class="flex flex-col sm:flex-row justify-between items-center mt-4 p-4 gap-3">
-          <div class="flex flex-wrap gap-2">
-            <button type="submit" name="save" class="bg-yellow-500 text-white px-4 py-2 rounded">Save & Continue Later</button>
-            <button type="submit" name="submit" class="bg-blue-600 text-white px-4 py-2 rounded">Submit Scores</button>
+                      </div>
+
+                    </div>
+
+                  {% endwith %}
+
+                {% endfor %}
+
+              </div>
+            </div>
+
+          </section>
+
+        {% empty %}
+
+          <div class="bg-white border border-gray-200 rounded-xl p-5 text-center text-gray-500">
+            No students found on this page.
           </div>
 
-          <div class="flex flex-col sm:flex-row items-center gap-2">
-            <span>Page {{ page_obj.number }} of {{ paginator.num_pages }}</span>
-            <div class="flex gap-1 flex-wrap">
-              {% if page_obj.has_previous %}
-                <a href="?class_id={{ selected_class.id }}{% for sid in selected_subject_ids %}&subject_id={{ sid }}{% endfor %}&page={{ page_obj.previous_page_number }}" class="px-2 py-1 border rounded">Previous</a>
-              {% endif %}
-              {% if page_obj.has_next %}
-                <a href="?class_id={{ selected_class.id }}{% for sid in selected_subject_ids %}&subject_id={{ sid }}{% endfor %}&page={{ page_obj.next_page_number }}" class="px-2 py-1 border rounded">Next</a>
-              {% endif %}
-            </div>
+        {% endfor %}
+
+      </div>
+
+      <!-- Save, submit and pagination -->
+      <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-3 sm:p-4 mt-5">
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+
+          <button type="submit"
+                  name="save"
+                  class="score-action-btn bg-yellow-500 hover:bg-yellow-600 text-white">
+            Save &amp; Continue Later
+          </button>
+
+          <button type="submit"
+                  name="submit"
+                  class="score-action-btn bg-blue-600 hover:bg-blue-700 text-white">
+            Submit Scores
+          </button>
+
+        </div>
+
+        <div class="flex flex-wrap justify-between items-center gap-3 mt-4 text-sm">
+
+          <span class="text-gray-600">
+            Page {{ page_obj.number }} of {{ paginator.num_pages }}
+          </span>
+
+          <div class="flex gap-2">
+
+            {% if page_obj.has_previous %}
+              <a href="?class_id={{ selected_class.id }}{% for sid in selected_subject_ids %}&subject_id={{ sid }}{% endfor %}&page={{ page_obj.previous_page_number }}"
+                 class="px-4 py-2 border rounded-lg text-gray-700 hover:bg-gray-50">
+                Previous
+              </a>
+            {% endif %}
+
+            {% if page_obj.has_next %}
+              <a href="?class_id={{ selected_class.id }}{% for sid in selected_subject_ids %}&subject_id={{ sid }}{% endfor %}&page={{ page_obj.next_page_number }}"
+                 class="px-4 py-2 border rounded-lg text-gray-700 hover:bg-gray-50">
+                Next
+              </a>
+            {% endif %}
+
           </div>
         </div>
-      </form>
-    </div>
+      </div>
+
+    </form>
+
   {% endif %}
 </div>
 
@@ -210,50 +503,68 @@ document.addEventListener('DOMContentLoaded', function () {
     const caInput = document.getElementById(`ca_${student}_${subject}`);
     const examInput = document.getElementById(`exam_${student}_${subject}`);
     const totalInput = document.getElementById(`total_${student}_${subject}`);
+
     if (!totalInput) return;
-    const ca = (caInput && IS_CA_ENABLED) ? (parseFloat(caInput.value) || 0) : 0;
-    const exam = examInput ? (parseFloat(examInput.value) || 0) : 0;
+
+    const ca = (caInput && IS_CA_ENABLED)
+      ? (parseFloat(caInput.value) || 0)
+      : 0;
+
+    const exam = examInput
+      ? (parseFloat(examInput.value) || 0)
+      : 0;
+
     totalInput.value = ca + exam;
   }
 
   document.querySelectorAll('.ca-input, .exam-input').forEach(function(input) {
     input.addEventListener('input', function() {
-      const student = this.dataset.student;
-      const subject = this.dataset.subject;
-      calcTotal(student, subject);
+      calcTotal(this.dataset.student, this.dataset.subject);
     });
   });
 
   document.querySelectorAll('.exam-input').forEach(function(input) {
-    const student = input.dataset.student;
-    const subject = input.dataset.subject;
-    calcTotal(student, subject);
+    calcTotal(input.dataset.student, input.dataset.subject);
   });
 
   // DELETE button AJAX with toast
   function getCookie(name) {
     let cookieValue = null;
+
     if (document.cookie && document.cookie !== '') {
       const cookies = document.cookie.split(';');
+
       for (let cookie of cookies) {
         cookie = cookie.trim();
+
         if (cookie.startsWith(name + '=')) {
-          cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+          cookieValue = decodeURIComponent(
+            cookie.substring(name.length + 1)
+          );
           break;
         }
       }
     }
+
     return cookieValue;
   }
+
   const csrftoken = getCookie('csrftoken');
 
   function showToast(message, type='success') {
     const container = document.getElementById('toast-container');
     if (!container) return;
+
     const toast = document.createElement('div');
-    toast.className = `px-4 py-2 rounded shadow text-white ${type==='success' ? 'bg-green-500' : 'bg-red-500'} animate-fadein`;
+
+    toast.className =
+      `px-4 py-3 rounded-lg shadow text-white ${
+        type === 'success' ? 'bg-green-600' : 'bg-red-600'
+      } animate-fadein`;
+
     toast.textContent = message;
     container.appendChild(toast);
+
     setTimeout(() => {
       toast.classList.add('opacity-0');
       setTimeout(() => toast.remove(), 600);
@@ -264,8 +575,13 @@ document.addEventListener('DOMContentLoaded', function () {
     button.addEventListener('click', function() {
       const studentId = this.dataset.student;
       const subjectId = this.dataset.subject;
-      const cell = document.getElementById(`score-cell-${studentId}-${subjectId}`);
-      const url = `{% url 'results:delete_score' 0 0 %}`.replace('/0/0/', `/${studentId}/${subjectId}/`);
+
+      const cell = document.getElementById(
+        `score-cell-${studentId}-${subjectId}`
+      );
+
+      const url = `{% url 'results:delete_score' 0 0 %}`
+        .replace('/0/0/', `/${studentId}/${subjectId}/`);
 
       if (!confirm('Are you sure you want to delete this score?')) return;
 
@@ -284,9 +600,13 @@ document.addEventListener('DOMContentLoaded', function () {
             cell.style.opacity = '0';
             setTimeout(() => cell.remove(), 600);
           }
+
           showToast('Score deleted successfully!');
         } else {
-          showToast(data.message || 'Could not delete score.', 'error');
+          showToast(
+            data.message || 'Could not delete score.',
+            'error'
+          );
         }
       })
       .catch(error => {
@@ -299,7 +619,20 @@ document.addEventListener('DOMContentLoaded', function () {
 </script>
 
 <style>
-@keyframes fadein { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-.animate-fadein { animation: fadein 0.3s ease forwards; }
+@keyframes fadein {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fadein {
+  animation: fadein 0.3s ease forwards;
+}
 </style>
+
 {% endblock %}
