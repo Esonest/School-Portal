@@ -4,327 +4,131 @@
 {% load widget_tweaks %}
 
 {% block content %}
+<div class="w-full max-w-3xl mx-auto px-3 sm:px-6 py-4 sm:py-8 box-border">
 
-<style>
-  .grade-settings-page {
-    width: 100%;
-    max-width: 1280px;
-    margin: 0 auto;
-    padding: 16px 12px 28px;
-    box-sizing: border-box;
-  }
-
-  .grade-settings-page * {
-    box-sizing: border-box;
-  }
-
-  .grade-settings-page input:not([type="checkbox"]),
-  .grade-settings-page select,
-  .grade-settings-page textarea {
-    width: 100%;
-    max-width: 100%;
-    min-width: 0;
-    min-height: 42px;
-    padding: 9px 10px;
-    border: 1px solid #d1d5db;
-    border-radius: 8px;
-    font-size: 16px;
-    background: #fff;
-  }
-
-  .grade-settings-page input:focus,
-  .grade-settings-page select:focus,
-  .grade-settings-page textarea:focus {
-    outline: none;
-    border-color: #2563eb;
-    box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.15);
-  }
-
-  .grade-card {
-    border: 1px solid #e5e7eb;
-    border-radius: 12px;
-    padding: 14px;
-    margin-bottom: 14px;
-    background: #fff;
-    box-shadow: 0 2px 7px rgba(0, 0, 0, 0.05);
-    min-width: 0;
-  }
-
-  .grade-field {
-    margin-bottom: 13px;
-    min-width: 0;
-  }
-
-  .grade-field label {
-    display: block;
-    font-size: 13px;
-    font-weight: 700;
-    color: #374151;
-    margin-bottom: 6px;
-  }
-
-  .grade-delete {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    padding-top: 10px;
-    border-top: 1px solid #f3f4f6;
-  }
-
-  .grade-delete .delete-row-btn {
-    min-width: 42px;
-    min-height: 42px;
-    border-radius: 8px;
-    background: #fef2f2;
-    color: #dc2626;
-    font-size: 24px;
-    font-weight: 700;
-  }
-
-  .grade-table-wrapper {
-    display: none;
-  }
-
-  .grade-mobile-list {
-    display: block;
-  }
-
-  .grade-actions {
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    width: 100%;
-  }
-
-  .grade-actions button {
-    width: 100%;
-    min-height: 46px;
-    border-radius: 9px;
-    font-weight: 600;
-    padding: 11px 16px;
-  }
-
-  .grade-settings-page .errorlist {
-    color: #dc2626;
-    font-size: 12px;
-    margin-top: 5px;
-    padding-left: 0;
-    list-style: none;
-    overflow-wrap: anywhere;
-  }
-
-  @media (min-width: 768px) {
-    .grade-settings-page {
-      padding: 28px 24px;
-    }
-
-    .grade-table-wrapper {
-      display: block;
-      width: 100%;
-      overflow-x: auto;
-      -webkit-overflow-scrolling: touch;
-    }
-
-    .grade-mobile-list {
-      display: none;
-    }
-
-    .grade-actions {
-      flex-direction: row;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .grade-actions button {
-      width: auto;
-    }
-  }
-</style>
-
-<div class="grade-settings-page">
-
-  <h1 class="text-xl sm:text-3xl font-bold mb-5 sm:mb-6 text-gray-800 break-words">
+  <h1 class="text-xl sm:text-3xl font-bold mb-4 sm:mb-6 text-gray-800 break-words">
     {{ school.name }} Grade Settings
   </h1>
 
-  <form method="POST" class="bg-white shadow-lg rounded-xl p-3 sm:p-6 space-y-5 sm:space-y-6">
+  <form method="POST" class="w-full bg-white shadow-md rounded-xl p-3 sm:p-6 space-y-4 sm:space-y-6 box-border">
     {% csrf_token %}
     {{ formset.management_form }}
 
-    <!-- DESKTOP / TABLET TABLE -->
-    <div class="grade-table-wrapper">
-      <table class="w-full border border-gray-200 rounded-lg overflow-hidden">
-        <thead class="bg-gray-100 text-gray-700 text-sm uppercase">
-          <tr>
-            <th class="px-3 py-3 text-left">Class</th>
-            <th class="px-3 py-3 text-left">Grade</th>
-            <th class="px-3 py-3 text-left">Min Score</th>
-            <th class="px-3 py-3 text-left">Interpretation</th>
-            <th class="px-3 py-3 text-center">Delete</th>
-          </tr>
-        </thead>
+    <!-- Grade rows -->
+    <div id="grade-body" class="space-y-3">
 
-        <tbody class="text-sm" id="grade-body-desktop">
-          {% for form in formset %}
-          <tr class="border-t hover:bg-gray-50 transition">
-            {{ form.id }}
-
-            <td class="px-2 py-3">
-              {{ form.SchoolClass|add_class:"w-full border rounded-lg px-2 py-2 focus:ring focus:ring-blue-200" }}
-              {% if form.SchoolClass.errors %}
-                <p class="text-red-600 text-xs mt-1">{{ form.SchoolClass.errors|join:", " }}</p>
-              {% endif %}
-            </td>
-
-            <td class="px-2 py-3">
-              {{ form.grade|add_class:"w-full border rounded-lg px-2 py-2 focus:ring focus:ring-blue-200" }}
-              {% if form.grade.errors %}
-                <p class="text-red-600 text-xs mt-1">{{ form.grade.errors|join:", " }}</p>
-              {% endif %}
-            </td>
-
-            <td class="px-2 py-3">
-              {{ form.min_score|add_class:"w-full border rounded-lg px-2 py-2 focus:ring focus:ring-blue-200" }}
-              {% if form.min_score.errors %}
-                <p class="text-red-600 text-xs mt-1">{{ form.min_score.errors|join:", " }}</p>
-              {% endif %}
-            </td>
-
-            <td class="px-2 py-3">
-              {{ form.interpretation|add_class:"w-full border rounded-lg px-2 py-2 focus:ring focus:ring-blue-200" }}
-              {% if form.interpretation.errors %}
-                <p class="text-red-600 text-xs mt-1">{{ form.interpretation.errors|join:", " }}</p>
-              {% endif %}
-            </td>
-
-            <td class="px-2 py-3 text-center">
-              <button type="button" class="delete-row-btn text-red-600 font-bold hover:text-red-800" aria-label="Delete grade row">&times;</button>
-              {{ form.DELETE }}
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-    </div>
-
-    <!-- ANDROID / MOBILE CARDS -->
-    <div class="grade-mobile-list" id="grade-body-mobile">
       {% for form in formset %}
-      <div class="grade-card">
+      <div class="grade-row border border-gray-200 rounded-lg p-3 space-y-3 bg-white">
         {{ form.id }}
 
-        <div class="grade-field">
-          <label>Class</label>
-          {{ form.SchoolClass|add_class:"w-full border rounded-lg px-3 py-2" }}
+        <div class="w-full min-w-0">
+          <label class="block text-sm font-semibold text-gray-700 mb-1">
+            Class
+          </label>
+          {{ form.SchoolClass|add_class:"w-full max-w-full min-w-0 border border-gray-300 rounded-lg px-3 py-2 text-base focus:ring-2 focus:ring-blue-200 focus:border-blue-500 box-border" }}
           {% if form.SchoolClass.errors %}
-            <p class="text-red-600 text-xs mt-1">{{ form.SchoolClass.errors|join:", " }}</p>
+            <p class="text-red-600 text-xs mt-1 break-words">{{ form.SchoolClass.errors|join:", " }}</p>
           {% endif %}
         </div>
 
-        <div class="grade-field">
-          <label>Grade</label>
-          {{ form.grade|add_class:"w-full border rounded-lg px-3 py-2" }}
-          {% if form.grade.errors %}
-            <p class="text-red-600 text-xs mt-1">{{ form.grade.errors|join:", " }}</p>
-          {% endif %}
+        <div class="grid grid-cols-2 gap-3">
+          <div class="min-w-0">
+            <label class="block text-sm font-semibold text-gray-700 mb-1">
+              Grade
+            </label>
+            {{ form.grade|add_class:"w-full max-w-full min-w-0 border border-gray-300 rounded-lg px-3 py-2 text-base focus:ring-2 focus:ring-blue-200 focus:border-blue-500 box-border" }}
+            {% if form.grade.errors %}
+              <p class="text-red-600 text-xs mt-1 break-words">{{ form.grade.errors|join:", " }}</p>
+            {% endif %}
+          </div>
+
+          <div class="min-w-0">
+            <label class="block text-sm font-semibold text-gray-700 mb-1">
+              Min Score
+            </label>
+            {{ form.min_score|add_class:"w-full max-w-full min-w-0 border border-gray-300 rounded-lg px-3 py-2 text-base focus:ring-2 focus:ring-blue-200 focus:border-blue-500 box-border" }}
+            {% if form.min_score.errors %}
+              <p class="text-red-600 text-xs mt-1 break-words">{{ form.min_score.errors|join:", " }}</p>
+            {% endif %}
+          </div>
         </div>
 
-        <div class="grade-field">
-          <label>Minimum Score</label>
-          {{ form.min_score|add_class:"w-full border rounded-lg px-3 py-2" }}
-          {% if form.min_score.errors %}
-            <p class="text-red-600 text-xs mt-1">{{ form.min_score.errors|join:", " }}</p>
-          {% endif %}
-        </div>
-
-        <div class="grade-field">
-          <label>Interpretation</label>
-          {{ form.interpretation|add_class:"w-full border rounded-lg px-3 py-2" }}
+        <div class="w-full min-w-0">
+          <label class="block text-sm font-semibold text-gray-700 mb-1">
+            Interpretation
+          </label>
+          {{ form.interpretation|add_class:"w-full max-w-full min-w-0 border border-gray-300 rounded-lg px-3 py-2 text-base focus:ring-2 focus:ring-blue-200 focus:border-blue-500 box-border" }}
           {% if form.interpretation.errors %}
-            <p class="text-red-600 text-xs mt-1">{{ form.interpretation.errors|join:", " }}</p>
+            <p class="text-red-600 text-xs mt-1 break-words">{{ form.interpretation.errors|join:", " }}</p>
           {% endif %}
         </div>
 
-        <div class="grade-delete">
-          <span class="text-sm font-semibold text-gray-600">Delete this grade</span>
-          <button type="button" class="delete-row-btn" aria-label="Delete grade row">&times;</button>
-          {{ form.DELETE }}
+        <div class="flex items-center justify-between border-t border-gray-100 pt-2">
+          <label class="text-sm text-gray-600">Delete this row</label>
+          <div class="flex items-center gap-3">
+            {{ form.DELETE }}
+            <button type="button"
+              class="delete-row-btn text-red-600 font-bold text-2xl leading-none px-3 py-1 rounded-lg hover:bg-red-50"
+              aria-label="Delete grade row">
+              &times;
+            </button>
+          </div>
         </div>
       </div>
       {% endfor %}
+
     </div>
 
-    <!-- EMPTY FORM TEMPLATE: USED BY ADD ROW -->
-    <table style="display: none;">
-      <tbody>
-        <tr id="empty-form-template-desktop">
-          {{ formset.empty_form.id }}
+    <!-- Empty form template used by Add Row -->
+    <div style="display:none;">
+      <div id="empty-form-template" class="grade-row border border-gray-200 rounded-lg p-3 space-y-3 bg-white">
+        {{ formset.empty_form.id }}
 
-          <td class="px-2 py-3">
-            {{ formset.empty_form.SchoolClass|add_class:"w-full border rounded-lg px-2 py-2" }}
-          </td>
+        <div class="w-full min-w-0">
+          <label class="block text-sm font-semibold text-gray-700 mb-1">Class</label>
+          {{ formset.empty_form.SchoolClass|add_class:"w-full max-w-full min-w-0 border border-gray-300 rounded-lg px-3 py-2 text-base box-border" }}
+        </div>
 
-          <td class="px-2 py-3">
-            {{ formset.empty_form.grade|add_class:"w-full border rounded-lg px-2 py-2" }}
-          </td>
+        <div class="grid grid-cols-2 gap-3">
+          <div class="min-w-0">
+            <label class="block text-sm font-semibold text-gray-700 mb-1">Grade</label>
+            {{ formset.empty_form.grade|add_class:"w-full max-w-full min-w-0 border border-gray-300 rounded-lg px-3 py-2 text-base box-border" }}
+          </div>
 
-          <td class="px-2 py-3">
-            {{ formset.empty_form.min_score|add_class:"w-full border rounded-lg px-2 py-2" }}
-          </td>
+          <div class="min-w-0">
+            <label class="block text-sm font-semibold text-gray-700 mb-1">Min Score</label>
+            {{ formset.empty_form.min_score|add_class:"w-full max-w-full min-w-0 border border-gray-300 rounded-lg px-3 py-2 text-base box-border" }}
+          </div>
+        </div>
 
-          <td class="px-2 py-3">
-            {{ formset.empty_form.interpretation|add_class:"w-full border rounded-lg px-2 py-2" }}
-          </td>
+        <div class="w-full min-w-0">
+          <label class="block text-sm font-semibold text-gray-700 mb-1">Interpretation</label>
+          {{ formset.empty_form.interpretation|add_class:"w-full max-w-full min-w-0 border border-gray-300 rounded-lg px-3 py-2 text-base box-border" }}
+        </div>
 
-          <td class="px-2 py-3 text-center">
-            <button type="button" class="delete-row-btn text-red-600 font-bold">&times;</button>
+        <div class="flex items-center justify-between border-t border-gray-100 pt-2">
+          <label class="text-sm text-gray-600">Delete this row</label>
+          <div class="flex items-center gap-3">
             <input type="checkbox" name="form-__prefix__-DELETE" id="id_form-__prefix__-DELETE" style="display:none;">
-          </td>
-        </tr>
-      </tbody>
-    </table>
-
-    <div id="empty-form-template-mobile" style="display:none;">
-      <div class="grade-card">
-        <input type="hidden" name="form-__prefix__-id" id="id_form-__prefix__-id">
-
-        <div class="grade-field">
-          <label>Class</label>
-          {{ formset.empty_form.SchoolClass|add_class:"w-full border rounded-lg px-3 py-2" }}
-        </div>
-
-        <div class="grade-field">
-          <label>Grade</label>
-          {{ formset.empty_form.grade|add_class:"w-full border rounded-lg px-3 py-2" }}
-        </div>
-
-        <div class="grade-field">
-          <label>Minimum Score</label>
-          {{ formset.empty_form.min_score|add_class:"w-full border rounded-lg px-3 py-2" }}
-        </div>
-
-        <div class="grade-field">
-          <label>Interpretation</label>
-          {{ formset.empty_form.interpretation|add_class:"w-full border rounded-lg px-3 py-2" }}
-        </div>
-
-        <div class="grade-delete">
-          <span class="text-sm font-semibold text-gray-600">Delete this grade</span>
-          <button type="button" class="delete-row-btn" aria-label="Delete grade row">&times;</button>
-          <input type="checkbox" name="form-__prefix__-DELETE" id="id_form-__prefix__-DELETE" style="display:none;">
+            <button type="button"
+              class="delete-row-btn text-red-600 font-bold text-2xl leading-none px-3 py-1 rounded-lg hover:bg-red-50"
+              aria-label="Delete grade row">
+              &times;
+            </button>
+          </div>
         </div>
       </div>
     </div>
 
-    <div class="grade-actions">
+    <!-- Actions -->
+    <div class="flex flex-col gap-3 pt-2">
       <button type="button" id="add-row-btn"
-        class="bg-gray-200 hover:bg-gray-300 text-gray-800">
+        class="w-full bg-gray-100 active:bg-gray-200 text-gray-800 font-semibold px-4 py-3 rounded-lg text-base">
         + Add Row
       </button>
 
       <button type="submit"
-        class="bg-blue-600 hover:bg-blue-700 text-white shadow-md transition">
+        class="w-full bg-blue-600 active:bg-blue-700 text-white font-semibold px-6 py-3 rounded-lg shadow text-base">
         Save Settings
       </button>
     </div>
@@ -345,79 +149,37 @@
 <script>
 document.addEventListener("DOMContentLoaded", function() {
   const addBtn = document.getElementById("add-row-btn");
-  const desktopBody = document.getElementById("grade-body-desktop");
-  const mobileBody = document.getElementById("grade-body-mobile");
+  const tableBody = document.getElementById("grade-body");
   const totalForms = document.querySelector("#id_form-TOTAL_FORMS");
+  const emptyTemplate = document.getElementById("empty-form-template").outerHTML;
 
-  const emptyDesktop = document.getElementById("empty-form-template-desktop").outerHTML;
-  const emptyMobile = document.getElementById("empty-form-template-mobile").innerHTML;
-
-  // Add a form row/card while preserving Django formset indexes.
+  // Add new row
   addBtn.addEventListener("click", function() {
-    let formCount = parseInt(totalForms.value, 10);
+    let formCount = parseInt(totalForms.value);
 
-    let newDesktopHtml = emptyDesktop.replace(/__prefix__/g, formCount);
-    let newMobileHtml = emptyMobile.replace(/__prefix__/g, formCount);
-
-    desktopBody.insertAdjacentHTML("beforeend", newDesktopHtml);
-    mobileBody.insertAdjacentHTML("beforeend", newMobileHtml);
+    let newRowHtml = emptyTemplate.replace(/__prefix__/g, formCount);
+    tableBody.insertAdjacentHTML("beforeend", newRowHtml);
 
     totalForms.value = formCount + 1;
 
-    const newDesktopRow = desktopBody.lastElementChild;
-    const newMobileCard = mobileBody.lastElementChild;
-
-    newDesktopRow.classList.add("bg-yellow-50");
-    newMobileCard.classList.add("bg-yellow-50");
-
-    [newDesktopRow, newMobileCard].forEach(container => {
-      container.querySelectorAll("select, input, textarea").forEach(input => {
-        input.classList.add("border-red-300");
-      });
+    // Highlight empty fields
+    const newRow = tableBody.lastElementChild;
+    newRow.classList.add("bg-yellow-50");
+    newRow.querySelectorAll("select, input").forEach(input => {
+      input.classList.add("border-red-300");
     });
   });
 
-  // Delete both visual copies of the same form and mark DELETE.
-  function deleteGradeRow(button) {
-    const container = button.closest("tr, .grade-card");
-    if (!container) return;
-
-    const deleteCheckbox = container.querySelector('input[type="checkbox"][name$="-DELETE"]');
-    if (deleteCheckbox) {
-      deleteCheckbox.checked = true;
-    }
-
-    // Each form is rendered twice (desktop and mobile).
-    // Hide both copies, but keep their inputs in the form for submission.
-    const deleteInput = container.querySelector('input[name$="-DELETE"]');
-    if (deleteInput) {
-      const match = deleteInput.name.match(/^form-(\d+)-DELETE$/);
-
-      if (match) {
-        const index = match[1];
-
-        document.querySelectorAll(
-          '#grade-body-desktop tr, #grade-body-mobile .grade-card'
-        ).forEach(item => {
-          const itemDelete = item.querySelector('input[name="form-' + index + '-DELETE"]');
-          if (itemDelete) {
-            item.style.display = "none";
-            itemDelete.checked = true;
-          }
-        });
-      }
-    }
-
-    container.style.display = "none";
-  }
-
-  // Handle delete buttons in both layouts.
-  document.addEventListener("click", function(e) {
+  // Delete row dynamically
+  tableBody.addEventListener("click", function(e) {
     if (e.target && e.target.classList.contains("delete-row-btn")) {
-      deleteGradeRow(e.target);
+      const row = e.target.closest(".grade-row");
+      const checkbox = row.querySelector('input[type="checkbox"][name$="-DELETE"]');
+
+      if (checkbox) checkbox.checked = true;
+      row.style.display = "none";
     }
   });
 });
 </script>
-
 {% endblock %}
