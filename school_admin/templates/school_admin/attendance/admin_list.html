@@ -1,40 +1,199 @@
+
 {% extends "accounts/base.html" %}
 
 {% block content %}
 
-<div class="space-y-6">
+<style>
+  .attendance-page {
+    width: 100%;
+    max-width: 1400px;
+    margin: 0 auto;
+    padding: 14px 10px 26px;
+    box-sizing: border-box;
+  }
+
+  .attendance-page * {
+    box-sizing: border-box;
+  }
+
+  .attendance-page .attendance-filter,
+  .attendance-page .attendance-filter select,
+  .attendance-page .attendance-filter input {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    font-size: 16px;
+  }
+
+  .attendance-page .attendance-filter select,
+  .attendance-page .attendance-filter input {
+    min-height: 44px;
+  }
+
+  .attendance-page .chart-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 14px;
+  }
+
+  .attendance-page .chart-card {
+    width: 100%;
+    min-width: 0;
+    padding: 12px;
+    overflow: hidden;
+  }
+
+  .attendance-page .chart-container {
+    position: relative;
+    width: 100%;
+    height: 260px;
+    min-width: 0;
+  }
+
+  .attendance-page .attendance-table-wrapper {
+    display: none;
+  }
+
+  .attendance-page .attendance-mobile-list {
+    display: block;
+    padding: 12px;
+  }
+
+  .attendance-page .attendance-record-card {
+    min-width: 0;
+    width: 100%;
+    padding: 14px;
+    margin-bottom: 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 12px;
+    background: #fff;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, .04);
+  }
+
+  .attendance-page .record-value {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  .attendance-page .record-label {
+    display: block;
+    margin-bottom: 4px;
+    color: #6b7280;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .03em;
+  }
+
+  .attendance-page .record-field {
+    margin-top: 12px;
+    min-width: 0;
+  }
+
+  .attendance-page .record-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 18px;
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px solid #f3f4f6;
+  }
+
+  .attendance-page .record-actions a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 40px;
+    font-weight: 600;
+    text-decoration: none;
+  }
+
+  .attendance-page .attendance-add-button,
+  .attendance-page .filter-button {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    min-height: 46px;
+    padding: 11px 14px;
+    border-radius: 10px;
+    text-align: center;
+    font-size: 14px;
+    font-weight: 600;
+  }
+
+  @media (min-width: 640px) {
+    .attendance-page {
+      padding: 22px 18px 30px;
+    }
+
+    .attendance-page .chart-container {
+      height: 300px;
+    }
+
+    .attendance-page .attendance-add-button,
+    .attendance-page .filter-button {
+      width: auto;
+    }
+  }
+
+  @media (min-width: 768px) {
+    .attendance-page .attendance-table-wrapper {
+      display: block;
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .attendance-page .attendance-mobile-list {
+      display: none;
+    }
+
+    .attendance-page .chart-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+  }
+
+  @media (min-width: 1100px) {
+    .attendance-page .chart-grid {
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+    }
+  }
+</style>
+
+<div class="attendance-page space-y-5 sm:space-y-6">
 
     <!-- HEADER -->
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-        <div>
-            <h2 class="text-xl sm:text-2xl lg:text-3xl font-bold text-{{ school.theme_color }}-600">
+        <div class="min-w-0">
+            <h2 class="text-2xl sm:text-3xl font-bold text-{{ school.theme_color }}-600">
                 Attendance Records
             </h2>
-            <p class="text-sm text-gray-500 mt-1 text-{{ school.theme_color }}-600">
+
+            <p class="text-sm text-gray-500 mt-1">
                 {{ school.name }}
             </p>
         </div>
 
         <a href="{% url 'school_admin:admin_attendance_create' school.id %}"
-           class="w-full sm:w-auto text-center bg-blue-600 text-white px-4 py-3 rounded-xl shadow hover:bg-blue-700 transition font-medium">
+           class="attendance-add-button sm:flex-shrink-0 bg-blue-600 text-white shadow hover:bg-blue-700 transition">
             + Add Attendance
         </a>
     </div>
 
-
     <!-- FILTER BAR -->
     <form method="GET"
-          class="bg-white p-4 sm:p-5 rounded-2xl shadow border border-gray-100">
+          class="attendance-filter bg-white p-3 sm:p-5 rounded-2xl shadow border border-gray-100">
 
-        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-3 sm:gap-4">
 
             <!-- Session -->
-            <div>
+            <div class="min-w-0">
                 <label class="block text-sm font-medium text-gray-600 mb-1">
                     Session
                 </label>
+
                 <select name="session"
-                        class="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm">
+                        class="border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none">
                     <option value="">All Sessions</option>
                     {% for s in sessions %}
                         <option value="{{ s }}"
@@ -46,12 +205,13 @@
             </div>
 
             <!-- Term -->
-            <div>
+            <div class="min-w-0">
                 <label class="block text-sm font-medium text-gray-600 mb-1">
                     Term
                 </label>
+
                 <select name="term"
-                        class="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm">
+                        class="border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none">
                     <option value="">All Terms</option>
                     {% for t in terms %}
                         <option value="{{ t }}"
@@ -63,12 +223,13 @@
             </div>
 
             <!-- Class -->
-            <div>
+            <div class="min-w-0">
                 <label class="block text-sm font-medium text-gray-600 mb-1">
                     Class
                 </label>
+
                 <select name="class"
-                        class="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm">
+                        class="border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none">
                     <option value="">All Classes</option>
                     {% for cls in classes %}
                         <option value="{{ cls.id }}"
@@ -80,12 +241,13 @@
             </div>
 
             <!-- Student -->
-            <div>
+            <div class="min-w-0">
                 <label class="block text-sm font-medium text-gray-600 mb-1">
                     Student
                 </label>
+
                 <select name="student"
-                        class="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm">
+                        class="border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none">
                     <option value="">All Students</option>
                     {% for std in students %}
                         <option value="{{ std.id }}"
@@ -97,12 +259,13 @@
             </div>
 
             <!-- Status -->
-            <div>
+            <div class="min-w-0">
                 <label class="block text-sm font-medium text-gray-600 mb-1">
                     Status
                 </label>
+
                 <select name="status"
-                        class="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm">
+                        class="border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none">
                     <option value="">Any Status</option>
                     <option value="present"
                         {% if selected_status == "present" %}selected{% endif %}>
@@ -116,123 +279,100 @@
             </div>
 
             <!-- Start Date -->
-            <div>
+            <div class="min-w-0">
                 <label class="block text-sm font-medium text-gray-600 mb-1">
                     From
                 </label>
+
                 <input type="date"
                        name="start_date"
                        value="{{ start_date|default:'' }}"
-                       class="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm">
+                       class="border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none">
             </div>
 
             <!-- End Date -->
-            <div>
+            <div class="min-w-0">
                 <label class="block text-sm font-medium text-gray-600 mb-1">
                     To
                 </label>
+
                 <input type="date"
                        name="end_date"
                        value="{{ end_date|default:'' }}"
-                       class="w-full border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none text-sm">
+                       class="border border-gray-300 p-3 rounded-xl focus:ring-2 focus:ring-blue-500 focus:outline-none">
             </div>
 
         </div>
 
-        <!-- Buttons -->
-        <div class="mt-5 flex flex-col sm:flex-row gap-3 sm:justify-end">
+        <!-- FILTER BUTTONS -->
+        <div class="mt-4 flex flex-col sm:flex-row gap-3 sm:justify-end">
 
             <a href="?"
-               class="w-full sm:w-auto text-center border border-gray-300 px-5 py-3 rounded-xl hover:bg-gray-100 transition text-sm font-medium">
+               class="filter-button border border-gray-300 hover:bg-gray-100 transition">
                 Reset
             </a>
 
             <button type="submit"
-                    class="w-full sm:w-auto bg-gray-900 text-white px-5 py-3 rounded-xl hover:bg-black transition text-sm font-medium shadow">
+                    class="filter-button bg-gray-900 text-white hover:bg-black transition shadow">
                 Apply Filters
             </button>
 
         </div>
-
     </form>
 
-
     <!-- CHARTS -->
-    <div class="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-5">
+    <div class="chart-grid">
 
-        <div class="bg-white p-4 rounded-2xl shadow border border-gray-100">
-            <div class="flex items-center justify-between mb-3">
-                <h3 class="font-semibold text-gray-700 text-sm sm:text-base">
-                    Daily Attendance
-                </h3>
-            </div>
+        <div class="chart-card bg-white rounded-2xl shadow border border-gray-100">
+            <h3 class="font-semibold text-gray-700 text-sm sm:text-base mb-3">
+                Daily Attendance
+            </h3>
 
-            <div class="relative h-72 sm:h-80">
+            <div class="chart-container">
                 <canvas id="dailyChart"></canvas>
             </div>
         </div>
 
-        <div class="bg-white p-4 rounded-2xl shadow border border-gray-100">
-            <div class="flex items-center justify-between mb-3">
-                <h3 class="font-semibold text-gray-700 text-sm sm:text-base">
-                    Status Distribution
-                </h3>
-            </div>
+        <div class="chart-card bg-white rounded-2xl shadow border border-gray-100">
+            <h3 class="font-semibold text-gray-700 text-sm sm:text-base mb-3">
+                Status Distribution
+            </h3>
 
-            <div class="relative h-72 sm:h-80">
+            <div class="chart-container">
                 <canvas id="statusChart"></canvas>
             </div>
         </div>
 
-        <div class="bg-white p-4 rounded-2xl shadow border border-gray-100 lg:col-span-2 xl:col-span-1">
-            <div class="flex items-center justify-between mb-3">
-                <h3 class="font-semibold text-gray-700 text-sm sm:text-base">
-                    Class Distribution
-                </h3>
-            </div>
+        <div class="chart-card bg-white rounded-2xl shadow border border-gray-100">
+            <h3 class="font-semibold text-gray-700 text-sm sm:text-base mb-3">
+                Class Distribution
+            </h3>
 
-            <div class="relative h-72 sm:h-80">
+            <div class="chart-container">
                 <canvas id="classChart"></canvas>
             </div>
         </div>
 
     </div>
 
-
-    <!-- TABLE -->
+    <!-- ATTENDANCE RECORDS -->
     <div class="bg-white shadow rounded-2xl border border-gray-100 overflow-hidden">
 
-        <!-- Mobile Scroll -->
-        <div class="overflow-x-auto">
-
+        <!-- DESKTOP TABLE -->
+        <div class="attendance-table-wrapper">
             <table class="min-w-full text-sm">
 
                 <thead class="bg-gray-100 border-b text-gray-700">
                     <tr>
-                        <th class="px-4 py-3 text-left whitespace-nowrap">
-                            Student
-                        </th>
-
-                        <th class="px-4 py-3 text-left whitespace-nowrap">
-                            Date
-                        </th>
-
-                        <th class="px-4 py-3 text-left whitespace-nowrap">
-                            Status
-                        </th>
-
-                        <th class="px-4 py-3 text-left whitespace-nowrap">
-                            Remarks
-                        </th>
-
-                        <th class="px-4 py-3 text-left whitespace-nowrap">
-                            Actions
-                        </th>
+                        <th class="px-4 py-3 text-left whitespace-nowrap">Student</th>
+                        <th class="px-4 py-3 text-left whitespace-nowrap">Date</th>
+                        <th class="px-4 py-3 text-left whitespace-nowrap">Status</th>
+                        <th class="px-4 py-3 text-left">Remarks</th>
+                        <th class="px-4 py-3 text-left whitespace-nowrap">Actions</th>
                     </tr>
                 </thead>
 
                 <tbody>
-
                     {% for rec in records %}
                     <tr class="border-b hover:bg-gray-50 transition">
 
@@ -256,14 +396,12 @@
                             {% endif %}
                         </td>
 
-                        <td class="px-4 py-4 text-gray-600 min-w-[180px]">
+                        <td class="px-4 py-4 text-gray-600">
                             {{ rec.remarks|default:"-" }}
                         </td>
 
                         <td class="px-4 py-4 whitespace-nowrap">
-
                             <div class="flex flex-wrap gap-3">
-
                                 <a href="{% url 'school_admin:admin_attendance_edit' school.id rec.id %}"
                                    class="text-blue-600 hover:text-blue-800 font-medium">
                                     Edit
@@ -273,34 +411,85 @@
                                    class="text-red-600 hover:text-red-800 font-medium">
                                     Delete
                                 </a>
-
                             </div>
-
                         </td>
 
                     </tr>
-
                     {% empty %}
-
                     <tr>
-                        <td colspan="5"
-                            class="px-4 py-10 text-center text-gray-500">
+                        <td colspan="5" class="px-4 py-10 text-center text-gray-500">
                             No attendance records found.
                         </td>
                     </tr>
-
                     {% endfor %}
-
                 </tbody>
 
             </table>
+        </div>
 
+        <!-- ANDROID MOBILE CARDS -->
+        <div class="attendance-mobile-list">
+            {% for rec in records %}
+            <article class="attendance-record-card">
+
+                <div class="record-field mt-0">
+                    <span class="record-label">Student</span>
+                    <div class="record-value font-semibold text-gray-800">
+                        {{ rec.student }}
+                    </div>
+                </div>
+
+                <div class="record-field">
+                    <span class="record-label">Date</span>
+                    <div class="record-value text-gray-700">
+                        {{ rec.date }}
+                    </div>
+                </div>
+
+                <div class="record-field">
+                    <span class="record-label">Status</span>
+
+                    {% if rec.status == "present" %}
+                        <span class="inline-flex items-center px-3 py-1 rounded-full bg-green-100 text-green-700 text-xs font-semibold">
+                            Present
+                        </span>
+                    {% else %}
+                        <span class="inline-flex items-center px-3 py-1 rounded-full bg-red-100 text-red-700 text-xs font-semibold">
+                            Absent
+                        </span>
+                    {% endif %}
+                </div>
+
+                <div class="record-field">
+                    <span class="record-label">Remarks</span>
+                    <div class="record-value text-gray-600 text-sm">
+                        {{ rec.remarks|default:"-" }}
+                    </div>
+                </div>
+
+                <div class="record-actions">
+                    <a href="{% url 'school_admin:admin_attendance_edit' school.id rec.id %}"
+                       class="text-blue-600 hover:text-blue-800">
+                        Edit
+                    </a>
+
+                    <a href="{% url 'school_admin:admin_attendance_delete' school.id rec.id %}"
+                       class="text-red-600 hover:text-red-800">
+                        Delete
+                    </a>
+                </div>
+
+            </article>
+            {% empty %}
+            <div class="px-4 py-10 text-center text-gray-500">
+                No attendance records found.
+            </div>
+            {% endfor %}
         </div>
 
     </div>
 
 </div>
-
 
 <!-- CHART.JS -->
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>

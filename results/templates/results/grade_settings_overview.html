@@ -1,29 +1,197 @@
+
 {% extends "accounts/base.html" %}
 
 {% block content %}
-<div class="max-w-7xl mx-auto py-10 px-4">
 
-    <!-- Header -->
-    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6 mb-8">
-        <div>
-            <h1 class="text-4xl font-extrabold text-{{ school.theme_color }}-600">
+<style>
+  .grade-overview-page {
+    width: 100%;
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: 16px 12px 28px;
+    box-sizing: border-box;
+  }
+
+  .grade-overview-page * {
+    box-sizing: border-box;
+  }
+
+  .grade-overview-page .page-heading {
+    font-size: clamp(1.5rem, 5vw, 2.5rem);
+    line-height: 1.2;
+    overflow-wrap: anywhere;
+  }
+
+  .grade-overview-page .class-filter {
+    display: block;
+    width: 100%;
+    min-width: 0;
+    min-height: 46px;
+    padding: 10px 12px;
+    border: 1px solid #d1d5db;
+    border-radius: 12px;
+    background: #fff;
+    font-size: 16px;
+  }
+
+  .grade-overview-page .grade-table-wrapper {
+    display: none;
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .grade-overview-page .grade-mobile-list {
+    display: block;
+    padding: 12px;
+  }
+
+  .grade-overview-page .grade-mobile-card {
+    width: 100%;
+    min-width: 0;
+    padding: 15px;
+    margin-bottom: 14px;
+    border: 1px solid #e5e7eb;
+    border-radius: 14px;
+    background: #fff;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.06);
+  }
+
+  .grade-overview-page .grade-mobile-class {
+    margin: 0 0 14px;
+    padding-bottom: 12px;
+    border-bottom: 1px solid #e5e7eb;
+    color: #1e293b;
+    font-size: 17px;
+    font-weight: 800;
+    overflow-wrap: anywhere;
+  }
+
+  .grade-overview-page .grade-detail {
+    min-width: 0;
+    margin-top: 12px;
+  }
+
+  .grade-overview-page .grade-detail-label {
+    display: block;
+    margin-bottom: 5px;
+    color: #64748b;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .04em;
+  }
+
+  .grade-overview-page .grade-detail-value {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    color: #334155;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+
+  .grade-overview-page .grade-badge {
+    display: inline-flex;
+    align-items: center;
+    max-width: 100%;
+    padding: 6px 12px;
+    border-radius: 999px;
+    background: linear-gradient(to right, #dbeafe, #e0e7ff);
+    color: #1d4ed8;
+    font-weight: 800;
+    overflow-wrap: anywhere;
+  }
+
+  .grade-overview-page .principal-comment {
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: #f0fdf4;
+    color: #166534;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  .grade-overview-page .teacher-comment {
+    padding: 10px 12px;
+    border-radius: 10px;
+    background: #fffbeb;
+    color: #92400e;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  .grade-overview-page .grade-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-top: 22px;
+  }
+
+  .grade-overview-page .grade-action-link {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 48px;
+    padding: 12px 16px;
+    border-radius: 12px;
+    color: #fff;
+    font-size: 15px;
+    font-weight: 700;
+    text-align: center;
+    text-decoration: none;
+    overflow-wrap: anywhere;
+  }
+
+  @media (min-width: 768px) {
+    .grade-overview-page {
+      padding: 28px 24px;
+    }
+
+    .grade-overview-page .grade-table-wrapper {
+      display: block;
+    }
+
+    .grade-overview-page .grade-mobile-list {
+      display: none;
+    }
+
+    .grade-overview-page .grade-actions {
+      flex-direction: row;
+      flex-wrap: wrap;
+    }
+
+    .grade-overview-page .grade-action-link {
+      width: auto;
+      min-width: 180px;
+    }
+  }
+</style>
+
+<div class="grade-overview-page">
+
+    <!-- HEADER -->
+    <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-5 mb-6 sm:mb-8">
+
+        <div class="min-w-0">
+            <h1 class="page-heading font-extrabold text-{{ school.theme_color }}-600">
                 Grade Settings Overview
             </h1>
-            <p class="text-gray-500 mt-2">
+
+            <p class="text-gray-500 mt-2 text-sm sm:text-base">
                 View grade scales, principal comments, and teacher comments by class
             </p>
         </div>
 
-        <!-- Filter -->
-        <div class="w-full lg:w-80">
-            <label class="block text-sm font-semibold text-gray-700 mb-2">
+        <!-- CLASS FILTER -->
+        <div class="w-full lg:w-80 min-w-0 flex-shrink-0">
+            <label for="classFilter" class="block text-sm font-semibold text-gray-700 mb-2">
                 Filter by Class
             </label>
-            <select id="classFilter"
-                    class="w-full rounded-2xl border-gray-300 shadow-lg
-                           focus:ring-4 focus:ring-blue-500/30
-                           focus:border-blue-500 px-4 py-3">
+
+            <select id="classFilter" class="class-filter shadow-sm focus:ring-2 focus:ring-blue-300 focus:border-blue-500">
                 <option value="">All Classes</option>
+
                 {% for cls in classes %}
                     <option value="{{ cls.id }}"
                         {% if selected_class_id == cls.id|stringformat:"s" %}selected{% endif %}>
@@ -32,98 +200,141 @@
                 {% endfor %}
             </select>
         </div>
+
     </div>
 
-    <!-- Main Card -->
-    <div class="bg-white rounded-3xl shadow-2xl border border-gray-100 overflow-hidden">
-        <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-700 px-8 py-6">
-            <h2 class="text-3xl font-bold text-white">
+    <!-- MAIN CARD -->
+    <div class="bg-white rounded-2xl sm:rounded-3xl shadow-xl border border-gray-100 overflow-hidden">
+
+        <div class="bg-gradient-to-r from-blue-600 via-indigo-600 to-purple-700 px-4 py-5 sm:px-8 sm:py-6">
+            <h2 class="text-xl sm:text-3xl font-bold text-white">
                 Grade Configuration Matrix
             </h2>
-            <p class="text-blue-100 mt-2">
+
+            <p class="text-blue-100 mt-2 text-sm sm:text-base">
                 Real-time grade settings per class
             </p>
         </div>
 
-        <div class="overflow-x-auto">
-            <table class="w-full">
+        <!-- DESKTOP TABLE -->
+        <div class="grade-table-wrapper">
+            <table class="w-full text-sm">
                 <thead class="bg-slate-50">
                     <tr>
-                        <th class="px-6 py-5 text-left font-bold text-slate-700">Class</th>
-                        <th class="px-6 py-5 text-left font-bold text-slate-700">Grade</th>
-                        <th class="px-6 py-5 text-left font-bold text-slate-700">Minimum Score</th>
-                        <th class="px-6 py-5 text-left font-bold text-slate-700">Interpretation</th>
-                        <th class="px-6 py-5 text-left font-bold text-green-700">Principal Comment</th>
-                        <th class="px-6 py-5 text-left font-bold text-amber-700">Teacher Comment</th>
+                        <th class="px-4 py-4 text-left font-bold text-slate-700">Class</th>
+                        <th class="px-4 py-4 text-left font-bold text-slate-700">Grade</th>
+                        <th class="px-4 py-4 text-left font-bold text-slate-700">Minimum Score</th>
+                        <th class="px-4 py-4 text-left font-bold text-slate-700">Interpretation</th>
+                        <th class="px-4 py-4 text-left font-bold text-green-700">Principal Comment</th>
+                        <th class="px-4 py-4 text-left font-bold text-amber-700">Teacher Comment</th>
                     </tr>
                 </thead>
 
                 <tbody id="gradesTableBody">
                     {% for grade in grade_settings %}
-                    <tr class="border-t border-slate-100 hover:bg-blue-50 transition-all duration-300">
-                        <td class="px-6 py-5 font-semibold text-slate-800">
+                    <tr class="border-t border-slate-100 hover:bg-blue-50 transition-colors">
+                        <td class="px-4 py-4 font-semibold text-slate-800">
                             {{ grade.SchoolClass.name }}
                         </td>
 
-                        <td class="px-6 py-5">
-                            <span class="inline-flex items-center px-4 py-1.5 rounded-full
-                                         bg-gradient-to-r from-blue-100 to-indigo-100
-                                         text-blue-700 font-bold shadow-sm">
-                                {{ grade.grade }}
-                            </span>
+                        <td class="px-4 py-4">
+                            <span class="grade-badge">{{ grade.grade }}</span>
                         </td>
 
-                        <td class="px-6 py-5 font-bold text-slate-700">
+                        <td class="px-4 py-4 font-bold text-slate-700">
                             {{ grade.min_score }}
                         </td>
 
-                        <td class="px-6 py-5 text-slate-600">
+                        <td class="px-4 py-4 text-slate-600">
                             {{ grade.interpretation|default:"N/A" }}
                         </td>
 
-                        <td class="px-6 py-5">
-                            <div class="max-w-xs rounded-xl bg-green-50 text-green-800 px-4 py-3 text-sm">
+                        <td class="px-4 py-4">
+                            <div class="max-w-xs rounded-xl bg-green-50 text-green-800 px-3 py-3">
                                 {{ grade.principal_comment|default:"No principal comment" }}
                             </div>
                         </td>
 
-                        <td class="px-6 py-5">
-                            <div class="max-w-xs rounded-xl bg-amber-50 text-amber-800 px-4 py-3 text-sm">
+                        <td class="px-4 py-4">
+                            <div class="max-w-xs rounded-xl bg-amber-50 text-amber-800 px-3 py-3">
                                 {{ grade.teacher_comment|default:"No teacher comment" }}
                             </div>
                         </td>
                     </tr>
                     {% empty %}
                     <tr>
-                        <td colspan="6" class="text-center py-16">
-                            <div class="text-slate-400 text-lg">
-                                No grade settings found.
-                            </div>
+                        <td colspan="6" class="text-center py-12 text-slate-400 text-base">
+                            No grade settings found.
                         </td>
                     </tr>
                     {% endfor %}
                 </tbody>
             </table>
         </div>
+
+        <!-- ANDROID MOBILE CARDS -->
+        <div class="grade-mobile-list" id="gradesMobileBody">
+            {% for grade in grade_settings %}
+            <article class="grade-mobile-card">
+
+                <h3 class="grade-mobile-class">
+                    {{ grade.SchoolClass.name }}
+                </h3>
+
+                <div class="grade-detail">
+                    <span class="grade-detail-label">Grade</span>
+                    <span class="grade-badge">{{ grade.grade }}</span>
+                </div>
+
+                <div class="grade-detail">
+                    <span class="grade-detail-label">Minimum Score</span>
+                    <div class="grade-detail-value font-bold">{{ grade.min_score }}</div>
+                </div>
+
+                <div class="grade-detail">
+                    <span class="grade-detail-label">Interpretation</span>
+                    <div class="grade-detail-value">
+                        {{ grade.interpretation|default:"N/A" }}
+                    </div>
+                </div>
+
+                <div class="grade-detail">
+                    <span class="grade-detail-label">Principal Comment</span>
+                    <div class="principal-comment text-sm">
+                        {{ grade.principal_comment|default:"No principal comment" }}
+                    </div>
+                </div>
+
+                <div class="grade-detail">
+                    <span class="grade-detail-label">Teacher Comment</span>
+                    <div class="teacher-comment text-sm">
+                        {{ grade.teacher_comment|default:"No teacher comment" }}
+                    </div>
+                </div>
+
+            </article>
+            {% empty %}
+            <div class="py-10 px-3 text-center text-slate-400">
+                No grade settings found.
+            </div>
+            {% endfor %}
+        </div>
+
     </div>
 
-    <!-- Action Buttons -->
-    <div class="mt-10 flex flex-wrap gap-4">
+    <!-- ACTION BUTTONS -->
+    <div class="grade-actions">
+
         <a href="{% url 'results:grade_settings' school.id %}"
-           class="px-8 py-4 rounded-2xl bg-gradient-to-r
-                  from-blue-600 to-indigo-700 text-white
-                  font-bold shadow-xl hover:scale-105
-                  transition-all duration-300">
+           class="grade-action-link bg-gradient-to-r from-blue-600 to-indigo-700 shadow-lg">
             Edit Settings
         </a>
 
         <a href="{% url 'school_admin:school_admin_dashboard' school.id %}"
-           class="px-8 py-4 rounded-2xl bg-gradient-to-r
-                  from-slate-600 to-slate-800 text-white
-                  font-bold shadow-xl hover:scale-105
-                  transition-all duration-300">
+           class="grade-action-link bg-gradient-to-r from-slate-600 to-slate-800 shadow-lg">
             Back Dashboard
         </a>
+
     </div>
 
 </div>
@@ -132,6 +343,7 @@
 document.addEventListener("DOMContentLoaded", function () {
     const classFilter = document.getElementById("classFilter");
     const tableBody = document.getElementById("gradesTableBody");
+    const mobileBody = document.getElementById("gradesMobileBody");
 
     classFilter.addEventListener("change", async function () {
         const classId = this.value;
@@ -143,66 +355,121 @@ document.addEventListener("DOMContentLoaded", function () {
             url.searchParams.delete("class");
         }
 
-        const response = await fetch(url, {
-            headers: {
-                "X-Requested-With": "XMLHttpRequest"
+        try {
+            const response = await fetch(url, {
+                headers: {
+                    "X-Requested-With": "XMLHttpRequest"
+                }
+            });
+
+            if (!response.ok) {
+                throw new Error("Unable to load grade settings.");
             }
-        });
 
-        const data = await response.json();
+            const data = await response.json();
+            const grades = data.grades || [];
 
-        let html = "";
+            let desktopHtml = "";
+            let mobileHtml = "";
 
-        if (data.grades.length === 0) {
-            html = `
-                <tr>
-                    <td colspan="6" class="text-center py-16 text-slate-400 text-lg">
-                        No grade settings found for this class.
-                    </td>
-                </tr>
-            `;
-        } else {
-            data.grades.forEach(item => {
-                html += `
-                    <tr class="border-t border-slate-100 hover:bg-blue-50 transition-all duration-300">
-                        <td class="px-6 py-5 font-semibold text-slate-800">
-                            ${item.class_name}
-                        </td>
-
-                        <td class="px-6 py-5">
-                            <span class="inline-flex items-center px-4 py-1.5 rounded-full
-                                         bg-gradient-to-r from-blue-100 to-indigo-100
-                                         text-blue-700 font-bold shadow-sm">
-                                ${item.grade}
-                            </span>
-                        </td>
-
-                        <td class="px-6 py-5 font-bold text-slate-700">
-                            ${item.min_score}
-                        </td>
-
-                        <td class="px-6 py-5 text-slate-600">
-                            ${item.interpretation}
-                        </td>
-
-                        <td class="px-6 py-5">
-                            <div class="max-w-xs rounded-xl bg-green-50 text-green-800 px-4 py-3 text-sm">
-                                ${item.principal_comment}
-                            </div>
-                        </td>
-
-                        <td class="px-6 py-5">
-                            <div class="max-w-xs rounded-xl bg-amber-50 text-amber-800 px-4 py-3 text-sm">
-                                ${item.teacher_comment}
-                            </div>
+            if (grades.length === 0) {
+                desktopHtml = `
+                    <tr>
+                        <td colspan="6" class="text-center py-12 text-slate-400">
+                            No grade settings found for this class.
                         </td>
                     </tr>
                 `;
-            });
-        }
 
-        tableBody.innerHTML = html;
+                mobileHtml = `
+                    <div class="py-10 px-3 text-center text-slate-400">
+                        No grade settings found for this class.
+                    </div>
+                `;
+            } else {
+                grades.forEach(item => {
+                    // Escape server-provided text before inserting into HTML.
+                    const escapeHtml = value => String(value ?? "").replace(/[&<>"']/g, char => ({
+                        "&": "&amp;",
+                        "<": "&lt;",
+                        ">": "&gt;",
+                        '"': "&quot;",
+                        "'": "&#39;"
+                    }[char]));
+
+                    const className = escapeHtml(item.class_name);
+                    const grade = escapeHtml(item.grade);
+                    const minScore = escapeHtml(item.min_score);
+                    const interpretation = escapeHtml(item.interpretation || "N/A");
+                    const principalComment = escapeHtml(
+                        item.principal_comment || "No principal comment"
+                    );
+                    const teacherComment = escapeHtml(
+                        item.teacher_comment || "No teacher comment"
+                    );
+
+                    desktopHtml += `
+                        <tr class="border-t border-slate-100 hover:bg-blue-50 transition-colors">
+                            <td class="px-4 py-4 font-semibold text-slate-800">${className}</td>
+                            <td class="px-4 py-4">
+                                <span class="grade-badge">${grade}</span>
+                            </td>
+                            <td class="px-4 py-4 font-bold text-slate-700">${minScore}</td>
+                            <td class="px-4 py-4 text-slate-600">${interpretation}</td>
+                            <td class="px-4 py-4">
+                                <div class="max-w-xs rounded-xl bg-green-50 text-green-800 px-3 py-3">
+                                    ${principalComment}
+                                </div>
+                            </td>
+                            <td class="px-4 py-4">
+                                <div class="max-w-xs rounded-xl bg-amber-50 text-amber-800 px-3 py-3">
+                                    ${teacherComment}
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+
+                    mobileHtml += `
+                        <article class="grade-mobile-card">
+                            <h3 class="grade-mobile-class">${className}</h3>
+
+                            <div class="grade-detail">
+                                <span class="grade-detail-label">Grade</span>
+                                <span class="grade-badge">${grade}</span>
+                            </div>
+
+                            <div class="grade-detail">
+                                <span class="grade-detail-label">Minimum Score</span>
+                                <div class="grade-detail-value font-bold">${minScore}</div>
+                            </div>
+
+                            <div class="grade-detail">
+                                <span class="grade-detail-label">Interpretation</span>
+                                <div class="grade-detail-value">${interpretation}</div>
+                            </div>
+
+                            <div class="grade-detail">
+                                <span class="grade-detail-label">Principal Comment</span>
+                                <div class="principal-comment text-sm">${principalComment}</div>
+                            </div>
+
+                            <div class="grade-detail">
+                                <span class="grade-detail-label">Teacher Comment</span>
+                                <div class="teacher-comment text-sm">${teacherComment}</div>
+                            </div>
+                        </article>
+                    `;
+                });
+            }
+
+            tableBody.innerHTML = desktopHtml;
+            mobileBody.innerHTML = mobileHtml;
+
+        } catch (error) {
+            console.error("Grade settings filter failed:", error);
+        }
     });
 });
 </script>
+
 {% endblock %}
