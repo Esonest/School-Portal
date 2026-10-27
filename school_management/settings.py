@@ -207,6 +207,7 @@ CHANNEL_LAYERS = {
 
 
 
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -217,10 +218,11 @@ DATABASES = {
         'PORT': os.getenv('DB_PORT', '5432'),
         'OPTIONS': {'sslmode': 'require'},
         'CONN_MAX_AGE': 600,
+
+        # Prevent server-side cursor errors with connection pooling
+        'DISABLE_SERVER_SIDE_CURSORS': True,
     }
 }
-
-
 
 # Optional: override SECRET_KEY and DEBUG from .env
 
