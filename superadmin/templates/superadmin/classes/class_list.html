@@ -2,103 +2,192 @@
 {% extends "accounts/base.html" %}
 {% block content %}
 
-<div class="bg-white p-6 rounded-xl shadow-lg mt-10">
+<div class="w-full max-w-7xl mx-auto px-3 sm:px-6 py-4 sm:py-8 box-border">
 
-    <div class="flex justify-between items-center mb-4">
-        <h2 class="text-2xl font-bold">School Classes</h2>
+    <div class="bg-white p-3 sm:p-6 rounded-xl shadow-lg mt-2 sm:mt-6">
 
-        <a href="{% url 'superadmin:class_create' %}"
-           class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-            + Add Class
-        </a>
-    </div>
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-5">
+            <h2 class="text-xl sm:text-2xl font-bold text-gray-800">
+                School Classes
+            </h2>
 
-    <div class="overflow-x-auto">
-        <table class="w-full border rounded-xl">
-            <thead class="bg-gray-200 text-left">
-                <tr>
-                    <th class="p-3">Name</th>
-                    <th class="p-3">School</th>
-                    <th class="p-3">Class Teacher</th>
-                    <th class="p-3">Teacher Names on Results</th>
-                    <th class="p-3">Actions</th>
-                </tr>
-            </thead>
+            <a href="{% url 'superadmin:class_create' %}"
+               class="w-full sm:w-auto text-center px-4 py-3 sm:py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-medium">
+                + Add Class
+            </a>
+        </div>
 
-            <tbody>
-                {% for cls in classes %}
-                <tr class="border-b hover:bg-gray-50">
+        <!-- Android/mobile layout -->
+        <div class="block sm:hidden space-y-3">
 
-                    <td class="p-3">{{ cls.name }}</td>
+            {% for cls in classes %}
+            <div class="border border-gray-200 rounded-xl p-3 space-y-3">
 
-                    <td class="p-3">{{ cls.school.name }}</td>
+                <div>
+                    <p class="text-xs text-gray-500 mb-1">Class Name</p>
+                    <p class="font-semibold text-gray-900 break-words">
+                        {{ cls.name }}
+                    </p>
+                </div>
 
-                    <td class="p-3">
+                <div>
+                    <p class="text-xs text-gray-500 mb-1">School</p>
+                    <p class="text-sm text-gray-800 break-words">
+                        {{ cls.school.name }}
+                    </p>
+                </div>
+
+                <div>
+                    <p class="text-xs text-gray-500 mb-1">Class Teacher</p>
+                    <p class="text-sm text-gray-800 break-words">
                         {% if cls.class_teacher %}
                             {{ cls.class_teacher.user.get_full_name }}
                         {% else %}
                             <span class="text-gray-400">Not Assigned</span>
                         {% endif %}
-                    </td>
+                    </p>
+                </div>
 
-                    <td class="p-3">
-                        <div class="flex items-center gap-3">
-                            <span
-                                class="relative inline-flex h-6 w-11 shrink-0 rounded-full
-                                transition-colors duration-200
-                                {% if cls.show_teacher_on_result %}
-                                    bg-blue-600
-                                {% else %}
-                                    bg-gray-300
-                                {% endif %}"
-                                role="img"
-                                aria-label="{% if cls.show_teacher_on_result %}Teacher names shown{% else %}Teacher names hidden{% endif %}"
-                            >
-                                <span
-                                    class="absolute top-0.5 left-0.5 h-5 w-5 rounded-full
-                                    bg-white shadow transition-transform duration-200
-                                    {% if cls.show_teacher_on_result %}
-                                        translate-x-5
-                                    {% endif %}"
-                                ></span>
-                            </span>
+                <div class="flex items-center justify-between gap-3 border-t border-gray-100 pt-3">
+                    <span class="text-sm text-gray-600">
+                        Teacher Names on Results
+                    </span>
 
+                    <div class="flex items-center gap-2 shrink-0">
+                        <span
+                            class="relative inline-flex h-6 w-11 shrink-0 rounded-full transition-colors duration-200
                             {% if cls.show_teacher_on_result %}
-                                <span class="text-sm font-medium text-blue-700">
-                                    Enabled
-                                </span>
+                                bg-blue-600
                             {% else %}
-                                <span class="text-sm font-medium text-gray-500">
-                                    Disabled
-                                </span>
+                                bg-gray-300
+                            {% endif %}"
+                            role="img"
+                            aria-label="{% if cls.show_teacher_on_result %}Teacher names shown{% else %}Teacher names hidden{% endif %}"
+                        >
+                            <span
+                                class="absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform duration-200
+                                {% if cls.show_teacher_on_result %}
+                                    translate-x-5
+                                {% endif %}"
+                            ></span>
+                        </span>
+
+                        {% if cls.show_teacher_on_result %}
+                            <span class="text-xs font-medium text-blue-700">Enabled</span>
+                        {% else %}
+                            <span class="text-xs font-medium text-gray-500">Disabled</span>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="flex gap-5 border-t border-gray-100 pt-3">
+                    <a href="{% url 'superadmin:class_edit' cls.id %}"
+                       class="flex-1 text-center py-2 rounded-lg bg-blue-50 text-blue-700 font-medium">
+                        Edit
+                    </a>
+
+                    <a href="{% url 'superadmin:class_delete' cls.id %}"
+                       class="flex-1 text-center py-2 rounded-lg bg-red-50 text-red-600 font-medium">
+                        Delete
+                    </a>
+                </div>
+
+            </div>
+            {% empty %}
+            <div class="text-center p-4 text-gray-500 border border-gray-200 rounded-xl">
+                No classes found
+            </div>
+            {% endfor %}
+
+        </div>
+
+        <!-- Tablet and desktop layout -->
+        <div class="hidden sm:block overflow-x-auto">
+            <table class="w-full border border-gray-200 rounded-xl">
+                <thead class="bg-gray-200 text-left">
+                    <tr>
+                        <th class="p-3">Name</th>
+                        <th class="p-3">School</th>
+                        <th class="p-3">Class Teacher</th>
+                        <th class="p-3">Teacher Names on Results</th>
+                        <th class="p-3">Actions</th>
+                    </tr>
+                </thead>
+
+                <tbody>
+                    {% for cls in classes %}
+                    <tr class="border-b hover:bg-gray-50">
+
+                        <td class="p-3">{{ cls.name }}</td>
+
+                        <td class="p-3">{{ cls.school.name }}</td>
+
+                        <td class="p-3">
+                            {% if cls.class_teacher %}
+                                {{ cls.class_teacher.user.get_full_name }}
+                            {% else %}
+                                <span class="text-gray-400">Not Assigned</span>
                             {% endif %}
-                        </div>
-                    </td>
+                        </td>
 
-                    <td class="p-3">
-                        <div class="flex gap-3">
-                            <a href="{% url 'superadmin:class_edit' cls.id %}"
-                               class="text-blue-600 hover:underline">
-                                Edit
-                            </a>
+                        <td class="p-3">
+                            <div class="flex items-center gap-3">
+                                <span
+                                    class="relative inline-flex h-6 w-11 shrink-0 rounded-full transition-colors duration-200
+                                    {% if cls.show_teacher_on_result %}
+                                        bg-blue-600
+                                    {% else %}
+                                        bg-gray-300
+                                    {% endif %}"
+                                    role="img"
+                                    aria-label="{% if cls.show_teacher_on_result %}Teacher names shown{% else %}Teacher names hidden{% endif %}"
+                                >
+                                    <span
+                                        class="absolute top-0.5 left-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform duration-200
+                                        {% if cls.show_teacher_on_result %}
+                                            translate-x-5
+                                        {% endif %}"
+                                    ></span>
+                                </span>
 
-                            <a href="{% url 'superadmin:class_delete' cls.id %}"
-                               class="text-red-600 hover:underline">
-                                Delete
-                            </a>
-                        </div>
-                    </td>
+                                {% if cls.show_teacher_on_result %}
+                                    <span class="text-sm font-medium text-blue-700">
+                                        Enabled
+                                    </span>
+                                {% else %}
+                                    <span class="text-sm font-medium text-gray-500">
+                                        Disabled
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </td>
 
-                </tr>
-                {% empty %}
-                <tr>
-                    <td colspan="5" class="text-center p-4 text-gray-500">
-                        No classes found
-                    </td>
-                </tr>
-                {% endfor %}
-            </tbody>
-        </table>
+                        <td class="p-3">
+                            <div class="flex gap-3">
+                                <a href="{% url 'superadmin:class_edit' cls.id %}"
+                                   class="text-blue-600 hover:underline">
+                                    Edit
+                                </a>
+
+                                <a href="{% url 'superadmin:class_delete' cls.id %}"
+                                   class="text-red-600 hover:underline">
+                                    Delete
+                                </a>
+                            </div>
+                        </td>
+
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="5" class="text-center p-4 text-gray-500">
+                            No classes found
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
     </div>
 
 </div>
