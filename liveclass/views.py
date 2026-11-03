@@ -54,6 +54,36 @@ def generate_100ms_token(payload):
     }, settings.HMS_API_SECRET, algorithm="HS256")
 
 
+def generate_100ms_screen_share_token(user_id, room_id):
+    """
+    Generate a separate 100ms identity for the Android
+    native screen-sharing participant.
+
+    It joins the SAME room but uses a unique user_id.
+    """
+    screen_user_id = (
+        f"tc-screen-{user_id}-{uuid.uuid4().hex[:8]}"
+    )
+
+    payload = {
+        "access_key": settings.HMS_API_KEY,
+        "room_id": room_id,
+        "user_id": screen_user_id,
+        "role": "teacher",
+        "type": "app",
+        "version": 2,
+        "iat": int(time.time()),
+        "exp": int(time.time()) + 86400,
+        "jti": str(uuid.uuid4()),
+    }
+
+    return jwt.encode(
+        payload,
+        settings.HMS_API_SECRET,
+        algorithm="HS256"
+    )    
+
+
 def is_school_admin(user):
     return hasattr(user, "school_admin_profile")
 
@@ -904,12 +934,23 @@ def liveclass_token_api(request, pk):
         live_class.room_id
     )
 
-    return JsonResponse({
+    response_data ={ 
         "token": token,
         "role": role,
         "room_id": live_class.room_id,
         "username": user.get_full_name() or user.username,
-    })
+    }
+
+    
+    if role == "teacher":
+        response_data["screen_share_token"] = (
+            generate_100ms_screen_share_token(
+                user.id,
+                live_class.room_id
+            )
+        )
+
+    return JsonResponse(response_data)
 
 
 
@@ -4046,9 +4087,16 @@ def public_event_teacher_token_api(request, event_slug):
         live_class.room_id,
     )
 
+
+    screen_share_token = generate_100ms_screen_share_token(
+        user.id,
+        live_class.room_id,
+    )
+
     return JsonResponse(
         {
             "token": token,
+            "screen_share_token": screen_share_token,
             "role": "teacher",
             "room_id": live_class.room_id,
             "username": (
