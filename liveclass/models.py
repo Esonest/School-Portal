@@ -1,5 +1,7 @@
 from django.db import models
 from django.utils import timezone
+from cloudinary_storage.storage import RawMediaCloudinaryStorage
+from django.conf import settings
 
 
 # models.py
@@ -313,3 +315,43 @@ class LiveClassGuest(models.Model):
 
     def __str__(self):
         return f"{self.name} - {self.live_class}"
+
+
+class LiveClassSharedFile(models.Model):
+
+    live_class = models.ForeignKey(
+        LiveClass,
+        on_delete=models.CASCADE,
+        related_name="shared_files"
+    )
+
+    uploaded_by = models.ForeignKey(
+        settings.AUTH_USER_MODEL,
+        on_delete=models.CASCADE,
+        related_name="liveclass_shared_files"
+    )
+
+    file = models.FileField(
+        storage=RawMediaCloudinaryStorage(),
+        upload_to="liveclass/shared/"
+    )
+
+    original_name = models.CharField(
+        max_length=255
+    )
+
+    mime_type = models.CharField(
+        max_length=150,
+        blank=True
+    )
+
+    uploaded_on = models.DateTimeField(
+        auto_now_add=True
+    )
+
+    is_active = models.BooleanField(
+        default=True
+    )
+
+    def __str__(self):
+        return f"{self.original_name} - {self.live_class.title}"    

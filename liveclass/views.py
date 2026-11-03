@@ -21,6 +21,14 @@ import jwt
 import time
 from django.conf import settings
 
+import os
+
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from django.core.exceptions import ValidationError
+
+from .models import LiveClass, LiveClassSharedFile
+
 import time
 import uuid
 import jwt
@@ -54,34 +62,7 @@ def generate_100ms_token(payload):
     }, settings.HMS_API_SECRET, algorithm="HS256")
 
 
-def generate_100ms_screen_share_token(user_id, room_id):
-    """
-    Generate a separate 100ms identity for the Android
-    native screen-sharing participant.
 
-    It joins the SAME room but uses a unique user_id.
-    """
-    screen_user_id = (
-        f"tc-screen-{user_id}-{uuid.uuid4().hex[:8]}"
-    )
-
-    payload = {
-        "access_key": settings.HMS_API_KEY,
-        "room_id": room_id,
-        "user_id": screen_user_id,
-        "role": "teacher",
-        "type": "app",
-        "version": 2,
-        "iat": int(time.time()),
-        "exp": int(time.time()) + 86400,
-        "jti": str(uuid.uuid4()),
-    }
-
-    return jwt.encode(
-        payload,
-        settings.HMS_API_SECRET,
-        algorithm="HS256"
-    )    
 
 
 def is_school_admin(user):
@@ -863,6 +844,7 @@ def generate_100ms_app_token(user_id, role, room_id):
 # API View: get token
 # ------------------------------
 
+
 @login_required
 def liveclass_token_api(request, pk):
     user = request.user
@@ -873,18 +855,17 @@ def liveclass_token_api(request, pk):
         school=getattr(user, "school", None)
     )
 
-    # =========================
     # ROLE DETECTION
-    # =========================
-    if getattr(user, "is_teacher_user", False) or getattr(user, "is_schooladmin", False) or getattr(user, "is_superadmin", False):
+    if (
+        getattr(user, "is_teacher_user", False)
+        or getattr(user, "is_schooladmin", False)
+        or getattr(user, "is_superadmin", False)
+    ):
         role = "teacher"
     else:
         role = "student"
 
-    # =========================
-    # WAITING ROOM CHECK (NEW)
-    # =========================
-    
+    # WAITING ROOM CHECK
     from .models import LiveClassWaiting
     from students.models import Student
 
@@ -892,7 +873,10 @@ def liveclass_token_api(request, pk):
         student = Student.objects.filter(user=user).first()
 
         if not student:
-            return JsonResponse({"error": "Student profile not found"}, status=400)
+            return JsonResponse(
+                {"error": "Student profile not found"},
+                status=400
+            )
 
         waiting = LiveClassWaiting.objects.filter(
             live_class=live_class,
@@ -900,58 +884,183 @@ def liveclass_token_api(request, pk):
         ).first()
 
         if not waiting:
-            return JsonResponse({"status": "none"}, status=403)
+            return JsonResponse(
+                {"status": "none"},
+                status=403
+            )
 
         if waiting.rejected:
-            return JsonResponse({"status": "rejected"}, status=403)
+            return JsonResponse(
+                {"status": "rejected"},
+                status=403
+            )
 
         if not waiting.approved:
             return JsonResponse({"status": "waiting"})
 
-
-    # =========================
     # ENSURE ROOM EXISTS
-    # =========================
     if not live_class.room_id:
         live_class.room_id = str(uuid.uuid4())
         live_class.save()
 
-    real_room_id = create_100ms_room_if_missing(live_class.room_id)
+    real_room_id = create_100ms_room_if_missing(
+        live_class.room_id
+    )
 
     if not real_room_id:
-        return JsonResponse({"error": "Room creation failed"}, status=500)
+        return JsonResponse(
+            {"error": "Room creation failed"},
+            status=500
+        )
 
     if live_class.room_id != real_room_id:
         live_class.room_id = real_room_id
         live_class.save()
 
-    # =========================
-    # GENERATE TOKEN
-    # =========================
+    # GENERATE ONLY THE NORMAL ROOM TOKEN
     token = generate_100ms_app_token(
         user.id,
         role,
         live_class.room_id
     )
 
-    response_data ={ 
+    return JsonResponse({
         "token": token,
         "role": role,
         "room_id": live_class.room_id,
         "username": user.get_full_name() or user.username,
-    }
+    })
 
-    
-    if role == "teacher":
-        response_data["screen_share_token"] = (
-            generate_100ms_screen_share_token(
-                user.id,
-                live_class.room_id
-            )
+
+@portal_required("liveclass")
+@login_required
+@require_POST
+def liveclass_share_upload(request, identifier):
+
+    user = request.user
+    role = getattr(user, "role", None)
+
+    # Support both numeric LiveClass IDs and public-event slugs.
+    if str(identifier).isdigit():
+        live_class = get_object_or_404(
+            LiveClass,
+            pk=int(identifier)
+        )
+    else:
+        live_class = get_object_or_404(
+            LiveClass,
+            event_slug=identifier,
+            liveclass_type="public_event"
         )
 
-    return JsonResponse(response_data)
+    teacher_profile = getattr(
+        user,
+        "teacher_profile",
+        None
+    )
 
+    school = getattr(
+        user,
+        "school",
+        None
+    )
+
+    allowed = False
+
+    # Superadmin
+    if role == "superadmin" or getattr(
+        user, "is_superadmin", False
+    ):
+        allowed = True
+
+    # School admin
+    elif role in ("schooladmin", "school_admin"):
+        allowed = (
+            school is not None
+            and live_class.school_id == school.id
+        )
+
+    # Assigned teacher
+    elif teacher_profile:
+        allowed = live_class.teacher.filter(
+            pk=teacher_profile.pk
+        ).exists()
+
+    if not allowed:
+        return JsonResponse(
+            {"error": "You are not authorized to share files."},
+            status=403
+        )
+
+    uploaded_file = request.FILES.get("file")
+
+    if not uploaded_file:
+        return JsonResponse(
+            {"error": "No file was received."},
+            status=400
+        )
+
+    if uploaded_file.size > 100 * 1024 * 1024:
+        return JsonResponse(
+            {"error": "Maximum file size is 100 MB."},
+            status=400
+        )
+
+    mime_type = uploaded_file.content_type or (
+        "application/octet-stream"
+    )
+
+    allowed_document_types = {
+        "application/pdf",
+        "application/msword",
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+        "application/vnd.ms-powerpoint",
+        "application/vnd.openxmlformats-officedocument.presentationml.presentation",
+    }
+
+    valid_type = (
+        mime_type.startswith("image/")
+        or mime_type.startswith("video/")
+        or mime_type in allowed_document_types
+    )
+
+    if not valid_type:
+        return JsonResponse(
+            {"error": "This file type is not supported."},
+            status=415
+        )
+
+    original_name = os.path.basename(
+        uploaded_file.name
+    )[:255]
+
+    try:
+        shared_file = LiveClassSharedFile.objects.create(
+            live_class=live_class,
+            uploaded_by=user,
+            file=uploaded_file,
+            original_name=original_name,
+            mime_type=mime_type
+        )
+
+        return JsonResponse({
+            "success": True,
+            "id": shared_file.pk,
+            "url": shared_file.file.url,
+            "name": shared_file.original_name,
+            "mime_type": shared_file.mime_type
+        })
+
+    except Exception:
+        import logging
+        logging.exception(
+            "LiveClass shared-file upload failed"
+        )
+
+        return JsonResponse(
+            {"error": "The upload failed. Please try again."},
+            status=500
+        )
 
 
 @login_required
@@ -4088,15 +4197,11 @@ def public_event_teacher_token_api(request, event_slug):
     )
 
 
-    screen_share_token = generate_100ms_screen_share_token(
-        user.id,
-        live_class.room_id,
-    )
+    
 
     return JsonResponse(
         {
             "token": token,
-            "screen_share_token": screen_share_token,
             "role": "teacher",
             "room_id": live_class.room_id,
             "username": (

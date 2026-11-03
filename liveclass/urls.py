@@ -38,6 +38,12 @@ urlpatterns = [
     path("api/liveclass/<int:pk>/stop-recording/",views.stop_recording_api,name="stop_recording_api"),
 
     path(
+        "api/liveclass/<str:identifier>/share-upload/",
+        views.liveclass_share_upload,
+        name="liveclass_share_upload"
+    ),
+
+    path(
         "api/liveclass/event/<slug:event_slug>/start-recording/",
         views.start_public_event_recording_api,
         name="start_public_event_recording",
