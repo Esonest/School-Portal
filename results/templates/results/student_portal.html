@@ -1,3 +1,4 @@
+
 {% load static %}
 {% load custom_filters %}
 
@@ -5,23 +6,147 @@
 <html>
 <head>
   <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Student Portal</title>
   <script src="https://cdn.tailwindcss.com"></script>
-  <style>@media print { .no-print { display:none; } }</style>
+
+  <style>
+    @media print {
+      .no-print { display: none !important; }
+    }
+
+    /* ANDROID / MOBILE RESPONSIVENESS */
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      width: 100%;
+      max-width: 100%;
+      margin: 0;
+      overflow-x: hidden;
+    }
+
+    @media screen and (max-width: 640px) {
+      body {
+        padding: 12px 0 !important;
+        font-size: 14px;
+      }
+
+      .portal-container {
+        width: 100%;
+        max-width: 100%;
+        padding: 14px !important;
+        border-radius: 0;
+        box-shadow: none;
+      }
+
+      .portal-header {
+        gap: 10px;
+        align-items: center;
+      }
+
+      .portal-header h1 {
+        font-size: 21px;
+        line-height: 1.3;
+      }
+
+      .portal-header p {
+        overflow-wrap: anywhere;
+      }
+
+      .portal-header img {
+        width: 60px;
+        height: 60px;
+      }
+
+      .portal-section {
+        padding: 12px !important;
+        margin-bottom: 16px !important;
+      }
+
+      .term-status-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+
+      .term-status-grid > div {
+        padding: 12px;
+      }
+
+      .session-form {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 8px;
+      }
+
+      .session-form select {
+        width: 100%;
+        max-width: 100%;
+      }
+
+      .result-item {
+        flex-direction: column;
+        align-items: stretch;
+        gap: 12px;
+        padding: 12px;
+      }
+
+      .result-item > div:first-child {
+        width: 100%;
+      }
+
+      .result-item > div:first-child p {
+        line-height: 1.5;
+      }
+
+      .result-actions {
+        display: flex;
+        width: 100%;
+      }
+
+      .result-actions a {
+        flex: 1;
+        text-align: center;
+        padding: 10px 8px;
+        font-size: 13px;
+      }
+
+      .cumulative-grid {
+        grid-template-columns: 1fr;
+        gap: 10px;
+      }
+
+      .cumulative-actions {
+        flex-direction: column;
+        gap: 10px;
+      }
+
+      .cumulative-actions a {
+        width: 100%;
+        text-align: center;
+      }
+
+      .portal-container h2 {
+        line-height: 1.4;
+        overflow-wrap: anywhere;
+      }
+    }
+  </style>
 </head>
 
 <body class="bg-gray-50 min-h-screen py-8">
 
-  <div class="max-w-4xl mx-auto bg-white p-6 rounded shadow">
+  <div class="portal-container max-w-4xl mx-auto bg-white p-6 rounded shadow">
 
     <!-- HEADER -->
-    <div class="flex items-center justify-between mb-6">
+    <div class="portal-header flex items-center justify-between mb-6">
       <div>
         <h1 class="text-2xl font-bold text-{{ school.theme_color }}-600">Student Portal</h1>
         <p class="text-sm text-gray-600">Welcome, {{ student.full_name }}</p>
       </div>
 
-      <div class="text-right">
+      <div class="text-right shrink-0">
         {% if photo_url %}
           <img src="{{ photo_url }}" class="h-20 w-20 rounded object-cover border" />
         {% endif %}
@@ -30,7 +155,7 @@
     </div>
 
     <!-- SCHOOL INFO -->
-    <div class="border rounded p-4 mb-6">
+    <div class="portal-section border rounded p-4 mb-6">
       <h2 class="font-semibold mb-1">School</h2>
       {% if school %}
         <div class="text-sm">{{ school.name }}</div>
@@ -39,7 +164,7 @@
     </div>
 
     <!-- TERM STATUS & PROGRESS BAR -->
-    <div class="mb-6">
+    <div class="portal-section mb-6">
       <h2 class="font-semibold text-lg mb-3">Term Result Status</h2>
 
       <!-- PROGRESS BAR -->
@@ -59,7 +184,7 @@
       </div>
 
       <!-- TERM STATUS CARDS -->
-      <div class="grid grid-cols-3 gap-4">
+      <div class="term-status-grid grid grid-cols-3 gap-4">
         {% for term in term_list %}
           <div class="p-4 border rounded bg-gray-50">
             <div class="font-medium">{{ term.label }}</div>
@@ -75,36 +200,34 @@
     </div>
 
     <!-- SESSION SELECTOR -->
-<div class="mb-6 no-print">
-  <form method="get" class="flex items-center gap-3">
-    <label class="text-sm font-medium">Select Session:</label>
+    <div class="portal-section mb-6 no-print">
+      <form method="get" class="session-form flex items-center gap-3">
+        <label class="text-sm font-medium">Select Session:</label>
 
-    <select name="session" onchange="this.form.submit()" class="border rounded px-3 py-2 text-sm">
-      <option value="">-- Select Session --</option>
+        <select name="session" onchange="this.form.submit()" class="border rounded px-3 py-2 text-sm">
+          <option value="">-- Select Session --</option>
 
-      {% for s in sessions %}
-        <option value="{{ s }}" {% if selected_session == s %}selected{% endif %}>{{ s }}</option>
-      {% endfor %}
-    </select>
-  </form>
-</div>
-
+          {% for s in sessions %}
+            <option value="{{ s }}" {% if selected_session == s %}selected{% endif %}>{{ s }}</option>
+          {% endfor %}
+        </select>
+      </form>
+    </div>
 
     <!-- TERM RESULTS LIST -->
-    <div class="mb-6">
+    <div class="portal-section mb-6">
       <h2 class="text-lg font-semibold mb-3">Your Term Results</h2>
       {% if results %}
         <div class="grid gap-4">
           {% for r in results %}
-            <div class="border p-4 rounded flex items-center justify-between bg-gray-50">
+            <div class="result-item border p-4 rounded flex items-center justify-between bg-gray-50">
               <div>
                 <div class="font-medium">{{ r.get_term_display }}</div>
                 <div class="text-sm text-gray-500">View or download your academic report for this term.</div>
               </div>
-              <div class="flex gap-2">
+              <div class="result-actions flex gap-2">
                 {% if r.rep_score_id %}
                   <a href="{% url 'results:student_view_result' r.rep_score_id %}" class="px-3 py-2 bg-blue-600 text-white rounded no-print">View</a>
-                  <a href="" class="px-3 py-2 bg-green-600 text-white rounded no-print">Download PDF</a>
                 {% else %}
                   <span class="text-sm text-gray-400">No report</span>
                 {% endif %}
@@ -118,22 +241,21 @@
     </div>
 
     <!-- CUMULATIVE RESULT -->
-    <div class="mt-8 p-4 border rounded bg-blue-50">
+    <div class="portal-section mt-8 p-4 border rounded bg-blue-50">
       <h2 class="font-semibold text-lg mb-2">Cumulative Result (Term 1 + Term 2 + Term 3)</h2>
 
       {% if cumulative_available %}
         <p class="text-sm text-gray-600 mb-3">View your combined 3-term academic performance.</p>
 
-        <div class="grid grid-cols-2 gap-4 mb-3 text-sm text-gray-700">
+        <div class="cumulative-grid grid grid-cols-2 gap-4 mb-3 text-sm text-gray-700">
           <div><strong>Overall Total:</strong> {{ overall_total }}</div>
           <div><strong>Average:</strong> {{ avg_total|floatformat:2 }}</div>
           {% if best_subject_overall %}<div><strong>Best Subject:</strong> {{ best_subject_overall.subject }} ({{ best_subject_overall.total }})</div>{% endif %}
           {% if least_subject_overall %}<div><strong>Weakest Subject:</strong> {{ least_subject_overall.subject }} ({{ least_subject_overall.total }})</div>{% endif %}
         </div>
 
-        <div class="flex gap-3">
+        <div class="cumulative-actions flex gap-3">
           <a href="{% url 'results:student_cumulative_result' %}" class="px-4 py-2 bg-blue-700 text-white rounded no-print">View Cumulative</a>
-          <a href="" class="px-4 py-2 bg-green-700 text-white rounded no-print">Download PDF</a>
         </div>
       {% else %}
         <p class="text-sm text-gray-500">
