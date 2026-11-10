@@ -1,9 +1,11 @@
+
 {% load custom_filters %}
 {% load static %}
 <!doctype html>
 <html>
 <head>
   <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1"/>
   <title>Result — {{ student.user.get_full_name }}</title>
   <script src="https://cdn.tailwindcss.com"></script>
 
@@ -36,66 +38,246 @@
     }
 
     .result-watermark {
-    position: relative;
-    overflow: hidden;
-  }
-
-  .result-watermark::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background-image: url('{{ school_logo_url }}');
-    background-repeat: no-repeat;
-    background-position: center;
-    background-size: 320px;
-    opacity: 0.06; /* watermark strength */
-    pointer-events: none;
-    z-index: 0;
-  }
-
-  .result-content {
-    position: relative;
-    z-index: 1;
-  }
-
-
-  /* ===== STAR LEGEND (WAEC / NECO STYLE) ===== */
-.legend-box {
-  margin-top: 6px;
-  border: 1px solid #000;
-  padding: 6px;
-  font-size: 10.5px;
-  width: 100%;
-  page-break-inside: avoid;
-}
-
-
-.legend-title {
-  font-weight: bold;
-  text-transform: uppercase;
-  margin-bottom: 4px;
-}
-
-.legend-row {
-  display: flex;
-  justify-content: space-between;
-  gap: 12px;
-}
-
-.legend-stars {
-  letter-spacing: 1px;
-}
-
-.legend-stars .gold {
-  color: #b8860b; /* Gold */
-  font-weight: bold;
-}
-
-  @media print {
-    .result-watermark::before {
-      opacity: 0.05;
+      position: relative;
+      overflow: hidden;
     }
-  }
+
+    .result-watermark::before {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background-image: url('{{ school_logo_url }}');
+      background-repeat: no-repeat;
+      background-position: center;
+      background-size: 320px;
+      opacity: 0.06;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    .result-content {
+      position: relative;
+      z-index: 1;
+    }
+
+    /* ===== STAR LEGEND (WAEC / NECO STYLE) ===== */
+    .legend-box {
+      margin-top: 6px;
+      border: 1px solid #000;
+      padding: 6px;
+      font-size: 10.5px;
+      width: 100%;
+      page-break-inside: avoid;
+    }
+
+    .legend-title {
+      font-weight: bold;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .legend-row {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+    }
+
+    .legend-stars {
+      letter-spacing: 1px;
+    }
+
+    .legend-stars .gold {
+      color: #b8860b;
+      font-weight: bold;
+    }
+
+    @media print {
+      .result-watermark::before {
+        opacity: 0.05;
+      }
+    }
+
+    /* ===== ANDROID / MOBILE RESPONSIVENESS ===== */
+    @media screen and (max-width: 640px) {
+
+      body {
+        padding: 0 !important;
+        overflow-x: hidden;
+        font-size: 12px;
+      }
+
+      .result-watermark {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 10px !important;
+        border-left: 0 !important;
+        border-right: 0 !important;
+        box-sizing: border-box;
+      }
+
+      .result-content {
+        width: 100%;
+        min-width: 0;
+      }
+
+      /* School header */
+      .result-content h1 {
+        font-size: 19px !important;
+        line-height: 1.3;
+        overflow-wrap: anywhere;
+      }
+
+      .result-content header img {
+        max-height: 52px;
+      }
+
+      /* Student information */
+      .result-content .grid.grid-cols-3 {
+        grid-template-columns: minmax(0, 1fr) !important;
+        gap: 8px !important;
+      }
+
+      .result-content .grid.grid-cols-3 > div {
+        min-width: 0;
+      }
+
+      .result-content .grid.grid-cols-3 > div:last-child {
+        text-align: left !important;
+      }
+
+      .result-content .grid.grid-cols-3 img {
+        width: 65px !important;
+        height: 65px !important;
+      }
+
+      .result-content .grid.grid-cols-3 > div:last-child > div {
+        width: 65px !important;
+        height: 65px !important;
+      }
+
+      /* Academic performance table */
+      .result-content table {
+        font-size: 9px;
+      }
+
+      .result-content table th,
+      .result-content table td {
+        padding: 4px 3px !important;
+        overflow-wrap: anywhere;
+      }
+
+      /* Allow wide academic table to scroll horizontally */
+      .result-content table.w-full.border {
+        display: block;
+        width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .result-content table.w-full.border thead,
+      .result-content table.w-full.border tbody {
+        width: 100%;
+      }
+
+      .result-content table.w-full.border th,
+      .result-content table.w-full.border td {
+        min-width: 42px;
+      }
+
+      .result-content table.w-full.border th:first-child,
+      .result-content table.w-full.border td:first-child {
+        min-width: 85px;
+      }
+
+      /* Summary */
+      .result-content .grid.grid-cols-2 {
+        grid-template-columns: minmax(0, 1fr) !important;
+        gap: 8px !important;
+      }
+
+      /* Domains and grading guide */
+      .result-content .grid.grid-cols-4 {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 10px !important;
+      }
+
+      .result-content .grid.grid-cols-4 > div {
+        min-width: 0;
+      }
+
+      .result-content .grid.grid-cols-4 h3 {
+        font-size: 11px;
+      }
+
+      .result-content .grid.grid-cols-4 ul {
+        font-size: 9px;
+      }
+
+      .result-content .grid.grid-cols-4 table {
+        font-size: 8px;
+      }
+
+      .result-content .grid.grid-cols-4 table td {
+        padding: 2px !important;
+      }
+
+      /* Comments */
+      .result-content .text-sm {
+        font-size: 11px;
+      }
+
+      /* Next term information */
+      .result-content .text-xl {
+        font-size: 14px !important;
+        line-height: 1.5;
+      }
+
+      /* Footer and QR code */
+      .result-content .flex.justify-between.items-end {
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: flex-end;
+      }
+
+      .result-content .flex.justify-between.items-end img {
+        max-width: 100%;
+      }
+
+      .result-content .flex.justify-between.items-end img.h-40 {
+        width: 105px !important;
+        height: 105px !important;
+      }
+
+      .result-content .flex.justify-between.items-end img.h-12 {
+        max-width: 120px;
+        object-fit: contain;
+      }
+
+      /* General spacing */
+      .result-content .mt-6 {
+        margin-top: 12px;
+      }
+
+      .result-content .mt-4 {
+        margin-top: 10px;
+      }
+
+      .result-content .p-4 {
+        padding: 8px;
+      }
+
+      .result-content .p-2 {
+        padding: 6px;
+      }
+
+      /* Print button */
+      .no-print button {
+        width: 100%;
+        padding: 12px;
+        font-size: 14px;
+      }
+    }
   </style>
 </head>
 
@@ -158,9 +340,8 @@
         <th class="border border-black p-1 text-center">Grade</th>
         <th class="border border-black p-1 text-center">Grade Interpretation</th>
         {% if show_teacher_on_result %}
-  <th class="border border-black p-1 text-center">Teacher</th>
-{% endif %}
-        
+          <th class="border border-black p-1 text-center">Teacher</th>
+        {% endif %}
       </tr>
     </thead>
 
@@ -177,8 +358,8 @@
         <td class="border border-black p-1 text-center">{{ s.grade }}</td>
         <td class="border border-black p-1 text-center">{{ s.grade_interpretation }}</td>
         {% if show_teacher_on_result %}
-  <td class="border border-black p-1 text-center">{{ s.teacher }}</td>
-{% endif %}
+          <td class="border border-black p-1 text-center">{{ s.teacher }}</td>
+        {% endif %}
       </tr>
       {% empty %}
       <tr>
@@ -211,229 +392,232 @@
   </div>
 
   <div class="mt-2 border border-black p-2 text-sm">
-  <p>
-    <strong>Attendance:</strong>
-    {{ attendance_present }} / {{ attendance_total }} days
-    (<span class="font-bold text-green-700">
-      {{ attendance_percent }}%
-    </span>)
-  </p>
-</div>
- <!-- COMBINED DOMAIN + LEGEND SECTION -->
-<h2 class="font-bold mt-3 uppercase text-center border border-black py-1 text-xs">
-  Domains & Grading Guide
-</h2>
-
-<div class="border border-t-0 border-black p-2 text-[10px]">
-
-  <div class="grid grid-cols-4 gap-2">
-
-    <!-- PSYCHOMOTOR -->
-    <div>
-      <h3 class="font-bold border-b mb-1">Psychomotor</h3>
-
-      {% if psychomotor %}
-      <ul class="space-y-[2px]">
-
-        <li class="flex justify-between">
-          <span>Neatness</span>
-          <span class="text-yellow-600">
-            {% for i in "12345" %}
-              {% if i|add:"0" <= psychomotor.neatness %}
-                ★
-              {% else %}
-                ☆
-              {% endif %}
-            {% endfor %}
-          </span>
-        </li>
-
-        <li class="flex justify-between">
-          <span>Agility</span>
-          <span class="text-yellow-600">
-            {% for i in "12345" %}
-              {% if i|add:"0" <= psychomotor.agility %}
-                ★
-              {% else %}
-                ☆
-              {% endif %}
-            {% endfor %}
-          </span>
-        </li>
-
-        <li class="flex justify-between">
-          <span>Creativity</span>
-          <span class="text-yellow-600">
-            {% for i in "12345" %}
-              {% if i|add:"0" <= psychomotor.creativity %}
-                ★
-              {% else %}
-                ☆
-              {% endif %}
-            {% endfor %}
-          </span>
-        </li>
-
-        <li class="flex justify-between">
-          <span>Sports</span>
-          <span class="text-yellow-600">
-            {% for i in "12345" %}
-              {% if i|add:"0" <= psychomotor.sports %}
-                ★
-              {% else %}
-                ☆
-              {% endif %}
-            {% endfor %}
-          </span>
-        </li>
-
-        <li class="flex justify-between">
-          <span>Handwriting</span>
-          <span class="text-yellow-600">
-            {% for i in "12345" %}
-              {% if i|add:"0" <= psychomotor.handwriting %}
-                ★
-              {% else %}
-                ☆
-              {% endif %}
-            {% endfor %}
-          </span>
-        </li>
-
-      </ul>
-      {% endif %}
-    </div>
-
-    <!-- AFFECTIVE -->
-    <div>
-      <h3 class="font-bold border-b mb-1">Affective</h3>
-
-      {% if affective %}
-      <ul class="space-y-[2px]">
-
-        <li class="flex justify-between">
-          <span>Punctuality</span>
-          <span class="text-yellow-600">
-            {% for i in "12345" %}
-              {% if i|add:"0" <= affective.punctuality %}
-                ★
-              {% else %}
-                ☆
-              {% endif %}
-            {% endfor %}
-          </span>
-        </li>
-
-        <li class="flex justify-between">
-          <span>Cooperation</span>
-          <span class="text-yellow-600">
-            {% for i in "12345" %}
-              {% if i|add:"0" <= affective.cooperation %}
-                ★
-              {% else %}
-                ☆
-              {% endif %}
-            {% endfor %}
-          </span>
-        </li>
-
-        <li class="flex justify-between">
-          <span>Behaviour</span>
-          <span class="text-yellow-600">
-            {% for i in "12345" %}
-              {% if i|add:"0" <= affective.behavior %}
-                ★
-              {% else %}
-                ☆
-              {% endif %}
-            {% endfor %}
-          </span>
-        </li>
-
-        <li class="flex justify-between">
-          <span>Attentiveness</span>
-          <span class="text-yellow-600">
-            {% for i in "12345" %}
-              {% if i|add:"0" <= affective.attentiveness %}
-                ★
-              {% else %}
-                ☆
-              {% endif %}
-            {% endfor %}
-          </span>
-        </li>
-
-        <li class="flex justify-between">
-          <span>Perseverance</span>
-          <span class="text-yellow-600">
-            {% for i in "12345" %}
-              {% if i|add:"0" <= affective.perseverance %}
-                ★
-              {% else %}
-                ☆
-              {% endif %}
-            {% endfor %}
-          </span>
-        </li>
-
-      </ul>
-      {% endif %}
-    </div>
-
-    <!-- STAR LEGEND -->
-    <div>
-      <h3 class="font-bold border-b mb-1">Star Guide</h3>
-
-      <div class="space-y-[2px]">
-        <div>★★★★★ - Excellent</div>
-        <div>★★★★☆ - Very Good</div>
-        <div>★★★☆☆ - Good</div>
-        <div>★★☆☆☆ - Fair</div>
-        <div>★☆☆☆☆ - Poor</div>
-      </div>
-    </div>
-
-    <!-- GRADE LEGEND -->
-    <div>
-      <h3 class="font-bold border-b mb-1">Grading Key</h3>
-
-      <table class="w-full text-[9px] border-collapse">
-        <tbody>
-
-          {% for g in grade_legend %}
-          <tr>
-            <td class="border px-1 font-bold text-center">
-              {{ g.grade }}
-            </td>
-
-            <td class="border px-1 text-center">
-              {{ g.min_score }}+
-            </td>
-
-            <td class="border px-1">
-              {{ g.interpretation }}
-            </td>
-          </tr>
-          {% endfor %}
-
-        </tbody>
-      </table>
-    </div>
-
+    <p>
+      <strong>Attendance:</strong>
+      {{ attendance_present }} / {{ attendance_total }} days
+      (<span class="font-bold text-green-700">
+        {{ attendance_percent }}%
+      </span>)
+    </p>
   </div>
+
+  <!-- COMBINED DOMAIN + LEGEND SECTION -->
+  <h2 class="font-bold mt-3 uppercase text-center border border-black py-1 text-xs">
+    Domains & Grading Guide
+  </h2>
+
+  <div class="border border-t-0 border-black p-2 text-[10px]">
+
+    <div class="grid grid-cols-4 gap-2">
+
+      <!-- PSYCHOMOTOR -->
+      <div>
+        <h3 class="font-bold border-b mb-1">Psychomotor</h3>
+
+        {% if psychomotor %}
+        <ul class="space-y-[2px]">
+
+          <li class="flex justify-between">
+            <span>Neatness</span>
+            <span class="text-yellow-600">
+              {% for i in "12345" %}
+                {% if i|add:"0" <= psychomotor.neatness %}
+                  ★
+                {% else %}
+                  ☆
+                {% endif %}
+              {% endfor %}
+            </span>
+          </li>
+
+          <li class="flex justify-between">
+            <span>Agility</span>
+            <span class="text-yellow-600">
+              {% for i in "12345" %}
+                {% if i|add:"0" <= psychomotor.agility %}
+                  ★
+                {% else %}
+                  ☆
+                {% endif %}
+              {% endfor %}
+            </span>
+          </li>
+
+          <li class="flex justify-between">
+            <span>Creativity</span>
+            <span class="text-yellow-600">
+              {% for i in "12345" %}
+                {% if i|add:"0" <= psychomotor.creativity %}
+                  ★
+                {% else %}
+                  ☆
+                {% endif %}
+              {% endfor %}
+            </span>
+          </li>
+
+          <li class="flex justify-between">
+            <span>Sports</span>
+            <span class="text-yellow-600">
+              {% for i in "12345" %}
+                {% if i|add:"0" <= psychomotor.sports %}
+                  ★
+                {% else %}
+                  ☆
+                {% endif %}
+              {% endfor %}
+            </span>
+          </li>
+
+          <li class="flex justify-between">
+            <span>Handwriting</span>
+            <span class="text-yellow-600">
+              {% for i in "12345" %}
+                {% if i|add:"0" <= psychomotor.handwriting %}
+                  ★
+                {% else %}
+                  ☆
+                {% endif %}
+              {% endfor %}
+            </span>
+          </li>
+
+        </ul>
+        {% endif %}
+      </div>
+
+      <!-- AFFECTIVE -->
+      <div>
+        <h3 class="font-bold border-b mb-1">Affective</h3>
+
+        {% if affective %}
+        <ul class="space-y-[2px]">
+
+          <li class="flex justify-between">
+            <span>Punctuality</span>
+            <span class="text-yellow-600">
+              {% for i in "12345" %}
+                {% if i|add:"0" <= affective.punctuality %}
+                  ★
+                {% else %}
+                  ☆
+                {% endif %}
+              {% endfor %}
+            </span>
+          </li>
+
+          <li class="flex justify-between">
+            <span>Cooperation</span>
+            <span class="text-yellow-600">
+              {% for i in "12345" %}
+                {% if i|add:"0" <= affective.cooperation %}
+                  ★
+                {% else %}
+                  ☆
+                {% endif %}
+              {% endfor %}
+            </span>
+          </li>
+
+          <li class="flex justify-between">
+            <span>Behaviour</span>
+            <span class="text-yellow-600">
+              {% for i in "12345" %}
+                {% if i|add:"0" <= affective.behavior %}
+                  ★
+                {% else %}
+                  ☆
+                {% endif %}
+              {% endfor %}
+            </span>
+          </li>
+
+          <li class="flex justify-between">
+            <span>Attentiveness</span>
+            <span class="text-yellow-600">
+              {% for i in "12345" %}
+                {% if i|add:"0" <= affective.attentiveness %}
+                  ★
+                {% else %}
+                  ☆
+                {% endif %}
+              {% endfor %}
+            </span>
+          </li>
+
+          <li class="flex justify-between">
+            <span>Perseverance</span>
+            <span class="text-yellow-600">
+              {% for i in "12345" %}
+                {% if i|add:"0" <= affective.perseverance %}
+                  ★
+                {% else %}
+                  ☆
+                {% endif %}
+              {% endfor %}
+            </span>
+          </li>
+
+        </ul>
+        {% endif %}
+      </div>
+
+      <!-- STAR LEGEND -->
+      <div>
+        <h3 class="font-bold border-b mb-1">Star Guide</h3>
+
+       <div class="space-y-[2px]">
+  <div><span class="text-yellow-600">★★★★★</span> - Excellent</div>
+  <div><span class="text-yellow-600">★★★★☆</span> - Very Good</div>
+  <div><span class="text-yellow-600">★★★☆☆</span> - Good</div>
+  <div><span class="text-yellow-600">★★☆☆☆</span> - Fair</div>
+  <div><span class="text-yellow-600">★☆☆☆☆</span> - Poor</div>
 </div>
+      </div>
+
+      <!-- GRADE LEGEND -->
+      <div>
+        <h3 class="font-bold border-b mb-1">Grading Key</h3>
+
+        <table class="w-full text-[9px] border-collapse">
+          <tbody>
+
+            {% for g in grade_legend %}
+            <tr>
+              <td class="border px-1 font-bold text-center">
+                {{ g.grade }}
+              </td>
+
+              <td class="border px-1 text-center">
+                {{ g.min_score }}+
+              </td>
+
+              <td class="border px-1">
+                {{ g.interpretation }}
+              </td>
+            </tr>
+            {% endfor %}
+
+          </tbody>
+        </table>
+      </div>
+
+    </div>
+  </div>
+
   <!-- COMMENTS -->
   <div class="mt-4 border border-black p-2 text-sm">
     <p><strong>Teacher’s Comment:</strong> {{ teacher_comment }}</p>
     <p class="mt-2"><strong>Principal’s Comment:</strong> {{ principal_comment }}</p>
   </div>
-<!-- NEXT TERM INFORMATION -->
-<div class="mt-4 border border-black p-2 text-sm">
-  <p class="text-xl font-bold text-{{ school.theme_color }}-600">
-    <strong>Next Term Begins On:</strong>
-    <span class="ml-1">{{ next_term_begins|date:"l, jS F Y"|default:"________________" }}</span>
-  </p>
-</div>
+
+  <!-- NEXT TERM INFORMATION -->
+  <div class="mt-4 border border-black p-2 text-sm">
+    <p class="text-xl font-bold text-{{ school.theme_color }}-600">
+      <strong>Next Term Begins On:</strong>
+      <span class="ml-1">{{ next_term_begins|date:"l, jS F Y"|default:"________________" }}</span>
+    </p>
+  </div>
 
   <!-- FOOTER -->
   <div class="flex justify-between items-end mt-6 text-sm">
@@ -457,6 +641,7 @@
       Print Result
     </button>
   </div>
+
 </div>
 </div>
 </body>

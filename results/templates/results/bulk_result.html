@@ -1,9 +1,11 @@
+
 {% load custom_filters %}
 {% load static %}
 <!doctype html>
 <html>
 <head>
   <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1"/>
   <title>{{ school.name }} — Class Results</title>
   <script src="https://cdn.tailwindcss.com"></script>
 
@@ -20,6 +22,7 @@
       page-break-before: always; 
       page-break-inside: avoid;  
     }
+
     .result-card:first-child { page-break-before: auto; }
 
     .result-watermark::before {
@@ -34,11 +37,10 @@
       pointer-events: none;
       z-index: 0;
     }
+
     .result-content { position: relative; z-index: 1; }
 
     table th { background: #f3f3f3; position: sticky; top: 0; z-index: 2; }
-
-    
 
     @media print { 
       .no-print { display: none !important; }
@@ -48,36 +50,36 @@
     }
 
     .print-wrapper {
-  overflow: visible;
-  height: auto;
-}
+      overflow: visible;
+      height: auto;
+    }
 
-@media print {
-  body {
-    background: #fff !important;
-    padding: 0 !important;
-  }
+    @media print {
+      body {
+        background: #fff !important;
+        padding: 0 !important;
+      }
 
-  .no-print {
-    display: none !important;
-  }
+      .no-print {
+        display: none !important;
+      }
 
-  .print-wrapper {
-    overflow: visible !important;
-    height: auto !important;
-  }
+      .print-wrapper {
+        overflow: visible !important;
+        height: auto !important;
+      }
 
-  .result-card {
-    page-break-before: always;
-    page-break-inside: avoid;
-  }
+      .result-card {
+        page-break-before: always;
+        page-break-inside: avoid;
+      }
 
-  .result-card:first-child {
-    page-break-before: auto;
-  }
-}
+      .result-card:first-child {
+        page-break-before: auto;
+      }
+    }
 
-.legend-box {
+    .legend-box {
       margin-top: 6px;
       border: 1px solid #000;
       padding: 6px;
@@ -102,11 +104,226 @@
       font-weight: bold;
     }
 
+    /* ===== ANDROID / MOBILE RESPONSIVENESS ===== */
+    @media screen and (max-width: 640px) {
+
+      body {
+        padding: 0 !important;
+        margin: 0;
+        width: 100%;
+        overflow-x: hidden;
+        font-size: 12px;
+      }
+
+      .print-wrapper {
+        width: 100%;
+        max-width: 100%;
+        overflow-x: hidden;
+      }
+
+      .result-card {
+        width: 100% !important;
+        max-width: 100% !important;
+        margin: 0 auto 12px !important;
+        padding: 8px !important;
+        border-left: 0 !important;
+        border-right: 0 !important;
+        box-sizing: border-box;
+        overflow: hidden;
+      }
+
+      .result-content {
+        width: 100%;
+        min-width: 0;
+      }
+
+      /* Header */
+      .result-content h1 {
+        font-size: 19px !important;
+        line-height: 1.3;
+        overflow-wrap: anywhere;
+      }
+
+      /* Bulk print button */
+      .no-print button {
+        max-width: 100%;
+        font-size: 12px;
+        padding: 10px 12px;
+      }
+
+      /* Individual print and download buttons */
+      .result-content > .no-print {
+        flex-wrap: wrap;
+        justify-content: flex-start !important;
+      }
+
+      .result-content > .no-print button,
+      .result-content > .no-print a {
+        font-size: 11px;
+        padding: 7px 10px;
+      }
+
+      /* Student information */
+      .result-content .grid.grid-cols-3 {
+        grid-template-columns: minmax(0, 1fr) !important;
+        gap: 8px !important;
+      }
+
+      .result-content .grid.grid-cols-3 > div {
+        min-width: 0;
+      }
+
+      .result-content .grid.grid-cols-3 > div:last-child {
+        text-align: left !important;
+      }
+
+      .result-content .grid.grid-cols-3 img {
+        width: 65px !important;
+        height: 65px !important;
+      }
+
+      .result-content .grid.grid-cols-3 > div:last-child > div {
+        width: 65px !important;
+        height: 65px !important;
+      }
+
+      /* Academic performance table */
+      .result-content table.w-full.border {
+        display: block;
+        width: 100%;
+        max-width: 100%;
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+      }
+
+      .result-content table.w-full.border th,
+      .result-content table.w-full.border td {
+        padding: 4px 3px !important;
+        font-size: 9px !important;
+        overflow-wrap: anywhere;
+      }
+
+      .result-content table.w-full.border th,
+      .result-content table.w-full.border td {
+        min-width: 43px;
+      }
+
+      .result-content table.w-full.border th:first-child,
+      .result-content table.w-full.border td:first-child {
+        min-width: 85px;
+      }
+
+      /* Summary */
+      .result-content .grid.grid-cols-2.gap-4 {
+        grid-template-columns: minmax(0, 1fr) !important;
+        gap: 8px !important;
+      }
+
+      .result-content .grid.grid-cols-2.gap-4 > div {
+        min-width: 0;
+      }
+
+      /* Psychomotor and Affective */
+      .result-content .grid.grid-cols-2.gap-4.mt-2 {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 8px !important;
+      }
+
+      .result-content .grid.grid-cols-2.gap-4.mt-2 > div {
+        min-width: 0;
+      }
+
+      .result-content .grid.grid-cols-2.gap-4.mt-2 li {
+        gap: 3px;
+        font-size: 10px;
+      }
+
+      .result-content .grid.grid-cols-2.gap-4.mt-2 li span:last-child {
+        white-space: nowrap;
+        letter-spacing: 0;
+      }
+
+      /* Domain legend and grading key */
+      .result-content .grid.grid-cols-2.gap-3 {
+        grid-template-columns: minmax(0, 1fr) !important;
+        gap: 12px !important;
+      }
+
+      .result-content .grid.grid-cols-2.gap-3 > div {
+        min-width: 0;
+      }
+
+      .result-content .grid.grid-cols-2.gap-3 table {
+        width: 100%;
+        table-layout: fixed;
+      }
+
+      .result-content .grid.grid-cols-2.gap-3 table th,
+      .result-content .grid.grid-cols-2.gap-3 table td {
+        font-size: 9px !important;
+        padding: 4px 3px !important;
+        overflow-wrap: anywhere;
+      }
+
+      /* Comments */
+      .result-content .text-sm {
+        font-size: 11px;
+      }
+
+      /* Next term information */
+      .result-content .text-xl {
+        font-size: 14px !important;
+        line-height: 1.5;
+      }
+
+      /* Footer and QR code */
+      .result-content .flex.justify-between.items-end {
+        gap: 10px;
+        flex-wrap: wrap;
+        align-items: flex-end;
+      }
+
+      .result-content .flex.justify-between.items-end > div {
+        width: auto !important;
+        max-width: 48%;
+        min-width: 0;
+      }
+
+      .result-content .flex.justify-between.items-end img {
+        max-width: 100%;
+      }
+
+      .result-content .flex.justify-between.items-end img.w-32 {
+        width: 105px !important;
+        height: 105px !important;
+      }
+
+      /* General spacing */
+      .result-content .mt-6 {
+        margin-top: 12px;
+      }
+
+      .result-content .mt-4 {
+        margin-top: 10px;
+      }
+
+      .result-content .p-4 {
+        padding: 8px;
+      }
+
+      .result-content .p-3 {
+        padding: 8px;
+      }
+
+      .result-content .p-2 {
+        padding: 6px;
+      }
+    }
   </style>
 </head>
 <body>
 
-<!-- 🔹 Bulk Print / Download All -->
+<!-- Bulk Print / Download All -->
 <div class="no-print text-center mb-4">
   <button onclick="window.print()" class="px-4 py-2 bg-black text-white">
     🖨️ Print / Download All Termly Results
@@ -118,7 +335,7 @@
 <div id="student-{{ r.student.id }}" class="result-card result-watermark">
   <div class="result-content">
 
-    <!-- 🔹 Per-Student Actions -->
+    <!-- Per-Student Actions -->
     <div class="no-print flex justify-end gap-2 mb-2">
       <button onclick="printSingle('{{ r.student.id }}')" class="border px-3 py-1 text-sm rounded">🖨️ Print</button>
 
@@ -127,6 +344,7 @@
         ⬇️ Download PDF
       </a>
     </div>
+
     <!-- HEADER -->
     <div class="text-center border-b border-black pb-2 mb-2">
       {% if school.logo %}
@@ -180,10 +398,11 @@
           <th class="border border-black p-1 text-center">Grade</th>
           <th class="border border-black p-1 text-center">Grade Interpretation</th>
           {% if show_teacher_on_result %}
-  <th class="border border-black p-1 text-center">Teacher</th>
-{% endif %}
-          
+            <th class="border border-black p-1 text-center">Teacher</th>
+          {% endif %}
+        </tr>
       </thead>
+
       <tbody>
         {% for s in r.scores %}
         <tr>
@@ -198,9 +417,8 @@
           <td class="border border-black p-1 text-center">{{ s.grade_interpretation }}</td>
 
           {% if show_teacher_on_result %}
-  <td class="border border-black p-1 text-center">{{ s.teacher }}</td>
-{% endif %}
-          
+            <td class="border border-black p-1 text-center">{{ s.teacher }}</td>
+          {% endif %}
         </tr>
         {% endfor %}
       </tbody>
@@ -224,154 +442,151 @@
     </div>
 
     <div class="mt-2 border border-black p-2 text-sm">
-  <p>
-    <strong>Attendance:</strong>
-    {{ r.attendance_present }} / {{ r.attendance_total }} days
-    (<span class="font-bold text-green-700">
-      {{ r.attendance_percent }}%
-    </span>)
-  </p>
-</div>
+      <p>
+        <strong>Attendance:</strong>
+        {{ r.attendance_present }} / {{ r.attendance_total }} days
+        (<span class="font-bold text-green-700">
+          {{ r.attendance_percent }}%
+        </span>)
+      </p>
+    </div>
+
     <!-- PSYCHOMOTOR & AFFECTIVE -->
     <h2 class="font-bold mt-4 uppercase text-center border border-black py-1">
       Psychomotor & Affective Domain
     </h2>
+
     <div class="grid grid-cols-2 gap-4 mt-2 border border-black p-3 text-xs">
+
       <!-- PSYCHOMOTOR -->
       <div>
         <p class="font-semibold mb-2">Psychomotor</p>
-       {% if r.psychomotor %}
-<ul class="space-y-1">
-    {% for attr in "neatness,agility,creativity,sports,handwriting"|split:"," %}
-        <li class="flex justify-between">
-            <span>{{ attr|capfirst }}</span>
-            <span class="text-yellow-600">
+        {% if r.psychomotor %}
+        <ul class="space-y-1">
+          {% for attr in "neatness,agility,creativity,sports,handwriting"|split:"," %}
+            <li class="flex justify-between">
+              <span>{{ attr|capfirst }}</span>
+              <span class="text-yellow-600">
                 {% for i in "12345" %}
-                    {% if i|add:"0" <= r.psychomotor|get_item:attr %}
-                        ★
-                    {% else %}
-                        ☆
-                    {% endif %}
+                  {% if i|add:"0" <= r.psychomotor|get_item:attr %}
+                    ★
+                  {% else %}
+                    ☆
+                  {% endif %}
                 {% endfor %}
-            </span>
-        </li>
-    {% endfor %}
-</ul>
-{% endif %}
-
+              </span>
+            </li>
+          {% endfor %}
+        </ul>
+        {% endif %}
       </div>
+
       <!-- AFFECTIVE -->
       <div>
         <p class="font-semibold mb-2">Affective</p>
         {% if r.affective %}
-<ul class="space-y-1">
-    {% for attr in "punctuality,cooperation,behavior,attentiveness,perseverance"|split:"," %}
-        <li class="flex justify-between">
-            <span>{{ attr|capfirst }}</span>
-            <span class="text-yellow-600">
+        <ul class="space-y-1">
+          {% for attr in "punctuality,cooperation,behavior,attentiveness,perseverance"|split:"," %}
+            <li class="flex justify-between">
+              <span>{{ attr|capfirst }}</span>
+              <span class="text-yellow-600">
                 {% for i in "12345" %}
-                    {% if i|add:"0" <= r.affective|get_item:attr %}
-                        ★
-                    {% else %}
-                        ☆
-                    {% endif %}
+                  {% if i|add:"0" <= r.affective|get_item:attr %}
+                    ★
+                  {% else %}
+                    ☆
+                  {% endif %}
                 {% endfor %}
-            </span>
-        </li>
-    {% endfor %}
-</ul>
-{% endif %}
-
+              </span>
+            </li>
+          {% endfor %}
+        </ul>
+        {% endif %}
       </div>
     </div>
-
 
     <!-- COMBINED DOMAIN LEGEND + GRADING KEY -->
-<div class="mt-3 border border-black p-2 text-xs">
+    <div class="mt-3 border border-black p-2 text-xs">
 
-  <div class="grid grid-cols-2 gap-3">
+      <div class="grid grid-cols-2 gap-3">
 
-    <!-- DOMAIN LEGEND -->
-    <div>
-      <h3 class="font-bold uppercase border-b border-black mb-1 pb-1">
-        Domain Legend
-      </h3>
+        <!-- DOMAIN LEGEND -->
+        <div>
+          <h3 class="font-bold uppercase border-b border-black mb-1 pb-1">
+            Domain Legend
+          </h3>
 
-      <div class="space-y-1">
+          <div class="space-y-1">
+            <div class="flex justify-between">
+              <span class="legend-stars text-yellow-700">★★★★★</span>
+              <span>Excellent</span>
+            </div>
 
-        <div class="flex justify-between">
-          <span class="legend-stars text-yellow-700">★★★★★</span>
-          <span>Excellent</span>
+            <div class="flex justify-between">
+              <span class="legend-stars text-yellow-700">★★★★☆</span>
+              <span>Very Good</span>
+            </div>
+
+            <div class="flex justify-between">
+              <span class="legend-stars text-yellow-700">★★★☆☆</span>
+              <span>Good</span>
+            </div>
+
+            <div class="flex justify-between">
+              <span class="legend-stars text-yellow-700">★★☆☆☆</span>
+              <span>Fair</span>
+            </div>
+
+            <div class="flex justify-between">
+              <span class="legend-stars text-yellow-700">★☆☆☆☆</span>
+              <span>Poor</span>
+            </div>
+          </div>
         </div>
 
-        <div class="flex justify-between">
-          <span class="legend-stars text-yellow-700">★★★★☆</span>
-          <span>Very Good</span>
-        </div>
+        <!-- GRADING KEY -->
+        <div>
+          <h3 class="font-bold uppercase border-b border-black mb-1 pb-1">
+            Grading Key
+          </h3>
 
-        <div class="flex justify-between">
-          <span class="legend-stars text-yellow-700">★★★☆☆</span>
-          <span>Good</span>
-        </div>
+          <table class="w-full border border-black border-collapse text-[11px]">
+            <thead>
+              <tr class="bg-gray-200">
+                <th class="border border-black p-1">Grade</th>
+                <th class="border border-black p-1">Score</th>
+                <th class="border border-black p-1">Interpretation</th>
+              </tr>
+            </thead>
 
-        <div class="flex justify-between">
-          <span class="legend-stars text-yellow-700">★★☆☆☆</span>
-          <span>Fair</span>
-        </div>
+            <tbody>
+              {% for g in grade_legend %}
+              <tr>
+                <td class="border border-black p-1 text-center font-bold">
+                  {{ g.grade }}
+                </td>
 
-        <div class="flex justify-between">
-          <span class="legend-stars text-yellow-700">★☆☆☆☆</span>
-          <span>Poor</span>
+                <td class="border border-black p-1 text-center">
+                  {{ g.min_score }}+
+                </td>
+
+                <td class="border border-black p-1 text-center">
+                  {{ g.interpretation }}
+                </td>
+              </tr>
+              {% empty %}
+              <tr>
+                <td colspan="3" class="border border-black p-1 text-center text-red-600">
+                  No grading key
+                </td>
+              </tr>
+              {% endfor %}
+            </tbody>
+          </table>
         </div>
 
       </div>
     </div>
-
-    <!-- GRADING KEY -->
-    <div>
-      <h3 class="font-bold uppercase border-b border-black mb-1 pb-1">
-        Grading Key
-      </h3>
-
-      <table class="w-full border border-black border-collapse text-[11px]">
-        <thead>
-          <tr class="bg-gray-200">
-            <th class="border border-black p-1">Grade</th>
-            <th class="border border-black p-1">Score</th>
-            <th class="border border-black p-1">Interpretation</th>
-          </tr>
-        </thead>
-
-        <tbody>
-          {% for g in grade_legend %}
-          <tr>
-            <td class="border border-black p-1 text-center font-bold">
-              {{ g.grade }}
-            </td>
-
-            <td class="border border-black p-1 text-center">
-              {{ g.min_score }}+
-            </td>
-
-            <td class="border border-black p-1 text-center">
-              {{ g.interpretation }}
-            </td>
-          </tr>
-          {% empty %}
-          <tr>
-            <td colspan="3" class="border border-black p-1 text-center text-red-600">
-              No grading key
-            </td>
-          </tr>
-          {% endfor %}
-        </tbody>
-      </table>
-
-    </div>
-
-  </div>
-
-</div>
 
     <!-- COMMENTS -->
     <div class="mt-4 border border-black p-2 text-sm">
@@ -386,35 +601,34 @@
         <span class="ml-1">{{ r.next_term_begins|date:"l, jS F Y"|default:"________________" }}</span>
       </p>
     </div>
-      
-   <!-- FOOTER: Signature and QR -->
-  <div class="flex justify-between items-end mt-6 text-sm border-t pt-2">
 
-  <!-- Signature -->
-  <div class="text-center w-32 md:w-40 flex-shrink-0">
-    {% if r.principal_signature_url %}
-      <img src="{{ r.principal_signature_url }}" class="h-12 border mx-auto" />
-    {% else %}
-      <div class="h-12 w-32 border mx-auto"></div>
-    {% endif %}
-    <p class="mt-1 font-semibold text-xs md:text-sm">Head Teacher</p>
-  </div>
+    <!-- FOOTER: Signature and QR -->
+    <div class="flex justify-between items-end mt-6 text-sm border-t pt-2">
 
-  <!-- QR -->
-  <div class="text-center w-32 md:w-40 flex-shrink-0">
-    <img src="{{ r.qr_data_uri }}"
-         class="w-32 h-32 md:w-40 md:h-40 border mx-auto bg-white p-1 object-contain"
-         alt="Student QR Code" />
-    <p class="text-xs md:text-sm">Scan to verify</p>
-  </div>
+      <!-- Signature -->
+      <div class="text-center w-32 md:w-40 flex-shrink-0">
+        {% if r.principal_signature_url %}
+          <img src="{{ r.principal_signature_url }}" class="h-12 border mx-auto" />
+        {% else %}
+          <div class="h-12 w-32 border mx-auto"></div>
+        {% endif %}
+        <p class="mt-1 font-semibold text-xs md:text-sm">Head Teacher</p>
+      </div>
 
-</div>
+      <!-- QR -->
+      <div class="text-center w-32 md:w-40 flex-shrink-0">
+        <img src="{{ r.qr_data_uri }}"
+             class="w-32 h-32 md:w-40 md:h-40 border mx-auto bg-white p-1 object-contain"
+             alt="Student QR Code" />
+        <p class="text-xs md:text-sm">Scan to verify</p>
+      </div>
+
+    </div>
 
   </div>
 </div>
 {% endfor %}
 </div>
- 
 
 <script>
 function printSingle(studentId){

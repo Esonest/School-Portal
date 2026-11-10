@@ -4,6 +4,7 @@
 <html>
 <head>
   <meta charset="utf-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Cumulative Class Results — {{ school.name }}</title>
   <script src="https://cdn.tailwindcss.com"></script>
 
@@ -73,6 +74,217 @@
       color: #b8860b;
       font-weight: bold;
     }
+
+
+/* ANDROID / MOBILE RESPONSIVE DISPLAY */
+@media screen and (max-width: 640px) {
+
+  html,
+  body {
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 0 !important;
+    overflow-x: hidden;
+    font-size: 12px;
+  }
+
+  body {
+    background: #f3f4f6;
+  }
+
+  .no-print.max-w-\[210mm\] {
+    width: 100%;
+    max-width: 100%;
+    padding: 10px;
+    box-sizing: border-box;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .no-print.max-w-\[210mm\] h2 {
+    font-size: 15px;
+    line-height: 1.4;
+  }
+
+  .no-print button {
+    font-size: 11px;
+    padding: 8px 10px;
+  }
+
+  .result-card {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    margin: 0 0 14px;
+    padding: 8px;
+    border-left: 0;
+    border-right: 0;
+    overflow: hidden;
+  }
+
+  .result-content {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .result-card h1 {
+    font-size: 19px;
+    line-height: 1.3;
+    overflow-wrap: anywhere;
+  }
+
+  .result-card h2 {
+    font-size: 12px;
+    line-height: 1.4;
+  }
+
+  .result-card p {
+    overflow-wrap: anywhere;
+  }
+
+  .result-card img {
+    max-width: 100%;
+  }
+
+  /* Student information */
+  .result-card .grid.grid-cols-3 {
+    grid-template-columns: 1fr;
+    gap: 8px;
+    font-size: 11px;
+  }
+
+  .result-card .grid.grid-cols-3 > div:last-child {
+    text-align: left;
+  }
+
+  .result-card .grid.grid-cols-3 img,
+  .result-card .grid.grid-cols-3 .h-20 {
+    width: 65px;
+    height: 65px;
+  }
+
+  /* Cumulative academic table */
+  .result-card table {
+    font-size: 9px;
+  }
+
+  .result-card table th,
+  .result-card table td {
+    font-size: 9px;
+    padding: 3px 4px;
+    white-space: nowrap;
+  }
+
+  /* Keep the wide cumulative table readable without
+     forcing the entire phone screen to scroll sideways. */
+  .result-card table.w-full {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .result-card table.w-full thead,
+  .result-card table.w-full tbody {
+    width: max-content;
+  }
+
+  /* Psychomotor and affective sections */
+  .result-card .grid.grid-cols-2 {
+    grid-template-columns: 1fr;
+    gap: 12px;
+  }
+
+  .result-card .grid.grid-cols-2 li {
+    gap: 5px;
+    font-size: 11px;
+  }
+
+  /* Star ratings: preserve gold/yellow colour */
+  .result-card .text-yellow-600,
+  .result-card .text-yellow-700 {
+    color: #b8860b !important;
+    white-space: nowrap;
+  }
+
+  /* Domain legend and grading key */
+  .result-card .legend-box,
+  .result-card .mt-3.border.border-black {
+    font-size: 10px;
+  }
+
+  .result-card .mt-3.border.border-black table th,
+  .result-card .mt-3.border.border-black table td {
+    font-size: 9px;
+    white-space: normal;
+  }
+
+  /* Attendance */
+  .result-card .flex.flex-wrap.justify-between {
+    justify-content: flex-start;
+    gap: 8px 14px;
+    line-height: 1.5;
+  }
+
+  /* Comments */
+  .result-card .text-sm {
+    font-size: 11px;
+    line-height: 1.5;
+  }
+
+  .result-card .text-xl {
+    font-size: 15px;
+    line-height: 1.5;
+  }
+
+  /* Footer and QR code */
+  .result-card .items-end {
+    align-items: center;
+  }
+
+  .result-card .items-end img {
+    max-width: 110px;
+    max-height: 110px;
+    object-fit: contain;
+  }
+
+  .result-card .items-end .h-12 {
+    max-height: 42px;
+  }
+
+  .result-card .items-end .w-32 {
+    max-width: 110px;
+  }
+
+  .result-card .mt-6 {
+    margin-top: 14px;
+  }
+}
+
+/* Keep A4 printing independent of mobile screen styling */
+@media print {
+  .result-card {
+    width: auto !important;
+    max-width: 210mm !important;
+    margin: 0 auto 24px !important;
+    padding: 14px !important;
+    border: 1px solid #000 !important;
+    overflow: visible !important;
+  }
+
+  .result-card table.w-full {
+    display: table !important;
+    overflow: visible !important;
+  }
+
+  .result-card table th,
+  .result-card table td {
+    font-size: 12px;
+  }
+}
+
   </style>
 </head>
 
