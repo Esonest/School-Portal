@@ -1,20 +1,22 @@
+
 {% extends "accounts/base.html" %}
+{% load static %}
 
 {% block content %}
 
-<div class="max-w-5xl mx-auto px-6 py-8">
+<div class="max-w-5xl mx-auto px-3 sm:px-6 py-5 sm:py-8">
 
-    <!-- Header -->
-    <div class="bg-gradient-to-r from-indigo-600 to-blue-600 rounded-2xl shadow-lg p-8 text-white mb-8">
+    <!-- Note Header -->
+    <div class="bg-gradient-to-r from-indigo-600 to-blue-600 rounded-2xl shadow-lg p-5 sm:p-8 text-white mb-5">
 
-        <h1 class="text-3xl font-bold">
+        <h1 class="text-2xl sm:text-3xl font-bold">
             {{ note.title }}
         </h1>
 
-        <div class="flex flex-wrap gap-3 mt-4 text-sm">
+        <div class="flex flex-wrap gap-2 mt-4 text-sm">
 
             <span class="bg-white/20 px-3 py-1 rounded-full">
-                📚 {{ note.subject }}
+                📚 {{ note.subject|default:"General" }}
             </span>
 
             <span class="bg-white/20 px-3 py-1 rounded-full">
@@ -32,53 +34,170 @@
             </span>
 
         </div>
+    </div>
+
+
+    <!-- READER -->
+    <div id="lessonReader"
+         class="bg-white rounded-2xl shadow-lg border border-gray-200 overflow-hidden">
+
+        <!-- Reader Toolbar -->
+        <div class="bg-gray-50 border-b p-3 sm:p-4">
+
+            <div class="flex flex-wrap items-center justify-between gap-3">
+
+                <div>
+                    <h2 class="font-bold text-gray-800 text-lg">
+                        📖 Lesson Reading Mode
+                    </h2>
+
+                    <p class="text-xs text-gray-500">
+                        Read your lesson one page at a time.
+                    </p>
+                </div>
+
+                <div class="flex flex-wrap gap-2">
+
+                    <button type="button"
+                            id="decreaseFont"
+                            class="px-3 py-2 bg-white border rounded-lg text-gray-700"
+                            aria-label="Decrease font size">
+                        A−
+                    </button>
+
+                    <button type="button"
+                            id="increaseFont"
+                            class="px-3 py-2 bg-white border rounded-lg text-gray-700"
+                            aria-label="Increase font size">
+                        A+
+                    </button>
+
+                    <button type="button"
+                            id="toggleTheme"
+                            class="px-3 py-2 bg-gray-800 text-white rounded-lg">
+                        🌙
+                    </button>
+
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- Progress -->
+        <div class="px-4 sm:px-6 pt-5">
+
+            <div class="flex justify-between text-sm text-gray-500 mb-2">
+
+                <span id="pageCounter">Preparing lesson...</span>
+
+                <span id="progressPercent">0%</span>
+
+            </div>
+
+            <div class="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
+
+                <div id="readingProgress"
+                     class="h-full bg-indigo-600 rounded-full transition-all"
+                     style="width:0%">
+                </div>
+
+            </div>
+
+        </div>
+
+
+        <!-- Reader Content -->
+        <div id="readingSurface"
+             class="px-5 sm:px-10 py-8 sm:py-10 min-h-[420px]">
+
+            <div id="readerStatus"
+                 class="text-center text-gray-500 py-20">
+
+                <div class="text-4xl mb-4">📚</div>
+
+                <p class="font-semibold">
+                    Preparing your lesson note...
+                </p>
+
+                <p class="text-sm mt-2">
+                    Please wait.
+                </p>
+
+            </div>
+
+            <div id="pageContent"
+                 class="hidden text-gray-700 leading-8"
+                 style="font-size:18px;">
+
+            </div>
+
+        </div>
+
+
+        <!-- Navigation -->
+        <div class="border-t bg-gray-50 p-4 sm:p-5">
+
+            <div class="flex items-center justify-between gap-3">
+
+                <button type="button"
+                        id="previousPage"
+                        disabled
+                        class="px-4 py-3 bg-gray-200 text-gray-700 rounded-xl font-semibold disabled:opacity-40">
+
+                    ← Previous
+
+                </button>
+
+
+                <span id="currentPage"
+                      class="text-sm font-semibold text-gray-600 text-center">
+
+                    Page 0
+
+                </span>
+
+
+                <button type="button"
+                        id="nextPage"
+                        disabled
+                        class="px-5 py-3 bg-indigo-600 text-white rounded-xl font-semibold disabled:opacity-40">
+
+                    Next →
+
+                </button>
+
+            </div>
+
+        </div>
 
     </div>
 
 
-    <!-- Lesson Content -->
-    <div class="bg-white rounded-2xl shadow border border-gray-200 overflow-hidden">
+    <!-- Original Attachment Download -->
+    {% if note.file and not note.expired %}
 
-        <div class="border-b bg-gray-50 px-6 py-4">
+    <div class="mt-5 bg-white border rounded-2xl shadow-sm p-4 sm:p-5">
 
-            <h2 class="text-xl font-semibold text-gray-800">
-                Lesson Content
-            </h2>
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 
-        </div>
+            <div class="min-w-0">
 
-        <div class="p-6 prose max-w-none text-gray-700 leading-8">
-
-            {{ note.content|linebreaks }}
-
-        </div>
-
-    </div>
-
-
-    <!-- Attachment -->
-    {% if note.file %}
-
-    <div class="bg-white rounded-2xl shadow border border-gray-200 mt-6 p-6">
-
-        <div class="flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-
-            <div>
-
-                <h3 class="font-semibold text-lg text-gray-800">
-                    📎 Attachment
+                <h3 class="font-bold text-gray-800">
+                    📎 Original Lesson Attachment
                 </h3>
 
-                <p class="text-gray-500 text-sm mt-1">
+                <p class="text-sm text-gray-500 mt-1 break-all">
                     {{ note.file.name }}
                 </p>
 
             </div>
 
             <a href="{% url 'notes:download_note_file' note.pk %}"
-               class="inline-flex items-center px-5 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow transition">
+               class="inline-flex items-center justify-center gap-2 px-5 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-semibold">
 
-                ⬇ Download Attachment
+                ⬇ Download Original
 
             </a>
 
@@ -89,43 +208,809 @@
     {% endif %}
 
 
-    <!-- Action Buttons -->
-   <!-- Action Buttons -->
+    <!-- Navigation Back -->
+    <div class="mt-6 flex flex-wrap justify-between gap-3">
 
-{% if request.user.role == "superadmin" or request.user.role == "schooladmin" or request.user.role == "teacher" %}
+        {% if request.user.role == "superadmin" or request.user.role == "schooladmin" or request.user.role == "teacher" %}
 
-<div class="flex flex-wrap justify-end gap-3 mt-8">
+            <a href="{% url 'notes:dashboard' %}"
+               class="px-5 py-3 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-xl">
+                ← Back to Dashboard
+            </a>
 
-    <a href="{% url 'notes:edit_note' note.pk %}"
-       class="px-5 py-3 bg-amber-500 hover:bg-amber-600 text-white rounded-xl shadow">
-        ✏ Edit
-    </a>
+            <div class="flex gap-2">
 
-    <a href="{% url 'notes:delete_note' note.pk %}"
-       class="px-5 py-3 bg-red-600 hover:bg-red-700 text-white rounded-xl shadow">
-        🗑 Delete
-    </a>
+                <a href="{% url 'notes:edit_note' note.pk %}"
+                   class="px-4 py-3 bg-amber-500 text-white rounded-xl">
+                    ✏ Edit
+                </a>
 
-    <a href="{% url 'notes:dashboard' %}"
-       class="px-5 py-3 bg-gray-200 hover:bg-gray-300 text-gray-800 rounded-xl shadow">
-        ← Back to Dashboard
-    </a>
+                <a href="{% url 'notes:delete_note' note.pk %}"
+                   class="px-4 py-3 bg-red-600 text-white rounded-xl">
+                    🗑 Delete
+                </a>
 
+            </div>
+
+        {% else %}
+
+            <a href="{% url 'notes:student_list' %}"
+               class="px-5 py-3 bg-gray-200 hover:bg-gray-300 rounded-xl text-gray-700">
+                ← Back to Notes
+            </a>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+
+<!-- Safely pass note text to JavaScript -->
+{{ note.content|json_script:"lesson-note-content" }}
+
+
+{% if note.file and not note.expired %}
+
+<div id="lessonFileData"
+     data-file-url="{% url 'notes:download_note_file' note.pk %}"
+     data-file-name="{{ note.file.name|escape }}"
+     hidden>
 </div>
 
 {% else %}
 
-<div class="mt-8">
-
-    <a href="{% url 'notes:student_list' %}"
-       class="inline-flex items-center px-5 py-3 bg-gray-200 hover:bg-gray-300 rounded-xl text-gray-700 shadow">
-        ← Back to Notes
-    </a>
-
+<div id="lessonFileData"
+     data-file-url=""
+     data-file-name=""
+     hidden>
 </div>
 
 {% endif %}
 
-</div>
+
+<!-- DOCUMENT READING LIBRARIES -->
+
+<!-- PDF -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+
+<!-- Word DOCX -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.8.0/mammoth.browser.min.js"></script>
+
+<!-- Images OCR -->
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+
+<!-- Excel -->
+<script src="https://cdn.sheetjs.com/xlsx-0.20.3/package/dist/xlsx.full.min.js"></script>
+
+<!-- ZIP / PowerPoint -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+
+
+<style>
+
+    #readingSurface {
+        transition: background .2s, color .2s;
+    }
+
+    #pageContent p {
+        margin-bottom: 1.2em;
+        line-height: 1.85;
+        overflow-wrap: anywhere;
+    }
+
+    #pageContent h3 {
+        font-size: 1.35em;
+        font-weight: 700;
+        color: #3730a3;
+        margin: 1.4em 0 .7em;
+    }
+
+    #pageContent ul {
+        list-style: disc;
+        padding-left: 1.5em;
+        margin-bottom: 1.2em;
+    }
+
+    #pageContent ol {
+        list-style: decimal;
+        padding-left: 1.5em;
+        margin-bottom: 1.2em;
+    }
+
+    #readingSurface.dark-reading {
+        background: #172033;
+        color: #e5e7eb;
+    }
+
+    #readingSurface.dark-reading #pageContent {
+        color: #e5e7eb;
+    }
+
+    #readingSurface.dark-reading #pageContent h3 {
+        color: #a5b4fc;
+    }
+
+    #readingSurface.dark-reading #readerStatus {
+        color: #e5e7eb;
+    }
+
+    @media(max-width: 640px) {
+
+        #readingSurface {
+            min-height: 400px;
+        }
+
+        #pageContent p {
+            line-height: 1.8;
+        }
+
+    }
+
+</style>
+
+
+<script>
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    const pageContent = document.getElementById("pageContent");
+    const readerStatus = document.getElementById("readerStatus");
+
+    const previousButton = document.getElementById("previousPage");
+    const nextButton = document.getElementById("nextPage");
+
+    const pageCounter = document.getElementById("pageCounter");
+    const currentPage = document.getElementById("currentPage");
+
+    const progress = document.getElementById("readingProgress");
+    const progressPercent = document.getElementById("progressPercent");
+
+    const readingSurface = document.getElementById("readingSurface");
+
+    const fileData = document.getElementById("lessonFileData");
+
+    const fallbackContent = JSON.parse(
+        document.getElementById("lesson-note-content").textContent
+    );
+
+    const fileUrl = fileData.dataset.fileUrl;
+    const fileName = fileData.dataset.fileName || "";
+
+    const TARGET_WORDS = 200;
+
+    let pages = [];
+    let pageIndex = 0;
+    let fontSize = 18;
+
+
+    // =========================================
+    // STATUS MESSAGE
+    // =========================================
+
+    function showStatus(message, error = false) {
+
+        readerStatus.classList.remove("hidden");
+
+        readerStatus.innerHTML = "";
+
+        const paragraph = document.createElement("p");
+
+        paragraph.className = error
+            ? "text-red-600 font-semibold"
+            : "text-gray-500 font-semibold";
+
+        paragraph.textContent = message;
+
+        readerStatus.appendChild(paragraph);
+
+        pageContent.classList.add("hidden");
+
+    }
+
+
+    // =========================================
+    // SPLIT LONG PARAGRAPHS
+    // =========================================
+
+    function splitLongParagraph(paragraph) {
+
+        const words = paragraph.trim().split(/\s+/);
+
+        if (words.length <= TARGET_WORDS) {
+            return [paragraph.trim()];
+        }
+
+        const sentences = paragraph.match(/[^.!?]+[.!?]+|[^.!?]+$/g) || [paragraph];
+
+        const chunks = [];
+
+        let current = [];
+
+        let count = 0;
+
+        sentences.forEach(sentence => {
+
+            const sentenceWords = sentence.trim().split(/\s+/);
+
+            if (sentenceWords.length > TARGET_WORDS) {
+
+                if (current.length) {
+                    chunks.push(current.join(" "));
+                    current = [];
+                    count = 0;
+                }
+
+                for (let i = 0; i < sentenceWords.length; i += TARGET_WORDS) {
+
+                    chunks.push(
+                        sentenceWords.slice(i, i + TARGET_WORDS).join(" ")
+                    );
+
+                }
+
+                return;
+            }
+
+            if (count + sentenceWords.length > TARGET_WORDS && current.length) {
+
+                chunks.push(current.join(" "));
+
+                current = [];
+                count = 0;
+
+            }
+
+            current.push(sentence.trim());
+
+            count += sentenceWords.length;
+
+        });
+
+        if (current.length) {
+            chunks.push(current.join(" "));
+        }
+
+        return chunks;
+
+    }
+
+
+    // =========================================
+    // CREATE APPROXIMATELY 200-WORD PAGES
+    // KEEP PARAGRAPHS TOGETHER
+    // =========================================
+
+    function createPages(text) {
+
+        const paragraphs = text
+            .replace(/\r\n?/g, "\n")
+            .split(/\n\s*\n+/)
+            .map(p => p.trim())
+            .filter(Boolean);
+
+        const blocks = [];
+
+        paragraphs.forEach(paragraph => {
+
+            const parts = splitLongParagraph(paragraph);
+
+            parts.forEach(part => blocks.push(part));
+
+        });
+
+        const result = [];
+
+        let current = [];
+        let wordCount = 0;
+
+        blocks.forEach(paragraph => {
+
+            const count = paragraph.split(/\s+/).filter(Boolean).length;
+
+            if (wordCount + count > TARGET_WORDS && current.length) {
+
+                result.push(current);
+
+                current = [];
+                wordCount = 0;
+
+            }
+
+            current.push(paragraph);
+
+            wordCount += count;
+
+        });
+
+        if (current.length) {
+            result.push(current);
+        }
+
+        return result;
+
+    }
+
+
+    // =========================================
+    // PDF EXTRACTION
+    // =========================================
+
+    async function readPDF(buffer) {
+
+        if (!window.pdfjsLib) {
+            throw new Error("PDF reader library could not load.");
+        }
+
+        pdfjsLib.GlobalWorkerOptions.workerSrc =
+            "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+
+        const pdf = await pdfjsLib.getDocument({
+            data: new Uint8Array(buffer)
+        }).promise;
+
+        let text = "";
+
+        for (let i = 1; i <= pdf.numPages; i++) {
+
+            const page = await pdf.getPage(i);
+
+            const content = await page.getTextContent();
+
+            let line = "";
+
+            content.items.forEach(item => {
+
+                line += item.str || "";
+
+                if (item.hasEOL) {
+
+                    text += line.trim() + "\n";
+
+                    line = "";
+
+                } else {
+
+                    line += " ";
+
+                }
+
+            });
+
+            if (line.trim()) {
+                text += line.trim() + "\n";
+            }
+
+            text += "\n";
+
+        }
+
+        return text;
+
+    }
+
+
+    // =========================================
+    // WORD DOCX EXTRACTION
+    // =========================================
+
+    async function readDOCX(buffer) {
+
+        if (!window.mammoth) {
+            throw new Error("Word reader library could not load.");
+        }
+
+        const result = await mammoth.extractRawText({
+            arrayBuffer: buffer
+        });
+
+        return result.value;
+
+    }
+
+
+    // =========================================
+    // POWERPOINT EXTRACTION
+    // =========================================
+
+    async function readPPTX(buffer) {
+
+        const zip = await JSZip.loadAsync(buffer);
+
+        const slides = Object.keys(zip.files)
+            .filter(name => /^ppt\/slides\/slide\d+\.xml$/.test(name))
+            .sort((a, b) => {
+
+                const na = Number(a.match(/slide(\d+)/)[1]);
+                const nb = Number(b.match(/slide(\d+)/)[1]);
+
+                return na - nb;
+
+            });
+
+        let text = "";
+
+        for (const slide of slides) {
+
+            const xmlText = await zip.files[slide].async("text");
+
+            const xml = new DOMParser().parseFromString(
+                xmlText,
+                "application/xml"
+            );
+
+            const values = Array.from(
+                xml.getElementsByTagName("a:t")
+            ).map(node => node.textContent.trim()).filter(Boolean);
+
+            text += values.join("\n") + "\n\n";
+
+        }
+
+        return text;
+
+    }
+
+
+    // =========================================
+    // EXCEL EXTRACTION
+    // =========================================
+
+    async function readEXCEL(buffer) {
+
+        if (!window.XLSX) {
+            throw new Error("Excel reader library could not load.");
+        }
+
+        const workbook = XLSX.read(buffer, {
+            type: "array"
+        });
+
+        let text = "";
+
+        workbook.SheetNames.forEach(sheetName => {
+
+            const sheet = workbook.Sheets[sheetName];
+
+            text += sheetName + "\n";
+
+            text += XLSX.utils.sheet_to_txt(sheet) + "\n\n";
+
+        });
+
+        return text;
+
+    }
+
+
+    // =========================================
+    // IMAGE OCR
+    // =========================================
+
+    async function readIMAGE(blob) {
+
+        if (!window.Tesseract) {
+            throw new Error("Image text reader could not load.");
+        }
+
+        showStatus("Extracting text from image. This may take a moment...");
+
+        const result = await Tesseract.recognize(
+            blob,
+            "eng"
+        );
+
+        return result.data.text;
+
+    }
+
+
+    // =========================================
+    // HTML EXTRACTION
+    // =========================================
+
+    function readHTML(text) {
+
+        const documentHTML = new DOMParser().parseFromString(
+            text,
+            "text/html"
+        );
+
+        documentHTML.querySelectorAll(
+            "script,style,noscript,iframe"
+        ).forEach(el => el.remove());
+
+        return documentHTML.body.innerText ||
+               documentHTML.body.textContent ||
+               "";
+
+    }
+
+
+    // =========================================
+    // DETECT FILE TYPE
+    // =========================================
+
+    async function extractFileText(blob) {
+
+        const extension = fileName
+            .split(".")
+            .pop()
+            .toLowerCase();
+
+        const buffer = await blob.arrayBuffer();
+
+        if (extension === "pdf") {
+            return await readPDF(buffer);
+        }
+
+        if (extension === "docx") {
+            return await readDOCX(buffer);
+        }
+
+        if (extension === "pptx") {
+            return await readPPTX(buffer);
+        }
+
+        if (["xlsx", "xls"].includes(extension)) {
+            return await readEXCEL(buffer);
+        }
+
+        if (["jpg", "jpeg", "png", "webp", "bmp"].includes(extension)) {
+            return await readIMAGE(blob);
+        }
+
+        if (["txt", "csv", "md"].includes(extension)) {
+            return await blob.text();
+        }
+
+        if (["html", "htm"].includes(extension)) {
+            return readHTML(await blob.text());
+        }
+
+        throw new Error(
+            "This file format is not supported for automatic reading. Please download the original file."
+        );
+
+    }
+
+
+    // =========================================
+    // DISPLAY PAGE
+    // =========================================
+
+    function displayPage() {
+
+        if (!pages.length) return;
+
+        const page = pages[pageIndex];
+
+        pageContent.innerHTML = "";
+
+        page.forEach((paragraph, index) => {
+
+            const p = document.createElement("p");
+
+            p.textContent = paragraph;
+
+            pageContent.appendChild(p);
+
+        });
+
+        pageContent.style.fontSize = fontSize + "px";
+
+        pageContent.classList.remove("hidden");
+
+        readerStatus.classList.add("hidden");
+
+
+        const total = pages.length;
+
+        const number = pageIndex + 1;
+
+        const percentage = Math.round(
+            (number / total) * 100
+        );
+
+        pageCounter.textContent =
+            `Page ${number} of ${total}`;
+
+        currentPage.textContent =
+            `Page ${number} / ${total}`;
+
+        progressPercent.textContent =
+            percentage + "%";
+
+        progress.style.width =
+            percentage + "%";
+
+        previousButton.disabled =
+            pageIndex === 0;
+
+        nextButton.disabled =
+            pageIndex === total - 1;
+
+    }
+
+
+    // =========================================
+    // NAVIGATION
+    // =========================================
+
+    previousButton.addEventListener("click", function () {
+
+        if (pageIndex > 0) {
+
+            pageIndex--;
+
+            displayPage();
+
+            readingSurface.scrollIntoView({
+                behavior: "smooth",
+                block: "start"
+            });
+
+        }
+
+    });
+
+
+    nextButton.addEventListener("click", function () {
+
+        if (pageIndex < pages.length - 1) {
+
+            pageIndex++;
+
+            displayPage();
+
+            readingSurface.scrollIntoView({
+                behavior: "smooth",
+                block: "start"
+            });
+
+        }
+
+    });
+
+
+    // =========================================
+    // FONT SIZE
+    // =========================================
+
+    document.getElementById("increaseFont").addEventListener(
+        "click",
+        function () {
+
+            fontSize = Math.min(fontSize + 2, 30);
+
+            pageContent.style.fontSize = fontSize + "px";
+
+        }
+    );
+
+
+    document.getElementById("decreaseFont").addEventListener(
+        "click",
+        function () {
+
+            fontSize = Math.max(fontSize - 2, 14);
+
+            pageContent.style.fontSize = fontSize + "px";
+
+        }
+    );
+
+
+    // =========================================
+    // DARK MODE
+    // =========================================
+
+    document.getElementById("toggleTheme").addEventListener(
+        "click",
+        function () {
+
+            readingSurface.classList.toggle("dark-reading");
+
+            this.textContent =
+                readingSurface.classList.contains("dark-reading")
+                ? "☀️"
+                : "🌙";
+
+        }
+    );
+
+
+    // =========================================
+    // LOAD LESSON
+    // =========================================
+
+    async function loadLesson() {
+
+        try {
+
+            let text = "";
+
+            if (fileUrl) {
+
+                showStatus("Downloading lesson for reading...");
+
+                const response = await fetch(fileUrl, {
+                    credentials: "same-origin"
+                });
+
+                if (!response.ok) {
+                    throw new Error("Unable to retrieve the uploaded lesson file.");
+                }
+
+                const blob = await response.blob();
+
+                text = await extractFileText(blob);
+
+            } else {
+
+                text = fallbackContent || "";
+
+            }
+
+            if (!text.trim()) {
+
+                throw new Error(
+                    "No readable text was found in this lesson note."
+                );
+
+            }
+
+            pages = createPages(text);
+
+            if (!pages.length) {
+
+                throw new Error("No readable pages were generated.");
+
+            }
+
+            pageIndex = 0;
+
+            displayPage();
+
+        } catch (error) {
+
+            console.error("LESSON READER ERROR:", error);
+
+            // If an uploaded attachment cannot be read,
+            // try the teacher's typed lesson content.
+
+            if (fallbackContent && fallbackContent.trim()) {
+
+                pages = createPages(fallbackContent);
+
+                if (pages.length) {
+
+                    pageIndex = 0;
+
+                    displayPage();
+
+                    return;
+
+                }
+
+            }
+
+            showStatus(
+                error.message || "Unable to display this lesson. Please download the original file.",
+                true
+            );
+
+        }
+
+    }
+
+
+    // START
+    loadLesson();
+
+
+});
+
+</script>
 
 {% endblock %}
