@@ -1,408 +1,228 @@
+
 {% extends 'accounts/base.html' %}
 
 {% block content %}
 
-<div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+<div class="w-full max-w-5xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 overflow-x-hidden">
 
+    <!-- ================= HEADER ================= -->
 
-<!-- ================= HEADER ================= -->
+    <div class="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl shadow-xl p-4 sm:p-6 md:p-8 text-white mb-5 sm:mb-8">
 
+        <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-5">
 
-<div class="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl sm:rounded-3xl shadow-xl p-4 sm:p-6 md:p-8 text-white mb-5 sm:mb-8">
+            <div class="min-w-0 flex-1">
 
-    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 sm:gap-5">
+                <div class="flex items-start gap-2 sm:gap-3 mb-2 sm:mb-3">
+                    <span class="text-2xl sm:text-4xl flex-shrink-0">📝</span>
 
-        <div class="min-w-0 flex-1">
+                    <h1 class="text-xl sm:text-2xl md:text-3xl font-bold leading-tight break-words min-w-0">
+                        {{ assignment.title }}
+                    </h1>
+                </div>
 
-            <div class="flex items-start gap-2 sm:gap-3 mb-2 sm:mb-3">
-
-                <span class="text-2xl sm:text-4xl flex-shrink-0">
-                    📝
-                </span>
-
-                <h1 class="text-xl sm:text-2xl md:text-3xl font-bold leading-tight break-words">
-                    {{ assignment.title }}
-                </h1>
+                <p class="text-indigo-100 text-sm sm:text-base leading-relaxed break-words">
+                    {{ assignment.description|truncatewords:25 }}
+                </p>
 
             </div>
 
-            <p class="text-indigo-100 text-sm sm:text-base leading-relaxed break-words">
-                {{ assignment.description|truncatewords:25 }}
+            <div class="flex-shrink-0">
+                {% if assignment.is_active and assignment.published %}
+                    <span class="inline-flex px-3 py-1.5 sm:px-4 sm:py-2 bg-white/20 rounded-full text-xs sm:text-sm font-semibold">
+                        ✓ Active Assignment
+                    </span>
+                {% else %}
+                    <span class="inline-flex px-3 py-1.5 sm:px-4 sm:py-2 bg-red-500/80 rounded-full text-xs sm:text-sm font-semibold">
+                        Closed
+                    </span>
+                {% endif %}
+            </div>
+
+        </div>
+    </div>
+
+
+    <!-- ================= DETAILS ================= -->
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-3 sm:gap-5 mb-5 sm:mb-8">
+
+        <div class="bg-white rounded-xl sm:rounded-2xl shadow-sm border p-4 sm:p-5 min-w-0">
+            <p class="text-xs text-gray-500 uppercase tracking-wide">Subject</p>
+            <p class="text-base sm:text-lg font-semibold text-gray-800 mt-1 break-words">
+                📚 {{ assignment.subject|default:"Not Assigned" }}
             </p>
+        </div>
+
+        <div class="bg-white rounded-xl sm:rounded-2xl shadow-sm border p-4 sm:p-5 min-w-0">
+            <p class="text-xs text-gray-500 uppercase tracking-wide">Session / Term</p>
+            <p class="text-base sm:text-lg font-semibold text-gray-800 mt-1 break-words">
+                {{ assignment.session|default:"-" }}
+
+                {% if assignment.term %}
+                    <span class="text-indigo-600">
+                        • Term {{ assignment.term }}
+                    </span>
+                {% endif %}
+            </p>
+        </div>
+
+        <div class="bg-white rounded-xl sm:rounded-2xl shadow-sm border p-4 sm:p-5 min-w-0">
+            <p class="text-xs text-gray-500 uppercase tracking-wide">Expiry Date</p>
+            <p class="text-base sm:text-lg font-semibold text-gray-800 mt-1 break-words">
+                {% if assignment.expiry_date %}
+                    ⏰ {{ assignment.expiry_date|date:"M d, Y H:i" }}
+                {% else %}
+                    No deadline
+                {% endif %}
+            </p>
+        </div>
+
+    </div>
+
+
+    <!-- ================= DESCRIPTION ================= -->
+
+    <div class="bg-white rounded-xl sm:rounded-2xl shadow-sm border p-4 sm:p-6 mb-5 sm:mb-8">
+
+        <h2 class="text-lg sm:text-xl font-bold text-gray-800 mb-3 sm:mb-4 flex items-center gap-2">
+            📖 Assignment Instructions
+        </h2>
+
+        <div class="text-gray-700 text-sm sm:text-base leading-relaxed break-words overflow-wrap-anywhere">
+            {{ assignment.description|linebreaks }}
+        </div>
+
+    </div>
+
+
+    <!-- ================= FILE ================= -->
+
+    {% if assignment.file %}
+
+    <div class="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100 rounded-xl sm:rounded-2xl p-4 sm:p-6 mb-5 sm:mb-8">
+
+        <h2 class="text-base sm:text-lg font-bold text-gray-800 mb-3 sm:mb-4">
+            📎 Learning Resource
+        </h2>
+
+        <a href="{{ assignment.file.url }}"
+           class="flex w-full sm:w-auto justify-center items-center gap-2 sm:gap-3 px-4 sm:px-5 py-3 bg-indigo-600 hover:bg-indigo-700 text-white text-sm sm:text-base rounded-xl shadow transition text-center">
+
+            <span class="text-xl">⬇️</span>
+            <span>Download Assignment File</span>
+
+        </a>
+
+    </div>
+
+    {% endif %}
+
+
+    <!-- ================= SUBMISSION ================= -->
+
+    <div class="bg-white rounded-xl sm:rounded-2xl shadow-sm sm:shadow-xl border p-4 sm:p-6">
+
+        <h2 class="text-lg sm:text-xl font-bold text-gray-800 mb-4 sm:mb-5 flex items-center gap-2">
+            📤 Submission Status
+        </h2>
+
+
+        {% if submission %}
+
+        <div class="bg-green-50 border border-green-200 rounded-xl p-3 sm:p-5">
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mb-4">
+
+                <div class="min-w-0">
+                    <p class="text-xs sm:text-sm text-gray-500">Status</p>
+                    <p class="text-base sm:text-lg font-bold text-green-700 break-words">
+                        {{ submission.status|title }}
+                    </p>
+                </div>
+
+                <div class="min-w-0 sm:text-right">
+                    <p class="text-xs sm:text-sm text-gray-500">Submitted</p>
+                    <p class="text-sm sm:text-base font-semibold text-gray-800 break-words">
+                        {{ submission.submitted_on|date:"M d, Y H:i" }}
+                    </p>
+                </div>
+
+            </div>
+
+
+            {% if submission.score %}
+
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 mt-4 sm:mt-5">
+
+                <div class="bg-white rounded-xl border p-3 sm:p-4">
+                    <p class="text-sm text-gray-500">Score</p>
+                    <p class="text-2xl sm:text-3xl font-bold text-indigo-600">
+                        {{ submission.score }}
+                    </p>
+                </div>
+
+                <div class="bg-white rounded-xl border p-3 sm:p-4 min-w-0">
+                    <p class="text-sm text-gray-500">Teacher Feedback</p>
+                    <p class="text-sm sm:text-base text-gray-700 mt-1 break-words">
+                        {{ submission.feedback|default:"No feedback yet." }}
+                    </p>
+                </div>
+
+            </div>
+
+            {% endif %}
 
         </div>
 
-        <div class="flex-shrink-0">
 
-            {% if assignment.is_active and assignment.published %}
+        {% else %}
 
-            <span class="inline-flex px-3 py-1.5 sm:px-4 sm:py-2 bg-white/20 rounded-full text-xs sm:text-sm font-semibold">
-                ✓ Active Assignment
-            </span>
+        <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4 sm:p-6 text-center">
+
+            <div class="text-3xl sm:text-4xl mb-2 sm:mb-3">📌</div>
+
+            <h3 class="font-bold text-gray-800 text-base sm:text-lg">
+                Assignment not submitted yet
+            </h3>
+
+            <p class="text-gray-600 text-sm sm:text-base mt-2 mb-4 sm:mb-5">
+                Submit your work before the deadline.
+            </p>
+
+            {% if assignment.is_active %}
+
+                <a href="{% url 'assignments:submit_assignment' pk=assignment.id %}"
+                   class="flex w-full sm:w-auto sm:inline-flex justify-center px-5 sm:px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold text-sm sm:text-base shadow transition">
+                    Submit Assignment
+                </a>
 
             {% else %}
 
-            <span class="inline-flex px-3 py-1.5 sm:px-4 sm:py-2 bg-red-500/80 rounded-full text-xs sm:text-sm font-semibold">
-                Closed
-            </span>
+                <span class="inline-flex justify-center px-5 sm:px-6 py-3 bg-gray-400 text-white rounded-xl text-sm sm:text-base">
+                    Submission Closed
+                </span>
 
             {% endif %}
+
+        </div>
+
+        {% endif %}
+
+
+        <!-- BACK BUTTON -->
+
+        <div class="mt-5 sm:mt-6">
+
+            <a href="{% url 'assignments:dashboard' %}"
+               class="flex w-full sm:w-auto sm:inline-flex justify-center items-center px-5 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-semibold text-sm sm:text-base transition">
+                ← Back to Dashboard
+            </a>
 
         </div>
 
     </div>
 
 </div>
-
-
-
-
-<!-- ================= DETAILS ================= -->
-
-
-<div class="grid md:grid-cols-3 gap-6 mb-8">
-
-
-<div class="bg-white rounded-2xl shadow border p-5">
-
-<p class="text-xs text-gray-500 uppercase">
-Subject
-</p>
-
-<p class="text-lg font-semibold text-gray-800 mt-1">
-📚 {{ assignment.subject|default:"Not Assigned" }}
-</p>
-
-</div>
-
-
-
-<div class="bg-white rounded-2xl shadow border p-5">
-
-<p class="text-xs text-gray-500 uppercase">
-Session / Term
-</p>
-
-<p class="text-lg font-semibold text-gray-800 mt-1">
-
-{{ assignment.session|default:"-" }}
-
-{% if assignment.term %}
-<span class="text-indigo-600">
-• Term {{ assignment.term }}
-</span>
-{% endif %}
-
-</p>
-
-</div>
-
-
-
-<div class="bg-white rounded-2xl shadow border p-5">
-
-<p class="text-xs text-gray-500 uppercase">
-Expiry Date
-</p>
-
-<p class="text-lg font-semibold text-gray-800 mt-1">
-
-{% if assignment.expiry_date %}
-
-⏰ {{ assignment.expiry_date|date:"M d, Y H:i" }}
-
-{% else %}
-
-No deadline
-
-{% endif %}
-
-</p>
-
-</div>
-
-
-
-</div>
-
-
-
-
-
-<!-- ================= DESCRIPTION ================= -->
-
-
-<div class="bg-white rounded-2xl shadow border p-6 mb-8">
-
-
-<h2 class="text-xl font-bold text-gray-800 mb-4 flex items-center gap-2">
-
-📖 Assignment Instructions
-
-</h2>
-
-
-<div class="text-gray-700 leading-relaxed">
-
-{{ assignment.description|linebreaks }}
-
-</div>
-
-
-</div>
-
-
-
-
-
-
-<!-- ================= FILE ================= -->
-
-
-{% if assignment.file %}
-
-
-<div class="bg-gradient-to-r from-indigo-50 to-purple-50 border border-indigo-100 rounded-2xl p-6 mb-8">
-
-
-<h2 class="text-lg font-bold text-gray-800 mb-4">
-📎 Learning Resource
-</h2>
-
-
-<a href="{{ assignment.file.url }}"
-   class="inline-flex items-center gap-3 px-5 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl shadow transition">
-
-
-<span class="text-xl">
-⬇️
-</span>
-
-Download Assignment File
-
-</a>
-
-
-</div>
-
-
-{% endif %}
-
-
-
-
-
-
-
-<!-- ================= SUBMISSION ================= -->
-
-
-<div class="bg-white rounded-2xl shadow-xl border p-6">
-
-
-<h2 class="text-xl font-bold text-gray-800 mb-5 flex items-center gap-2">
-
-📤 Submission Status
-
-</h2>
-
-
-
-
-{% if submission %}
-
-
-
-<div class="bg-green-50 border border-green-200 rounded-xl p-5">
-
-
-<div class="flex justify-between items-center mb-4">
-
-
-<div>
-
-<p class="text-sm text-gray-500">
-Status
-</p>
-
-
-<p class="text-lg font-bold text-green-700">
-
-{{ submission.status|title }}
-
-</p>
-
-
-</div>
-
-
-
-<div class="text-right">
-
-<p class="text-sm text-gray-500">
-Submitted
-</p>
-
-
-<p class="font-semibold text-gray-800">
-
-{{ submission.submitted_on|date:"M d, Y H:i" }}
-
-</p>
-
-
-</div>
-
-
-</div>
-
-
-
-
-
-{% if submission.score %}
-
-
-<div class="grid md:grid-cols-2 gap-4 mt-5">
-
-
-<div class="bg-white rounded-xl border p-4">
-
-
-<p class="text-sm text-gray-500">
-Score
-</p>
-
-
-<p class="text-3xl font-bold text-indigo-600">
-
-{{ submission.score }}
-
-</p>
-
-
-</div>
-
-
-
-<div class="bg-white rounded-xl border p-4">
-
-
-<p class="text-sm text-gray-500">
-Teacher Feedback
-</p>
-
-
-<p class="text-gray-700 mt-1">
-
-{{ submission.feedback|default:"No feedback yet." }}
-
-</p>
-
-
-</div>
-
-
-
-</div>
-
-
-
-{% endif %}
-
-
-
-</div>
-
-
-
-{% else %}
-
-
-
-<div class="bg-yellow-50 border border-yellow-200 rounded-xl p-6 text-center">
-
-
-<div class="text-4xl mb-3">
-📌
-</div>
-
-
-<h3 class="font-bold text-gray-800 text-lg">
-
-Assignment not submitted yet
-
-</h3>
-
-
-<p class="text-gray-600 mt-2 mb-5">
-
-Submit your work before the deadline.
-
-</p>
-
-
-
-{% if assignment.is_active %}
-
-
-<a href="{% url 'assignments:submit_assignment' pk=assignment.id %}"
-
-class="inline-flex px-6 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-xl font-semibold shadow transition">
-
-
-Submit Assignment
-
-</a>
-
-
-{% else %}
-
-
-<span class="inline-flex px-6 py-3 bg-gray-400 text-white rounded-xl">
-
-Submission Closed
-
-</span>
-
-
-{% endif %}
-
-
-
-</div>
-
-
-
-{% endif %}
-
-
-
-
-
-<div class="mt-6">
-
-
-<a href="{% url 'assignments:dashboard' %}"
-
-class="inline-flex px-5 py-3 bg-gray-100 hover:bg-gray-200 text-gray-700 rounded-xl font-semibold">
-
-
-← Back to Dashboard
-
-</a>
-
-
-</div>
-
-
-
-</div>
-
-
-
-
-</div>
-
 
 {% endblock %}
