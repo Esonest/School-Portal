@@ -1,368 +1,318 @@
+
 {% extends 'accounts/base.html' %}
 
 {% block content %}
 
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 space-y-8">
+<div class="w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 space-y-4 sm:space-y-8 overflow-x-hidden">
 
+    <!-- HEADER -->
+    <div class="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
 
-    <!-- ================= HEADER CARD ================= -->
-    <div class="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="bg-gradient-to-r from-indigo-600 to-purple-600 px-4 sm:px-6 py-5 sm:py-8 text-white">
 
-        <div class="bg-gradient-to-r from-indigo-600 to-purple-600 px-6 py-8 text-white">
+            <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
 
-            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                <div class="min-w-0 flex-1">
 
-                <div>
-                    <h1 class="text-3xl font-bold">
+                    <h1 class="text-xl sm:text-2xl md:text-3xl font-bold break-words">
                         {{ assignment.title }}
                     </h1>
 
-                    <div class="flex flex-wrap gap-4 mt-3 text-sm text-indigo-100">
+                    <div class="flex flex-wrap gap-x-4 gap-y-2 mt-3 text-xs sm:text-sm text-indigo-100">
 
-                        <span>
-                            📘 {{ assignment.subject|default:"No Subject" }}
-                        </span>
+                        <span>📘 {{ assignment.subject|default:"No Subject" }}</span>
 
                         {% if assignment.session %}
-                        <span>
-                            🎓 {{ assignment.session }}
-                        </span>
+                        <span>🎓 {{ assignment.session }}</span>
                         {% endif %}
 
                         {% if assignment.term %}
-                        <span>
-                            📅 Term {{ assignment.term }}
-                        </span>
+                        <span>📅 Term {{ assignment.term }}</span>
                         {% endif %}
 
                         {% if assignment.due_date %}
-                        <span>
-                            ⏰ Due {{ assignment.due_date|date:"M d, Y H:i" }}
-                        </span>
+                        <span>⏰ Due {{ assignment.due_date|date:"M d, Y H:i" }}</span>
                         {% endif %}
 
                     </div>
+
                 </div>
 
-
-                <div>
+                <div class="flex-shrink-0">
 
                     {% if assignment.is_active %}
-
-                    <span class="px-4 py-2 rounded-full bg-white/20 text-white text-sm font-medium">
+                    <span class="inline-flex px-4 py-2 rounded-full bg-white/20 text-white text-xs sm:text-sm font-medium">
                         Active
                     </span>
-
                     {% else %}
-
-                    <span class="px-4 py-2 rounded-full bg-red-500 text-white text-sm font-medium">
+                    <span class="inline-flex px-4 py-2 rounded-full bg-red-500 text-white text-xs sm:text-sm font-medium">
                         Inactive
                     </span>
-
                     {% endif %}
 
                 </div>
-
 
             </div>
 
         </div>
 
-
-        <!-- Description -->
-
-        <div class="p-6">
+        <!-- DESCRIPTION -->
+        <div class="p-4 sm:p-6">
 
             <h3 class="font-semibold text-gray-800 mb-2">
                 Assignment Instructions
             </h3>
 
-            <div class="text-gray-600 leading-relaxed">
-
+            <div class="text-sm sm:text-base text-gray-600 leading-relaxed break-words">
                 {{ assignment.description|linebreaks }}
-
             </div>
-
 
             {% if assignment.file %}
 
-            <div class="mt-6">
+            <div class="mt-5 bg-indigo-50 border border-indigo-100 rounded-xl p-3 sm:p-5">
 
-                <a href="{{ assignment.file.url }}"
-                   class="inline-flex items-center gap-2 px-5 py-2.5 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 transition shadow">
+                <h3 class="font-bold text-gray-800 mb-3">
+                    📎 Assignment Learning Resource
+                </h3>
 
-                    📎 Download Resource
+                <p class="text-xs sm:text-sm text-gray-600 mb-3 break-all">
+                    {{ assignment.file.name }}
+                </p>
 
-                </a>
+                <div class="flex flex-col sm:flex-row gap-2">
+
+                    <button type="button"
+                            data-reader-url="{{ assignment.file.url }}"
+                            data-reader-name="{{ assignment.file.name }}"
+                            class="open-resource w-full sm:w-auto px-5 py-3 bg-indigo-600 text-white rounded-xl text-sm font-semibold hover:bg-indigo-700">
+                        📖 Read on Screen
+                    </button>
+
+                    <a href="{{ assignment.file.url }}"
+                       download
+                       class="w-full sm:w-auto text-center px-5 py-3 bg-gray-700 text-white rounded-xl text-sm font-semibold hover:bg-gray-800">
+                        ⬇️ Download Resource
+                    </a>
+
+                </div>
 
             </div>
 
             {% endif %}
 
-
         </div>
-
 
     </div>
 
 
+    <!-- STATISTICS -->
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-5">
 
-
-    <!-- ================= STATISTICS ================= -->
-
-
-    <div class="grid grid-cols-1 sm:grid-cols-3 gap-5">
-
-
-        <div class="bg-white border rounded-2xl shadow-sm p-5">
-
-            <p class="text-sm text-gray-500">
-                Total Submissions
-            </p>
-
-            <h2 class="text-3xl font-bold text-indigo-600 mt-2">
+        <div class="bg-white border rounded-xl sm:rounded-2xl shadow-sm p-4 sm:p-5">
+            <p class="text-sm text-gray-500">Total Submissions</p>
+            <h2 class="text-2xl sm:text-3xl font-bold text-indigo-600 mt-2">
                 {{ submissions.count }}
             </h2>
-
         </div>
 
-
-
-        <div class="bg-white border rounded-2xl shadow-sm p-5">
-
-            <p class="text-sm text-gray-500">
-                Maximum Score
-            </p>
-
-            <h2 class="text-3xl font-bold text-green-600 mt-2">
+        <div class="bg-white border rounded-xl sm:rounded-2xl shadow-sm p-4 sm:p-5">
+            <p class="text-sm text-gray-500">Maximum Score</p>
+            <h2 class="text-2xl sm:text-3xl font-bold text-green-600 mt-2">
                 {{ assignment.max_score }}
             </h2>
-
         </div>
 
-
-
-        <div class="bg-white border rounded-2xl shadow-sm p-5">
-
-            <p class="text-sm text-gray-500">
-                Classes Assigned
-            </p>
-
-            <h2 class="text-3xl font-bold text-purple-600 mt-2">
+        <div class="bg-white border rounded-xl sm:rounded-2xl shadow-sm p-4 sm:p-5">
+            <p class="text-sm text-gray-500">Classes Assigned</p>
+            <h2 class="text-2xl sm:text-3xl font-bold text-purple-600 mt-2">
                 {{ assignment.classes.count }}
             </h2>
-
         </div>
-
 
     </div>
 
 
+    <!-- STUDENT SUBMISSIONS -->
+    <div class="bg-white rounded-xl sm:rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
 
+        <div class="px-4 sm:px-6 py-4 sm:py-5 border-b flex flex-col sm:flex-row sm:justify-between sm:items-center gap-2">
 
-
-    <!-- ================= SUBMISSIONS ================= -->
-
-
-    <div class="bg-white rounded-2xl border border-gray-100 shadow-sm">
-
-
-        <div class="px-6 py-5 border-b flex justify-between items-center">
-
-            <h2 class="text-xl font-bold text-gray-800">
+            <h2 class="text-lg sm:text-xl font-bold text-gray-800">
                 Student Submissions
             </h2>
 
-
-            <span class="text-sm bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full">
+            <span class="self-start text-xs sm:text-sm bg-indigo-50 text-indigo-700 px-3 py-1 rounded-full">
                 {{ submissions.count }} Records
             </span>
 
-
         </div>
-
 
 
         {% if submissions %}
 
-
-        <div class="overflow-x-auto">
-
+        <!-- DESKTOP TABLE -->
+        <div class="hidden md:block overflow-x-auto">
 
             <table class="w-full text-sm">
 
-
                 <thead class="bg-gray-50 text-gray-600 uppercase text-xs">
-
                     <tr>
-
-                        <th class="px-6 py-4 text-left">
-                            Student
-                        </th>
-
-                        <th class="px-6 py-4 text-left">
-                            Submitted
-                        </th>
-
-                        <th class="px-6 py-4 text-left">
-                            Status
-                        </th>
-
-                        <th class="px-6 py-4 text-left">
-                            Score
-                        </th>
-
-                        <th class="px-6 py-4 text-left">
-                            Actions
-                        </th>
-
+                        <th class="px-6 py-4 text-left">Student</th>
+                        <th class="px-6 py-4 text-left">Submitted</th>
+                        <th class="px-6 py-4 text-left">Status</th>
+                        <th class="px-6 py-4 text-left">Score</th>
+                        <th class="px-6 py-4 text-left">Actions</th>
                     </tr>
-
                 </thead>
-
-
 
                 <tbody class="divide-y">
 
+                    {% for s in submissions %}
 
-                {% for s in submissions %}
+                    <tr class="hover:bg-gray-50">
 
-
-                    <tr class="hover:bg-gray-50 transition">
-
-
-                        <td class="px-6 py-4">
-
-                            <div class="font-semibold text-gray-800">
-
-                                {{ s.student }}
-
-                            </div>
-
+                        <td class="px-6 py-4 font-semibold text-gray-800">
+                            {{ s.student }}
                         </td>
-
-
-
 
                         <td class="px-6 py-4 text-gray-600">
-
                             {{ s.submitted_on|date:"M d, Y H:i" }}
-
                         </td>
 
-
-
-
                         <td class="px-6 py-4">
-
 
                             {% if s.status == "graded" %}
-
-                            <span class="px-3 py-1 rounded-full text-xs bg-green-100 text-green-700">
-
-                                Graded
-
-                            </span>
-
-
+                            <span class="px-3 py-1 rounded-full text-xs bg-green-100 text-green-700">Graded</span>
                             {% elif s.status == "late" %}
-
-
-                            <span class="px-3 py-1 rounded-full text-xs bg-red-100 text-red-700">
-
-                                Late
-
-                            </span>
-
-
+                            <span class="px-3 py-1 rounded-full text-xs bg-red-100 text-red-700">Late</span>
                             {% else %}
-
-
-                            <span class="px-3 py-1 rounded-full text-xs bg-yellow-100 text-yellow-700">
-
-                                Submitted
-
-                            </span>
-
-
+                            <span class="px-3 py-1 rounded-full text-xs bg-yellow-100 text-yellow-700">Submitted</span>
                             {% endif %}
 
-
                         </td>
-
-
-
-
 
                         <td class="px-6 py-4 font-bold text-gray-800">
-
                             {{ s.score|default:"--" }}
-
                         </td>
 
-
-
-
-
                         <td class="px-6 py-4">
-
 
                             <div class="flex flex-wrap gap-2">
 
-
                                 <a href="{% url 'assignments:grade_submission' submission_id=s.id %}"
-                                   class="px-3 py-1.5 bg-indigo-600 text-white rounded-lg text-xs hover:bg-indigo-700">
-
+                                   class="px-3 py-2 bg-indigo-600 text-white rounded-lg text-xs hover:bg-indigo-700">
                                     Grade
-
                                 </a>
-
-
-
 
                                 {% for f in s.files.all %}
 
+                                <button type="button"
+                                        data-reader-url="{% url 'assignments:download_submission_file' file_id=f.id %}"
+                                        data-reader-name="{{ f.filename|default:f.file.name }}"
+                                        class="open-resource px-3 py-2 bg-gray-100 text-gray-700 rounded-lg text-xs hover:bg-gray-200">
+                                    📖 Read File
+                                </button>
+
                                 <a href="{% url 'assignments:download_submission_file' file_id=f.id %}"
-                                   class="px-3 py-1.5 bg-gray-100 text-gray-700 rounded-lg text-xs hover:bg-gray-200">
-
-                                    📄 File
-
+                                   class="px-3 py-2 bg-gray-200 text-gray-700 rounded-lg text-xs hover:bg-gray-300">
+                                    ⬇️ Download
                                 </a>
 
                                 {% endfor %}
 
-
                             </div>
-
 
                         </td>
 
-
                     </tr>
 
-
-
-                {% endfor %}
-
+                    {% endfor %}
 
                 </tbody>
 
-
             </table>
-
 
         </div>
 
 
+        <!-- ANDROID / MOBILE CARDS -->
+        <div class="md:hidden p-3 space-y-3">
+
+            {% for s in submissions %}
+
+            <div class="border rounded-xl p-3 bg-gray-50 min-w-0">
+
+                <h3 class="font-bold text-gray-800 text-base break-words">
+                    {{ s.student }}
+                </h3>
+
+                <p class="text-xs text-gray-500 mt-1">
+                    Submitted: {{ s.submitted_on|date:"M d, Y H:i" }}
+                </p>
+
+                <div class="flex flex-wrap justify-between items-center gap-2 mt-3">
+
+                    <div>
+                        {% if s.status == "graded" %}
+                        <span class="px-3 py-1 rounded-full text-xs bg-green-100 text-green-700">Graded</span>
+                        {% elif s.status == "late" %}
+                        <span class="px-3 py-1 rounded-full text-xs bg-red-100 text-red-700">Late</span>
+                        {% else %}
+                        <span class="px-3 py-1 rounded-full text-xs bg-yellow-100 text-yellow-700">Submitted</span>
+                        {% endif %}
+                    </div>
+
+                    <p class="font-bold text-gray-800 text-sm">
+                        Score: {{ s.score|default:"--" }}
+                    </p>
+
+                </div>
+
+                <div class="flex flex-col gap-2 mt-3">
+
+                    <a href="{% url 'assignments:grade_submission' submission_id=s.id %}"
+                       class="w-full text-center px-4 py-3 bg-indigo-600 text-white rounded-lg text-sm font-semibold">
+                        Grade Submission
+                    </a>
+
+                    {% for f in s.files.all %}
+
+                    <div class="border bg-white rounded-lg p-3">
+
+                        <p class="text-sm font-medium text-gray-800 break-all mb-2">
+                            {{ f.filename|default:f.file.name }}
+                        </p>
+
+                        <button type="button"
+                                data-reader-url="{% url 'assignments:download_submission_file' file_id=f.id %}"
+                                data-reader-name="{{ f.filename|default:f.file.name }}"
+                                class="open-resource w-full px-3 py-2 bg-indigo-600 text-white rounded-lg text-sm font-semibold">
+                            📖 Read on Screen
+                        </button>
+
+                        <a href="{% url 'assignments:download_submission_file' file_id=f.id %}"
+                           class="block w-full text-center mt-2 px-3 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm">
+                            ⬇️ Download File
+                        </a>
+
+                    </div>
+
+                    {% endfor %}
+
+                </div>
+
+            </div>
+
+            {% endfor %}
+
+        </div>
+
 
         {% else %}
 
+        <div class="p-6 sm:p-10 text-center">
 
-        <div class="p-10 text-center">
-
-            <div class="text-5xl mb-3">
-                📭
-            </div>
+            <div class="text-4xl sm:text-5xl mb-3">📭</div>
 
             <h3 class="font-semibold text-gray-700">
                 No submissions yet
@@ -374,16 +324,471 @@
 
         </div>
 
-
         {% endif %}
-
-
 
     </div>
 
+</div>
 
+
+<!-- DOCUMENT READER -->
+<div id="resourceReader"
+     class="hidden fixed inset-0 z-[9999] bg-black/70 p-2 sm:p-5">
+
+    <div class="bg-white w-full max-w-5xl h-full mx-auto rounded-xl flex flex-col overflow-hidden">
+
+        <div class="p-3 sm:p-4 border-b flex items-center justify-between gap-2">
+
+            <div class="min-w-0">
+                <h2 class="font-bold text-gray-800 text-sm sm:text-lg">📖 Document Reader</h2>
+                <p id="readerFilename" class="text-xs text-gray-500 truncate"></p>
+            </div>
+
+            <button type="button" onclick="closeResourceReader()"
+                    class="flex-shrink-0 bg-red-600 text-white px-3 py-2 rounded-lg text-sm">
+                ✕ Close
+            </button>
+
+        </div>
+
+        <div class="p-2 sm:p-3 bg-gray-50 border-b flex flex-wrap items-center justify-between gap-2">
+
+            <div class="flex items-center gap-2">
+
+                <button id="readerPrevious" type="button"
+                        class="px-3 py-2 bg-gray-200 rounded-lg text-sm">
+                    ← Previous
+                </button>
+
+                <button id="readerNext" type="button"
+                        class="px-3 py-2 bg-indigo-600 text-white rounded-lg text-sm">
+                    Next →
+                </button>
+
+            </div>
+
+            <span id="readerPageInfo" class="text-xs sm:text-sm text-gray-600">
+                Page 0 of 0
+            </span>
+
+        </div>
+
+        <div class="flex-1 min-h-0 overflow-y-auto p-3 sm:p-6 bg-gray-100">
+
+            <p id="readerMessage" class="text-sm text-gray-600 mb-3">
+                Loading document...
+            </p>
+
+            <img id="readerImage" class="hidden max-w-full h-auto mx-auto rounded-lg" alt="Uploaded document">
+
+            <div id="readerContent"
+                 class="bg-white rounded-lg shadow-sm p-4 sm:p-8 text-gray-800 text-sm sm:text-base leading-7 whitespace-pre-wrap break-words min-h-40">
+            </div>
+
+        </div>
+
+        <div class="border-t p-3 flex flex-wrap justify-between items-center gap-2">
+
+    <div class="flex gap-2">
+
+        <button type="button" onclick="changeReaderFont(-1)"
+                class="px-3 py-2 bg-gray-100 text-gray-800 rounded-lg text-sm">
+            A-
+        </button>
+
+        <button type="button" onclick="changeReaderFont(1)"
+                class="px-3 py-2 bg-gray-100 text-gray-800 rounded-lg text-sm">
+            A+
+        </button>
+
+        <button type="button" id="readerDarkToggle"
+                onclick="toggleReaderDarkMode()"
+                class="px-3 py-2 bg-gray-800 text-white rounded-lg text-sm">
+            🌙 Dark
+        </button>
+
+    </div>
+
+    <a id="readerDownload" href="#" download
+       class="px-3 py-2 bg-green-600 text-white rounded-lg text-sm">
+        ⬇️ Download Original
+    </a>
 
 </div>
 
+    </div>
+
+</div>
+
+
+<!-- READING LIBRARIES -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.8.0/mammoth.browser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
+
+
+<script>
+(function () {
+
+    const reader = document.getElementById("resourceReader");
+    const content = document.getElementById("readerContent");
+    const message = document.getElementById("readerMessage");
+    const filenameLabel = document.getElementById("readerFilename");
+    const pageInfo = document.getElementById("readerPageInfo");
+    const previous = document.getElementById("readerPrevious");
+    const next = document.getElementById("readerNext");
+    const image = document.getElementById("readerImage");
+    const download = document.getElementById("readerDownload");
+
+    let pages = [];
+    let currentPage = 0;
+    let fontSize = 16;
+    let imageUrl = null;
+
+    if (window.pdfjsLib) {
+        pdfjsLib.GlobalWorkerOptions.workerSrc =
+            "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+    }
+
+    function splitIntoPages(text) {
+        const words = String(text || "").split(/\s+/).filter(Boolean);
+        const result = [];
+
+        for (let i = 0; i < words.length; i += 200) {
+            result.push(words.slice(i, i + 200).join(" "));
+        }
+
+        return result.length ? result : ["No readable text was found in this document."];
+    }
+
+    function showPage() {
+        if (!pages.length) return;
+
+        content.textContent = pages[currentPage] || "";
+        content.style.fontSize = fontSize + "px";
+
+        pageInfo.textContent =
+            "Page " + (currentPage + 1) + " of " + pages.length;
+
+        previous.disabled = currentPage === 0;
+        next.disabled = currentPage >= pages.length - 1;
+
+        previous.classList.toggle("opacity-40", previous.disabled);
+        next.classList.toggle("opacity-40", next.disabled);
+    }
+
+    function setText(text) {
+        image.classList.add("hidden");
+        content.classList.remove("hidden");
+
+        pages = splitIntoPages(text);
+        currentPage = 0;
+        showPage();
+    }
+
+    async function extractPDF(buffer) {
+        if (!window.pdfjsLib) throw new Error("PDF reader library unavailable.");
+
+        const pdf = await pdfjsLib.getDocument({data: buffer}).promise;
+        let text = "";
+
+        for (let i = 1; i <= pdf.numPages; i++) {
+            message.textContent = "Extracting PDF page " + i + " of " + pdf.numPages + "...";
+
+            const page = await pdf.getPage(i);
+            const data = await page.getTextContent();
+
+            text += "\n\n" + data.items.map(item => item.str).join(" ");
+        }
+
+        return text;
+    }
+
+    async function extractDOCX(buffer) {
+        if (!window.mammoth) throw new Error("Word reader library unavailable.");
+
+        const result = await mammoth.extractRawText({arrayBuffer: buffer});
+        return result.value;
+    }
+
+    async function extractPPTX(buffer) {
+        if (!window.JSZip) throw new Error("PowerPoint reader library unavailable.");
+
+        const zip = await JSZip.loadAsync(buffer);
+        const slideFiles = Object.keys(zip.files)
+            .filter(name => /^ppt\/slides\/slide\d+\.xml$/.test(name))
+            .sort((a, b) => {
+                const na = parseInt(a.match(/slide(\d+)/)[1], 10);
+                const nb = parseInt(b.match(/slide(\d+)/)[1], 10);
+                return na - nb;
+            });
+
+        let output = "";
+
+        for (const file of slideFiles) {
+            const xml = await zip.files[file].async("text");
+            const doc = new DOMParser().parseFromString(xml, "application/xml");
+            const texts = Array.from(doc.getElementsByTagName("a:t"))
+                .map(node => node.textContent);
+
+            output += "\n\n" + texts.join(" ");
+        }
+
+        return output;
+    }
+
+    async function extractExcel(buffer) {
+        if (!window.XLSX) throw new Error("Excel reader library unavailable.");
+
+        const workbook = XLSX.read(buffer, {type: "array"});
+        let output = "";
+
+        workbook.SheetNames.forEach(name => {
+            output += "\n\nSHEET: " + name + "\n\n";
+            output += XLSX.utils.sheet_to_csv(workbook.Sheets[name]);
+        });
+
+        return output;
+    }
+
+    async function extractImage(blob) {
+        image.classList.remove("hidden");
+        content.classList.add("hidden");
+
+        if (imageUrl) URL.revokeObjectURL(imageUrl);
+        imageUrl = URL.createObjectURL(blob);
+        image.src = imageUrl;
+
+        message.textContent = "Image preview. Preparing text recognition...";
+
+        if (!window.Tesseract) {
+            setText("Image preview is available, but text recognition could not be loaded.");
+            return;
+        }
+
+        const result = await Tesseract.recognize(blob, "eng", {
+            logger: info => {
+                if (info.status === "recognizing text") {
+                    message.textContent =
+                        "Recognising image text: " + Math.round(info.progress * 100) + "%";
+                }
+            }
+        });
+
+        setText("TEXT EXTRACTED FROM IMAGE\n\n" + result.data.text);
+        image.classList.remove("hidden");
+    }
+
+    async function openReader(url, filename) {
+
+        reader.classList.remove("hidden");
+        document.body.style.overflow = "hidden";
+
+        filenameLabel.textContent = filename || "Uploaded document";
+        download.href = url;
+        download.setAttribute("download", filename || "document");
+
+        content.textContent = "";
+        content.classList.remove("hidden");
+        image.classList.add("hidden");
+        message.textContent = "Loading document...";
+        pageInfo.textContent = "Loading...";
+        pages = [];
+        currentPage = 0;
+
+        if (imageUrl) {
+            URL.revokeObjectURL(imageUrl);
+            imageUrl = null;
+        }
+
+        try {
+            const response = await fetch(url, {credentials: "same-origin"});
+
+            if (!response.ok) {
+                throw new Error("The file could not be accessed. Please check your access or download the original.");
+            }
+
+            const blob = await response.blob();
+            const buffer = await blob.arrayBuffer();
+
+            const name = (filename || url.split("?")[0])
+                .split("/").pop().toLowerCase();
+
+            const extension = name.includes(".")
+                ? name.split(".").pop()
+                : "";
+
+            let text = "";
+
+            message.textContent = "Extracting document contents...";
+
+            if (extension === "pdf" || blob.type === "application/pdf") {
+                text = await extractPDF(buffer);
+
+            } else if (extension === "docx") {
+                text = await extractDOCX(buffer);
+
+            } else if (extension === "pptx") {
+                text = await extractPPTX(buffer);
+
+            } else if (["xlsx", "xls", "csv"].includes(extension)) {
+                text = await extractExcel(buffer);
+
+            } else if (["txt", "md", "html", "htm", "json", "xml"].includes(extension)) {
+                text = new TextDecoder("utf-8").decode(buffer);
+
+                if (["html", "htm", "xml"].includes(extension)) {
+                    const doc = new DOMParser().parseFromString(text, "text/html");
+                    text = doc.body ? doc.body.textContent : text;
+                }
+
+            } else if (
+                ["png", "jpg", "jpeg", "webp", "gif", "bmp"].includes(extension) ||
+                (blob.type && blob.type.startsWith("image/"))
+            ) {
+                await extractImage(blob);
+                message.textContent = "Image preview and extracted text.";
+                return;
+
+            } else {
+                throw new Error("This file format cannot be read directly here. Please download the original file.");
+            }
+
+            setText(text);
+            message.textContent = "Document ready. Use Previous and Next to read approximately 200 words per page.";
+
+        } catch (error) {
+            content.textContent = error.message;
+            pages = [];
+            pageInfo.textContent = "Unable to read";
+            message.textContent = "Reading was unsuccessful.";
+        }
+    }
+
+    document.addEventListener("click", function (event) {
+        const button = event.target.closest(".open-resource");
+
+        if (button) {
+            openReader(
+                button.getAttribute("data-reader-url"),
+                button.getAttribute("data-reader-name")
+            );
+        }
+    });
+
+    previous.addEventListener("click", function () {
+        if (currentPage > 0) {
+            currentPage--;
+            showPage();
+        }
+    });
+
+    next.addEventListener("click", function () {
+        if (currentPage < pages.length - 1) {
+            currentPage++;
+            showPage();
+        }
+    });
+
+    window.closeResourceReader = function () {
+        reader.classList.add("hidden");
+        document.body.style.overflow = "";
+
+        if (imageUrl) {
+            URL.revokeObjectURL(imageUrl);
+            imageUrl = null;
+        }
+
+        image.src = "";
+        content.textContent = "";
+    };
+
+    window.changeReaderFont = function (change) {
+        fontSize = Math.max(12, Math.min(26, fontSize + change));
+        content.style.fontSize = fontSize + "px";
+    };
+
+    // DOCUMENT READER DARK MODE
+
+window.toggleReaderDarkMode = function () {
+
+    const reader = document.getElementById("resourceReader");
+    const button = document.getElementById("readerDarkToggle");
+
+    reader.classList.toggle("reader-dark");
+
+    const darkEnabled = reader.classList.contains("reader-dark");
+
+    button.textContent = darkEnabled ? "☀️ Light" : "🌙 Dark";
+
+};
+
+    document.addEventListener("keydown", function (event) {
+        if (reader.classList.contains("hidden")) return;
+
+        if (event.key === "Escape") {
+            window.closeResourceReader();
+        }
+    });
+
+})();
+</script>
+
+<style>
+/* DOCUMENT READER DARK MODE */
+
+#resourceReader.reader-dark {
+    background: rgba(0, 0, 0, 0.95);
+}
+
+#resourceReader.reader-dark > div {
+    background: #111827 !important;
+    color: #f9fafb !important;
+}
+
+#resourceReader.reader-dark .border-b,
+#resourceReader.reader-dark .border-t {
+    border-color: #374151 !important;
+}
+
+#resourceReader.reader-dark .bg-gray-50,
+#resourceReader.reader-dark .bg-gray-100 {
+    background: #1f2937 !important;
+}
+
+#resourceReader.reader-dark #readerContent {
+    background: #111827 !important;
+    color: #f9fafb !important;
+    border: 1px solid #374151;
+}
+
+#resourceReader.reader-dark #readerFilename,
+#resourceReader.reader-dark #readerMessage,
+#resourceReader.reader-dark #readerPageInfo {
+    color: #d1d5db !important;
+}
+
+#resourceReader.reader-dark h2 {
+    color: #f9fafb !important;
+}
+
+#resourceReader.reader-dark #readerPrevious {
+    background: #374151 !important;
+    color: white !important;
+}
+
+#resourceReader.reader-dark #readerNext {
+    background: #4f46e5 !important;
+    color: white !important;
+}
+
+#resourceReader.reader-dark #readerDarkToggle {
+    background: #facc15 !important;
+    color: #111827 !important;
+}
+
+</style>
 
 {% endblock %}
