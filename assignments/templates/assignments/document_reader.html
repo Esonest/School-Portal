@@ -1,0 +1,666 @@
+
+<!-- SHARED DOCUMENT READER -->
+<div id="resourceReader" class="reader-overlay hidden">
+    <div class="reader-panel">
+
+        <!-- HEADER -->
+        <div class="reader-header">
+            <div class="reader-heading">
+                <strong>📖 Document Reader</strong>
+                <span id="readerFilename">Uploaded document</span>
+            </div>
+            <button type="button" id="readerClose" class="reader-close">
+                ✕ Close
+            </button>
+        </div>
+
+        <!-- PAGE NAVIGATION -->
+        <div class="reader-navigation">
+            <button type="button" id="readerPrevious">← Previous</button>
+            <span id="readerPageInfo">Page 0 of 0</span>
+            <button type="button" id="readerNext">Next →</button>
+        </div>
+
+        <!-- DOCUMENT AREA -->
+        <div id="readerViewport" class="reader-viewport">
+            <p id="readerMessage">Select a document to read.</p>
+
+            <canvas id="readerCanvas" class="hidden"></canvas>
+
+            <img id="readerImage" class="hidden" alt="Uploaded document">
+
+            <div id="readerContent" class="hidden"></div>
+        </div>
+
+        <!-- ANDROID-FRIENDLY BOTTOM CONTROLS -->
+        <div class="reader-footer">
+            <div class="reader-tools">
+                <button type="button" id="readerFontDown">A−</button>
+                <button type="button" id="readerFontUp">A+</button>
+                <button type="button" id="readerDarkToggle">🌙 Dark mode</button>
+            </div>
+
+            <a id="readerDownload" href="#" class="reader-download">
+                ⬇ Download original file
+            </a>
+        </div>
+
+    </div>
+</div>
+
+<style>
+.reader-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 999999;
+    background: rgba(0,0,0,.88);
+    padding: 0;
+}
+
+.reader-overlay.hidden {
+    display: none !important;
+}
+
+.reader-panel {
+    width: 100%;
+    height: 100vh;
+    height: 100dvh;
+    max-height: 100dvh;
+    background: #ffffff;
+    color: #111827;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.reader-header {
+    flex: 0 0 auto;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 12px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+.reader-heading {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.reader-heading strong {
+    font-size: 15px;
+}
+
+#readerFilename {
+    font-size: 12px;
+    color: #6b7280;
+    overflow-wrap: anywhere;
+}
+
+.reader-close {
+    flex-shrink: 0;
+    min-height: 44px;
+    padding: 9px 13px;
+    background: #dc2626;
+    color: white;
+    border: 0;
+    border-radius: 9px;
+    font-size: 14px;
+    font-weight: 700;
+}
+
+.reader-navigation {
+    flex: 0 0 auto;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    gap: 8px;
+    padding: 9px 10px;
+    border-bottom: 1px solid #e5e7eb;
+    background: #f9fafb;
+}
+
+.reader-navigation button {
+    min-height: 44px;
+    padding: 8px 10px;
+    border: 0;
+    border-radius: 9px;
+    background: #4f46e5;
+    color: white;
+    font-size: 13px;
+    font-weight: 700;
+}
+
+#readerPrevious {
+    background: #e5e7eb;
+    color: #111827;
+}
+
+#readerPageInfo {
+    text-align: center;
+    font-size: 12px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.reader-viewport {
+    flex: 1 1 auto;
+    min-height: 0;
+    overflow: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 12px;
+    background: #e5e7eb;
+}
+
+#readerMessage {
+    font-size: 13px;
+    color: #4b5563;
+    margin: 0 0 10px;
+    overflow-wrap: anywhere;
+}
+
+#readerCanvas {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    margin: 0 auto;
+    background: white;
+    box-shadow: 0 2px 12px rgba(0,0,0,.15);
+}
+
+#readerImage {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    margin: 0 auto;
+}
+
+#readerContent {
+    background: white;
+    color: #111827;
+    border-radius: 8px;
+    padding: 18px;
+    min-height: 150px;
+    font-size: 16px;
+    line-height: 1.8;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.reader-footer {
+    flex: 0 0 auto;
+    padding: 9px 10px;
+    padding-bottom: calc(10px + env(safe-area-inset-bottom));
+    border-top: 1px solid #d1d5db;
+    background: white;
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+}
+
+.reader-tools {
+    display: grid;
+    grid-template-columns: .7fr .7fr 1.6fr;
+    gap: 8px;
+}
+
+.reader-tools button {
+    min-width: 0;
+    min-height: 48px;
+    padding: 8px 5px;
+    border: 0;
+    border-radius: 9px;
+    background: #e5e7eb;
+    color: #111827;
+    font-size: 14px;
+    font-weight: 800;
+}
+
+#readerDarkToggle {
+    background: #1f2937;
+    color: white;
+}
+
+.reader-download {
+    display: flex;
+    width: 100%;
+    min-height: 50px;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 10px;
+    border-radius: 9px;
+    background: #059669;
+    color: white !important;
+    text-decoration: none !important;
+    font-size: 14px;
+    font-weight: 800;
+}
+
+.reader-panel.reader-dark {
+    background: #111827;
+    color: #f9fafb;
+}
+
+.reader-dark .reader-header,
+.reader-dark .reader-navigation,
+.reader-dark .reader-footer {
+    background: #111827;
+    color: #f9fafb;
+    border-color: #374151;
+}
+
+.reader-dark .reader-navigation {
+    background: #1f2937;
+}
+
+.reader-dark #readerFilename,
+.reader-dark #readerMessage,
+.reader-dark #readerPageInfo {
+    color: #d1d5db;
+}
+
+.reader-dark .reader-viewport {
+    background: #030712;
+}
+
+.reader-dark #readerContent {
+    background: #1f2937;
+    color: #f9fafb;
+}
+
+.reader-dark .reader-tools button {
+    background: #374151;
+    color: white;
+}
+
+.reader-dark #readerDarkToggle {
+    background: #facc15;
+    color: #111827;
+}
+
+.reader-dark .reader-download {
+    background: #059669;
+    color: white !important;
+}
+
+@media (min-width: 768px) {
+    .reader-overlay {
+        padding: 15px;
+    }
+
+    .reader-panel {
+        max-width: 1100px;
+        height: 100%;
+        max-height: 100%;
+        margin: auto;
+        border-radius: 12px;
+    }
+
+    .reader-footer {
+        flex-direction: row;
+        align-items: center;
+        justify-content: space-between;
+    }
+
+    .reader-tools {
+        display: flex;
+    }
+
+    .reader-tools button {
+        min-width: 65px;
+    }
+
+    .reader-download {
+        width: auto;
+        min-width: 190px;
+    }
+}
+</style>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.8.0/mammoth.browser.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<script>
+(function () {
+    const reader = document.getElementById("resourceReader");
+    if (!reader || reader.dataset.initialized === "yes") return;
+    reader.dataset.initialized = "yes";
+
+    const panel = reader.querySelector(".reader-panel");
+    const viewport = document.getElementById("readerViewport");
+    const canvas = document.getElementById("readerCanvas");
+    const image = document.getElementById("readerImage");
+    const content = document.getElementById("readerContent");
+    const message = document.getElementById("readerMessage");
+    const filenameLabel = document.getElementById("readerFilename");
+    const pageInfo = document.getElementById("readerPageInfo");
+    const previous = document.getElementById("readerPrevious");
+    const next = document.getElementById("readerNext");
+    const download = document.getElementById("readerDownload");
+
+    let pdfDocument = null;
+    let textPages = [];
+    let currentPage = 1;
+    let fontSize = 16;
+    let imageObjectUrl = null;
+    let currentRenderTask = null;
+
+    if (window.pdfjsLib) {
+        pdfjsLib.GlobalWorkerOptions.workerSrc =
+            "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+    }
+
+    function showMessage(text) {
+        message.textContent = text;
+        message.classList.remove("hidden");
+    }
+
+    function hideAllContent() {
+        canvas.classList.add("hidden");
+        image.classList.add("hidden");
+        content.classList.add("hidden");
+    }
+
+    function splitTextIntoPages(text) {
+        const words = String(text || "").split(/\s+/).filter(Boolean);
+        const result = [];
+
+        for (let i = 0; i < words.length; i += 200) {
+            result.push(words.slice(i, i + 200).join(" "));
+        }
+
+        return result.length ? result : [
+            "No readable text was found in this document."
+        ];
+    }
+
+    function updateNavigation(total) {
+        pageInfo.textContent = "Page " + currentPage + " of " + total;
+        previous.disabled = currentPage <= 1;
+        next.disabled = currentPage >= total;
+        previous.style.opacity = previous.disabled ? ".45" : "1";
+        next.style.opacity = next.disabled ? ".45" : "1";
+    }
+
+    async function renderPDFPage() {
+        if (!pdfDocument) return;
+
+        const total = pdfDocument.numPages;
+        currentPage = Math.max(1, Math.min(currentPage, total));
+
+        if (currentRenderTask) {
+            try { currentRenderTask.cancel(); } catch (e) {}
+            currentRenderTask = null;
+        }
+
+        const page = await pdfDocument.getPage(currentPage);
+        const baseViewport = page.getViewport({ scale: 1 });
+
+        const availableWidth = Math.max(250, viewport.clientWidth - 24);
+        const scale = Math.min(2, availableWidth / baseViewport.width);
+        const deviceScale = Math.min(window.devicePixelRatio || 1, 2);
+        const renderViewport = page.getViewport({
+            scale: scale * deviceScale
+        });
+
+        canvas.width = Math.floor(renderViewport.width);
+        canvas.height = Math.floor(renderViewport.height);
+        canvas.style.width = Math.floor(renderViewport.width / deviceScale) + "px";
+        canvas.style.height = Math.floor(renderViewport.height / deviceScale) + "px";
+
+        canvas.classList.remove("hidden");
+        image.classList.add("hidden");
+        content.classList.add("hidden");
+
+        currentRenderTask = page.render({
+            canvasContext: canvas.getContext("2d"),
+            viewport: renderViewport
+        });
+
+        try {
+            await currentRenderTask.promise;
+        } catch (error) {
+            if (error.name !== "RenderingCancelledException") throw error;
+        }
+
+        currentRenderTask = null;
+        updateNavigation(total);
+        showMessage("PDF page displayed. Use Previous and Next to turn pages.");
+    }
+
+    function renderTextPage() {
+        const total = textPages.length;
+        currentPage = Math.max(1, Math.min(currentPage, total));
+
+        content.textContent = textPages[currentPage - 1] || "";
+        content.style.fontSize = fontSize + "px";
+
+        content.classList.remove("hidden");
+        canvas.classList.add("hidden");
+        image.classList.add("hidden");
+
+        updateNavigation(total);
+        showMessage("Document ready. Approximately 200 words are displayed per page.");
+    }
+
+    async function openReader(url, filename) {
+        reader.classList.remove("hidden");
+        document.body.style.overflow = "hidden";
+
+        filenameLabel.textContent = filename || "Uploaded document";
+        download.href = url;
+        download.setAttribute("download", (filename || "document").split("/").pop());
+
+        pdfDocument = null;
+        textPages = [];
+        currentPage = 1;
+
+        hideAllContent();
+        pageInfo.textContent = "Loading...";
+        showMessage("Opening your document. Please wait...");
+
+        if (imageObjectUrl) {
+            URL.revokeObjectURL(imageObjectUrl);
+            imageObjectUrl = null;
+        }
+
+        try {
+            const response = await fetch(url, {
+                credentials: "same-origin",
+                cache: "no-store"
+            });
+
+            if (!response.ok) {
+                throw new Error("The server could not provide this file. Please try Download Original.");
+            }
+
+            const blob = await response.blob();
+            const buffer = await blob.arrayBuffer();
+
+            const cleanName = (filename || url.split("?")[0])
+                .split("/")
+                .pop()
+                .split("?")[0]
+                .toLowerCase();
+
+            const extension = cleanName.includes(".")
+                ? cleanName.split(".").pop()
+                : "";
+
+            const isPDF = extension === "pdf" ||
+                blob.type.toLowerCase().includes("pdf");
+
+            if (isPDF) {
+                if (!window.pdfjsLib) {
+                    throw new Error("The PDF viewer library did not load. Check your internet connection.");
+                }
+
+                showMessage("Loading PDF pages...");
+                pdfDocument = await pdfjsLib.getDocument({
+                    data: new Uint8Array(buffer)
+                }).promise;
+
+                currentPage = 1;
+                await renderPDFPage();
+                return;
+            }
+
+            let extractedText = "";
+
+            if (extension === "docx") {
+                if (!window.mammoth) throw new Error("Word reader library did not load.");
+                const result = await mammoth.extractRawText({arrayBuffer: buffer});
+                extractedText = result.value;
+
+            } else if (extension === "pptx") {
+                if (!window.JSZip) throw new Error("PowerPoint reader library did not load.");
+
+                const zip = await JSZip.loadAsync(buffer);
+                const slideFiles = Object.keys(zip.files)
+                    .filter(name => /^ppt\/slides\/slide\d+\.xml$/.test(name))
+                    .sort((a, b) => {
+                        const x = Number(a.match(/slide(\d+)/)[1]);
+                        const y = Number(b.match(/slide(\d+)/)[1]);
+                        return x - y;
+                    });
+
+                for (const file of slideFiles) {
+                    const xml = await zip.files[file].async("text");
+                    const doc = new DOMParser().parseFromString(xml, "application/xml");
+                    extractedText += "\n\n" +
+                        Array.from(doc.getElementsByTagName("a:t"))
+                            .map(node => node.textContent).join(" ");
+                }
+
+            } else if (["xlsx", "xls", "csv"].includes(extension)) {
+                if (!window.XLSX) throw new Error("Excel reader library did not load.");
+
+                const workbook = XLSX.read(buffer, {type: "array"});
+                workbook.SheetNames.forEach(name => {
+                    extractedText += "\n\nSHEET: " + name + "\n\n";
+                    extractedText += XLSX.utils.sheet_to_csv(workbook.Sheets[name]);
+                });
+
+            } else if (["txt", "md", "html", "htm", "json", "xml"].includes(extension)) {
+                extractedText = new TextDecoder("utf-8").decode(buffer);
+
+                if (["html", "htm", "xml"].includes(extension)) {
+                    const doc = new DOMParser().parseFromString(extractedText, "text/html");
+                    extractedText = doc.body ? doc.body.textContent : extractedText;
+                }
+
+            } else if (blob.type.startsWith("image/") ||
+                ["png", "jpg", "jpeg", "webp", "gif", "bmp"].includes(extension)) {
+
+                imageObjectUrl = URL.createObjectURL(blob);
+                image.src = imageObjectUrl;
+                image.classList.remove("hidden");
+                showMessage("Image preview.");
+                pageInfo.textContent = "Image preview";
+                previous.disabled = true;
+                next.disabled = true;
+                return;
+
+            } else {
+                throw new Error("This file format cannot be previewed here. Use Download Original.");
+            }
+
+            textPages = splitTextIntoPages(extractedText);
+            currentPage = 1;
+            renderTextPage();
+
+        } catch (error) {
+            hideAllContent();
+            pageInfo.textContent = "Unable to read";
+            showMessage(error.message || "Unable to open this document.");
+        }
+    }
+
+    document.addEventListener("click", function (event) {
+        const button = event.target.closest(".open-resource");
+        if (!button) return;
+
+        const url = button.getAttribute("data-reader-url");
+        const filename = button.getAttribute("data-reader-name");
+
+        if (url) openReader(url, filename);
+    });
+
+    previous.addEventListener("click", function () {
+        if (currentPage <= 1) return;
+        currentPage--;
+
+        if (pdfDocument) {
+            renderPDFPage().catch(error => showMessage(error.message));
+        } else {
+            renderTextPage();
+        }
+    });
+
+    next.addEventListener("click", function () {
+        const total = pdfDocument ? pdfDocument.numPages : textPages.length;
+        if (currentPage >= total) return;
+        currentPage++;
+
+        if (pdfDocument) {
+            renderPDFPage().catch(error => showMessage(error.message));
+        } else {
+            renderTextPage();
+        }
+    });
+
+    document.getElementById("readerFontDown").addEventListener("click", function () {
+        fontSize = Math.max(12, fontSize - 2);
+        if (!pdfDocument && textPages.length) renderTextPage();
+    });
+
+    document.getElementById("readerFontUp").addEventListener("click", function () {
+        fontSize = Math.min(30, fontSize + 2);
+        if (!pdfDocument && textPages.length) renderTextPage();
+    });
+
+    document.getElementById("readerDarkToggle").addEventListener("click", function () {
+        panel.classList.toggle("reader-dark");
+        this.textContent = panel.classList.contains("reader-dark")
+            ? "☀ Light mode"
+            : "🌙 Dark mode";
+    });
+
+    function closeReader() {
+        reader.classList.add("hidden");
+        document.body.style.overflow = "";
+
+        pdfDocument = null;
+        textPages = [];
+        canvas.width = 0;
+        canvas.height = 0;
+        image.src = "";
+        content.textContent = "";
+
+        if (imageObjectUrl) {
+            URL.revokeObjectURL(imageObjectUrl);
+            imageObjectUrl = null;
+        }
+    }
+
+    document.getElementById("readerClose").addEventListener("click", closeReader);
+
+    document.addEventListener("keydown", function (event) {
+        if (event.key === "Escape" && !reader.classList.contains("hidden")) {
+            closeReader();
+        }
+    });
+
+    window.addEventListener("resize", function () {
+        if (!reader.classList.contains("hidden") && pdfDocument) {
+            renderPDFPage().catch(() => {});
+        }
+    });
+})();
+</script>

@@ -19,4 +19,9 @@ urlpatterns = [
     path('submissions/', views.submission_list, name='submission_list'),
     path('submissions/<int:assignment_id>/', views.submission_list, name='submission_list_for_assignment'),
     path('file/<int:file_id>/download/', views.download_submission_file, name='download_submission_file'),
+    path(
+        "assignment-file/<int:pk>/",
+        views.download_assignment_file,
+        name="download_assignment_file"
+    ),
 ]

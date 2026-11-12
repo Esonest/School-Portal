@@ -855,7 +855,67 @@ def download_submission_file(request, file_id):
     )
 
 
+import os
+import mimetypes
 
+@login_required
+def download_assignment_file(request, pk):
+    assignment = get_object_or_404(
+        Assignment.objects.prefetch_related("classes"),
+        pk=pk
+    )
+
+    user = request.user
+    role = getattr(user, "role", None)
+
+    teacher = getattr(user, "teacher_profile", None)
+    student = getattr(user, "student_profile", None)
+
+    allowed = False
+
+    # Assignment teacher
+    if teacher and assignment.teacher_id == teacher.id:
+        allowed = True
+
+    # School admin
+    elif role in ["schooladmin", "school_admin"]:
+        if getattr(user, "school_id", None) == assignment.school_id:
+            allowed = True
+
+    # Superadmin
+    elif role == "superadmin":
+        allowed = True
+
+    # Student assigned to the class
+    elif student:
+        allowed = (
+            assignment.published
+            and assignment.is_active
+            and assignment.classes.filter(
+                pk=student.school_class_id
+            ).exists()
+            and not assignment.is_expired()
+        )
+
+    if not allowed:
+        raise Http404("You are not authorized to access this assignment file.")
+
+    if not assignment.file:
+        raise Http404("No assignment file was uploaded.")
+
+    filename = os.path.basename(assignment.file.name)
+    content_type, _ = mimetypes.guess_type(filename)
+
+    try:
+        response = FileResponse(
+            assignment.file.open("rb"),
+            as_attachment=True,
+            filename=filename,
+            content_type=content_type or "application/octet-stream"
+        )
+        return response
+    except Exception:
+        raise Http404("The assignment file could not be opened.")
 
 
 
