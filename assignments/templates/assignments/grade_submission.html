@@ -152,8 +152,20 @@
 </div>
 
 <!-- NOTES-STYLE DOCUMENT READER -->
-<div id="lessonReader" class="hidden fixed inset-0 z-[99999] bg-black/80 p-0 sm:p-3">
-    <div id="lessonReaderPanel" class="lesson-reader-panel bg-white w-full max-w-5xl h-full mx-auto sm:rounded-xl flex flex-col overflow-hidden">
+<div id="lessonReader"
+     class="hidden bg-black/80"
+     style="
+        position: fixed;
+        inset: 0;
+        width: 100%;
+        height: 100vh;
+        height: 100dvh;
+        z-index: 2147483647;
+        padding: 0;
+     ">
+    <div id="lessonReaderPanel"
+     class="lesson-reader-panel bg-white w-full max-w-5xl mx-auto sm:rounded-xl flex flex-col overflow-hidden"
+     style="height:100%; max-height:100%; min-height:0;">
 
         <div class="shrink-0 px-3 sm:px-5 py-3 border-b flex items-center justify-between gap-2">
             <div class="min-w-0">
@@ -180,22 +192,52 @@
             <article id="pageContent" class="bg-white text-gray-800 rounded-lg shadow-sm p-4 sm:p-8 leading-7 whitespace-pre-wrap break-words min-h-40"></article>
         </div>
 
-        <div class="shrink-0 border-t bg-white px-2 sm:px-4 py-2"
-             style="padding-bottom: max(8px, env(safe-area-inset-bottom));">
-            <div class="grid grid-cols-3 gap-2 mb-2">
-                <button id="decreaseFont" type="button" class="reader-control">A−</button>
-                <button id="increaseFont" type="button" class="reader-control">A+</button>
-                <button id="toggleTheme" type="button" class="reader-control reader-dark-button">🌙 Dark</button>
-            </div>
-            <div class="grid grid-cols-[1fr_auto_1fr] gap-2 items-center">
-                <button id="previousPage" type="button" class="reader-control">← Previous</button>
-                <span id="currentPage" class="text-xs text-gray-500 text-center whitespace-nowrap">0 / 0</span>
-                <button id="nextPage" type="button" class="reader-control reader-next">Next →</button>
-            </div>
-            <a id="readerDownload" href="#" class="block text-center mt-2 py-2.5 rounded-lg bg-green-600 text-white text-sm font-semibold">
-                ⬇️ Download Original
-            </a>
-        </div>
+       <div id="readerControls"
+     class="shrink-0 border-t bg-white px-2 sm:px-4 py-2"
+     style="
+        padding-bottom: max(12px, env(safe-area-inset-bottom));
+        max-height: 45%;
+        overflow-y: auto;
+        overscroll-behavior: contain;
+     ">
+
+    <div class="grid grid-cols-3 gap-2 mb-2">
+        <button id="decreaseFont" type="button" class="reader-control">
+            A−
+        </button>
+
+        <button id="increaseFont" type="button" class="reader-control">
+            A+
+        </button>
+
+        <button id="toggleTheme" type="button"
+                class="reader-control reader-dark-button">
+            🌙 Dark
+        </button>
+    </div>
+
+    <div class="grid grid-cols-3 gap-2 items-center">
+        <button id="previousPage" type="button" class="reader-control">
+            ← Previous
+        </button>
+
+        <span id="currentPage"
+              class="text-xs text-gray-500 text-center whitespace-nowrap">
+            0 / 0
+        </span>
+
+        <button id="nextPage" type="button"
+                class="reader-control reader-next">
+            Next →
+        </button>
+    </div>
+
+    <a id="readerDownload"
+       href="#"
+       class="block text-center mt-2 py-3 rounded-lg bg-green-600 text-white text-sm font-semibold">
+        ⬇️ Download Original
+    </a>
+</div>
     </div>
 </div>
 
@@ -206,42 +248,140 @@
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
 <style>
+/* Document reader controls */
 .reader-control {
     min-width: 0;
     width: 100%;
-    padding: 10px 6px;
+    padding: 12px 4px;
     border-radius: 9px;
     background: #e5e7eb;
     color: #1f2937;
     font-size: 13px;
     font-weight: 600;
     text-align: center;
+    white-space: nowrap;
+    touch-action: manipulation;
 }
-.reader-next { background: #4f46e5; color: white; }
-.reader-dark-button { background: #1f2937; color: white; }
 
-#lessonReader.reader-dark #lessonReaderPanel { background: #111827; color: #f9fafb; }
+.reader-control:disabled {
+    opacity: .45;
+}
+
+.reader-next {
+    background: #4f46e5;
+    color: white;
+}
+
+.reader-dark-button {
+    background: #1f2937;
+    color: white;
+}
+
+/* Keep the reader above the portal navigation */
+#lessonReader {
+    position: fixed !important;
+    inset: 0 !important;
+    width: 100% !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    z-index: 2147483647 !important;
+}
+
+#lessonReaderPanel {
+    height: 100% !important;
+    max-height: 100% !important;
+    min-height: 0 !important;
+}
+
+/* Reading area must shrink independently */
+#readingSurface {
+    flex: 1 1 0%;
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+}
+
+/* Reader dark mode */
+#lessonReader.reader-dark #lessonReaderPanel {
+    background: #111827;
+    color: #f9fafb;
+}
+
 #lessonReader.reader-dark .border-b,
-#lessonReader.reader-dark .border-t { border-color: #374151; }
-#lessonReader.reader-dark #readingSurface { background: #1f2937; }
-#lessonReader.reader-dark #pageContent { background: #111827; color: #f9fafb; border: 1px solid #374151; }
-#lessonReader.reader-dark .bg-gray-50 { background: #1f2937; }
+#lessonReader.reader-dark .border-t {
+    border-color: #374151;
+}
+
+#lessonReader.reader-dark #readingSurface {
+    background: #1f2937;
+}
+
+#lessonReader.reader-dark #pageContent {
+    background: #111827;
+    color: #f9fafb;
+    border: 1px solid #374151;
+}
+
+#lessonReader.reader-dark .bg-gray-50 {
+    background: #1f2937;
+}
+
 #lessonReader.reader-dark h2,
 #lessonReader.reader-dark #readerStatus,
 #lessonReader.reader-dark #readerLoadingMessage,
 #lessonReader.reader-dark #pageCounter,
 #lessonReader.reader-dark #progressPercent,
-#lessonReader.reader-dark #currentPage { color: #e5e7eb; }
-#lessonReader.reader-dark .reader-control { background: #374151; color: white; }
-#lessonReader.reader-dark .reader-next { background: #4f46e5; }
-
-@media (max-width: 640px) {
-    #lessonReader { padding: 0; }
-    #lessonReaderPanel { border-radius: 0; }
-    #readingSurface { padding: 12px; }
-    #pageContent { padding: 16px; font-size: 16px; line-height: 1.8; }
+#lessonReader.reader-dark #currentPage {
+    color: #e5e7eb;
 }
 
+#lessonReader.reader-dark .reader-control {
+    background: #374151;
+    color: white;
+}
+
+#lessonReader.reader-dark .reader-next {
+    background: #4f46e5;
+}
+
+/* Android and small screens */
+@media (max-width: 640px) {
+    #lessonReader {
+        padding: 0 !important;
+    }
+
+    #lessonReaderPanel {
+        border-radius: 0 !important;
+    }
+
+    #readingSurface {
+        padding: 10px;
+    }
+
+    #pageContent {
+        padding: 16px;
+        font-size: 16px;
+        line-height: 1.8;
+    }
+
+    #readerControls {
+        max-height: 45%;
+        padding-left: 8px;
+        padding-right: 8px;
+        padding-top: 8px;
+        padding-bottom: max(14px, env(safe-area-inset-bottom));
+    }
+
+    .reader-control {
+        padding: 12px 2px;
+        font-size: 12px;
+    }
+
+    #readerDownload {
+        padding: 12px;
+        margin-top: 8px;
+    }
+}
 /* Keep grading fields comfortable on phones. */
 input, textarea, select {
     width: 100%;
@@ -263,9 +403,13 @@ button, a { -webkit-tap-highlight-color: transparent; }
 
 <script>
 (function () {
-    const reader = document.getElementById("lessonReader");
-    if (!reader || reader.dataset.initialized === "1") return;
-    reader.dataset.initialized = "1";
+   const reader = document.getElementById("lessonReader");
+if (!reader || reader.dataset.initialized === "1") return;
+
+reader.dataset.initialized = "1";
+
+/* Move reader directly under BODY to escape parent stacking contexts */
+document.body.appendChild(reader);
 
     const content = document.getElementById("pageContent");
     const status = document.getElementById("readerStatus");
