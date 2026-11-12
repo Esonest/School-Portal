@@ -22,6 +22,6 @@ urlpatterns = [
     path(
         "assignment-file/<int:pk>/",
         views.download_assignment_file,
-        name="download_assignment_file"
+        name="download_assignment_file",
     ),
 ]

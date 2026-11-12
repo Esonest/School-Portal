@@ -1,222 +1,123 @@
-
 {% extends 'accounts/base.html' %}
-
 {% block content %}
 
 <div class="w-full max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 py-4 sm:py-8 overflow-x-hidden">
 
-    <!-- HEADER -->
     <div class="bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl shadow-lg p-4 sm:p-6 text-white mb-5 sm:mb-8">
-
         <div class="flex flex-col sm:flex-row justify-between gap-4 items-start sm:items-center">
-
             <div class="min-w-0">
-                <h1 class="text-xl sm:text-2xl md:text-3xl font-bold flex items-center gap-2 sm:gap-3">
-                    📝 Grade Submission
-                </h1>
-
-                <p class="text-indigo-100 text-sm sm:text-base mt-2">
-                    Review student work, provide scores and feedback.
-                </p>
+                <h1 class="text-xl sm:text-2xl md:text-3xl font-bold">📝 Grade Submission</h1>
+                <p class="text-indigo-100 text-sm sm:text-base mt-2">Review student work, provide scores and feedback.</p>
             </div>
-
             <div class="bg-white/20 rounded-xl px-4 sm:px-5 py-3 flex-shrink-0">
-
-                <p class="text-xs sm:text-sm text-indigo-100">
-                    Submission Status
-                </p>
-
-                <p class="font-bold text-base sm:text-lg">
-                    {{ submission.status|title }}
-                </p>
-
+                <p class="text-xs sm:text-sm text-indigo-100">Submission Status</p>
+                <p class="font-bold text-base sm:text-lg">{{ submission.status|title }}</p>
             </div>
-
         </div>
-
     </div>
 
-
-    <!-- MAIN LAYOUT -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-8">
 
-
-        <!-- SUBMISSION DETAILS -->
         <div class="lg:col-span-2 space-y-4 sm:space-y-6">
 
             <div class="bg-white rounded-xl sm:rounded-2xl shadow-sm border border-gray-100 p-4 sm:p-6">
-
-                <h2 class="text-lg sm:text-xl font-bold text-gray-800 mb-4 sm:mb-5">
-                    📚 Submission Details
-                </h2>
+                <h2 class="text-lg sm:text-xl font-bold text-gray-800 mb-4 sm:mb-5">📚 Submission Details</h2>
 
                 <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-5">
-
                     <div class="bg-gray-50 rounded-xl p-3 sm:p-4 min-w-0">
                         <p class="text-xs text-gray-500 uppercase">Assignment</p>
-                        <p class="font-semibold text-gray-800 mt-1 break-words">
-                            {{ submission.assignment.title }}
-                        </p>
+                        <p class="font-semibold text-gray-800 mt-1 break-words">{{ submission.assignment.title }}</p>
                     </div>
-
                     <div class="bg-gray-50 rounded-xl p-3 sm:p-4 min-w-0">
                         <p class="text-xs text-gray-500 uppercase">Student</p>
-                        <p class="font-semibold text-gray-800 mt-1 break-words">
-                            {{ submission.student }}
-                        </p>
+                        <p class="font-semibold text-gray-800 mt-1 break-words">{{ submission.student }}</p>
                     </div>
-
                     <div class="bg-gray-50 rounded-xl p-3 sm:p-4 min-w-0">
                         <p class="text-xs text-gray-500 uppercase">Submitted Date</p>
                         <p class="font-semibold text-gray-800 mt-1 text-sm sm:text-base break-words">
                             {{ submission.submitted_on|date:"M d, Y H:i" }}
                         </p>
                     </div>
-
                     <div class="bg-gray-50 rounded-xl p-3 sm:p-4">
                         <p class="text-xs text-gray-500 uppercase">Maximum Score</p>
-                        <p class="font-semibold text-indigo-600 text-xl mt-1">
-                            {{ submission.assignment.max_score }}
-                        </p>
+                        <p class="font-semibold text-indigo-600 text-xl mt-1">{{ submission.assignment.max_score }}</p>
                     </div>
-
                 </div>
-
             </div>
 
-
-            <!-- ASSIGNMENT RESOURCE -->
             {% if submission.assignment.file %}
-
             <div class="bg-white rounded-xl sm:rounded-2xl shadow-sm border p-4 sm:p-6">
-
-                <h2 class="text-lg sm:text-xl font-bold text-gray-800 mb-3">
-                    📘 Assignment Resource
-                </h2>
-
-                <p class="text-sm text-gray-600 mb-3 break-all">
-                    {{ submission.assignment.file.name }}
-                </p>
+                <h2 class="text-lg sm:text-xl font-bold text-gray-800 mb-3">📘 Assignment Resource</h2>
+                <p class="text-sm text-gray-600 mb-3 break-all">{{ submission.assignment.file.name }}</p>
 
                 <div class="flex flex-col sm:flex-row gap-2">
-
                     <button type="button"
-                            data-reader-url="{{ submission.assignment.file.url }}"
+                            data-reader-url="{% url 'assignments:download_assignment_file' pk=submission.assignment.pk %}"
                             data-reader-name="{{ submission.assignment.file.name }}"
                             class="open-resource w-full sm:w-auto px-4 py-3 bg-indigo-600 text-white rounded-xl text-sm font-semibold">
                         📖 Read Assignment
                     </button>
-
-                    <a href="{{ submission.assignment.file.url }}"
-                       download
+                    <a href="{% url 'assignments:download_assignment_file' pk=submission.assignment.pk %}"
                        class="w-full sm:w-auto text-center px-4 py-3 bg-gray-100 text-gray-700 rounded-xl text-sm font-semibold">
                         ⬇️ Download
                     </a>
-
                 </div>
-
             </div>
-
             {% endif %}
 
-
-            <!-- STUDENT ANSWER -->
             {% if submission.text %}
-
             <div class="bg-white rounded-xl sm:rounded-2xl shadow-sm border p-4 sm:p-6">
-
-                <h2 class="text-lg sm:text-xl font-bold mb-4 text-gray-800">
-                    💬 Student Response
-                </h2>
-
+                <h2 class="text-lg sm:text-xl font-bold mb-4 text-gray-800">💬 Student Response</h2>
                 <div class="bg-gray-50 rounded-xl p-3 sm:p-5 text-gray-700 whitespace-pre-wrap break-words text-sm sm:text-base leading-relaxed">
                     {{ submission.text }}
                 </div>
-
             </div>
-
             {% endif %}
 
-
-            <!-- STUDENT UPLOADED FILES -->
             {% if submission.files.all %}
-
             <div class="bg-white rounded-xl sm:rounded-2xl shadow-sm border p-4 sm:p-6">
-
-                <h2 class="text-lg sm:text-xl font-bold mb-4 text-gray-800">
-                    📎 Student Submitted Files
-                </h2>
+                <h2 class="text-lg sm:text-xl font-bold mb-4 text-gray-800">📎 Student Submitted Files</h2>
 
                 <div class="space-y-3">
-
                     {% for file in submission.files.all %}
-
                     <div class="border rounded-xl p-3 sm:p-4 bg-gray-50 min-w-0">
-
                         <div class="flex items-start gap-3 min-w-0">
-
                             <span class="text-2xl flex-shrink-0">📄</span>
-
                             <div class="min-w-0 flex-1">
-
-                                <p class="font-semibold text-gray-800 text-sm sm:text-base break-all">
-                                    {{ file.filename }}
-                                </p>
-
-                                <p class="text-xs text-gray-500 mt-1">
-                                    Uploaded student work
-                                </p>
-
+                                <p class="font-semibold text-gray-800 text-sm sm:text-base break-all">{{ file.filename }}</p>
+                                <p class="text-xs text-gray-500 mt-1">Uploaded student work</p>
                             </div>
-
                         </div>
 
-                       <div class="flex flex-col sm:flex-row gap-2">
-
-    <button type="button"
-            data-reader-url="{% url 'assignments:download_assignment_file' pk=submission.assignment.pk %}"
-            data-reader-name="{{ submission.assignment.file.name }}"
-            class="open-resource w-full sm:w-auto px-4 py-3 bg-indigo-600 text-white rounded-xl text-sm font-semibold">
-        📖 Read Assignment
-    </button>
-
-    <a href="{% url 'assignments:download_assignment_file' pk=submission.assignment.pk %}"
-       class="w-full sm:w-auto text-center px-4 py-3 bg-gray-100 text-gray-700 rounded-xl text-sm font-semibold">
-        ⬇️ Download
-    </a>
-
-</div>
-
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 mt-3">
+                            <button type="button"
+                                    data-reader-url="{% url 'assignments:download_submission_file' file_id=file.id %}"
+                                    data-reader-name="{{ file.filename }}"
+                                    class="open-resource w-full px-3 py-3 bg-indigo-600 hover:bg-indigo-700 text-white rounded-lg text-sm font-semibold">
+                                📖 Read on Screen
+                            </button>
+                            <a href="{% url 'assignments:download_submission_file' file_id=file.id %}"
+                               class="w-full text-center px-3 py-3 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg text-sm font-semibold">
+                                ⬇️ Download Original
+                            </a>
+                        </div>
                     </div>
-
                     {% endfor %}
-
                 </div>
-
             </div>
-
             {% endif %}
 
         </div>
 
-
-        <!-- GRADING PANEL -->
         <div class="min-w-0">
-
             <div class="lg:sticky lg:top-5 bg-white rounded-xl sm:rounded-2xl shadow-sm sm:shadow-xl border p-4 sm:p-6">
-
-                <h2 class="text-lg sm:text-xl font-bold text-gray-800 mb-5">
-                    🎯 Enter Grade
-                </h2>
+                <h2 class="text-lg sm:text-xl font-bold text-gray-800 mb-5">🎯 Enter Grade</h2>
 
                 <form method="post" class="space-y-5">
-
                     {% csrf_token %}
 
                     {% for field in form %}
-
                     <div class="min-w-0">
-
                         <label class="block text-sm font-semibold text-gray-700 mb-2">
                             {{ field.label }}
                         </label>
@@ -224,382 +125,339 @@
                         {{ field }}
 
                         {% if field.help_text %}
-                        <p class="text-xs text-gray-500 mt-1">
-                            {{ field.help_text }}
-                        </p>
+                        <p class="text-xs text-gray-500 mt-1">{{ field.help_text }}</p>
                         {% endif %}
 
                         {% for error in field.errors %}
-                        <p class="text-sm text-red-600 mt-1">
-                            {{ error }}
-                        </p>
+                        <p class="text-sm text-red-600 mt-1">{{ error }}</p>
                         {% endfor %}
-
                     </div>
-
                     {% endfor %}
 
                     <div class="border-t pt-5 flex flex-col gap-3">
-
                         <button type="submit"
                                 class="w-full px-5 py-3 bg-green-600 hover:bg-green-700 text-white rounded-xl font-semibold shadow text-sm sm:text-base">
                             💾 Save Grade
                         </button>
-
                         <a href="{% url 'assignments:teacher_assignment_detail' pk=submission.assignment.id %}"
                            class="w-full text-center px-5 py-3 bg-gray-100 hover:bg-gray-200 rounded-xl font-semibold text-sm sm:text-base">
                             ← Back
                         </a>
-
                     </div>
-
                 </form>
-
             </div>
-
         </div>
 
     </div>
-
 </div>
 
+<!-- NOTES-STYLE DOCUMENT READER -->
+<div id="lessonReader" class="hidden fixed inset-0 z-[99999] bg-black/80 p-0 sm:p-3">
+    <div id="lessonReaderPanel" class="lesson-reader-panel bg-white w-full max-w-5xl h-full mx-auto sm:rounded-xl flex flex-col overflow-hidden">
 
-<!-- DOCUMENT READER -->
-<div id="resourceReader"
-     class="hidden fixed inset-0 z-[9999] bg-black/70 p-2 sm:p-5">
-
-    <div class="bg-white w-full max-w-5xl h-full mx-auto rounded-xl flex flex-col overflow-hidden">
-
-        <div class="p-3 sm:p-4 border-b flex items-center justify-between gap-2">
-
+        <div class="shrink-0 px-3 sm:px-5 py-3 border-b flex items-center justify-between gap-2">
             <div class="min-w-0">
-                <h2 class="font-bold text-gray-800 text-sm sm:text-lg">
-                    📖 Document Reader
-                </h2>
-
-                <p id="readerFilename" class="text-xs text-gray-500 truncate"></p>
+                <h2 class="font-bold text-gray-800 text-sm sm:text-lg">📖 Document Reader</h2>
+                <p id="readerStatus" class="text-xs text-gray-500 truncate">Ready to open a document</p>
             </div>
-
-            <button type="button"
-                    onclick="closeResourceReader()"
-                    class="flex-shrink-0 bg-red-600 text-white px-3 py-2 rounded-lg text-sm">
-                ✕ Close
-            </button>
-
+            <button type="button" onclick="closeLessonReader()"
+                    class="shrink-0 bg-red-600 text-white px-3 py-2 rounded-lg text-sm">✕ Close</button>
         </div>
 
-
-        <!-- READER CONTROLS -->
-        <div class="p-2 sm:p-3 bg-gray-50 border-b flex flex-wrap items-center justify-between gap-2">
-
-            <div class="flex items-center gap-2">
-
-                <button id="readerPrevious"
-                        type="button"
-                        class="px-3 py-2 bg-gray-200 rounded-lg text-sm">
-                    ← Previous
-                </button>
-
-                <button id="readerNext"
-                        type="button"
-                        class="px-3 py-2 bg-indigo-600 text-white rounded-lg text-sm">
-                    Next →
-                </button>
-
+        <div class="shrink-0 px-3 py-2 bg-gray-50 border-b">
+            <div class="flex items-center justify-between gap-3 text-xs text-gray-600 mb-2">
+                <span id="pageCounter">Page 0 of 0</span>
+                <span id="progressPercent">0%</span>
             </div>
-
-            <span id="readerPageInfo" class="text-xs sm:text-sm text-gray-600">
-                Page 0 of 0
-            </span>
-
+            <div class="w-full h-1.5 bg-gray-200 rounded-full overflow-hidden">
+                <div id="readingProgress" class="h-full bg-indigo-600 rounded-full" style="width:0%"></div>
+            </div>
         </div>
 
-
-        <!-- DOCUMENT CONTENT -->
-        <div class="flex-1 min-h-0 overflow-y-auto p-3 sm:p-6 bg-gray-100">
-
-            <p id="readerMessage" class="text-sm text-gray-600 mb-3">
-                Loading document...
-            </p>
-
-            <img id="readerImage"
-                 class="hidden max-w-full h-auto mx-auto rounded-lg"
-                 alt="Uploaded document">
-
-            <div id="readerContent"
-                 class="bg-white rounded-lg shadow-sm p-4 sm:p-8 text-gray-800 text-sm sm:text-base leading-7 whitespace-pre-wrap break-words min-h-40">
-            </div>
-
+        <div id="readingSurface" class="flex-1 min-h-0 overflow-y-auto bg-gray-100 p-3 sm:p-6">
+            <p id="readerLoadingMessage" class="text-sm text-gray-600 mb-3">Open a document to begin reading.</p>
+            <img id="readerImage" class="hidden max-w-full h-auto mx-auto rounded-lg" alt="Document image">
+            <article id="pageContent" class="bg-white text-gray-800 rounded-lg shadow-sm p-4 sm:p-8 leading-7 whitespace-pre-wrap break-words min-h-40"></article>
         </div>
 
-
-        <!-- BOTTOM CONTROLS -->
-        <div class="border-t p-3 flex flex-wrap justify-between items-center gap-2">
-
-    <div class="flex gap-2">
-
-        <button type="button" onclick="changeReaderFont(-1)"
-                class="px-3 py-2 bg-gray-100 text-gray-800 rounded-lg text-sm">
-            A-
-        </button>
-
-        <button type="button" onclick="changeReaderFont(1)"
-                class="px-3 py-2 bg-gray-100 text-gray-800 rounded-lg text-sm">
-            A+
-        </button>
-
-        <button type="button" id="readerDarkToggle"
-                onclick="toggleReaderDarkMode()"
-                class="px-3 py-2 bg-gray-800 text-white rounded-lg text-sm">
-            🌙 Dark
-        </button>
-
+        <div class="shrink-0 border-t bg-white px-2 sm:px-4 py-2"
+             style="padding-bottom: max(8px, env(safe-area-inset-bottom));">
+            <div class="grid grid-cols-3 gap-2 mb-2">
+                <button id="decreaseFont" type="button" class="reader-control">A−</button>
+                <button id="increaseFont" type="button" class="reader-control">A+</button>
+                <button id="toggleTheme" type="button" class="reader-control reader-dark-button">🌙 Dark</button>
+            </div>
+            <div class="grid grid-cols-[1fr_auto_1fr] gap-2 items-center">
+                <button id="previousPage" type="button" class="reader-control">← Previous</button>
+                <span id="currentPage" class="text-xs text-gray-500 text-center whitespace-nowrap">0 / 0</span>
+                <button id="nextPage" type="button" class="reader-control reader-next">Next →</button>
+            </div>
+            <a id="readerDownload" href="#" class="block text-center mt-2 py-2.5 rounded-lg bg-green-600 text-white text-sm font-semibold">
+                ⬇️ Download Original
+            </a>
+        </div>
     </div>
-
-    <a id="readerDownload" href="#" download
-       class="px-3 py-2 bg-green-600 text-white rounded-lg text-sm">
-        ⬇️ Download Original
-    </a>
-
 </div>
 
-    </div>
-
-</div>
-
-
-<!-- DOCUMENT READING LIBRARIES -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/mammoth/1.8.0/mammoth.browser.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 
+<style>
+.reader-control {
+    min-width: 0;
+    width: 100%;
+    padding: 10px 6px;
+    border-radius: 9px;
+    background: #e5e7eb;
+    color: #1f2937;
+    font-size: 13px;
+    font-weight: 600;
+    text-align: center;
+}
+.reader-next { background: #4f46e5; color: white; }
+.reader-dark-button { background: #1f2937; color: white; }
+
+#lessonReader.reader-dark #lessonReaderPanel { background: #111827; color: #f9fafb; }
+#lessonReader.reader-dark .border-b,
+#lessonReader.reader-dark .border-t { border-color: #374151; }
+#lessonReader.reader-dark #readingSurface { background: #1f2937; }
+#lessonReader.reader-dark #pageContent { background: #111827; color: #f9fafb; border: 1px solid #374151; }
+#lessonReader.reader-dark .bg-gray-50 { background: #1f2937; }
+#lessonReader.reader-dark h2,
+#lessonReader.reader-dark #readerStatus,
+#lessonReader.reader-dark #readerLoadingMessage,
+#lessonReader.reader-dark #pageCounter,
+#lessonReader.reader-dark #progressPercent,
+#lessonReader.reader-dark #currentPage { color: #e5e7eb; }
+#lessonReader.reader-dark .reader-control { background: #374151; color: white; }
+#lessonReader.reader-dark .reader-next { background: #4f46e5; }
+
+@media (max-width: 640px) {
+    #lessonReader { padding: 0; }
+    #lessonReaderPanel { border-radius: 0; }
+    #readingSurface { padding: 12px; }
+    #pageContent { padding: 16px; font-size: 16px; line-height: 1.8; }
+}
+
+/* Keep grading fields comfortable on phones. */
+input, textarea, select {
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    border: 1px solid #d1d5db;
+    border-radius: .75rem;
+    padding: .75rem;
+    font-size: 16px;
+}
+input:focus, textarea:focus, select:focus {
+    outline: none;
+    border-color: #6366f1;
+    box-shadow: 0 0 0 3px rgba(99,102,241,.2);
+}
+textarea { min-height: 130px; }
+button, a { -webkit-tap-highlight-color: transparent; }
+</style>
 
 <script>
 (function () {
+    const reader = document.getElementById("lessonReader");
+    if (!reader || reader.dataset.initialized === "1") return;
+    reader.dataset.initialized = "1";
 
-    const reader = document.getElementById("resourceReader");
-    const content = document.getElementById("readerContent");
-    const message = document.getElementById("readerMessage");
-    const filenameLabel = document.getElementById("readerFilename");
-    const pageInfo = document.getElementById("readerPageInfo");
-    const previous = document.getElementById("readerPrevious");
-    const next = document.getElementById("readerNext");
+    const content = document.getElementById("pageContent");
+    const status = document.getElementById("readerStatus");
+    const loading = document.getElementById("readerLoadingMessage");
+    const counter = document.getElementById("pageCounter");
+    const current = document.getElementById("currentPage");
+    const progress = document.getElementById("readingProgress");
+    const percent = document.getElementById("progressPercent");
+    const previous = document.getElementById("previousPage");
+    const next = document.getElementById("nextPage");
     const image = document.getElementById("readerImage");
     const download = document.getElementById("readerDownload");
+    const surface = document.getElementById("readingSurface");
 
     let pages = [];
-    let currentPage = 0;
+    let pageIndex = 0;
     let fontSize = 16;
     let imageUrl = null;
+    let loadToken = 0;
 
     if (window.pdfjsLib) {
         pdfjsLib.GlobalWorkerOptions.workerSrc =
             "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
     }
 
-    function splitIntoPages(text) {
+    function splitLongParagraph(paragraph, limit) {
+        const words = paragraph.split(/\s+/).filter(Boolean);
+        const chunks = [];
+        let chunk = [];
 
-        const words = String(text || "").split(/\s+/).filter(Boolean);
-        const result = [];
+        words.forEach(word => {
+            chunk.push(word);
+            if (chunk.length >= limit) {
+                chunks.push(chunk.join(" "));
+                chunk = [];
+            }
+        });
 
-        for (let i = 0; i < words.length; i += 200) {
-            result.push(words.slice(i, i + 200).join(" "));
-        }
-
-        return result.length
-            ? result
-            : ["No readable text was found in this document."];
+        if (chunk.length) chunks.push(chunk.join(" "));
+        return chunks;
     }
 
-    function showPage() {
+    function createPages(text) {
+        const paragraphs = String(text || "")
+            .replace(/\r/g, "")
+            .split(/\n\s*\n/)
+            .map(p => p.trim())
+            .filter(Boolean);
 
+        const result = [];
+        let page = [];
+        let wordCount = 0;
+
+        paragraphs.forEach(paragraph => {
+            splitLongParagraph(paragraph, 200).forEach(chunk => {
+                const count = chunk.split(/\s+/).length;
+
+                if (wordCount && wordCount + count > 220) {
+                    result.push(page.join("\n\n"));
+                    page = [];
+                    wordCount = 0;
+                }
+
+                page.push(chunk);
+                wordCount += count;
+            });
+        });
+
+        if (page.length) result.push(page.join("\n\n"));
+        return result.length ? result : ["No readable text was found in this document."];
+    }
+
+    function displayPage() {
         if (!pages.length) return;
 
-        content.textContent = pages[currentPage] || "";
+        content.textContent = pages[pageIndex] || "";
         content.style.fontSize = fontSize + "px";
 
-        pageInfo.textContent =
-            "Page " + (currentPage + 1) + " of " + pages.length;
+        const total = pages.length;
+        const shown = pageIndex + 1;
+        const value = Math.round((shown / total) * 100);
 
-        previous.disabled = currentPage === 0;
-        next.disabled = currentPage >= pages.length - 1;
+        counter.textContent = `Page ${shown} of ${total}`;
+        current.textContent = `${shown} / ${total}`;
+        percent.textContent = `${value}%`;
+        progress.style.width = `${value}%`;
 
-        previous.classList.toggle("opacity-40", previous.disabled);
-        next.classList.toggle("opacity-40", next.disabled);
+        previous.disabled = pageIndex === 0;
+        next.disabled = pageIndex >= total - 1;
+        previous.style.opacity = previous.disabled ? ".45" : "1";
+        next.style.opacity = next.disabled ? ".45" : "1";
+        surface.scrollTop = 0;
     }
 
-    function setText(text) {
-
+    function showText(text) {
         image.classList.add("hidden");
         content.classList.remove("hidden");
-
-        pages = splitIntoPages(text);
-        currentPage = 0;
-
-        showPage();
+        pages = createPages(text);
+        pageIndex = 0;
+        displayPage();
     }
 
-    async function extractPDF(buffer) {
-
-        if (!window.pdfjsLib) {
-            throw new Error("PDF reader library unavailable.");
-        }
-
+    async function extractPDF(buffer, token) {
+        if (!window.pdfjsLib) throw new Error("PDF reader library could not load.");
         const pdf = await pdfjsLib.getDocument({data: buffer}).promise;
-        let text = "";
+        let output = "";
 
         for (let i = 1; i <= pdf.numPages; i++) {
-
-            message.textContent =
-                "Extracting PDF page " + i + " of " + pdf.numPages + "...";
-
+            if (token !== loadToken) return "";
+            status.textContent = `Reading PDF page ${i} of ${pdf.numPages}...`;
             const page = await pdf.getPage(i);
             const data = await page.getTextContent();
-
-            text += "\n\n" + data.items.map(item => item.str).join(" ");
+            output += "\n\n" + data.items.map(item => item.str).join(" ");
         }
-
-        return text;
+        return output;
     }
 
     async function extractDOCX(buffer) {
-
-        if (!window.mammoth) {
-            throw new Error("Word reader library unavailable.");
-        }
-
-        const result = await mammoth.extractRawText({
-            arrayBuffer: buffer
-        });
-
+        if (!window.mammoth) throw new Error("Word reader library could not load.");
+        const result = await mammoth.extractRawText({arrayBuffer: buffer});
         return result.value;
     }
 
     async function extractPPTX(buffer) {
-
-        if (!window.JSZip) {
-            throw new Error("PowerPoint reader library unavailable.");
-        }
-
+        if (!window.JSZip) throw new Error("PowerPoint reader library could not load.");
         const zip = await JSZip.loadAsync(buffer);
-
-        const slideFiles = Object.keys(zip.files)
+        const files = Object.keys(zip.files)
             .filter(name => /^ppt\/slides\/slide\d+\.xml$/.test(name))
-            .sort((a, b) => {
-                const na = parseInt(a.match(/slide(\d+)/)[1], 10);
-                const nb = parseInt(b.match(/slide(\d+)/)[1], 10);
-                return na - nb;
-            });
+            .sort((a, b) => Number(a.match(/slide(\d+)/)[1]) - Number(b.match(/slide(\d+)/)[1]));
 
         let output = "";
-
-        for (const file of slideFiles) {
-
+        for (const file of files) {
             const xml = await zip.files[file].async("text");
-
-            const doc = new DOMParser().parseFromString(
-                xml,
-                "application/xml"
-            );
-
-            const texts = Array.from(
-                doc.getElementsByTagName("a:t")
-            ).map(node => node.textContent);
-
-            output += "\n\n" + texts.join(" ");
+            const doc = new DOMParser().parseFromString(xml, "application/xml");
+            output += "\n\n" + Array.from(doc.getElementsByTagName("a:t"))
+                .map(node => node.textContent).join(" ");
         }
-
         return output;
     }
 
-    async function extractExcel(buffer) {
-
-        if (!window.XLSX) {
-            throw new Error("Excel reader library unavailable.");
-        }
-
+    async function extractSpreadsheet(buffer) {
+        if (!window.XLSX) throw new Error("Spreadsheet reader library could not load.");
         const workbook = XLSX.read(buffer, {type: "array"});
-        let output = "";
-
-        workbook.SheetNames.forEach(name => {
-
-            output += "\n\nSHEET: " + name + "\n\n";
-
-            output += XLSX.utils.sheet_to_csv(
-                workbook.Sheets[name]
-            );
-
-        });
-
-        return output;
+        return workbook.SheetNames.map(name =>
+            `SHEET: ${name}\n\n${XLSX.utils.sheet_to_csv(workbook.Sheets[name])}`
+        ).join("\n\n");
     }
 
-    async function extractImage(blob) {
-
+    async function extractImageFile(blob, token) {
         image.classList.remove("hidden");
         content.classList.add("hidden");
 
-        if (imageUrl) {
-            URL.revokeObjectURL(imageUrl);
-        }
-
+        if (imageUrl) URL.revokeObjectURL(imageUrl);
         imageUrl = URL.createObjectURL(blob);
         image.src = imageUrl;
-
-        message.textContent = "Image preview. Preparing text recognition...";
+        status.textContent = "Image preview loaded.";
 
         if (!window.Tesseract) {
-            setText("Image preview is available, but text recognition could not be loaded.");
+            loading.textContent = "Image preview is available. Text recognition library is unavailable.";
             return;
         }
 
-        const result = await Tesseract.recognize(
-            blob,
-            "eng",
-            {
-                logger: info => {
-
-                    if (info.status === "recognizing text") {
-
-                        message.textContent =
-                            "Recognising image text: " +
-                            Math.round(info.progress * 100) + "%";
-
-                    }
-
+        loading.textContent = "Recognising text in image...";
+        const result = await Tesseract.recognize(blob, "eng", {
+            logger: info => {
+                if (token === loadToken && info.status === "recognizing text") {
+                    status.textContent = `Recognising image text: ${Math.round(info.progress * 100)}%`;
                 }
             }
-        );
+        });
 
-        setText("TEXT EXTRACTED FROM IMAGE\n\n" + result.data.text);
+        if (token !== loadToken) return;
+        showText(result.data.text);
         image.classList.remove("hidden");
+        loading.textContent = "Image preview and extracted text.";
     }
 
-    async function openReader(url, filename) {
+    async function loadLesson(url, filename) {
+        const token = ++loadToken;
 
         reader.classList.remove("hidden");
         document.body.style.overflow = "hidden";
-
-        filenameLabel.textContent =
-            filename || "Uploaded document";
+        status.textContent = filename || "Loading document...";
+        loading.textContent = "Loading document...";
+        content.textContent = "";
+        image.classList.add("hidden");
+        content.classList.remove("hidden");
+        pages = [];
+        pageIndex = 0;
 
         download.href = url;
-        download.setAttribute(
-            "download",
-            filename || "document"
-        );
-
-        content.textContent = "";
-        content.classList.remove("hidden");
-        image.classList.add("hidden");
-
-        message.textContent = "Loading document...";
-        pageInfo.textContent = "Loading...";
-
-        pages = [];
-        currentPage = 0;
+        download.setAttribute("download", filename || "document");
 
         if (imageUrl) {
             URL.revokeObjectURL(imageUrl);
@@ -607,278 +465,120 @@
         }
 
         try {
-
             const response = await fetch(url, {
-                credentials: "same-origin"
+                credentials: "same-origin",
+                cache: "no-store"
             });
-
             if (!response.ok) {
-                throw new Error(
-                    "The file could not be accessed. Check your permissions or download the original."
-                );
+                throw new Error("The file could not be accessed. Check your permission or try downloading it.");
             }
 
             const blob = await response.blob();
             const buffer = await blob.arrayBuffer();
-
-            const name = (filename || url.split("?")[0])
-                .split("/")
-                .pop()
-                .toLowerCase();
-
-            const extension = name.includes(".")
-                ? name.split(".").pop()
-                : "";
-
+            const name = (filename || url.split("?")[0]).split("/").pop().toLowerCase();
+            const extension = name.includes(".") ? name.split(".").pop() : "";
             let text = "";
 
-            message.textContent = "Extracting document contents...";
-
             if (extension === "pdf" || blob.type === "application/pdf") {
-
-                text = await extractPDF(buffer);
-
+                text = await extractPDF(buffer, token);
             } else if (extension === "docx") {
-
                 text = await extractDOCX(buffer);
-
             } else if (extension === "pptx") {
-
                 text = await extractPPTX(buffer);
-
             } else if (["xlsx", "xls", "csv"].includes(extension)) {
-
-                text = await extractExcel(buffer);
-
-            } else if (
-                ["txt", "md", "html", "htm", "json", "xml"].includes(extension)
-            ) {
-
+                text = await extractSpreadsheet(buffer);
+            } else if (["txt", "md", "html", "htm", "json", "xml"].includes(extension)) {
                 text = new TextDecoder("utf-8").decode(buffer);
-
                 if (["html", "htm", "xml"].includes(extension)) {
-
-                    const doc = new DOMParser().parseFromString(
-                        text,
-                        "text/html"
-                    );
-
+                    const doc = new DOMParser().parseFromString(text, "text/html");
                     text = doc.body ? doc.body.textContent : text;
                 }
-
-            } else if (
-                ["png", "jpg", "jpeg", "webp", "gif", "bmp"].includes(extension) ||
-                (blob.type && blob.type.startsWith("image/"))
-            ) {
-
-                await extractImage(blob);
-
-                message.textContent =
-                    "Image preview and extracted text.";
-
+            } else if (["png", "jpg", "jpeg", "webp", "gif", "bmp"].includes(extension) ||
+                       (blob.type && blob.type.startsWith("image/"))) {
+                await extractImageFile(blob, token);
                 return;
-
             } else {
-
-                throw new Error(
-                    "This file format cannot be read directly here. Please download the original file."
-                );
-
+                throw new Error("This file format is not supported by the screen reader. Download the original file instead.");
             }
 
-            setText(text);
-
-            message.textContent =
-                "Document ready. Use Previous and Next to read approximately 200 words per page.";
-
+            if (token !== loadToken) return;
+            showText(text);
+            status.textContent = filename || "Document ready";
+            loading.textContent = "Document ready. Use Previous and Next to continue reading.";
         } catch (error) {
-
-            content.textContent = error.message;
+            if (token !== loadToken) return;
             pages = [];
-
-            pageInfo.textContent = "Unable to read";
-            message.textContent = "Reading was unsuccessful.";
-
+            content.textContent = error.message || "Unable to read this document.";
+            counter.textContent = "Unable to read";
+            current.textContent = "0 / 0";
+            progress.style.width = "0%";
+            percent.textContent = "0%";
+            loading.textContent = "Document reading failed.";
+            status.textContent = "Unable to open document";
         }
-
     }
 
-    document.addEventListener("click", function (event) {
-
+    document.addEventListener("click", event => {
         const button = event.target.closest(".open-resource");
-
-        if (button) {
-
-            openReader(
-                button.getAttribute("data-reader-url"),
-                button.getAttribute("data-reader-name")
-            );
-
-        }
-
+        if (!button) return;
+        const url = button.getAttribute("data-reader-url");
+        const filename = button.getAttribute("data-reader-name");
+        if (url) loadLesson(url, filename);
     });
 
-    previous.addEventListener("click", function () {
-
-        if (currentPage > 0) {
-            currentPage--;
-            showPage();
+    previous.addEventListener("click", () => {
+        if (pageIndex > 0) {
+            pageIndex--;
+            displayPage();
         }
-
     });
 
-    next.addEventListener("click", function () {
-
-        if (currentPage < pages.length - 1) {
-            currentPage++;
-            showPage();
+    next.addEventListener("click", () => {
+        if (pageIndex < pages.length - 1) {
+            pageIndex++;
+            displayPage();
         }
-
     });
 
-    window.closeResourceReader = function () {
+    document.getElementById("decreaseFont").addEventListener("click", () => {
+        fontSize = Math.max(12, fontSize - 1);
+        content.style.fontSize = fontSize + "px";
+    });
 
+    document.getElementById("increaseFont").addEventListener("click", () => {
+        fontSize = Math.min(28, fontSize + 1);
+        content.style.fontSize = fontSize + "px";
+    });
+
+    document.getElementById("toggleTheme").addEventListener("click", event => {
+        reader.classList.toggle("reader-dark");
+        event.currentTarget.textContent =
+            reader.classList.contains("reader-dark") ? "☀️ Light" : "🌙 Dark";
+    });
+
+    window.closeLessonReader = function () {
+        loadToken++;
         reader.classList.add("hidden");
-
         document.body.style.overflow = "";
-
-        if (imageUrl) {
-            URL.revokeObjectURL(imageUrl);
-            imageUrl = null;
-        }
-
+        if (imageUrl) URL.revokeObjectURL(imageUrl);
+        imageUrl = null;
         image.src = "";
         content.textContent = "";
-
     };
 
-    window.changeReaderFont = function (change) {
-
-        fontSize = Math.max(
-            12,
-            Math.min(26, fontSize + change)
-        );
-
-        content.style.fontSize = fontSize + "px";
-
-    };
-
-// DOCUMENT READER DARK MODE
-
-window.toggleReaderDarkMode = function () {
-
-    const reader = document.getElementById("resourceReader");
-    const button = document.getElementById("readerDarkToggle");
-
-    reader.classList.toggle("reader-dark");
-
-    const darkEnabled = reader.classList.contains("reader-dark");
-
-    button.textContent = darkEnabled ? "☀️ Light" : "🌙 Dark";
-
-};
-
-    document.addEventListener("keydown", function (event) {
-
+    document.addEventListener("keydown", event => {
         if (reader.classList.contains("hidden")) return;
-
-        if (event.key === "Escape") {
-            window.closeResourceReader();
+        if (event.key === "Escape") window.closeLessonReader();
+        if (event.key === "ArrowLeft" && pageIndex > 0) {
+            pageIndex--;
+            displayPage();
         }
-
+        if (event.key === "ArrowRight" && pageIndex < pages.length - 1) {
+            pageIndex++;
+            displayPage();
+        }
     });
-
 })();
 </script>
-
-
-<!-- MOBILE-FRIENDLY FORM STYLING -->
-<style>
-
-input,
-textarea,
-select {
-    width: 100%;
-    max-width: 100%;
-    box-sizing: border-box;
-    border: 1px solid #d1d5db;
-    border-radius: 0.75rem;
-    padding: 0.75rem;
-    font-size: 16px;
-}
-
-input:focus,
-textarea:focus,
-select:focus {
-    outline: none;
-    border-color: #6366f1;
-    box-shadow: 0 0 0 3px rgba(99,102,241,.2);
-}
-
-textarea {
-    min-height: 130px;
-}
-
-button,
-a {
-    -webkit-tap-highlight-color: transparent;
-}
-
-</style>
-
-<style>
-/* DOCUMENT READER DARK MODE */
-
-#resourceReader.reader-dark {
-    background: rgba(0, 0, 0, 0.95);
-}
-
-#resourceReader.reader-dark > div {
-    background: #111827 !important;
-    color: #f9fafb !important;
-}
-
-#resourceReader.reader-dark .border-b,
-#resourceReader.reader-dark .border-t {
-    border-color: #374151 !important;
-}
-
-#resourceReader.reader-dark .bg-gray-50,
-#resourceReader.reader-dark .bg-gray-100 {
-    background: #1f2937 !important;
-}
-
-#resourceReader.reader-dark #readerContent {
-    background: #111827 !important;
-    color: #f9fafb !important;
-    border: 1px solid #374151;
-}
-
-#resourceReader.reader-dark #readerFilename,
-#resourceReader.reader-dark #readerMessage,
-#resourceReader.reader-dark #readerPageInfo {
-    color: #d1d5db !important;
-}
-
-#resourceReader.reader-dark h2 {
-    color: #f9fafb !important;
-}
-
-#resourceReader.reader-dark #readerPrevious {
-    background: #374151 !important;
-    color: white !important;
-}
-
-#resourceReader.reader-dark #readerNext {
-    background: #4f46e5 !important;
-    color: white !important;
-}
-
-#resourceReader.reader-dark #readerDarkToggle {
-    background: #facc15 !important;
-    color: #111827 !important;
-}
-
-</style>
 
 {% endblock %}
