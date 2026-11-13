@@ -12,6 +12,24 @@ urlpatterns = [
     path("<int:school_id>/create/", views.student_create, name="admin_student_create"),
     path("<int:school_id>/edit/<int:student_id>/", views.student_edit, name="admin_student_edit"),
     path("<int:school_id>/delete/<int:student_id>/", views.student_delete, name="admin_student_delete"),
+
+    path(
+        "<int:school_id>/bulk-extract/",
+        views.bulk_extract_students,
+        name="bulk_extract_students"
+    ),
+
+    path(
+        "<int:school_id>/bulk-save/",
+        views.bulk_save_students,
+        name="bulk_save_students"
+    ),
+
+    path(
+        "<int:school_id>/download-student-template/",
+        views.download_student_excel_template,
+        name="download_student_excel_template"
+    ),
     path(
         "users/<int:school_id>/<int:user_id>/toggle-status/",
         views.toggle_user_status,

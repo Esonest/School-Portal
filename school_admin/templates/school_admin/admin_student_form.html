@@ -46,6 +46,150 @@
             {% endif %}
 
 
+            <!-- =====================================================
+     BULK STUDENT REGISTRATION
+===================================================== -->
+
+<div class="mb-8 p-5 bg-blue-50 border border-blue-200 rounded-2xl">
+
+    <div class="flex items-center gap-3 mb-3">
+
+        <div class="bg-blue-600 text-white p-3 rounded-xl">
+            <span class="text-xl">📚</span>
+        </div>
+
+        <div>
+            <h2 class="font-bold text-blue-800 text-lg">
+                Bulk Student Registration
+            </h2>
+
+            <p class="text-sm text-gray-600">
+                Upload Word, PDF, Excel or handwritten student records.
+            </p>
+        </div>
+
+    </div>
+
+    <div class="bg-white border-2 border-dashed border-blue-300
+                rounded-xl p-5 text-center">
+
+                <div class="mb-5">
+
+    <a href="{% url 'school_admin:download_student_excel_template' school.id %}"
+       class="inline-flex items-center justify-center gap-2
+              px-5 py-3 bg-green-600 hover:bg-green-700
+              text-white rounded-xl font-semibold shadow-sm">
+
+        <span>📥</span>
+
+        Download Excel Template
+
+    </a>
+
+    <p class="text-xs text-gray-500 mt-2">
+        Download the official student registration spreadsheet,
+        fill in your students and upload it below.
+    </p>
+
+</div>
+
+        <input
+            type="file"
+            id="studentBulkFile"
+            accept=".docx,.xlsx,.pdf,.png,.jpg,.jpeg,.webp,.tif,.tiff"
+            class="block w-full text-sm text-gray-600
+                   file:bg-blue-600 file:text-white
+                   file:border-0 file:rounded-lg
+                   file:px-4 file:py-2 file:mr-3"
+        >
+
+        <p class="text-xs text-gray-500 mt-3">
+            Maximum 15MB. You can upload one document at a time.
+        </p>
+
+        <button
+            type="button"
+            id="extractStudentsBtn"
+            class="mt-4 w-full sm:w-auto px-6 py-3
+                   bg-blue-600 hover:bg-blue-700
+                   text-white rounded-xl font-semibold">
+
+            <span id="extractButtonText">
+                Extract Student Information
+            </span>
+
+        </button>
+
+    </div>
+
+    <div id="bulkProgress" class="hidden mt-4">
+
+        <div class="animate-pulse text-blue-700 text-sm font-medium">
+            Extracting student information. Please wait...
+        </div>
+
+    </div>
+
+    <div id="bulkError"
+         class="hidden mt-4 p-3 rounded-lg bg-red-50
+                border border-red-200 text-red-700 text-sm">
+    </div>
+
+    <div id="bulkSuccess"
+         class="hidden mt-4 p-3 rounded-lg bg-green-50
+                border border-green-200 text-green-700 text-sm">
+    </div>
+
+</div>
+
+
+<!-- =====================================================
+     EXTRACTED STUDENTS
+===================================================== -->
+
+<div id="bulkStudentSection" class="hidden mb-8">
+
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-4">
+
+        <div>
+
+            <h2 class="text-xl font-bold text-gray-800">
+                Extracted Students
+            </h2>
+
+            <p class="text-sm text-gray-500">
+                Review and edit each student's information before saving.
+            </p>
+
+        </div>
+
+        <span id="bulkStudentCount"
+              class="bg-blue-100 text-blue-700
+                     px-4 py-2 rounded-full text-sm font-bold">
+            0 Students
+        </span>
+
+    </div>
+
+    <div id="bulkStudentForms" class="space-y-5">
+    </div>
+
+    <button
+        type="button"
+        id="saveBulkStudentsBtn"
+        class="mt-6 w-full py-4 bg-green-600
+               hover:bg-green-700 text-white
+               rounded-xl font-bold shadow-lg">
+
+        Save All Students
+
+    </button>
+
+    <div id="bulkSaveResults" class="mt-5">
+    </div>
+
+</div>
+
 
             <form method="POST"
                   enctype="multipart/form-data"
@@ -379,6 +523,662 @@ URL.createObjectURL(file);
 });
 
 
+
+});
+
+// ==========================================================
+// BULK STUDENT REGISTRATION JAVASCRIPT
+// ==========================================================
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    const uploadInput = document.getElementById("studentBulkFile");
+    const extractBtn = document.getElementById("extractStudentsBtn");
+
+    const progress = document.getElementById("bulkProgress");
+    const errorBox = document.getElementById("bulkError");
+    const successBox = document.getElementById("bulkSuccess");
+
+    const section = document.getElementById("bulkStudentSection");
+    const formsContainer = document.getElementById("bulkStudentForms");
+
+    const saveBtn = document.getElementById("saveBulkStudentsBtn");
+
+    let extractedStudents = [];
+
+    // ------------------------------------------------------
+// DOWNLOAD SUCCESSFULLY REGISTERED STUDENTS
+// ------------------------------------------------------
+
+function downloadSuccessfulStudents(students) {
+
+    if (!students || !students.length) {
+        return;
+    }
+
+    const headers = [
+        "Student Name",
+        "Admission Number",
+        "Username",
+        "Password"
+    ];
+
+    function csvCell(value) {
+
+        let text = String(value ?? "");
+
+        // Prevent spreadsheet formula injection.
+        if (/^[\s]*[=+\-@]/.test(text)) {
+            text = "'" + text;
+        }
+
+        return '"' + text.replace(/"/g, '""') + '"';
+    }
+
+    const rows = students.map(student => [
+        student.name,
+        student.admission_no,
+        student.username,
+        student.password
+    ]);
+
+    const csvContent = [
+        headers,
+        ...rows
+    ].map(row => row.map(csvCell).join(",")).join("\r\n");
+
+    // BOM ensures Excel handles UTF-8 correctly.
+    const blob = new Blob(
+        ["\uFEFF" + csvContent],
+        { type: "text/csv;charset=utf-8;" }
+    );
+
+    const url = URL.createObjectURL(blob);
+
+    const link = document.createElement("a");
+
+    link.href = url;
+
+    link.download =
+        "student_credentials_" +
+        new Date().toISOString().slice(0, 10) +
+        ".csv";
+
+    document.body.appendChild(link);
+
+    link.click();
+
+    document.body.removeChild(link);
+
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+    function getCSRFToken() {
+        return document.querySelector(
+            '[name=csrfmiddlewaretoken]'
+        ).value;
+    }
+
+    function showError(message) {
+
+        errorBox.textContent = message;
+        errorBox.classList.remove("hidden");
+
+        successBox.classList.add("hidden");
+    }
+
+    function showSuccess(message) {
+
+        successBox.textContent = message;
+        successBox.classList.remove("hidden");
+
+        errorBox.classList.add("hidden");
+    }
+
+    // ------------------------------------------------------
+    // SAFE HTML OUTPUT
+    // ------------------------------------------------------
+
+    function escapeHTML(value) {
+
+        return String(value ?? "").replace(
+            /[&<>"']/g,
+            character => ({
+                "&": "&amp;",
+                "<": "&lt;",
+                ">": "&gt;",
+                '"': "&quot;",
+                "'": "&#039;"
+            })[character]
+        );
+
+    }
+
+    // ------------------------------------------------------
+    // GENERATE INDIVIDUAL STUDENT FORMS
+    // ------------------------------------------------------
+
+    function renderStudentForms(students) {
+
+        formsContainer.innerHTML = "";
+
+        extractedStudents = students;
+
+        students.forEach((student, index) => {
+
+            const card = document.createElement("div");
+
+            card.className =
+                "bg-white border border-gray-200 rounded-2xl " +
+                "shadow-sm p-5";
+
+            const fields = [
+
+                ["first_name", "First Name"],
+                ["last_name", "Last Name"],
+                ["email", "Account Email"],
+                ["school_class", "Class"],
+                ["gender", "Gender"],
+                ["dob", "Date of Birth"],
+                ["parent_name", "Parent Name"],
+                ["parent_email", "Parent Email"],
+                ["parent_phone", "Parent Phone"],
+                ["student_email", "Student Email"],
+                ["admission_no", "Admission Number"],
+                ["username", "Username"],
+                ["password", "Temporary Password"]
+
+            ];
+
+            let html = `
+
+                <div class="flex justify-between items-center mb-5">
+
+                    <div>
+
+                        <h3 class="font-bold text-gray-800">
+                            Student ${index + 1}
+                        </h3>
+
+                        <p class="text-xs text-gray-500">
+                            Individual registration form
+                        </p>
+
+                    </div>
+
+                    <button type="button"
+                        class="remove-bulk-student text-red-600
+                               text-sm font-semibold">
+
+                        Remove
+
+                    </button>
+
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+
+            `;
+
+            fields.forEach(([key, label]) => {
+
+                const value = student[key] || "";
+
+                let inputType = "text";
+
+                if (key === "email" ||
+                    key === "parent_email" ||
+                    key === "student_email") {
+
+                    inputType = "email";
+
+                }
+
+                if (key === "dob") {
+                    inputType = "date";
+                }
+
+                if (key === "password") {
+                    inputType = "text";
+                }
+
+                html += `
+
+                    <div>
+
+                        <label class="block text-sm
+                                      font-semibold text-gray-700 mb-1">
+
+                            ${label}
+
+                        </label>
+
+                        <input
+
+                            type="${inputType}"
+
+                            data-field="${key}"
+
+                            value="${escapeHTML(value)}"
+
+                            class="bulk-student-input w-full px-3 py-2
+                                   border border-gray-300 rounded-lg
+                                   focus:ring-2 focus:ring-blue-500
+                                   outline-none"
+
+                            ${key === "password"
+                                ? 'maxlength="5" inputmode="numeric" pattern="[0-9]{5}"'
+                                : ""}
+
+                        >
+
+                    </div>
+
+                `;
+
+            });
+
+            html += "</div>";
+
+            card.innerHTML = html;
+
+            card.querySelector(
+                ".remove-bulk-student"
+            ).addEventListener("click", function () {
+
+                extractedStudents.splice(index, 1);
+
+                renderStudentForms(extractedStudents);
+
+            });
+
+            card.querySelectorAll(
+                ".bulk-student-input"
+            ).forEach(input => {
+
+                input.addEventListener("input", function () {
+
+                    const key = this.dataset.field;
+
+                    student[key] = this.value;
+
+                });
+
+            });
+
+            formsContainer.appendChild(card);
+
+        });
+
+        document.getElementById(
+            "bulkStudentCount"
+        ).textContent = students.length + " Students";
+
+        section.classList.toggle(
+            "hidden",
+            students.length === 0
+        );
+
+    }
+
+
+    // ------------------------------------------------------
+    // EXTRACT UPLOADED DOCUMENT
+    // ------------------------------------------------------
+
+    extractBtn.addEventListener("click", async function () {
+
+        const file = uploadInput.files[0];
+
+        if (!file) {
+
+            showError("Please select a student document first.");
+
+            return;
+
+        }
+
+        const formData = new FormData();
+
+        formData.append("student_file", file);
+
+        progress.classList.remove("hidden");
+
+        errorBox.classList.add("hidden");
+        successBox.classList.add("hidden");
+
+        extractBtn.disabled = true;
+
+        try {
+
+            const response = await fetch(
+                "{% url 'school_admin:bulk_extract_students' school.id %}",
+                {
+                    method: "POST",
+
+                    headers: {
+                        "X-CSRFToken": getCSRFToken()
+                    },
+
+                    body: formData
+                }
+            );
+
+            const data = await response.json();
+
+            if (!response.ok) {
+
+                throw new Error(
+                    data.error || "Extraction failed."
+                );
+
+            }
+
+            renderStudentForms(data.students);
+
+            showSuccess(data.message);
+
+        }
+
+        catch (error) {
+
+            showError(error.message);
+
+        }
+
+        finally {
+
+            progress.classList.add("hidden");
+
+            extractBtn.disabled = false;
+
+        }
+
+    });
+
+
+    // ------------------------------------------------------
+    // SAVE ALL STUDENTS
+    // ------------------------------------------------------
+
+    saveBtn.addEventListener("click", async function () {
+
+        if (!extractedStudents.length) {
+
+            showError("There are no students to save.");
+
+            return;
+
+        }
+
+        // Check required fields.
+        for (let i = 0; i < extractedStudents.length; i++) {
+
+            const student = extractedStudents[i];
+
+            if (!student.first_name ||
+                !student.last_name ||
+                !student.admission_no ||
+                !student.username ||
+                !/^\d{5}$/.test(student.password || "")) {
+
+                showError(
+                    `Please check the required information and five-digit password for Student ${i + 1}.`
+                );
+
+                return;
+
+            }
+
+        }
+
+        saveBtn.disabled = true;
+
+        saveBtn.textContent = "Registering Students...";
+
+        try {
+
+            const response = await fetch(
+                "{% url 'school_admin:bulk_save_students' school.id %}",
+                {
+                    method: "POST",
+
+                    headers: {
+
+                        "Content-Type": "application/json",
+
+                        "X-CSRFToken": getCSRFToken()
+
+                    },
+
+                    body: JSON.stringify({
+
+                        students: extractedStudents
+
+                    })
+
+                }
+            );
+
+            const data = await response.json();
+
+            if (!response.ok) {
+
+                throw new Error(
+                    data.error || "Registration failed."
+                );
+
+            }
+
+            let html = `
+
+                <div class="bg-green-50 border border-green-200
+                            rounded-xl p-5">
+
+                    <h3 class="font-bold text-green-800 mb-3">
+
+                        ${data.created} Students Registered Successfully
+
+                    </h3>
+
+                    <p class="text-sm text-gray-700 mb-4">
+
+    ${escapeHTML(data.message)}
+
+</p>
+
+<button
+    type="button"
+    id="downloadStudentCredentials"
+    class="mb-5 inline-flex items-center gap-2
+           px-5 py-3 bg-blue-600 hover:bg-blue-700
+           text-white rounded-xl font-semibold">
+
+    📥 Download Student Credentials
+
+</button>
+            `;
+
+            if (data.successful_students.length) {
+
+                html += `
+
+                    <div class="overflow-x-auto">
+
+                        <table class="w-full text-sm text-left">
+
+                            <thead>
+
+                                <tr class="border-b">
+
+                                    <th class="p-2">Name</th>
+                                    <th class="p-2">Admission No.</th>
+                                    <th class="p-2">Username</th>
+                                    <th class="p-2">Password</th>
+
+                                </tr>
+
+                            </thead>
+
+                            <tbody>
+
+                `;
+
+                data.successful_students.forEach(student => {
+
+                    html += `
+
+                        <tr class="border-b">
+
+                            <td class="p-2">
+                                ${escapeHTML(student.name)}
+                            </td>
+
+                            <td class="p-2">
+                                ${escapeHTML(student.admission_no)}
+                            </td>
+
+                            <td class="p-2">
+                                ${escapeHTML(student.username)}
+                            </td>
+
+                            <td class="p-2 font-bold">
+                                ${escapeHTML(student.password)}
+                            </td>
+
+                        </tr>
+
+                    `;
+
+                });
+
+                html += "</tbody></table></div>";
+
+            }
+
+            if (data.failed_students.length) {
+
+                html += `
+
+                    <div class="mt-5 bg-red-50 border border-red-200
+                                rounded-xl p-4">
+
+                        <h4 class="font-bold text-red-700 mb-3">
+
+                            Failed Records
+
+                        </h4>
+
+                `;
+
+                data.failed_students.forEach(item => {
+
+                    html += `
+
+                        <p class="text-sm text-red-700 mb-2">
+
+                            Student ${item.row}:
+                            ${escapeHTML(item.name)} —
+                            ${escapeHTML(item.error)}
+
+                        </p>
+
+                    `;
+
+                });
+
+                html += "</div>";
+
+            }
+
+            html += "</div>";
+
+            document.getElementById(
+                "bulkSaveResults"
+            ).innerHTML = html;
+
+            document.getElementById(
+    "bulkSaveResults"
+).classList.remove("hidden");
+
+           // Download only when the administrator clicks the button.
+if (data.successful_students &&
+    data.successful_students.length) {
+
+    const downloadBtn = document.getElementById(
+        "downloadStudentCredentials"
+    );
+
+    if (downloadBtn) {
+
+        downloadBtn.addEventListener("click", function () {
+
+            downloadSuccessfulStudents(
+                data.successful_students
+            );
+
+        });
+
+    }
+
+}
+
+          if (data.created > 0) {
+
+    // Keep the results section visible.
+    section.classList.remove("hidden");
+
+    // Keep only failed students available for correction.
+    extractedStudents = (data.failed_students || [])
+        .map(item => item.data);
+
+    if (extractedStudents.length) {
+
+        renderStudentForms(extractedStudents);
+
+        saveBtn.classList.remove("hidden");
+
+    } else {
+
+        // All students were registered successfully.
+        formsContainer.innerHTML = "";
+
+        // Hide the extraction forms and save button,
+        // NOT the entire results section.
+        formsContainer.classList.add("hidden");
+        saveBtn.classList.add("hidden");
+
+    }
+
+    showSuccess(
+        `${data.created} student accounts have been created successfully.`
+    );
+
+    // Bring the registration results into view.
+    document.getElementById("bulkSaveResults")
+        .scrollIntoView({
+            behavior: "smooth",
+            block: "start"
+        });
+
+}
+        }
+
+        catch (error) {
+
+            showError(error.message);
+
+        }
+
+        finally {
+
+            saveBtn.disabled = false;
+
+            saveBtn.textContent = "Save All Students";
+
+        }
+
+    });
 
 });
 

@@ -3,11 +3,73 @@ from students.models import Student
 from accounts.models import User
 from results.utils import generate_unique_username
 from ckeditor_uploader.widgets import CKEditorUploadingWidget
+import secrets
+import re
+
+from django.db.models import Max
 
 
 tailwind_input = "w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:ring-2 focus:ring-blue-500 focus:outline-none"
 tailwind_select = "w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm bg-white focus:ring-2 focus:ring-blue-500"
 tailwind_file = "block w-full text-sm text-gray-700 border border-gray-300 rounded-lg cursor-pointer bg-gray-50"
+
+
+
+def generate_student_credentials(
+    school,
+    reserved_admissions=None,
+    reserved_usernames=None
+):
+    if reserved_admissions is None:
+        reserved_admissions = set()
+
+    if reserved_usernames is None:
+        reserved_usernames = set()
+
+    prefix = (school.admission_prefix or "").strip().upper()
+
+    if not prefix:
+        prefix = "".join(
+            word[0] for word in school.name.split() if word
+        ).upper()[:5]
+
+    prefix = re.sub(r"[^A-Z0-9]", "", prefix) or "STU"
+
+    existing_numbers = Student.objects.filter(
+        admission_no__startswith=prefix
+    ).values_list("admission_no", flat=True)
+
+    highest = 0
+
+    for number in existing_numbers:
+        match = re.fullmatch(
+            re.escape(prefix) + r"(\d+)",
+            number
+        )
+
+        if match:
+            highest = max(highest, int(match.group(1)))
+
+    while True:
+        highest += 1
+        admission_no = f"{prefix}{highest:04d}"
+
+        if (
+            Student.objects.filter(admission_no=admission_no).exists()
+            or User.objects.filter(username=admission_no).exists()
+            or admission_no in reserved_admissions
+            or admission_no in reserved_usernames
+        ):
+            continue
+
+        reserved_admissions.add(admission_no)
+        reserved_usernames.add(admission_no)
+
+        return {
+            "admission_no": admission_no,
+            "username": admission_no,
+            "password": str(secrets.randbelow(90000) + 10000),
+        }
 
 
 class StudentCreateForm(forms.ModelForm):
@@ -25,7 +87,7 @@ class StudentCreateForm(forms.ModelForm):
         widget=forms.TextInput(attrs={"class": tailwind_input, "placeholder": "Username"})
     )
     email = forms.EmailField(
-        required=True,
+        required=False,
         widget=forms.EmailInput(attrs={"class": tailwind_input, "placeholder": "Email"})
     )
     password = forms.CharField(
@@ -80,12 +142,26 @@ class StudentCreateForm(forms.ModelForm):
     def __init__(self, *args, **kwargs):
         self.school = kwargs.pop("school", None)
         super().__init__(*args, **kwargs)
+
         if self.school:
-            self.fields["school_class"].queryset = self.fields["school_class"].queryset.filter(school=self.school)
+            self.fields["school_class"].queryset = (
+                self.fields["school_class"].queryset.filter(
+                    school=self.school
+                )
+            )
+
+            if not self.is_bound and not self.instance.pk:
+                credentials = generate_student_credentials(self.school)
+
+                self.fields["admission_no"].initial = credentials["admission_no"]
+                self.fields["username"].initial = credentials["username"]
+                self.fields["password"].initial = credentials["password"]
 
     def save(self, commit=True):
         data = self.cleaned_data
-        username = data.get("username") or generate_unique_username(data["first_name"])
+        username = data.get("username") or generate_unique_username(
+            data["first_name"]
+        )
 
         # Create User
         user = User.objects.create_user(

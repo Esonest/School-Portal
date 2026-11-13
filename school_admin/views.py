@@ -9,12 +9,511 @@ from django.shortcuts import get_object_or_404
 from results.utils import SESSION_CHOICES, normalize_latex, portal_required
 from superadmin.views import class_create, class_edit, class_delete, subject_create, subject_edit, subject_delete 
 
+import os
+import re
+import json
+import tempfile
+
+from django.http import HttpResponse
+from openpyxl import Workbook
+from openpyxl.styles import Font, PatternFill, Alignment
+from openpyxl.worksheet.datavalidation import DataValidation
+from openpyxl.utils import get_column_letter
+
+from datetime import datetime
+
+from django.http import JsonResponse
+from django.views.decorators.http import require_POST
+from django.db import transaction
+
+from docx import Document
+from openpyxl import load_workbook
+import pdfplumber
+from PIL import Image
+import pytesseract
+
+from .forms import (
+    StudentCreateForm,
+    generate_student_credentials,
+)
+
 # Permission checks
 def is_superadmin(user):
     return user.role == 'superadmin'
 
 def is_schooladmin(user):
     return user.role == 'schooladmin'
+
+
+# ==========================================================
+# BULK STUDENT DOCUMENT EXTRACTION
+# ==========================================================
+
+STUDENT_FIELD_ALIASES = {
+    "first_name": [
+        "first name", "firstname", "given name"
+    ],
+    "last_name": [
+        "last name", "lastname", "surname", "family name"
+    ],
+    "email": [
+        "email",
+        "email address",
+        "account email"
+    ],
+
+    "student_email": [
+        "student email",
+        "personal email"
+    ],
+    "gender": [
+        "gender", "sex"
+    ],
+    "dob": [
+        "dob", "date of birth", "birth date"
+    ],
+    "parent_name": [
+        "parent name", "guardian name", "father/mother name"
+    ],
+    "parent_email": [
+        "parent email", "guardian email"
+    ],
+    "parent_phone": [
+        "parent phone", "guardian phone", "phone number"
+    ],
+    
+    "school_class": [
+        "class", "school class", "grade", "level"
+    ],
+}
+
+
+def normalize_header(value):
+    return re.sub(
+        r"[^a-z0-9]+",
+        " ",
+        str(value or "").lower()
+    ).strip()
+
+
+def map_student_columns(headers):
+
+    mapping = {}
+
+    for index, header in enumerate(headers):
+
+        normalized = normalize_header(header)
+
+        for field, aliases in STUDENT_FIELD_ALIASES.items():
+
+            if normalized in [
+                normalize_header(alias) for alias in aliases
+            ]:
+
+                mapping[field] = index
+                break
+
+    return mapping
+
+
+def clean_student_record(row):
+
+    cleaned = {}
+
+    for key, value in row.items():
+
+        if value is None:
+            value = ""
+
+        value = str(value).strip()
+
+        if key == "gender":
+            gender = value.lower()
+
+            if gender in ["male", "m"]:
+                value = "M"
+
+            elif gender in ["female", "f"]:
+                value = "F"
+
+        if key == "dob" and value:
+
+            try:
+                if re.match(r"^\d{4}-\d{2}-\d{2}$", value):
+                    pass
+
+                else:
+                    for fmt in (
+                        "%d/%m/%Y",
+                        "%d-%m-%Y",
+                        "%m/%d/%Y",
+                        "%d.%m.%Y",
+                    ):
+                        try:
+                            value = datetime.strptime(
+                                value, fmt
+                            ).strftime("%Y-%m-%d")
+                            break
+                        except ValueError:
+                            continue
+
+            except Exception:
+                pass
+
+        cleaned[key] = value
+
+    return cleaned
+
+
+def extract_table_records(rows):
+
+    if not rows or len(rows) < 2:
+        return []
+
+    headers = rows[0]
+
+    mapping = map_student_columns(headers)
+
+    if "first_name" not in mapping:
+        return []
+
+    records = []
+
+    for row in rows[1:]:
+
+        if not row:
+            continue
+
+        record = {}
+
+        for field, index in mapping.items():
+
+            if index < len(row):
+                record[field] = row[index]
+
+        record = clean_student_record(record)
+
+        if record.get("first_name") or record.get("last_name"):
+            records.append(record)
+
+    return records
+
+
+def extract_word(file_path):
+
+    document = Document(file_path)
+
+    records = []
+
+    # Extract tables first.
+    for table in document.tables:
+
+        rows = [
+            [cell.text.strip() for cell in row.cells]
+            for row in table.rows
+        ]
+
+        records.extend(extract_table_records(rows))
+
+    if records:
+        return records
+
+    # Extract paragraphs as a fallback.
+    text = "\n".join(
+        paragraph.text for paragraph in document.paragraphs
+    )
+
+    return extract_text_records(text)
+
+
+def extract_excel(file_path):
+
+    workbook = load_workbook(
+        file_path,
+        read_only=True,
+        data_only=True
+    )
+
+    records = []
+
+    for sheet in workbook.worksheets:
+
+        rows = list(sheet.iter_rows(values_only=True))
+
+        if not rows:
+            continue
+
+        extracted = extract_table_records(rows)
+
+        records.extend(extracted)
+
+    workbook.close()
+
+    return records
+
+
+def extract_pdf(file_path):
+
+    text = ""
+
+    with pdfplumber.open(file_path) as pdf:
+
+        for page in pdf.pages:
+
+            text += "\n" + (page.extract_text() or "")
+
+            for table in page.extract_tables():
+
+                extracted = extract_table_records(table or [])
+
+                if extracted:
+                    return extracted
+
+    if text.strip():
+        return extract_text_records(text)
+
+    # Scanned PDF fallback using OCR.
+    try:
+        from pdf2image import convert_from_path
+
+        images = convert_from_path(
+            file_path,
+            dpi=250
+        )
+
+        for image in images:
+
+            text += "\n" + pytesseract.image_to_string(image)
+
+    except Exception as exc:
+        raise ValueError(
+            "Could not read scanned PDF. Check PDF OCR dependencies: "
+            + str(exc)
+        )
+
+    return extract_text_records(text)
+
+
+def extract_image(file_path):
+
+    image = Image.open(file_path)
+
+    # OCR extraction.
+    text = pytesseract.image_to_string(
+        image,
+        config="--psm 6"
+    )
+
+    return extract_text_records(text)
+
+
+def extract_text_records(text):
+
+    """
+    Basic labelled-text extraction.
+
+    Example:
+
+    First Name: John
+    Last Name: Smith
+    Gender: Male
+    Class: SS1
+    """
+
+    records = []
+
+    current = {}
+
+    aliases = {}
+
+    for field, names in STUDENT_FIELD_ALIASES.items():
+
+        for name in names:
+            aliases[normalize_header(name)] = field
+
+    for line in text.splitlines():
+
+        line = line.strip()
+
+        if not line:
+            continue
+
+        parts = re.split(r"[:=\t]", line, maxsplit=1)
+
+        if len(parts) == 2:
+
+            key = normalize_header(parts[0])
+            value = parts[1].strip()
+
+            field = aliases.get(key)
+
+            if field:
+
+                current[field] = value
+
+                if (
+                    field == "last_name"
+                    and current.get("first_name")
+                ):
+
+                    records.append(
+                        clean_student_record(current)
+                    )
+
+                    current = {}
+
+    if current.get("first_name"):
+        records.append(clean_student_record(current))
+
+    return records
+
+
+def extract_student_file(upload):
+
+    extension = os.path.splitext(upload.name)[1].lower()
+
+    allowed = [
+        ".docx",
+        ".xlsx",
+        ".pdf",
+        ".png",
+        ".jpg",
+        ".jpeg",
+        ".webp",
+        ".tif",
+        ".tiff",
+    ]
+
+    if extension not in allowed:
+        raise ValueError("Unsupported file format.")
+
+    with tempfile.NamedTemporaryFile(
+        delete=False,
+        suffix=extension
+    ) as temp:
+
+        for chunk in upload.chunks():
+            temp.write(chunk)
+
+        file_path = temp.name
+
+    try:
+
+        if extension == ".docx":
+            records = extract_word(file_path)
+
+        elif extension == ".xlsx":
+            records = extract_excel(file_path)
+
+        elif extension == ".pdf":
+            records = extract_pdf(file_path)
+
+        else:
+            records = extract_image(file_path)
+
+        return records
+
+    finally:
+
+        if os.path.exists(file_path):
+            os.remove(file_path)
+
+# ==========================================================
+# BULK STUDENT UPLOAD AND EXTRACTION API
+# ==========================================================
+
+@login_required
+@user_passes_test(
+    lambda u: is_schooladmin(u) or is_superadmin(u)
+)
+@require_POST
+def bulk_extract_students(request, school_id):
+
+    school = get_object_or_404(School, id=school_id)
+
+    # Verify school ownership.
+    if not is_superadmin(request.user):
+
+        admin_school = request.user.school_admin_profile.school
+
+        if admin_school.id != school.id:
+            return JsonResponse(
+                {"error": "You cannot access this school."},
+                status=403
+            )
+
+    upload = request.FILES.get("student_file")
+
+    if not upload:
+        return JsonResponse(
+            {"error": "Please select a document."},
+            status=400
+        )
+
+    if upload.size > 15 * 1024 * 1024:
+        return JsonResponse(
+            {"error": "Maximum upload size is 15MB."},
+            status=400
+        )
+
+    try:
+
+        records = extract_student_file(upload)
+
+        if not records:
+            return JsonResponse({
+                "error": (
+                    "No student records were detected. "
+                    "Please upload a properly formatted document."
+                )
+            }, status=400)
+
+        # Prevent excessively large imports.
+        if len(records) > 300:
+            return JsonResponse({
+                "error": "Maximum 300 students per upload."
+            }, status=400)
+
+        reserved_admissions = set()
+        reserved_usernames = set()
+
+        for record in records:
+
+            while True:
+
+                credentials = generate_student_credentials(school)
+
+                if (
+                    credentials["admission_no"] not in reserved_admissions
+                    and credentials["username"] not in reserved_usernames
+                ):
+                    break
+
+            reserved_admissions.add(credentials["admission_no"])
+            reserved_usernames.add(credentials["username"])
+
+            record.update(credentials)
+
+            record["school_class"] = record.get(
+                "school_class", ""
+            )
+
+        return JsonResponse({
+            "success": True,
+            "count": len(records),
+            "students": records,
+            "message": (
+                f"{len(records)} student records extracted successfully."
+            )
+        })
+
+    except Exception as exc:
+
+        return JsonResponse({
+            "error": str(exc)
+        }, status=400)
+
+
 
 @login_required
 @user_passes_test(is_superadmin)
@@ -136,7 +635,9 @@ from .forms import StudentCreateForm, StudentUpdateForm
 
 # LIST STUDENTS
 @login_required
-@user_passes_test(is_schooladmin or is_superadmin)
+@user_passes_test(
+    lambda u: is_schooladmin(u) or is_superadmin(u)
+)
 def student_list(request, school_id):
 
     # Base queryset
@@ -174,6 +675,196 @@ from django.shortcuts import render, redirect, get_object_or_404
 from accounts.models import User
 from .forms import StudentCreateForm  # 👈 separate forms like you did for accountant
 
+# ==========================================================
+# BULK STUDENT REGISTRATION
+# ==========================================================
+
+@login_required
+@user_passes_test(
+    lambda u: is_schooladmin(u) or is_superadmin(u)
+)
+@require_POST
+def bulk_save_students(request, school_id):
+
+    school = get_object_or_404(School, id=school_id)
+
+    if not is_superadmin(request.user):
+
+        admin_school = request.user.school_admin_profile.school
+
+        if admin_school.id != school.id:
+            return JsonResponse(
+                {"error": "Unauthorized school access."},
+                status=403
+            )
+
+    try:
+
+        payload = json.loads(request.body)
+
+        students_data = payload.get("students", [])
+
+    except (json.JSONDecodeError, AttributeError):
+
+        return JsonResponse({
+            "error": "Invalid student data."
+        }, status=400)
+
+    if not students_data:
+        return JsonResponse({
+            "error": "No students submitted."
+        }, status=400)
+
+    if len(students_data) > 300:
+        return JsonResponse({
+            "error": "Maximum 300 students per submission."
+        }, status=400)
+
+    successful = []
+    failed = []
+
+    for index, data in enumerate(students_data, start=1):
+
+        try:
+
+            with transaction.atomic():
+
+                # Resolve class against this school's classes.
+                class_name = str(
+                    data.get("school_class", "")
+                ).strip()
+
+                school_class = None
+
+                if class_name:
+
+                    school_class = SchoolClass.objects.filter(
+                        school=school,
+                        name__iexact=class_name
+                    ).first()
+
+                    if not school_class:
+
+                        raise ValueError(
+                            f"Class '{class_name}' does not exist "
+                            "in this school."
+                        )
+
+                admission_no = str(
+                    data.get("admission_no", "")
+                ).strip()
+
+                username = str(
+                    data.get("username", "")
+                ).strip()
+
+                password = str(
+                    data.get("password", "")
+                )
+
+                # Check credentials before creating accounts.
+                if not re.fullmatch(r"\d{5}", password):
+
+                    raise ValueError(
+                        "Password must contain exactly five digits."
+                    )
+
+                if not admission_no or not username:
+
+                    raise ValueError(
+                        "Admission number and username are required."
+                    )
+
+                if Student.objects.filter(
+                    admission_no=admission_no
+                ).exists():
+
+                    raise ValueError(
+                        f"Admission number {admission_no} already exists."
+                    )
+
+                if get_user_model().objects.filter(
+                    username=username
+                ).exists():
+
+                    raise ValueError(
+                        f"Username {username} already exists."
+                    )
+
+                # Prepare data for the existing form.
+                form_data = {
+                    "first_name": data.get("first_name", "").strip(),
+                    "last_name": data.get("last_name", "").strip(),
+                    "username": username,
+                    "email": data.get("email", "").strip(),
+                    "password": password,
+                    "admission_no": admission_no,
+                    "school_class": (
+                        school_class.pk if school_class else ""
+                    ),
+                    "dob": data.get("dob", ""),
+                    "gender": data.get("gender", ""),
+                    "parent_name": data.get("parent_name", ""),
+                    "parent_email": data.get("parent_email", ""),
+                    "parent_phone": data.get("parent_phone", ""),
+                    "student_email": data.get("student_email", ""),
+                }
+
+                form = StudentCreateForm(
+                    data=form_data,
+                    school=school
+                )
+
+                if not form.is_valid():
+
+                    errors = "; ".join(
+                        f"{field}: {', '.join(messages_list)}"
+                        for field, messages_list in form.errors.items()
+                    )
+
+                    raise ValueError(errors)
+
+                student = form.save()
+
+                successful.append({
+                    "name": student.full_name(),
+                    "admission_no": student.admission_no,
+                    "username": username,
+                    "password": password,
+                })
+
+        except Exception as exc:
+
+           
+            import traceback
+
+            print("\n========== BULK STUDENT REGISTRATION ERROR ==========")
+            traceback.print_exc()
+            print("=====================================================")
+
+   
+            failed.append({
+                "row": index,
+                "name": (
+                    f"{data.get('first_name', '')} "
+                    f"{data.get('last_name', '')}"
+                ).strip(),
+                "error": str(exc),
+                "data": data
+            })
+
+    return JsonResponse({
+        "success": len(successful) > 0,
+        "created": len(successful),
+        "failed": len(failed),
+        "successful_students": successful,
+        "failed_students": failed,
+        "message": (
+            f"{len(successful)} students registered successfully. "
+            f"{len(failed)} records failed."
+        )
+    })
+
 
 @login_required
 @user_passes_test(lambda u: is_schooladmin(u) or is_superadmin(u))
@@ -208,7 +899,206 @@ def student_create(request, school_id):
 
 
 
+# ==========================================================
+# DOWNLOAD BULK STUDENT EXCEL TEMPLATE
+# ==========================================================
 
+@login_required
+@user_passes_test(
+    lambda u: is_schooladmin(u) or is_superadmin(u)
+)
+def download_student_excel_template(request, school_id):
+
+    school = get_object_or_404(School, id=school_id)
+
+    # Verify school ownership
+    if not is_superadmin(request.user):
+
+        admin_school = request.user.school_admin_profile.school
+
+        if admin_school.id != school.id:
+            messages.error(
+                request,
+                "You cannot download a template for this school."
+            )
+
+            return redirect(
+                "school_admin:admin_student_create",
+                school_id=school_id
+            )
+
+    workbook = Workbook()
+
+    # ======================================================
+    # SHEET 1: STUDENTS
+    # ======================================================
+
+    sheet = workbook.active
+    sheet.title = "Students"
+
+    headers = [
+        "First Name",
+        "Last Name",
+        "Account Email",
+        "Student Email",
+        "Class",
+        "Gender",
+        "Date of Birth",
+        "Parent Name",
+        "Parent Email",
+        "Parent Phone",
+    ]
+
+    sheet.append(headers)
+
+    # Header formatting
+    for cell in sheet[1]:
+
+        cell.font = Font(
+            bold=True,
+            color="FFFFFF",
+            size=11
+        )
+
+        cell.fill = PatternFill(
+            fill_type="solid",
+            fgColor="2563EB"
+        )
+
+        cell.alignment = Alignment(
+            horizontal="center",
+            vertical="center"
+        )
+
+    sheet.row_dimensions[1].height = 30
+
+    # Column widths
+    widths = [
+        20, 20, 30, 30, 20,
+        15, 18, 25, 30, 20
+    ]
+
+    for index, width in enumerate(widths, start=1):
+
+        sheet.column_dimensions[
+            get_column_letter(index)
+        ].width = width
+
+    # Freeze header
+    sheet.freeze_panes = "A2"
+
+    # Enable filters
+    sheet.auto_filter.ref = "A1:J301"
+
+    # Gender dropdown
+    gender_validation = DataValidation(
+        type="list",
+        formula1='"Male,Female"',
+        allow_blank=True
+    )
+
+    sheet.add_data_validation(gender_validation)
+
+    gender_validation.add("F2:F301")
+
+    # Date format
+    for row in range(2, 302):
+        sheet[f"G{row}"].number_format = "yyyy-mm-dd"
+
+    # ======================================================
+    # SHEET 2: INSTRUCTIONS
+    # ======================================================
+
+    instructions = workbook.create_sheet("Instructions")
+
+    instruction_rows = [
+
+        ["BULK STUDENT REGISTRATION TEMPLATE"],
+
+        ["School", school.name],
+
+        ["IMPORTANT INSTRUCTIONS"],
+
+        ["1", "Enter one student's information per row."],
+
+        ["2", "First Name and Last Name are compulsory."],
+
+        ["3", "Account Email is optional."],
+
+        ["4", "Student Email is optional and separate from Account Email."],
+
+        ["5", "Enter the exact class name as registered in the school portal."],
+
+        ["6", "Gender must be Male or Female."],
+
+        ["7", "Use YYYY-MM-DD for Date of Birth."],
+
+        ["8", "Leave unavailable information blank."],
+
+        ["9", "Do not add admission numbers, usernames or passwords."],
+
+        ["10", "The school portal generates admission numbers, usernames and temporary passwords automatically."],
+
+        ["11", "Upload the completed workbook using Bulk Student Registration."],
+
+        ["12", "Review all extracted records before saving."],
+
+    ]
+
+    for row in instruction_rows:
+        instructions.append(row)
+
+    instructions.merge_cells("A1:B1")
+
+    instructions["A1"].font = Font(
+        bold=True,
+        size=15,
+        color="FFFFFF"
+    )
+
+    instructions["A1"].fill = PatternFill(
+        fill_type="solid",
+        fgColor="2563EB"
+    )
+
+    instructions["A1"].alignment = Alignment(
+        horizontal="center"
+    )
+
+    instructions.column_dimensions["A"].width = 18
+    instructions.column_dimensions["B"].width = 95
+
+    for row in range(2, instructions.max_row + 1):
+
+        instructions.cell(row, 2).alignment = Alignment(
+            wrap_text=True,
+            vertical="top"
+        )
+
+    instructions.freeze_panes = "A4"
+
+    # ======================================================
+    # DOWNLOAD RESPONSE
+    # ======================================================
+
+    response = HttpResponse(
+        content_type=(
+            "application/vnd.openxmlformats-officedocument."
+            "spreadsheetml.sheet"
+        )
+    )
+
+    filename = f"{school.name}_Student_Registration_Template.xlsx"
+
+    response["Content-Disposition"] = (
+        f'attachment; filename="{filename}"'
+    )
+
+    workbook.save(response)
+
+    return response
+
+    
 
 # ------------------- EDIT STUDENT -------------------
 @login_required
@@ -235,7 +1125,9 @@ def student_edit(request, school_id, student_id):
 
 # DELETE STUDENT
 @login_required
-@user_passes_test(is_schooladmin or is_superadmin)
+@user_passes_test(
+    lambda u: is_schooladmin(u) or is_superadmin(u)
+)
 def student_delete(request, school_id, student_id):
     school = request.user.school_admin_profile.school
     student = get_object_or_404(Student, id=student_id, school=school)
