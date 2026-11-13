@@ -412,8 +412,7 @@ hover:bg-gray-200 text-gray-700">
 
 
 
-
-
+<script src="https://cdn.jsdelivr.net/npm/jspdf@2.5.2/dist/jspdf.umd.min.js"></script>
 
 <script>
 
@@ -550,68 +549,203 @@ document.addEventListener("DOMContentLoaded", function () {
 // DOWNLOAD SUCCESSFULLY REGISTERED STUDENTS
 // ------------------------------------------------------
 
+
+
 function downloadSuccessfulStudents(students) {
 
-    if (!students || !students.length) {
+    if (!students || !students.length) return;
+
+    if (!window.jspdf || !window.jspdf.jsPDF) {
+        alert("PDF library is not loaded. Please refresh and try again.");
         return;
     }
 
-    const headers = [
-        "Student Name",
-        "Admission Number",
-        "Username",
-        "Password"
-    ];
+    const { jsPDF } = window.jspdf;
 
-    function csvCell(value) {
+    const doc = new jsPDF({
+        orientation: "landscape",
+        unit: "mm",
+        format: "a4"
+    });
 
-        let text = String(value ?? "");
+    const pageWidth = doc.internal.pageSize.getWidth();
+    const pageHeight = doc.internal.pageSize.getHeight();
 
-        // Prevent spreadsheet formula injection.
-        if (/^[\s]*[=+\-@]/.test(text)) {
-            text = "'" + text;
-        }
+    const margin = 10;
+    const gap = 5;
 
-        return '"' + text.replace(/"/g, '""') + '"';
+    const columns = 3;
+
+    const cardWidth =
+        (pageWidth - (margin * 2) - (gap * (columns - 1))) / columns;
+
+    const cardHeight = 75;
+
+    const rowGap = 6;
+
+    let y = 38;
+
+    // Document heading
+    function drawHeader() {
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(17);
+        doc.setTextColor(30, 70, 100);
+
+        doc.text(
+            "STUDENT REGISTRATION DETAILS",
+            pageWidth / 2,
+            15,
+            { align: "center" }
+        );
+
+        doc.setFont("helvetica", "normal");
+        doc.setFontSize(9);
+        doc.setTextColor(70, 70, 70);
+
+        doc.text(
+            "Total Students Registered: " + students.length,
+            margin,
+            25
+        );
+
+        doc.text(
+            "Date: " + new Date().toLocaleDateString(),
+            pageWidth - margin,
+            25,
+            { align: "right" }
+        );
+
+        doc.setDrawColor(180, 180, 180);
+
+        doc.line(
+            margin,
+            29,
+            pageWidth - margin,
+            29
+        );
+
     }
 
-    const rows = students.map(student => [
-        student.name,
-        student.admission_no,
-        student.username,
-        student.password
-    ]);
+    drawHeader();
 
-    const csvContent = [
-        headers,
-        ...rows
-    ].map(row => row.map(csvCell).join(",")).join("\r\n");
+    students.forEach((student, index) => {
 
-    // BOM ensures Excel handles UTF-8 correctly.
-    const blob = new Blob(
-        ["\uFEFF" + csvContent],
-        { type: "text/csv;charset=utf-8;" }
-    );
+        const column = index % columns;
 
-    const url = URL.createObjectURL(blob);
+        const x = margin + column * (cardWidth + gap);
 
-    const link = document.createElement("a");
+        // Move to the next horizontal row after every 3 students.
+        if (index > 0 && column === 0) {
 
-    link.href = url;
+            y += cardHeight + rowGap;
 
-    link.download =
-        "student_credentials_" +
+        }
+
+        // Start a new page if the next row will not fit.
+        if (y + cardHeight > pageHeight - margin) {
+
+            doc.addPage();
+
+            y = 38;
+
+            drawHeader();
+
+        }
+
+        // Draw student card.
+        doc.setDrawColor(190, 190, 190);
+        doc.setLineWidth(0.4);
+
+        doc.roundedRect(
+            x,
+            y,
+            cardWidth,
+            cardHeight,
+            3,
+            3
+        );
+
+        // Student heading
+        doc.setFillColor(235, 245, 240);
+
+        doc.roundedRect(
+            x + 1,
+            y + 1,
+            cardWidth - 2,
+            11,
+            2,
+            2,
+            "F"
+        );
+
+        doc.setFont("helvetica", "bold");
+        doc.setFontSize(10);
+        doc.setTextColor(30, 90, 60);
+
+        doc.text(
+            "STUDENT " + (index + 1),
+            x + 5,
+            y + 8
+        );
+
+        let textY = y + 19;
+
+        const fields = [
+            ["Name", student.name],
+            ["Admission No.", student.admission_no],
+            ["Username", student.username],
+            ["Password", student.password]
+        ];
+
+        fields.forEach(([label, value]) => {
+
+            const valueText = String(value ?? "");
+
+            doc.setFont("helvetica", "bold");
+            doc.setFontSize(8);
+            doc.setTextColor(90, 90, 90);
+
+            doc.text(
+                label + ":",
+                x + 5,
+                textY
+            );
+
+            textY += 4;
+
+            doc.setFont("helvetica", "normal");
+            doc.setFontSize(9);
+            doc.setTextColor(20, 20, 20);
+
+            const lines = doc.splitTextToSize(
+                valueText,
+                cardWidth - 10
+            );
+
+            doc.text(
+                lines,
+                x + 5,
+                textY
+            );
+
+            textY += (lines.length * 4) + 4;
+
+        });
+
+    });
+
+    // Save PDF
+    const fileName =
+        "Student_Registration_Details_" +
         new Date().toISOString().slice(0, 10) +
-        ".csv";
+        ".pdf";
 
-    document.body.appendChild(link);
+    doc.save(fileName);
 
-    link.click();
-
-    document.body.removeChild(link);
-
-    setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
+
+
 
     function getCSRFToken() {
         return document.querySelector(
@@ -1001,7 +1135,7 @@ let html = `
                    text-white rounded-xl font-semibold
                    active:scale-95 transition">
 
-            📥 Download Student Credentials
+            📄 Download Student Details (PDF)
 
         </button>
 
