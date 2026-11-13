@@ -970,128 +970,202 @@ function downloadSuccessfulStudents(students) {
 
             }
 
-            let html = `
+            
+let html = `
 
-                <div class="bg-green-50 border border-green-200
-                            rounded-xl p-5">
+    <div class="w-full max-w-full min-w-0
+                bg-green-50 border border-green-200
+                rounded-xl p-3 sm:p-5 overflow-hidden">
 
-                    <h3 class="font-bold text-green-800 mb-3">
+        <h3 class="text-base sm:text-lg font-bold
+                   text-green-800 mb-2">
 
-                        ${data.created} Students Registered Successfully
+            ${data.created} Students Registered Successfully
 
-                    </h3>
+        </h3>
 
-                    <p class="text-sm text-gray-700 mb-4">
+        <p class="text-sm text-gray-700 mb-4
+                  leading-relaxed break-words">
 
-    ${escapeHTML(data.message)}
+            ${escapeHTML(data.message)}
 
-</p>
+        </p>
 
-<button
-    type="button"
-    id="downloadStudentCredentials"
-    class="mb-5 inline-flex items-center gap-2
-           px-5 py-3 bg-blue-600 hover:bg-blue-700
-           text-white rounded-xl font-semibold">
+        <button
+            type="button"
+            id="downloadStudentCredentials"
+            class="w-full sm:w-auto mb-5
+                   inline-flex items-center justify-center gap-2
+                   px-4 py-3 text-sm sm:text-base
+                   bg-blue-600 hover:bg-blue-700
+                   text-white rounded-xl font-semibold
+                   active:scale-95 transition">
 
-    📥 Download Student Credentials
+            📥 Download Student Credentials
 
-</button>
-            `;
+        </button>
 
-            if (data.successful_students.length) {
+`;
 
-                html += `
+if (data.successful_students.length) {
 
-                    <div class="overflow-x-auto">
+    html += `
 
-                        <table class="w-full text-sm text-left">
+        <div class="w-full min-w-0 space-y-3">
 
-                            <thead>
+            <h4 class="font-bold text-gray-800 text-sm sm:text-base">
 
-                                <tr class="border-b">
+                Successfully Registered Students
 
-                                    <th class="p-2">Name</th>
-                                    <th class="p-2">Admission No.</th>
-                                    <th class="p-2">Username</th>
-                                    <th class="p-2">Password</th>
+            </h4>
 
-                                </tr>
+    `;
 
-                            </thead>
+    data.successful_students.forEach((student, index) => {
 
-                            <tbody>
+        html += `
 
-                `;
+            <div class="w-full min-w-0
+                        bg-white border border-gray-200
+                        rounded-xl p-3 sm:p-4
+                        shadow-sm overflow-hidden">
 
-                data.successful_students.forEach(student => {
+                <div class="flex items-center justify-between
+                            gap-2 mb-3">
 
-                    html += `
+                    <span class="text-xs sm:text-sm
+                                 font-bold text-gray-500">
 
-                        <tr class="border-b">
+                        Student ${index + 1}
 
-                            <td class="p-2">
-                                ${escapeHTML(student.name)}
-                            </td>
+                    </span>
 
-                            <td class="p-2">
-                                ${escapeHTML(student.admission_no)}
-                            </td>
+                    <span class="text-xs font-semibold
+                                 text-green-700 bg-green-100
+                                 rounded-full px-2 py-1">
 
-                            <td class="p-2">
-                                ${escapeHTML(student.username)}
-                            </td>
+                        Registered
 
-                            <td class="p-2 font-bold">
-                                ${escapeHTML(student.password)}
-                            </td>
+                    </span>
 
-                        </tr>
+                </div>
 
-                    `;
+                <div class="grid grid-cols-1
+                            sm:grid-cols-2 lg:grid-cols-4
+                            gap-3">
 
-                });
+                    <div class="min-w-0">
 
-                html += "</tbody></table></div>";
+                        <p class="text-xs text-gray-500 mb-1">
+                            Student Name
+                        </p>
 
-            }
+                        <p class="text-sm font-semibold
+                                  text-gray-800 break-all">
 
-            if (data.failed_students.length) {
-
-                html += `
-
-                    <div class="mt-5 bg-red-50 border border-red-200
-                                rounded-xl p-4">
-
-                        <h4 class="font-bold text-red-700 mb-3">
-
-                            Failed Records
-
-                        </h4>
-
-                `;
-
-                data.failed_students.forEach(item => {
-
-                    html += `
-
-                        <p class="text-sm text-red-700 mb-2">
-
-                            Student ${item.row}:
-                            ${escapeHTML(item.name)} —
-                            ${escapeHTML(item.error)}
+                            ${escapeHTML(student.name)}
 
                         </p>
 
-                    `;
+                    </div>
 
-                });
+                    <div class="min-w-0">
 
-                html += "</div>";
+                        <p class="text-xs text-gray-500 mb-1">
+                            Admission Number
+                        </p>
 
-            }
+                        <p class="text-sm font-semibold
+                                  text-gray-800 break-all">
 
-            html += "</div>";
+                            ${escapeHTML(student.admission_no)}
+
+                        </p>
+
+                    </div>
+
+                    <div class="min-w-0">
+
+                        <p class="text-xs text-gray-500 mb-1">
+                            Username
+                        </p>
+
+                        <p class="text-sm font-semibold
+                                  text-blue-700 break-all">
+
+                            ${escapeHTML(student.username)}
+
+                        </p>
+
+                    </div>
+
+                    <div class="min-w-0">
+
+                        <p class="text-xs text-gray-500 mb-1">
+                            Password
+                        </p>
+
+                        <p class="text-sm font-bold
+                                  text-gray-900 break-all">
+
+                            ${escapeHTML(student.password)}
+
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+
+        `;
+
+    });
+
+    html += `</div>`;
+
+}
+
+if (data.failed_students.length) {
+
+    html += `
+
+        <div class="mt-5 w-full min-w-0
+                    bg-red-50 border border-red-200
+                    rounded-xl p-3 sm:p-4 overflow-hidden">
+
+            <h4 class="font-bold text-red-700 mb-3">
+
+                Failed Records
+
+            </h4>
+
+    `;
+
+    data.failed_students.forEach(item => {
+
+        html += `
+
+            <p class="text-sm text-red-700 mb-3
+                      leading-relaxed break-words">
+
+                Student ${item.row}:
+                ${escapeHTML(item.name)} —
+                ${escapeHTML(item.error)}
+
+            </p>
+
+        `;
+
+    });
+
+    html += `</div>`;
+
+}
+
+html += `</div>`;
+
+               
 
             document.getElementById(
                 "bulkSaveResults"
