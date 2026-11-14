@@ -459,5 +459,111 @@ h3{
 </style>
 
 
+<script>
+(function () {
+    var currentPath = window.location.pathname.toLowerCase();
+
+    var loginPending = sessionStorage.getItem(
+        'tcLoginPendingGreeting'
+    );
+
+    if (currentPath.includes('login')) {
+        sessionStorage.setItem('tcLoginPendingGreeting', '1');
+        return;
+    }
+
+    if (loginPending !== '1') return;
+
+    sessionStorage.removeItem('tcLoginPendingGreeting');
+
+    // Capture the logged-in user's registered name or username.
+    var userName = "{{ request.user.get_full_name|default:request.user.username|escapejs }}".trim();
+
+    var hour = new Date().getHours();
+
+    var greeting = hour < 12
+        ? 'Good morning'
+        : hour < 17
+            ? 'Good afternoon'
+            : 'Good evening';
+
+    function showGreeting() {
+        if (document.getElementById('tc-welcome-greeting')) return;
+
+        var box = document.createElement('div');
+
+        box.id = 'tc-welcome-greeting';
+
+        var heading = document.createElement('div');
+        heading.textContent = 'WELCOME TO TECHCENTER';
+        heading.style.cssText =
+            'font-size:12px;color:#64748b;margin-bottom:4px;';
+
+        var message = document.createElement('div');
+        message.textContent = greeting + (userName ? ', ' + userName : '') + '!';
+        message.style.cssText =
+            'font-size:17px;font-weight:800;color:#0f172a;';
+
+        var footer = document.createElement('div');
+        footer.textContent = 'Wishing you a productive day.';
+        footer.style.cssText =
+            'font-size:12px;color:#64748b;margin-top:4px;';
+
+        box.appendChild(heading);
+        box.appendChild(message);
+        box.appendChild(footer);
+
+        box.style.cssText =
+            'position:fixed;' +
+            'top:calc(14px + env(safe-area-inset-top,0px));' +
+            'right:14px;' +
+            'z-index:2147483000;' +
+            'width:calc(100% - 40px);' +
+            'max-width:310px;' +
+            'box-sizing:border-box;' +
+            'padding:15px 18px;' +
+            'background:white;' +
+            'border:1px solid #e2e8f0;' +
+            'border-right:4px solid #4f46e5;' +
+            'border-radius:15px;' +
+            'box-shadow:0 8px 28px rgba(15,23,42,.16);' +
+            'font-family:Arial,sans-serif;' +
+            'animation:tcWelcomeIn .35s ease;';
+
+        document.body.appendChild(box);
+
+        setTimeout(function () {
+            box.style.transition = 'opacity .5s ease';
+            box.style.opacity = '0';
+
+            setTimeout(function () {
+                box.remove();
+            }, 550);
+        }, 5000);
+    }
+
+    if (!document.getElementById('tc-welcome-style')) {
+        var style = document.createElement('style');
+        style.id = 'tc-welcome-style';
+
+        style.textContent =
+            '@keyframes tcWelcomeIn {' +
+            'from { opacity:0; transform:translateY(-12px); }' +
+            'to { opacity:1; transform:translateY(0); }' +
+            '}';
+
+        document.head.appendChild(style);
+    }
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', showGreeting, {
+            once: true
+        });
+    } else {
+        showGreeting();
+    }
+})();
+</script>
+
 
 {% endblock %}
