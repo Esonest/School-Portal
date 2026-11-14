@@ -744,15 +744,16 @@ function downloadSuccessfulStudents(students) {
     // Android app: save the generated PDF through the native bridge.
 if (
     window.TechcenterBridge &&
-    typeof window.TechcenterBridge.savePdfToDownloads === "function"
+    typeof window.TechcenterBridge.saveFileToDownloads === "function"
 ) {
     try {
         const pdfDataUri = doc.output("datauristring");
         const base64Data = pdfDataUri.split(",")[1];
 
-        window.TechcenterBridge.savePdfToDownloads(
+        window.TechcenterBridge.saveFileToDownloads(
             fileName,
-            base64Data
+            base64Data,
+            "application/pdf"
         );
 
     } catch (error) {
