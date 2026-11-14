@@ -741,7 +741,29 @@ function downloadSuccessfulStudents(students) {
         new Date().toISOString().slice(0, 10) +
         ".pdf";
 
+    // Android app: save the generated PDF through the native bridge.
+if (
+    window.TechcenterBridge &&
+    typeof window.TechcenterBridge.savePdfToDownloads === "function"
+) {
+    try {
+        const pdfDataUri = doc.output("datauristring");
+        const base64Data = pdfDataUri.split(",")[1];
+
+        window.TechcenterBridge.savePdfToDownloads(
+            fileName,
+            base64Data
+        );
+
+    } catch (error) {
+        console.error("TECHCENTER PDF download failed:", error);
+        alert("Unable to prepare the PDF. Please try again.");
+    }
+
+} else {
+    // Chrome and other ordinary browsers retain their normal download.
     doc.save(fileName);
+}
 
 }
 
