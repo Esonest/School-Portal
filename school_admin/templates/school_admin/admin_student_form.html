@@ -756,9 +756,15 @@ if (
         );
 
     } catch (error) {
-        console.error("TECHCENTER PDF download failed:", error);
-        alert("Unable to download PDF, try again.");
-    }
+    console.error("TECHCENTER PDF download failed:", error);
+
+    alert(
+        "PDF ERROR:\n" +
+        (error && error.message
+            ? error.message
+            : String(error))
+    );
+}
 
 } else {
     doc.save(fileName);
