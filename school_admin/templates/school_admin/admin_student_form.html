@@ -744,25 +744,23 @@ function downloadSuccessfulStudents(students) {
     // Android app: save the generated PDF through the native bridge.
 if (
     window.TechcenterBridge &&
-    typeof window.TechcenterBridge.saveFileToDownloads === "function"
+    typeof window.TechcenterBridge.savePdfToDownloads === "function"
 ) {
     try {
         const pdfDataUri = doc.output("datauristring");
         const base64Data = pdfDataUri.split(",")[1];
 
-        window.TechcenterBridge.saveFileToDownloads(
-            fileName,
+        window.TechcenterBridge.savePdfToDownloads(
             base64Data,
-            "application/pdf"
+            fileName
         );
 
     } catch (error) {
         console.error("TECHCENTER PDF download failed:", error);
-        alert("Unable to prepare the PDF. Please try again.");
+        alert("Unable to download PDF, try again.");
     }
 
 } else {
-    // Chrome and other ordinary browsers retain their normal download.
     doc.save(fileName);
 }
 
