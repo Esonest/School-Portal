@@ -499,6 +499,74 @@ document.addEventListener('DOMContentLoaded', function () {
   const EXAM_MAX = {{ exam_max|default_if_none:60 }};
   const IS_CA_ENABLED = {{ is_ca_enabled|yesno:"true,false" }};
 
+
+  // ==========================================
+  // IMMEDIATE MAXIMUM SCORE VALIDATION
+  // ==========================================
+
+  function validateScoreInput(input) {
+    if (!input) return true;
+
+    const isCA = input.classList.contains('ca-input');
+
+    const maximum = isCA ? CA_MAX : EXAM_MAX;
+
+    const value = input.value.trim();
+
+    const numericValue = Number(value);
+
+const invalid = value !== '' &&
+    (
+      !Number.isFinite(numericValue) ||
+      numericValue < 0 ||
+      numericValue > maximum
+    );
+
+    input.classList.toggle('score-invalid', invalid);
+    input.setAttribute('aria-invalid', invalid ? 'true' : 'false');
+
+    let warning = input.parentElement.querySelector(
+      '.score-validation-message'
+    );
+
+    if (invalid) {
+      if (!warning) {
+        warning = document.createElement('div');
+        warning.className = 'score-validation-message';
+        input.insertAdjacentElement('afterend', warning);
+      }
+
+      if (numericValue < 0) {
+  warning.textContent = 'Score cannot be less than 0.';
+} else {
+  warning.textContent =
+    'Maximum allowed score is ' + maximum +
+    '. You entered ' + value + '.';
+}
+
+      return false;
+    }
+
+    if (warning) {
+      warning.remove();
+    }
+
+    return true;
+  }
+
+  function validateAllScores() {
+    let valid = true;
+
+    document.querySelectorAll('.ca-input, .exam-input').forEach(function(input) {
+      if (!validateScoreInput(input)) {
+        valid = false;
+      }
+    });
+
+    return valid;
+  }
+
+
   function calcTotal(student, subject) {
     const caInput = document.getElementById(`ca_${student}_${subject}`);
     const examInput = document.getElementById(`exam_${student}_${subject}`);
@@ -507,25 +575,72 @@ document.addEventListener('DOMContentLoaded', function () {
     if (!totalInput) return;
 
     const ca = (caInput && IS_CA_ENABLED)
-      ? (parseFloat(caInput.value) || 0)
-      : 0;
+        ? (parseFloat(caInput.value) || 0)
+        : 0;
 
     const exam = examInput
-      ? (parseFloat(examInput.value) || 0)
-      : 0;
+        ? (parseFloat(examInput.value) || 0)
+        : 0;
 
     totalInput.value = ca + exam;
-  }
+}
 
+  
   document.querySelectorAll('.ca-input, .exam-input').forEach(function(input) {
+
+    // Check existing saved scores when the page opens.
+    validateScoreInput(input);
+
     input.addEventListener('input', function() {
+
+      // Update the total immediately.
       calcTotal(this.dataset.student, this.dataset.subject);
+
+      // Flag scores exceeding the maximum immediately.
+      validateScoreInput(this);
     });
+
+    input.addEventListener('change', function() {
+      validateScoreInput(this);
+    });
+
   });
+
 
   document.querySelectorAll('.exam-input').forEach(function(input) {
     calcTotal(input.dataset.student, input.dataset.subject);
   });
+
+
+  // Stop saving or submitting if any score exceeds its maximum.
+  const bulkForm = document.getElementById('bulk-scores-form');
+
+  if (bulkForm) {
+    bulkForm.addEventListener('submit', function(event) {
+
+      if (!validateAllScores()) {
+        event.preventDefault();
+
+        const firstInvalid = bulkForm.querySelector('.score-invalid');
+
+        if (firstInvalid) {
+          firstInvalid.scrollIntoView({
+            behavior: 'smooth',
+            block: 'center'
+          });
+
+          firstInvalid.focus();
+        }
+
+        showToast(
+          'Please correct the highlighted scores before continuing.',
+          'error'
+        );
+      }
+
+    });
+  }
+
 
   // DELETE button AJAX with toast
   function getCookie(name) {
@@ -633,6 +748,160 @@ document.addEventListener('DOMContentLoaded', function () {
 .animate-fadein {
   animation: fadein 0.3s ease forwards;
 }
+</style>
+
+<style>
+
+/* ==============================================
+   TECHCENTER ANDROID — NATIVE SCORE ENTRY
+   Android app only
+============================================== */
+
+html.techcenter-android-app body {
+    background: #f1f5f9 !important;
+}
+
+html.techcenter-android-app .score-student-card {
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 20px !important;
+    background: #fff !important;
+    box-shadow: 0 4px 14px rgba(15,23,42,.06) !important;
+    margin-bottom: 17px;
+}
+
+html.techcenter-android-app .score-student-card > div:first-child {
+    background: #f8fafc !important;
+    padding: 15px !important;
+}
+
+html.techcenter-android-app .score-student-card > div:first-child h2 {
+    font-size: 16px !important;
+    font-weight: 800 !important;
+}
+
+html.techcenter-android-app .subject-score-card {
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 17px !important;
+    padding: 14px !important;
+    background: #fff !important;
+    box-shadow: 0 2px 8px rgba(15,23,42,.035);
+}
+
+html.techcenter-android-app .score-subject-heading {
+    font-size: 14px !important;
+    font-weight: 800 !important;
+    color: #334155 !important;
+    padding-bottom: 9px;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+html.techcenter-android-app .score-entry-grid {
+    gap: 10px !important;
+}
+
+html.techcenter-android-app .score-field label {
+    font-size: 12px !important;
+    font-weight: 800 !important;
+    color: #64748b !important;
+    margin-bottom: 7px !important;
+}
+
+html.techcenter-android-app .score-field input[type="number"] {
+    width: 100% !important;
+    height: 57px !important;
+    box-sizing: border-box !important;
+    border: 1.5px solid #cbd5e1 !important;
+    border-radius: 14px !important;
+    background: #f8fafc !important;
+    color: #0f172a !important;
+    font-size: 21px !important;
+    font-weight: 800 !important;
+    text-align: center !important;
+    padding: 8px !important;
+    outline: none !important;
+    -webkit-appearance: none;
+    appearance: none;
+    transition: border-color .15s ease, box-shadow .15s ease;
+}
+
+html.techcenter-android-app .score-field input[type="number"]:focus {
+    border-color: #4f46e5 !important;
+    background: #fff !important;
+    box-shadow: 0 0 0 4px rgba(79,70,229,.12) !important;
+}
+
+/* Invalid score appearance */
+html.techcenter-android-app .score-field input.score-invalid {
+    border: 2px solid #dc2626 !important;
+    background: #fff1f2 !important;
+    color: #b91c1c !important;
+    box-shadow: 0 0 0 3px rgba(220,38,38,.09) !important;
+}
+
+html.techcenter-android-app .score-validation-message {
+    display: block;
+    color: #dc2626;
+    font-size: 11px;
+    font-weight: 800;
+    line-height: 1.4;
+    margin-top: 7px;
+}
+
+html.techcenter-android-app .score-total-box {
+    border-radius: 13px !important;
+    padding: 12px !important;
+    background: #eff6ff !important;
+    border: 1px solid #dbeafe;
+}
+
+html.techcenter-android-app .score-total-box input {
+    font-size: 20px !important;
+    font-weight: 900 !important;
+}
+
+html.techcenter-android-app .score-delete-btn {
+    min-height: 43px !important;
+    border-radius: 11px !important;
+    font-weight: 700 !important;
+}
+
+html.techcenter-android-app .filter-select {
+    min-height: 52px !important;
+    border-radius: 13px !important;
+    background-color: #f8fafc !important;
+    font-size: 15px !important;
+}
+
+html.techcenter-android-app .score-action-btn {
+    min-height: 54px !important;
+    border-radius: 14px !important;
+    font-size: 14px !important;
+    font-weight: 800 !important;
+    box-shadow: 0 4px 10px rgba(15,23,42,.09);
+    -webkit-tap-highlight-color: transparent;
+}
+
+html.techcenter-android-app .score-action-btn:active {
+    transform: scale(.98);
+    filter: brightness(.92);
+}
+
+html.techcenter-android-app #bulk-scores-form > div:last-child {
+    border-radius: 18px !important;
+    padding: 15px !important;
+}
+
+@media (max-width: 380px) {
+    html.techcenter-android-app .score-entry-grid {
+        gap: 7px !important;
+    }
+
+    html.techcenter-android-app .score-field input[type="number"] {
+        height: 53px !important;
+        font-size: 19px !important;
+    }
+}
+
 </style>
 
 {% endblock %}

@@ -81,7 +81,239 @@
   }
 </style>
 
-<div class="w-full max-w-7xl mx-auto px-3 py-4 sm:px-6 sm:py-6">
+
+<style>
+/* ==============================================
+   TECHCENTER — NATIVE ANDROID RATING EXPERIENCE
+   Android application only
+============================================== */
+
+html.techcenter-android-app body {
+    background: #f1f5f9 !important;
+}
+
+/* Main page spacing */
+html.techcenter-android-app .rating-page {
+    padding: 14px 12px 28px !important;
+}
+
+/* Page heading */
+html.techcenter-android-app .rating-page-title {
+    font-size: 21px !important;
+    line-height: 1.3 !important;
+    font-weight: 900 !important;
+    letter-spacing: -.4px;
+    margin-bottom: 16px !important;
+}
+
+/* Filter panel */
+html.techcenter-android-app .rating-filter-panel {
+    background: #fff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 19px !important;
+    padding: 15px !important;
+    box-shadow: 0 3px 12px rgba(15,23,42,.045) !important;
+}
+
+html.techcenter-android-app .rating-filter-panel label {
+    font-size: 12px !important;
+    font-weight: 800 !important;
+    color: #64748b !important;
+    margin-bottom: 7px !important;
+}
+
+html.techcenter-android-app .rating-filter-panel select {
+    width: 100% !important;
+    min-height: 53px !important;
+    padding: 12px 13px !important;
+    border: 1px solid #cbd5e1 !important;
+    border-radius: 13px !important;
+    background: #f8fafc !important;
+    color: #0f172a !important;
+    font-size: 15px !important;
+    font-weight: 600 !important;
+    outline: none !important;
+}
+
+/* Section headings */
+html.techcenter-android-app .rating-section-heading {
+    margin-bottom: 15px !important;
+    align-items: center !important;
+}
+
+html.techcenter-android-app .rating-section-heading h2 {
+    font-size: 18px !important;
+    font-weight: 900 !important;
+    color: #0f172a !important;
+}
+
+html.techcenter-android-app .rating-section-heading p {
+    font-size: 12px !important;
+    color: #64748b !important;
+    margin-top: 4px !important;
+}
+
+/* Student cards */
+html.techcenter-android-app .rating-card {
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 19px !important;
+    background: #fff !important;
+    overflow: hidden !important;
+    box-shadow: 0 3px 12px rgba(15,23,42,.055) !important;
+    margin-bottom: 2px;
+}
+
+/* Student header */
+html.techcenter-android-app .rating-card-header {
+    padding: 15px !important;
+}
+
+html.techcenter-android-app .rating-card-header h3 {
+    font-size: 15px !important;
+    font-weight: 850 !important;
+    color: #0f172a !important;
+}
+
+html.techcenter-android-app .rating-card-header p {
+    font-size: 12px !important;
+    color: #64748b !important;
+}
+
+/* Rating rows */
+html.techcenter-android-app .rating-card-content {
+    padding: 5px 14px 12px !important;
+}
+
+html.techcenter-android-app .rating-row {
+    min-height: 57px !important;
+    padding: 10px 0 !important;
+    gap: 5px !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+}
+
+html.techcenter-android-app .rating-label {
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    color: #334155 !important;
+}
+
+/* Large, touch-friendly stars */
+html.techcenter-android-app .star-group {
+    gap: 3px !important;
+}
+
+html.techcenter-android-app .star-btn {
+    width: 35px !important;
+    height: 43px !important;
+    padding: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    border: none !important;
+    border-radius: 10px !important;
+    background: transparent !important;
+    font-size: 27px !important;
+    line-height: 1 !important;
+    -webkit-tap-highlight-color: transparent !important;
+    touch-action: manipulation;
+    transition: transform .12s ease, background .12s ease;
+}
+
+html.techcenter-android-app .star-btn:active {
+    transform: scale(.82) !important;
+    background: #fef3c7 !important;
+}
+
+html.techcenter-android-app .star-btn:focus-visible {
+    outline: 2px solid #4f46e5 !important;
+    outline-offset: 1px;
+}
+
+/* Psychomotor header */
+html.techcenter-android-app .psychomotor-card-header {
+    background: #eff6ff !important;
+    border-bottom: 1px solid #dbeafe !important;
+}
+
+/* Affective header */
+html.techcenter-android-app .affective-card-header {
+    background: #faf5ff !important;
+    border-bottom: 1px solid #f3e8ff !important;
+}
+
+/* Rating section cards */
+html.techcenter-android-app .psychomotor-section,
+html.techcenter-android-app .affective-section {
+    margin-bottom: 27px !important;
+}
+
+/* Bottom save panel */
+html.techcenter-android-app .rating-save-panel {
+    padding: 15px !important;
+    border-radius: 19px !important;
+    background: #fff !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: 0 4px 15px rgba(15,23,42,.06) !important;
+}
+
+html.techcenter-android-app .rating-save-btn {
+    width: 100% !important;
+    min-height: 55px !important;
+    border-radius: 14px !important;
+    font-size: 14px !important;
+    font-weight: 850 !important;
+    -webkit-tap-highlight-color: transparent;
+    touch-action: manipulation;
+    transition: transform .12s ease, filter .12s ease;
+}
+
+html.techcenter-android-app .rating-save-btn:active {
+    transform: scale(.98);
+    filter: brightness(.92);
+}
+
+/* Pagination */
+html.techcenter-android-app .rating-pagination a {
+    min-height: 43px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 9px 16px !important;
+    border-radius: 11px !important;
+    background: #f8fafc !important;
+    font-weight: 700 !important;
+}
+
+/* Small screens */
+@media (max-width: 380px) {
+    html.techcenter-android-app .star-btn {
+        width: 29px !important;
+        min-width: 29px !important;
+        height: 40px !important;
+        font-size: 23px !important;
+    }
+
+    html.techcenter-android-app .star-group {
+        gap: 1px !important;
+    }
+
+    html.techcenter-android-app .rating-row {
+        gap: 3px !important;
+    }
+
+    html.techcenter-android-app .rating-label {
+        font-size: 12px !important;
+    }
+
+    html.techcenter-android-app .rating-card-content {
+        padding-left: 10px !important;
+        padding-right: 10px !important;
+    }
+}
+</style>
+
+
+<div class="rating-page w-full max-w-7xl mx-auto px-3 py-4 sm:px-6 sm:py-6">
 
   <!-- Messages -->
   {% if messages %}
@@ -96,11 +328,11 @@
 
   <!-- Heading and selectors -->
   <div class="mb-5">
-    <h1 class="text-xl sm:text-2xl font-bold text-{{ school.theme_color }}-600 leading-tight mb-4">
+    <h1 class="rating-page-title text-xl sm:text-2xl font-bold text-{{ school.theme_color }}-600 leading-tight mb-4">
       Bulk Psychomotor &amp; Affective Entry
     </h1>
 
-    <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-3 sm:p-4">
+    <div class="rating-filter-panel bg-white border border-gray-200 rounded-xl shadow-sm p-3 sm:p-4">
       <form method="get" class="grid grid-cols-1 sm:grid-cols-3 gap-3">
 
         <input type="hidden" name="page" value="{{ page_obj.number }}">
@@ -163,9 +395,9 @@
 
     <!-- ================= PSYCHOMOTOR CARDS ================= -->
 
-    <section class="mb-7">
+   <section class="psychomotor-section mb-7">
 
-      <div class="flex items-center gap-3 mb-3">
+      <div class="rating-section-heading flex items-center gap-3 mb-3">
         <div class="w-1.5 h-9 bg-blue-600 rounded-full"></div>
         <div>
           <h2 class="text-lg sm:text-xl font-bold text-gray-800">
@@ -183,7 +415,7 @@
 
           <div class="rating-card bg-white border border-gray-200 rounded-xl shadow-sm">
 
-            <div class="bg-blue-50 border-b border-blue-100 p-3">
+            <div class="rating-card-header psychomotor-card-header bg-blue-50 border-b border-blue-100 p-3">
               <div class="flex items-start gap-2">
                 <span class="flex-shrink-0 flex items-center justify-center w-7 h-7 rounded-full bg-blue-600 text-white text-xs font-bold">
                   {{ forloop.counter0|add:page_obj.start_index }}
@@ -201,7 +433,7 @@
               </div>
             </div>
 
-            <div class="px-3 py-1">
+            <div class="rating-card-content px-3 py-1">
 
               <div class="rating-row">
                 <label class="rating-label">Neatness</label>
@@ -287,9 +519,9 @@
 
     <!-- ================= AFFECTIVE CARDS ================= -->
 
-    <section class="mb-7">
+   <section class="affective-section mb-7">
 
-      <div class="flex items-center gap-3 mb-3">
+      <div class="rating-section-heading flex items-center gap-3 mb-3">
         <div class="w-1.5 h-9 bg-purple-600 rounded-full"></div>
         <div>
           <h2 class="text-lg sm:text-xl font-bold text-gray-800">
@@ -307,7 +539,7 @@
 
           <div class="rating-card bg-white border border-gray-200 rounded-xl shadow-sm">
 
-            <div class="bg-purple-50 border-b border-purple-100 p-3">
+            <div class="rating-card-header affective-card-header bg-purple-50 border-b border-purple-100 p-3">
               <div class="flex items-start gap-2">
                 <span class="flex-shrink-0 flex items-center justify-center w-7 h-7 rounded-full bg-purple-600 text-white text-xs font-bold">
                   {{ forloop.counter0|add:page_obj.start_index }}
@@ -325,7 +557,7 @@
               </div>
             </div>
 
-            <div class="px-3 py-1">
+           <div class="rating-card-content px-3 py-1">
 
               <div class="rating-row">
                 <label class="rating-label">Punctuality</label>
@@ -411,19 +643,19 @@
 
     <!-- ================= SAVE AND PAGINATION ================= -->
 
-    <div class="bg-white border border-gray-200 rounded-xl shadow-sm p-3 sm:p-4 mb-5">
+   <div class="rating-save-panel bg-white border border-gray-200 rounded-xl shadow-sm p-3 sm:p-4 mb-5">
 
       <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
 
         <button type="submit"
                 name="save"
-                class="w-full min-h-12 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold px-4 py-3 rounded-lg">
+                class="rating-save-btn w-full min-h-12 bg-yellow-500 hover:bg-yellow-600 text-white font-semibold px-4 py-3 rounded-lg">
           Save &amp; Continue Later
         </button>
 
         <button type="submit"
                 name="submit"
-                class="w-full min-h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-3 rounded-lg">
+                class="rating-save-btn w-full min-h-12 bg-blue-600 hover:bg-blue-700 text-white font-semibold px-4 py-3 rounded-lg">
           Submit All
         </button>
 
@@ -435,7 +667,7 @@
           Page {{ page_obj.number }} of {{ paginator.num_pages }}
         </span>
 
-        <div class="flex gap-2">
+        <div class="rating-pagination flex gap-2">
 
           {% if page_obj.has_previous %}
             <a href="?class_id={{ selected_class.id }}&session={{ selected_session|urlencode }}&term={{ selected_term }}&page={{ page_obj.previous_page_number }}"
