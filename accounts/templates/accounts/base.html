@@ -80,6 +80,73 @@ scroll-smooth {% if request.resolver_match.url_name == 'login' %}login-layout{% 
 </div>
 {% endif %}
 
+
+{% if user.is_authenticated %}
+<!-- ANDROID APP DISPLAY TOOLBAR -->
+<div id="android-display-toolbar">
+
+    <button type="button" id="android-dark-toggle" class="android-tool-button">
+        <span id="android-dark-icon">🌙</span>
+        <span id="android-dark-label">Dark</span>
+    </button>
+
+    <div class="android-zoom-controls">
+        <button type="button" id="android-zoom-out" class="android-tool-button" aria-label="Reduce screen size">−</button>
+        <span id="android-zoom-level">100%</span>
+        <button type="button" id="android-zoom-in" class="android-tool-button" aria-label="Enlarge screen">+</button>
+    </div>
+
+    <button type="button" id="android-notification-button"
+            class="android-tool-button android-notification-button"
+            aria-label="Open notifications">
+        <span>🔔</span>
+        <span>Alerts</span>
+        <span id="android-notification-count" class="android-notification-count" hidden>0</span>
+    </button>
+
+</div>
+
+<!-- ANDROID NOTIFICATION INBOX -->
+<div id="android-notification-overlay" hidden>
+
+    <div id="android-notification-panel">
+
+        <div class="android-notification-header">
+            <div>
+                <h2>Notifications</h2>
+                <p id="android-notification-summary">Your notification history</p>
+            </div>
+
+            <button type="button" id="android-notification-close"
+                    aria-label="Close notifications">✕</button>
+        </div>
+
+        <div class="android-notification-actions">
+            <button type="button" id="android-mark-all-read">Mark all as read</button>
+            <button type="button" id="android-clear-notifications">Clear history</button>
+        </div>
+
+        <div id="android-notification-list"></div>
+
+        <div id="android-notification-empty" hidden>
+            <div style="font-size:38px;">🔔</div>
+            <p>No notifications yet.</p>
+            <small>New notifications will appear here when received by the portal.</small>
+        </div>
+
+        <div id="android-notification-detail" hidden>
+            <button type="button" id="android-notification-back">← Back to notifications</button>
+            <h3 id="android-detail-title"></h3>
+            <p id="android-detail-date"></p>
+            <div id="android-detail-message"></div>
+            <a id="android-detail-link" href="#" hidden>Open related page →</a>
+        </div>
+
+    </div>
+</div>
+{% endif %}
+
+
 <!-- NAVBAR -->
 <nav class="sticky top-0 z-40 bg-slate-950/90 backdrop-blur-xl border-b border-white/10 shadow-lg">
 
@@ -209,10 +276,15 @@ scroll-smooth {% if request.resolver_match.url_name == 'login' %}login-layout{% 
 
 </nav>
 
+
 <!-- CONTENT -->
-<main class="{% if request.resolver_match.url_name == 'login' %}login-main{% else %}flex-grow max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8{% endif %}">
-    {% block content %}{% endblock %}
-</main>
+<div id="android-zoom-content">
+
+    <main class="{% if request.resolver_match.url_name == 'login' %}login-main{% else %}flex-grow max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8{% endif %}">
+        {% block content %}{% endblock %}
+    </main>
+
+</div>
 
 <!-- FOOTER -->
 <!-- FOOTER -->
@@ -444,6 +516,397 @@ body.login-layout #loginCard {
     }
 }
 
+
+
+/* ==========================================
+   TECHCENTER ANDROID DISPLAY TOOLBAR
+   ANDROID APP ONLY
+========================================== */
+
+#android-display-toolbar,
+#android-notification-overlay {
+    display: none;
+}
+
+html.techcenter-android-app #android-display-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 7px;
+    width: 100%;
+    padding: 9px 10px;
+    background: #ffffff;
+    border-bottom: 1px solid #e5e7eb;
+    position: relative;
+    z-index: 100;
+    box-sizing: border-box;
+}
+
+html.techcenter-android-app .android-tool-button {
+    min-width: 40px;
+    min-height: 40px;
+    padding: 5px 9px;
+    border: none;
+    border-radius: 11px;
+    background: #f1f5f9;
+    color: #1e293b;
+    font-size: 13px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    position: relative;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+html.techcenter-android-app .android-tool-button:active {
+    transform: scale(.95);
+    background: #dbeafe;
+}
+
+html.techcenter-android-app .android-zoom-controls {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+html.techcenter-android-app #android-zoom-level {
+    min-width: 43px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 800;
+    color: #475569;
+}
+
+html.techcenter-android-app .android-notification-count {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 20px;
+    background: #dc2626;
+    color: white;
+    font-size: 10px;
+    font-weight: 800;
+    border: 2px solid white;
+}
+
+html.techcenter-android-app .android-notification-count[hidden] {
+    display: none !important;
+}
+
+/* ==========================================
+   NOTIFICATION INBOX
+========================================== */
+
+html.techcenter-android-app #android-notification-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    background: rgba(15, 23, 42, .65);
+    padding: 12px;
+    box-sizing: border-box;
+    align-items: center;
+    justify-content: center;
+}
+
+html.techcenter-android-app #android-notification-overlay:not([hidden]) {
+    display: flex;
+}
+
+html.techcenter-android-app #android-notification-panel {
+    width: 100%;
+    max-width: 520px;
+    max-height: 85dvh;
+    overflow-y: auto;
+    background: white;
+    color: #1e293b;
+    border-radius: 19px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.25);
+    padding: 17px;
+    box-sizing: border-box;
+}
+
+html.techcenter-android-app .android-notification-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 13px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+html.techcenter-android-app .android-notification-header h2 {
+    font-size: 21px;
+    font-weight: 800;
+}
+
+html.techcenter-android-app .android-notification-header p {
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 3px;
+}
+
+html.techcenter-android-app #android-notification-close {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: #f1f5f9;
+    font-size: 19px;
+}
+
+html.techcenter-android-app .android-notification-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 12px 0;
+}
+
+html.techcenter-android-app .android-notification-actions button {
+    font-size: 11px;
+    font-weight: 700;
+    color: #2563eb;
+    padding: 7px;
+}
+
+html.techcenter-android-app #android-notification-list {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+}
+
+html.techcenter-android-app .android-notification-item {
+    width: 100%;
+    display: flex;
+    gap: 10px;
+    text-align: left;
+    padding: 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 13px;
+    background: #f8fafc;
+    color: #1e293b;
+}
+
+html.techcenter-android-app .android-notification-item.unread {
+    background: #eff6ff;
+    border-color: #bfdbfe;
+}
+
+html.techcenter-android-app .android-notification-item-content {
+    flex: 1;
+    min-width: 0;
+}
+
+html.techcenter-android-app .android-notification-item-title {
+    font-size: 13px;
+    font-weight: 800;
+    overflow-wrap: anywhere;
+}
+
+html.techcenter-android-app .android-notification-item-message {
+    font-size: 12px;
+    color: #475569;
+    margin-top: 4px;
+    overflow-wrap: anywhere;
+}
+
+html.techcenter-android-app .android-notification-item-date {
+    font-size: 10px;
+    color: #64748b;
+    margin-top: 7px;
+}
+
+html.techcenter-android-app .android-notification-unread-dot {
+    width: 9px;
+    height: 9px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: #2563eb;
+    margin-top: 5px;
+}
+
+html.techcenter-android-app #android-notification-empty {
+    text-align: center;
+    padding: 35px 15px;
+    color: #64748b;
+}
+
+html.techcenter-android-app #android-notification-empty p {
+    font-weight: 800;
+    margin: 10px 0 5px;
+}
+
+html.techcenter-android-app #android-notification-empty small {
+    font-size: 11px;
+}
+
+html.techcenter-android-app #android-notification-detail {
+    padding-top: 15px;
+}
+
+html.techcenter-android-app #android-notification-back {
+    color: #2563eb;
+    font-size: 12px;
+    font-weight: 700;
+    margin-bottom: 20px;
+}
+
+html.techcenter-android-app #android-detail-title {
+    font-size: 19px;
+    font-weight: 800;
+    overflow-wrap: anywhere;
+}
+
+html.techcenter-android-app #android-detail-date {
+    font-size: 11px;
+    color: #64748b;
+    margin: 8px 0 17px;
+}
+
+html.techcenter-android-app #android-detail-message {
+    font-size: 14px;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+html.techcenter-android-app #android-detail-link {
+    display: inline-block;
+    margin-top: 20px;
+    color: #2563eb;
+    font-weight: 700;
+    font-size: 13px;
+}
+
+/* ==========================================
+   ANDROID DARK MODE
+========================================== */
+
+html.techcenter-android-app.tc-dark {
+    color-scheme: dark;
+    background: #0f172a !important;
+}
+
+html.techcenter-android-app.tc-dark body {
+    background: #0f172a !important;
+    color: #e2e8f0 !important;
+}
+
+html.techcenter-android-app.tc-dark #android-display-toolbar {
+    background: #111827 !important;
+    border-color: #334155 !important;
+}
+
+html.techcenter-android-app.tc-dark .android-tool-button {
+    background: #263449 !important;
+    color: #f8fafc !important;
+}
+
+html.techcenter-android-app.tc-dark #android-zoom-level {
+    color: #e2e8f0 !important;
+}
+
+html.techcenter-android-app.tc-dark #android-notification-panel {
+    background: #111827 !important;
+    color: #f8fafc !important;
+}
+
+html.techcenter-android-app.tc-dark .android-notification-header {
+    border-color: #334155 !important;
+}
+
+html.techcenter-android-app.tc-dark .android-notification-header p,
+html.techcenter-android-app.tc-dark .android-notification-item-message,
+html.techcenter-android-app.tc-dark .android-notification-item-date,
+html.techcenter-android-app.tc-dark #android-detail-date {
+    color: #cbd5e1 !important;
+}
+
+html.techcenter-android-app.tc-dark .android-notification-item {
+    background: #1e293b !important;
+    color: #f8fafc !important;
+    border-color: #334155 !important;
+}
+
+html.techcenter-android-app.tc-dark .android-notification-item.unread {
+    background: #172b48 !important;
+    border-color: #2563eb !important;
+}
+
+html.techcenter-android-app.tc-dark #android-notification-close {
+    background: #263449 !important;
+    color: white !important;
+}
+
+html.techcenter-android-app.tc-dark #android-notification-empty {
+    color: #cbd5e1 !important;
+}
+
+/* Common Tailwind backgrounds */
+html.techcenter-android-app.tc-dark .bg-white,
+html.techcenter-android-app.tc-dark .bg-gray-50,
+html.techcenter-android-app.tc-dark .bg-gray-100,
+html.techcenter-android-app.tc-dark .bg-slate-50,
+html.techcenter-android-app.tc-dark .bg-slate-100,
+html.techcenter-android-app.tc-dark .bg-blue-50,
+html.techcenter-android-app.tc-dark .bg-indigo-50,
+html.techcenter-android-app.tc-dark .bg-purple-50,
+html.techcenter-android-app.tc-dark .bg-green-50,
+html.techcenter-android-app.tc-dark .bg-yellow-50 {
+    background-color: #1e293b !important;
+}
+
+/* Common Tailwind text colors */
+html.techcenter-android-app.tc-dark .text-gray-900,
+html.techcenter-android-app.tc-dark .text-gray-800,
+html.techcenter-android-app.tc-dark .text-gray-700,
+html.techcenter-android-app.tc-dark .text-gray-600,
+html.techcenter-android-app.tc-dark .text-slate-900,
+html.techcenter-android-app.tc-dark .text-slate-800,
+html.techcenter-android-app.tc-dark .text-slate-700,
+html.techcenter-android-app.tc-dark .text-slate-600 {
+    color: #e2e8f0 !important;
+}
+
+/* Form fields */
+html.techcenter-android-app.tc-dark input,
+html.techcenter-android-app.tc-dark select,
+html.techcenter-android-app.tc-dark textarea {
+    background-color: #1e293b !important;
+    color: #f8fafc !important;
+    border-color: #475569 !important;
+}
+
+html.techcenter-android-app.tc-dark input::placeholder,
+html.techcenter-android-app.tc-dark textarea::placeholder {
+    color: #94a3b8 !important;
+}
+
+@media (max-width: 380px) {
+    html.techcenter-android-app #android-display-toolbar {
+        gap: 4px;
+        padding: 7px 5px;
+    }
+
+    html.techcenter-android-app .android-tool-button {
+        padding: 5px 6px;
+        font-size: 11px;
+    }
+
+    html.techcenter-android-app #android-zoom-level {
+        min-width: 37px;
+        font-size: 11px;
+    }
+}
+
 </style>
 
 <!-- MOBILE SCRIPT -->
@@ -517,6 +980,359 @@ resetTimers();
     data-school-id="{{ user.school_id|default:''|escape }}"
 ></div>
 {% endif %}
+
+
+<script>
+(function () {
+    'use strict';
+
+    const root = document.documentElement;
+
+    // This entire feature is restricted to the Android app.
+    if (!root.classList.contains('techcenter-android-app')) return;
+
+    const toolbar = document.getElementById('android-display-toolbar');
+    if (!toolbar) return;
+
+    /* ======================================
+       DARK MODE
+    ====================================== */
+
+    const darkButton = document.getElementById('android-dark-toggle');
+    const darkIcon = document.getElementById('android-dark-icon');
+    const darkLabel = document.getElementById('android-dark-label');
+
+    let isDark = localStorage.getItem('tc_android_dark_mode') === 'true';
+
+    function applyDarkMode() {
+        root.classList.toggle('tc-dark', isDark);
+
+        darkIcon.textContent = isDark ? '☀️' : '🌙';
+        darkLabel.textContent = isDark ? 'Light' : 'Dark';
+
+        localStorage.setItem('tc_android_dark_mode', String(isDark));
+    }
+
+    darkButton.addEventListener('click', function () {
+        isDark = !isDark;
+        applyDarkMode();
+    });
+
+    applyDarkMode();
+
+
+    /* ======================================
+       PAGE ZOOM: 80% TO 150%
+    ====================================== */
+
+    const zoomContent = document.getElementById('android-zoom-content');
+    const zoomIn = document.getElementById('android-zoom-in');
+    const zoomOut = document.getElementById('android-zoom-out');
+    const zoomLevel = document.getElementById('android-zoom-level');
+
+    let zoom = parseFloat(localStorage.getItem('tc_android_zoom') || '1');
+
+    if (!Number.isFinite(zoom)) zoom = 1;
+
+    function applyZoom() {
+        zoom = Math.max(0.8, Math.min(1.5, zoom));
+
+        if (zoomContent) {
+            zoomContent.style.zoom = String(zoom);
+        }
+
+        zoomLevel.textContent = Math.round(zoom * 100) + '%';
+
+        localStorage.setItem('tc_android_zoom', String(zoom));
+    }
+
+    zoomIn.addEventListener('click', function () {
+        zoom = Math.round((zoom + 0.1) * 10) / 10;
+        applyZoom();
+    });
+
+    zoomOut.addEventListener('click', function () {
+        zoom = Math.round((zoom - 0.1) * 10) / 10;
+        applyZoom();
+    });
+
+    applyZoom();
+
+
+    /* ======================================
+       NOTIFICATION STORAGE
+    ====================================== */
+
+    const STORAGE_KEY = 'tc_android_notification_history';
+
+    const notificationButton = document.getElementById('android-notification-button');
+    const notificationCount = document.getElementById('android-notification-count');
+
+    const overlay = document.getElementById('android-notification-overlay');
+    const closeButton = document.getElementById('android-notification-close');
+
+    const list = document.getElementById('android-notification-list');
+    const empty = document.getElementById('android-notification-empty');
+    const summary = document.getElementById('android-notification-summary');
+
+    const markAllButton = document.getElementById('android-mark-all-read');
+    const clearButton = document.getElementById('android-clear-notifications');
+
+    const detail = document.getElementById('android-notification-detail');
+    const detailTitle = document.getElementById('android-detail-title');
+    const detailDate = document.getElementById('android-detail-date');
+    const detailMessage = document.getElementById('android-detail-message');
+    const detailLink = document.getElementById('android-detail-link');
+    const backButton = document.getElementById('android-notification-back');
+
+    function loadNotifications() {
+        try {
+            const data = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+            return Array.isArray(data) ? data : [];
+        } catch (error) {
+            console.error('Unable to read notification history:', error);
+            return [];
+        }
+    }
+
+    function saveNotifications(items) {
+        // Keep the latest 200 notifications.
+        items = items.slice(0, 200);
+
+        try {
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(items));
+        } catch (error) {
+            console.error('Unable to save notification history:', error);
+        }
+    }
+
+    function escapeNotificationText(value) {
+        return String(value == null ? '' : value);
+    }
+
+    function updateNotificationCount() {
+        const items = loadNotifications();
+        const unread = items.filter(item => !item.read).length;
+
+        notificationCount.textContent = unread > 99 ? '99+' : String(unread);
+        notificationCount.hidden = unread === 0;
+
+        summary.textContent =
+            items.length + ' saved notification' +
+            (items.length === 1 ? '' : 's') +
+            ' · ' + unread + ' unread';
+    }
+
+    function addNotification(data) {
+        if (!data || typeof data !== 'object') return;
+
+        const title = escapeNotificationText(data.title || data.subject || 'TECHCENTER Notification').trim();
+        const message = escapeNotificationText(data.message || data.body || data.text || '').trim();
+
+        if (!message && !title) return;
+
+        const items = loadNotifications();
+
+        // Avoid duplicate notifications when the same event is delivered again.
+        if (data.id && items.some(item => item.sourceId === String(data.id))) {
+            return;
+        }
+
+        const notification = {
+            id: 'tc_' + Date.now() + '_' + Math.random().toString(36).slice(2, 9),
+            sourceId: data.id ? String(data.id) : '',
+            title: title,
+            message: message,
+            date: data.date || data.timestamp || new Date().toISOString(),
+            url: data.url || '',
+            type: data.type || 'general',
+            read: false
+        };
+
+        items.unshift(notification);
+        saveNotifications(items);
+        updateNotificationCount();
+
+        // Refresh the inbox if it is already open.
+        if (!overlay.hidden) {
+            renderNotificationList();
+        }
+    }
+
+    function formatNotificationDate(value) {
+        const date = new Date(value);
+
+        if (Number.isNaN(date.getTime())) return '';
+
+        return date.toLocaleString();
+    }
+
+    function renderNotificationList() {
+        const items = loadNotifications();
+
+        list.replaceChildren();
+        detail.hidden = true;
+        list.hidden = false;
+        empty.hidden = items.length > 0;
+
+        items.forEach(function (item) {
+            const button = document.createElement('button');
+            button.type = 'button';
+            button.className = 'android-notification-item' +
+                (item.read ? '' : ' unread');
+
+            const content = document.createElement('div');
+            content.className = 'android-notification-item-content';
+
+            const title = document.createElement('div');
+            title.className = 'android-notification-item-title';
+            title.textContent = item.title;
+
+            const message = document.createElement('div');
+            message.className = 'android-notification-item-message';
+            message.textContent = item.message;
+
+            const date = document.createElement('div');
+            date.className = 'android-notification-item-date';
+            date.textContent = formatNotificationDate(item.date);
+
+            content.append(title, message, date);
+            button.appendChild(content);
+
+            if (!item.read) {
+                const dot = document.createElement('span');
+                dot.className = 'android-notification-unread-dot';
+                button.appendChild(dot);
+            }
+
+            button.addEventListener('click', function () {
+                openNotification(item.id);
+            });
+
+            list.appendChild(button);
+        });
+
+        updateNotificationCount();
+    }
+
+    function openNotification(id) {
+        const items = loadNotifications();
+        const item = items.find(notification => notification.id === id);
+
+        if (!item) return;
+
+        item.read = true;
+        saveNotifications(items);
+
+        list.hidden = true;
+        empty.hidden = true;
+        detail.hidden = false;
+
+        detailTitle.textContent = item.title;
+        detailDate.textContent = formatNotificationDate(item.date);
+        detailMessage.textContent = item.message;
+
+        detailLink.hidden = true;
+        detailLink.removeAttribute('href');
+
+        // Only allow links back to this website.
+        if (item.url) {
+            try {
+                const safeUrl = new URL(item.url, window.location.origin);
+
+                if (safeUrl.origin === window.location.origin) {
+                    detailLink.href = safeUrl.href;
+                    detailLink.hidden = false;
+                }
+            } catch (error) {
+                console.warn('Invalid notification URL.');
+            }
+        }
+
+        updateNotificationCount();
+    }
+
+    function openInbox() {
+        overlay.hidden = false;
+        document.body.style.overflow = 'hidden';
+        renderNotificationList();
+    }
+
+    function closeInbox() {
+        overlay.hidden = true;
+        document.body.style.overflow = '';
+    }
+
+    notificationButton.addEventListener('click', openInbox);
+    closeButton.addEventListener('click', closeInbox);
+
+    overlay.addEventListener('click', function (event) {
+        if (event.target === overlay) closeInbox();
+    });
+
+    backButton.addEventListener('click', renderNotificationList);
+
+    markAllButton.addEventListener('click', function () {
+        const items = loadNotifications();
+
+        items.forEach(item => {
+            item.read = true;
+        });
+
+        saveNotifications(items);
+        renderNotificationList();
+    });
+
+    clearButton.addEventListener('click', function () {
+        if (!confirm('Clear all saved notifications? This cannot be undone.')) {
+            return;
+        }
+
+        saveNotifications([]);
+        renderNotificationList();
+    });
+
+    /* ======================================
+       RECEIVE NOTIFICATIONS FROM PAGE JS
+    ====================================== */
+
+    // Other portal scripts can send notifications using:
+    // window.dispatchEvent(new CustomEvent('techcenter:notification', {
+    //     detail: {title: 'New result', message: 'Your result is ready.'}
+    // }));
+
+    window.addEventListener('techcenter:notification', function (event) {
+        addNotification(event.detail);
+    });
+
+    // Simple helper for existing portal scripts.
+    window.TechcenterNotifications = {
+        add: addNotification,
+        open: openInbox,
+        refresh: updateNotificationCount
+    };
+
+    /* ======================================
+       SAVE DJANGO FLASH MESSAGES
+    ====================================== */
+
+    document.querySelectorAll('#flash-container .flash-message').forEach(function (element) {
+        const message = element.textContent.trim();
+
+        if (!message) return;
+
+        addNotification({
+            title: 'Portal notification',
+            message: message,
+            type: 'django-message'
+        });
+    });
+
+    updateNotificationCount();
+
+})();
+</script>
+
 
 </body>
 </html>
