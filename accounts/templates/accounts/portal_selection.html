@@ -667,6 +667,325 @@ h3{
 </style>
 
 
+<style>
+/* =====================================================
+   TECHCENTER MOBILE — NATIVE ANDROID PORTAL EXPERIENCE
+   Android app only. Desktop browser remains unchanged.
+===================================================== */
+
+/* Main page background */
+html.techcenter-android-app body {
+    background: #f1f5f9 !important;
+}
+
+/* Remove excessive desktop spacing */
+html.techcenter-android-app body .portal-main {
+    min-height: auto !important;
+    margin-top: -12px !important;
+    padding: 0 14px calc(30px + env(safe-area-inset-bottom, 0px)) !important;
+    align-items: flex-start !important;
+}
+
+html.techcenter-android-app body .portal-sections {
+    width: 100% !important;
+    max-width: 100% !important;
+    gap: 25px !important;
+}
+
+/* =====================================================
+   1. WELCOME HEADER
+===================================================== */
+
+html.techcenter-android-app body .portal-hero {
+    height: 185px !important;
+    min-height: 185px !important;
+    border-radius: 0 0 26px 26px;
+    box-shadow: 0 8px 22px rgba(15, 23, 42, .12);
+}
+
+html.techcenter-android-app body .portal-hero > div:nth-child(2) img {
+    width: 190px !important;
+    opacity: .12;
+}
+
+html.techcenter-android-app body .portal-hero .relative.z-10 {
+    width: calc(100% - 32px);
+    max-width: 420px;
+    padding: 15px 12px !important;
+    border-radius: 18px !important;
+    background: rgba(15, 23, 42, .48) !important;
+    border: 1px solid rgba(255, 255, 255, .14);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, .12);
+}
+
+html.techcenter-android-app body .portal-hero h2 {
+    font-size: clamp(18px, 5vw, 23px) !important;
+    line-height: 1.35 !important;
+    font-weight: 800 !important;
+}
+
+html.techcenter-android-app body .portal-hero p {
+    font-size: 12px !important;
+    margin-top: 6px !important;
+}
+
+/* =====================================================
+   2. SCHOOL IDENTITY
+===================================================== */
+
+html.techcenter-android-app body .portal-school-header {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: flex-start !important;
+    text-align: left !important;
+    flex-wrap: nowrap !important;
+    gap: 12px !important;
+    margin: 18px 4px 25px !important;
+    padding: 13px !important;
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0;
+    border-radius: 19px;
+    box-shadow: 0 4px 13px rgba(15, 23, 42, .055);
+}
+
+html.techcenter-android-app body .portal-school-header img {
+    width: 48px !important;
+    height: 48px !important;
+    flex-shrink: 0;
+    padding: 3px;
+    background: #f8fafc;
+    border: 1px solid #e2e8f0 !important;
+}
+
+html.techcenter-android-app body .portal-school-header h2 {
+    font-size: 15px !important;
+    font-weight: 800 !important;
+    line-height: 1.4 !important;
+    overflow-wrap: anywhere;
+}
+
+html.techcenter-android-app body .portal-school-header p {
+    font-size: 11px !important;
+    margin-top: 3px;
+}
+
+/* =====================================================
+   3. PORTAL SECTION HEADINGS
+===================================================== */
+
+html.techcenter-android-app body .portal-sections h3 {
+    font-size: 16px !important;
+    font-weight: 800 !important;
+    letter-spacing: -.2px !important;
+    margin-bottom: 13px !important;
+    color: #1e293b !important;
+}
+
+/* =====================================================
+   4. NATIVE ANDROID PORTAL GRID
+===================================================== */
+
+html.techcenter-android-app body .portal-sections .grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+    width: 100%;
+}
+
+/* Individual portal cards */
+html.techcenter-android-app body .portal-sections .portal-card {
+    position: relative !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    flex-direction: column !important;
+
+    width: 100% !important;
+    min-width: 0 !important;
+    min-height: 116px !important;
+    height: auto !important;
+
+    padding: 15px 8px !important;
+    box-sizing: border-box !important;
+
+    border-radius: 19px !important;
+    border: 1px solid rgba(255, 255, 255, .55) !important;
+
+    color: #ffffff !important;
+    font-size: 13px !important;
+    font-weight: 800 !important;
+    line-height: 1.45 !important;
+    text-align: center !important;
+
+    overflow-wrap: anywhere;
+    text-decoration: none !important;
+
+    box-shadow:
+        0 5px 13px rgba(15, 23, 42, .12),
+        inset 0 1px 0 rgba(255, 255, 255, .18) !important;
+
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    transition: transform .16s ease, filter .16s ease !important;
+}
+
+/* Remove the old decorative shimmer */
+html.techcenter-android-app body .portal-sections .portal-card::before {
+    display: none !important;
+}
+
+/* Android touch feedback */
+html.techcenter-android-app body .portal-sections .portal-card:active {
+    transform: scale(.96) !important;
+    filter: brightness(.90);
+}
+
+html.techcenter-android-app body .portal-sections .portal-card:hover {
+    transform: none !important;
+}
+
+/* =====================================================
+   5. EXPENSE CARD — KEEP ITS TWO ACTIONS USABLE
+===================================================== */
+
+html.techcenter-android-app body .portal-sections .portal-card.flex.flex-col {
+    align-items: stretch !important;
+    justify-content: center !important;
+    gap: 8px !important;
+}
+
+html.techcenter-android-app body .portal-sections .portal-card.flex.flex-col > div:first-child {
+    text-align: center !important;
+}
+
+html.techcenter-android-app body .portal-sections .portal-card.flex.flex-col .mt-4 {
+    margin-top: 8px !important;
+    gap: 7px !important;
+}
+
+html.techcenter-android-app body .portal-sections .portal-card.flex.flex-col a {
+    padding: 8px 5px !important;
+    border-radius: 9px !important;
+    font-size: 10px !important;
+    line-height: 1.3 !important;
+}
+
+/* =====================================================
+   6. ANNOUNCEMENTS — APP NOTIFICATION STYLE
+===================================================== */
+
+html.techcenter-android-app body .portal-sections section.mb-10.mt-4 {
+    margin-top: 0 !important;
+    margin-bottom: 22px !important;
+}
+
+html.techcenter-android-app body .portal-sections section.mb-10.mt-4 > div {
+    border-radius: 17px !important;
+    box-shadow: 0 5px 15px rgba(15, 23, 42, .12) !important;
+}
+
+html.techcenter-android-app body .portal-sections section.mb-10.mt-4 .flex.items-center.h-20 {
+    height: 62px !important;
+}
+
+html.techcenter-android-app body .portal-sections section.mb-10.mt-4 .px-6 {
+    padding-left: 11px !important;
+    padding-right: 11px !important;
+    gap: 8px !important;
+}
+
+html.techcenter-android-app body .portal-sections section.mb-10.mt-4 .w-12.h-12 {
+    width: 37px !important;
+    height: 37px !important;
+    font-size: 20px !important;
+    border-radius: 12px !important;
+}
+
+html.techcenter-android-app body .portal-sections section.mb-10.mt-4 .announcement-marquee {
+    animation-duration: 30s !important;
+}
+
+html.techcenter-android-app body .portal-sections section.mb-10.mt-4 .announcement-marquee > div {
+    margin-left: 13px !important;
+    margin-right: 13px !important;
+}
+
+html.techcenter-android-app body .portal-sections section.mb-10.mt-4 .announcement-marquee span {
+    font-size: 12px !important;
+}
+
+/* =====================================================
+   7. SMALL ANDROID PHONES
+===================================================== */
+
+@media screen and (max-width: 380px) {
+
+    html.techcenter-android-app body .portal-hero {
+        height: 165px !important;
+        min-height: 165px !important;
+    }
+
+    html.techcenter-android-app body .portal-main {
+        padding-left: 10px !important;
+        padding-right: 10px !important;
+    }
+
+    html.techcenter-android-app body .portal-sections .grid {
+        gap: 9px !important;
+    }
+
+    html.techcenter-android-app body .portal-sections .portal-card {
+        min-height: 105px !important;
+        padding: 11px 5px !important;
+        font-size: 12px !important;
+        border-radius: 16px !important;
+    }
+
+    html.techcenter-android-app body .portal-school-header {
+        padding: 10px !important;
+    }
+}
+
+/* =====================================================
+   8. TABLETS
+===================================================== */
+
+@media screen and (min-width: 700px) {
+
+    html.techcenter-android-app body .portal-sections {
+        max-width: 850px !important;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    html.techcenter-android-app body .portal-sections .grid {
+        grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+        gap: 16px !important;
+    }
+
+    html.techcenter-android-app body .portal-sections .portal-card {
+        min-height: 135px !important;
+        font-size: 14px !important;
+    }
+}
+
+/* =====================================================
+   9. ACCESSIBILITY
+===================================================== */
+
+html.techcenter-android-app body .portal-sections .portal-card:focus-visible {
+    outline: 3px solid #818cf8;
+    outline-offset: 3px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    html.techcenter-android-app body .portal-sections .portal-card {
+        transition: none !important;
+    }
+}
+</style>
+
+
 <script>
 (function () {
     var currentPath = window.location.pathname.toLowerCase();
