@@ -81,7 +81,7 @@ scroll-smooth {% if request.resolver_match.url_name == 'login' %}login-layout{% 
 {% endif %}
 
 
-{% if user.is_authenticated %}
+{% if user.is_authenticated and request.resolver_match.url_name != 'login' %}
 <!-- ANDROID APP DISPLAY TOOLBAR -->
 <div id="android-display-toolbar">
 
@@ -278,13 +278,21 @@ scroll-smooth {% if request.resolver_match.url_name == 'login' %}login-layout{% 
 
 
 <!-- CONTENT -->
-<div id="android-zoom-content">
+{% if request.resolver_match.url_name == 'login' %}
 
-    <main class="{% if request.resolver_match.url_name == 'login' %}login-main{% else %}flex-grow max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8{% endif %}">
+    <main class="login-main">
         {% block content %}{% endblock %}
     </main>
 
-</div>
+{% else %}
+
+    <div id="android-zoom-content">
+        <main class="flex-grow max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+{% endif %}
 
 <!-- FOOTER -->
 <!-- FOOTER -->
@@ -907,6 +915,46 @@ html.techcenter-android-app.tc-dark textarea::placeholder {
     }
 }
 
+/* ==========================================
+   LOGIN PAGE PROTECTION
+   KEEP ORIGINAL FULL-SCREEN LAYOUT
+========================================== */
+
+body.login-layout {
+    display: flex !important;
+    flex-direction: column !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+}
+
+/* Login page must not inherit Android display spacing */
+body.login-layout #android-display-toolbar,
+body.login-layout #android-notification-overlay {
+    display: none !important;
+}
+
+/* Preserve original login content position */
+body.login-layout > .login-main {
+    flex: 1 1 auto !important;
+    min-height: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 4px 12px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    overflow: hidden !important;
+}
+
+/* Keep login footer in its original position */
+body.login-layout > .login-footer {
+    flex: 0 0 auto !important;
+    margin-top: 0 !important;
+}
+
 </style>
 
 <!-- MOBILE SCRIPT -->
@@ -1025,7 +1073,10 @@ resetTimers();
        PAGE ZOOM: 80% TO 150%
     ====================================== */
 
-    const zoomContent = document.getElementById('android-zoom-content');
+    const zoomContent =
+    document.getElementById('android-zoom-content');
+
+const isLoginPage = document.body.classList.contains('login-layout');
     const zoomIn = document.getElementById('android-zoom-in');
     const zoomOut = document.getElementById('android-zoom-out');
     const zoomLevel = document.getElementById('android-zoom-level');
@@ -1037,9 +1088,9 @@ resetTimers();
     function applyZoom() {
         zoom = Math.max(0.8, Math.min(1.5, zoom));
 
-        if (zoomContent) {
-            zoomContent.style.zoom = String(zoom);
-        }
+        if (zoomContent && !isLoginPage) {
+    zoomContent.style.zoom = String(zoom);
+}
 
         zoomLevel.textContent = Math.round(zoom * 100) + '%';
 
