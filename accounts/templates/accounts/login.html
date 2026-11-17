@@ -132,145 +132,196 @@
   </div>
 </div>
 
-<!-- ROLE BUTTON STYLE -->
+
+<!-- ROLE BUTTON STYLE AND LOGIN PAGE LAYOUT -->
 <style>
+/* ROLE BUTTONS */
 .role-btn {
-  padding: 8px 14px;
-  border-radius: 10px;
-  background: rgba(255,255,255,0.05);
-  color: white;
-  cursor: pointer;
-  transition: 0.3s;
-  border: 1px solid rgba(255,255,255,0.1);
+    padding: 8px 14px;
+    border-radius: 10px;
+    background: rgba(255,255,255,0.05);
+    color: white;
+    cursor: pointer;
+    transition: 0.3s;
+    border: 1px solid rgba(255,255,255,0.1);
 }
 
 .role-btn.active {
-  background: linear-gradient(to right, #6366f1, #8b5cf6);
-  border-color: transparent;
+    background: linear-gradient(to right, #6366f1, #8b5cf6);
+    border-color: transparent;
 }
 
 /* =========================================
-   FIT LOGIN PAGE WITHIN SCREEN HEIGHT
+   LOGIN PAGE — NO SCROLL, FOOTER VISIBLE
 ========================================= */
 
-#loginPage {
-    width: 100%;
-    height: 100vh;
-    height: 100svh;
+/* Apply fixed-height layout only to login page */
+html,
+body {
+    margin: 0;
+    padding: 0;
+}
+
+body.login-layout {
+    height: 100vh !important;
+    height: 100dvh !important;
+    min-height: 0 !important;
+    overflow: hidden !important;
+}
+
+/* Navbar */
+body.login-layout > nav {
+    flex: 0 0 64px;
+    height: 64px;
+}
+
+/* Main login area */
+body.login-layout > .login-main {
+    flex: 1 1 auto;
     min-height: 0;
+    width: 100%;
+    max-width: 100%;
+    margin: 0;
+    padding: 4px 12px;
+    overflow: hidden;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Footer */
+body.login-layout > .login-footer {
+    flex: 0 0 auto;
+    margin-top: 0 !important;
+    width: 100%;
+}
+
+.login-footer-inner {
+    padding: 7px 12px !important;
+}
+
+.login-footer-inner > div {
+    gap: 5px !important;
+}
+
+.login-footer-inner h3 {
+    font-size: 11px !important;
+}
+
+.login-footer-inner p,
+.login-footer-inner a,
+.login-footer-inner span {
+    font-size: 9px !important;
+}
+
+.login-footer-inner .flex.flex-wrap {
+    gap: 7px !important;
+}
+
+/* Login wrapper */
+body.login-layout #loginPage {
+    width: 100%;
+    height: 100%;
+    min-height: 0;
+    padding: 4px 8px;
+    overflow: hidden;
     box-sizing: border-box;
-    padding: 12px 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+/* Login card */
+body.login-layout #loginCard {
+    width: 100%;
+    max-width: 440px;
+    max-height: 100%;
+    padding: clamp(7px, 1.3vh, 16px);
+    box-sizing: border-box;
     overflow: hidden;
 }
 
-#loginCard {
-    padding: clamp(14px, 2.5vh, 28px);
-    box-sizing: border-box;
-    max-height: 100%;
-    overflow-y: auto;
-}
-
+/* Logo and heading */
 #loginHeader {
-    margin-bottom: clamp(10px, 2vh, 20px);
+    margin-bottom: 6px;
 }
 
 #loginHeader img {
-    width: clamp(48px, 8vh, 72px);
-    max-height: 72px;
+    width: clamp(36px, 6vh, 55px);
+    max-height: 55px;
     object-fit: contain;
 }
 
 #loginHeader h2 {
-    font-size: clamp(19px, 3vh, 24px);
+    font-size: clamp(17px, 2.5vh, 22px);
     line-height: 1.2;
 }
 
 #loginHeader p {
-    font-size: 12px;
+    font-size: 11px;
 }
 
-.role-btn {
-    padding: 7px 14px;
-    font-size: 13px;
-}
-
+/* Form */
 #loginForm {
-    gap: clamp(10px, 1.8vh, 16px);
+    gap: clamp(5px, 1vh, 10px);
 }
 
 #loginForm input[type="text"],
 #loginForm input[type="password"] {
-    padding-top: clamp(8px, 1.5vh, 12px);
-    padding-bottom: clamp(8px, 1.5vh, 12px);
+    padding-top: 7px;
+    padding-bottom: 7px;
     font-size: 14px;
 }
 
 #loginForm button[type="submit"] {
-    padding-top: clamp(9px, 1.5vh, 12px);
-    padding-bottom: clamp(9px, 1.5vh, 12px);
+    padding-top: 8px;
+    padding-bottom: 8px;
 }
 
-/* Extra compact layout on short phone screens */
+/* Short screens */
 @media screen and (max-height: 650px) {
+    .login-footer-inner {
+        padding: 4px 8px !important;
+    }
 
-    #loginPage {
+    body.login-layout #loginCard {
         padding: 6px 12px;
     }
 
-    #loginCard {
-        padding: 12px 18px;
-    }
-
     #loginHeader {
-        margin-bottom: 8px;
-    }
-
-    #loginHeader img {
-        width: 42px;
         margin-bottom: 3px;
     }
 
+    #loginHeader img {
+        width: 30px;
+    }
+
     #loginHeader h2 {
-        font-size: 18px;
-    }
-
-    #loginHeader p {
-        font-size: 11px;
-    }
-
-    .role-btn {
-        padding: 5px 12px;
+        font-size: 16px;
     }
 
     #loginForm {
-        gap: 9px;
-    }
-
-    #loginForm input[type="text"],
-    #loginForm input[type="password"] {
-        padding-top: 7px;
-        padding-bottom: 7px;
-    }
-
-    #loginForm button[type="submit"] {
-        padding-top: 8px;
-        padding-bottom: 8px;
+        gap: 4px;
     }
 }
 
-/* Very narrow screens */
+/* Narrow Android screens */
 @media screen and (max-width: 360px) {
-
-    #loginCard {
-        padding: 12px;
+    body.login-layout #loginCard {
+        padding: 6px 10px;
     }
 
     .role-btn {
-        padding: 6px 10px;
-        font-size: 12px;
+        padding: 5px 8px;
+        font-size: 11px;
+    }
+
+    .login-footer-inner {
+        padding: 4px 5px !important;
     }
 }
 </style>
+
 
 <!-- SCRIPT -->
 <script>
