@@ -850,10 +850,25 @@ async function downloadResultPDF() {
 
             const remainingHeight = canvas.height - sourceY;
 
-            const sliceHeight = Math.min(
-                pixelsPerPage,
-                remainingHeight
-            );
+            let sliceHeight = Math.min(
+    pixelsPerPage,
+    remainingHeight
+);
+
+// ==========================================
+// REMOVE THICK BLACK PAGE-SEPARATION LINES
+// ==========================================
+
+// Leave a tiny gap between PDF page slices.
+// This prevents table borders from being doubled
+// at the top and bottom of adjoining PDF pages.
+
+if (remainingHeight > pixelsPerPage) {
+    sliceHeight = Math.min(
+        pixelsPerPage - 3,
+        remainingHeight
+    );
+}
 
             const pageCanvas = document.createElement("canvas");
 
@@ -912,7 +927,12 @@ async function downloadResultPDF() {
             );
 
             sourceY += sliceHeight;
-            pageCount++;
+
+if (sourceY < canvas.height) {
+    sourceY += 3;
+}
+
+pageCount++;
 
         }
 

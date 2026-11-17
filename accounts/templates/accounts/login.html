@@ -12,17 +12,18 @@
 </div>
 
 <!-- MAIN WRAPPER -->
-<div class="min-h-screen flex items-center justify-center px-4">
+<div id="loginPage" class="flex items-center justify-center px-4">
 
   <!-- LOGIN CARD -->
-  <div class="w-full max-w-md p-8 rounded-3xl
-              bg-slate-900/80 backdrop-blur-xl
-              border border-white/10 shadow-2xl text-white">
+ <div id="loginCard"
+     class="w-full max-w-md rounded-3xl
+            bg-slate-900/80 backdrop-blur-xl
+            border border-white/10 shadow-2xl text-white">
 
     <!-- LOGO -->
-    <div class="flex flex-col items-center mb-6">
-      <img src="{% static 'images/techcenter-logo.png' %}"
-           class="w-20 mb-3 drop-shadow-lg">
+    <div id="loginHeader" class="flex flex-col items-center">
+  <img src="{% static 'images/techcenter-logo.png' %}"
+       class="w-16 mb-2 drop-shadow-lg">
       <h2 class="text-2xl font-bold">TECHCENTER</h2>
       <p class="text-sm text-gray-400">School Portal Login</p>
     </div>
@@ -41,7 +42,7 @@
     </div>
 
     <!-- ROLE SELECT -->
-    <div class="flex justify-center gap-2 mb-6">
+    <div class="flex justify-center gap-2 mb-4">
       <button type="button" class="role-btn active" data-role="student">Student</button>
       <button type="button" class="role-btn" data-role="teacher">Teacher</button>
       <button type="button" class="role-btn" data-role="admin">Admin</button>
@@ -50,7 +51,7 @@
     <input type="hidden" name="role" id="roleInput" value="student">
 
     <!-- FORM -->
-    <form method="post" action="{% url 'accounts:login' %}" id="loginForm" class="space-y-6">
+    <form method="post" action="{% url 'accounts:login' %}" id="loginForm" class="space-y-4">
       {% csrf_token %}
 
       <!-- USERNAME -->
@@ -64,7 +65,7 @@
     autocapitalize="none"
     spellcheck="false"
     required
-    class="w-full pl-10 pr-3 py-3 rounded-xl
+    class="w-full pl-10 pr-3 py-2.5 rounded-xl
            bg-black/40 border border-white/10 text-white
            focus:outline-none focus:ring-2 focus:ring-indigo-500">
       </div>
@@ -78,7 +79,7 @@
     id="id_password"
     autocomplete="current-password"
     required
-    class="w-full pl-10 pr-10 py-3 rounded-xl
+    class="w-full pl-10 pr-10 py-2.5 rounded-xl
            bg-black/40 border border-white/10 text-white
            focus:outline-none focus:ring-2 focus:ring-indigo-500">
 
@@ -113,7 +114,7 @@
 
       <!-- BUTTON -->
       <button type="submit" id="loginButton"
-              class="w-full py-3 rounded-xl font-semibold
+              class="w-full py-2.5 rounded-xl font-semibold
                      bg-gradient-to-r from-indigo-600 to-purple-600
                      hover:from-indigo-500 hover:to-purple-500
                      transition transform hover:scale-[1.02]
@@ -146,6 +147,128 @@
 .role-btn.active {
   background: linear-gradient(to right, #6366f1, #8b5cf6);
   border-color: transparent;
+}
+
+/* =========================================
+   FIT LOGIN PAGE WITHIN SCREEN HEIGHT
+========================================= */
+
+#loginPage {
+    width: 100%;
+    height: 100vh;
+    height: 100svh;
+    min-height: 0;
+    box-sizing: border-box;
+    padding: 12px 16px;
+    overflow: hidden;
+}
+
+#loginCard {
+    padding: clamp(14px, 2.5vh, 28px);
+    box-sizing: border-box;
+    max-height: 100%;
+    overflow-y: auto;
+}
+
+#loginHeader {
+    margin-bottom: clamp(10px, 2vh, 20px);
+}
+
+#loginHeader img {
+    width: clamp(48px, 8vh, 72px);
+    max-height: 72px;
+    object-fit: contain;
+}
+
+#loginHeader h2 {
+    font-size: clamp(19px, 3vh, 24px);
+    line-height: 1.2;
+}
+
+#loginHeader p {
+    font-size: 12px;
+}
+
+.role-btn {
+    padding: 7px 14px;
+    font-size: 13px;
+}
+
+#loginForm {
+    gap: clamp(10px, 1.8vh, 16px);
+}
+
+#loginForm input[type="text"],
+#loginForm input[type="password"] {
+    padding-top: clamp(8px, 1.5vh, 12px);
+    padding-bottom: clamp(8px, 1.5vh, 12px);
+    font-size: 14px;
+}
+
+#loginForm button[type="submit"] {
+    padding-top: clamp(9px, 1.5vh, 12px);
+    padding-bottom: clamp(9px, 1.5vh, 12px);
+}
+
+/* Extra compact layout on short phone screens */
+@media screen and (max-height: 650px) {
+
+    #loginPage {
+        padding: 6px 12px;
+    }
+
+    #loginCard {
+        padding: 12px 18px;
+    }
+
+    #loginHeader {
+        margin-bottom: 8px;
+    }
+
+    #loginHeader img {
+        width: 42px;
+        margin-bottom: 3px;
+    }
+
+    #loginHeader h2 {
+        font-size: 18px;
+    }
+
+    #loginHeader p {
+        font-size: 11px;
+    }
+
+    .role-btn {
+        padding: 5px 12px;
+    }
+
+    #loginForm {
+        gap: 9px;
+    }
+
+    #loginForm input[type="text"],
+    #loginForm input[type="password"] {
+        padding-top: 7px;
+        padding-bottom: 7px;
+    }
+
+    #loginForm button[type="submit"] {
+        padding-top: 8px;
+        padding-bottom: 8px;
+    }
+}
+
+/* Very narrow screens */
+@media screen and (max-width: 360px) {
+
+    #loginCard {
+        padding: 12px;
+    }
+
+    .role-btn {
+        padding: 6px 10px;
+        font-size: 12px;
+    }
 }
 </style>
 

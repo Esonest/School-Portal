@@ -6,7 +6,7 @@
 {% block content %}
 
 <!-- HERO SECTION -->
-<section class="relative h-56 sm:h-64 md:h-72 lg:h-80 flex flex-col justify-center items-center overflow-hidden">
+<section class="portal-hero relative h-56 sm:h-64 md:h-72 lg:h-80 flex flex-col justify-center items-center overflow-hidden">
 
   <!-- BACKGROUND IMAGE -->
   <div class="absolute inset-0 bg-cover bg-center"
@@ -49,7 +49,7 @@
 
 <!-- SCHOOL HEADER -->
 {% if school %}
-<div class="flex items-center justify-center gap-4 mb-10 flex-wrap text-center">
+<div class="portal-school-header flex items-center justify-center gap-4 mb-10 flex-wrap text-center">
 
   {% if school.logo %}
   <img src="{{ school.logo.url }}"
@@ -68,8 +68,8 @@
 
 </div>
 {% endif %}
-<div class="min-h-screen flex items-center justify-center px-4 sm:px-6 -mt-12 sm:-mt-16">
-  <div class="w-full max-w-6xl space-y-14 sm:space-y-16">
+<div class="portal-main min-h-screen flex items-center justify-center px-4 sm:px-6 -mt-12 sm:-mt-16">
+  <div class="portal-sections w-full max-w-6xl space-y-14 sm:space-y-16">
 
    <!-- STUDENT PORTALS -->
 {% if 'student' in roles %}
@@ -454,6 +454,214 @@
 /* SECTION TITLES */
 h3{
     letter-spacing:.3px;
+}
+
+/* ==========================================
+   TECHCENTER ANDROID APP-STYLE INTERFACE
+========================================== */
+
+@media screen and (max-width: 640px) {
+
+    /* Phone screen and safe-area spacing */
+    .portal-main {
+        min-height: auto !important;
+        margin-top: -18px !important;
+        padding-left: 12px !important;
+        padding-right: 12px !important;
+        padding-bottom: calc(25px + env(safe-area-inset-bottom, 0px));
+        align-items: flex-start !important;
+    }
+
+    .portal-sections {
+        width: 100% !important;
+        max-width: 100% !important;
+        gap: 25px !important;
+    }
+
+    /* Compact app welcome header */
+    .portal-hero {
+        height: 155px !important;
+        min-height: 155px !important;
+        border-radius: 0 0 24px 24px;
+    }
+
+    .portal-hero > div:nth-child(2) img {
+        width: 175px !important;
+    }
+
+    .portal-hero h2 {
+        font-size: 19px !important;
+        line-height: 1.3 !important;
+    }
+
+    .portal-hero p {
+        font-size: 12px !important;
+        margin-top: 5px !important;
+    }
+
+    .portal-hero .relative.z-10 {
+        width: calc(100% - 28px);
+        padding: 12px 10px !important;
+        border-radius: 15px !important;
+    }
+
+    /* School identity header */
+    .portal-school-header {
+        gap: 10px !important;
+        margin: 12px 0 22px !important;
+        padding: 0 12px;
+    }
+
+    .portal-school-header img {
+        width: 44px !important;
+        height: 44px !important;
+    }
+
+    .portal-school-header h2 {
+        font-size: 16px !important;
+        line-height: 1.3 !important;
+    }
+
+    .portal-school-header p {
+        font-size: 11px !important;
+    }
+
+    /* App section headings */
+    .portal-sections h3 {
+        font-size: 16px !important;
+        margin-bottom: 13px !important;
+        letter-spacing: 0 !important;
+    }
+
+    /* Two-column mobile app grid */
+    .portal-sections .grid {
+        display: grid !important;
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 11px !important;
+    }
+
+    /* App-style portal tiles */
+    .portal-card {
+        min-width: 0 !important;
+        min-height: 112px !important;
+        height: auto !important;
+        padding: 13px 7px !important;
+        border-radius: 19px !important;
+        font-size: 13px !important;
+        line-height: 1.4 !important;
+        font-weight: 700 !important;
+        text-align: center !important;
+        overflow-wrap: anywhere;
+        box-sizing: border-box !important;
+
+        box-shadow:
+            0 5px 14px rgba(0,0,0,.13),
+            inset 0 1px 0 rgba(255,255,255,.15) !important;
+
+        -webkit-tap-highlight-color: transparent;
+        transition: transform .15s ease, filter .15s ease;
+    }
+
+    /* Native-app-like touch feedback */
+    .portal-card:active {
+        transform: scale(.96) !important;
+        filter: brightness(.92);
+    }
+
+    .portal-card:hover {
+        transform: none !important;
+    }
+
+    .portal-card::before {
+        display: none;
+    }
+
+    /* Expense card and its internal actions */
+    .portal-card.flex.flex-col {
+        align-items: stretch !important;
+        justify-content: center !important;
+    }
+
+    .portal-card.flex.flex-col > div:first-child {
+        text-align: center;
+    }
+
+    .portal-card.flex.flex-col .mt-4 {
+        margin-top: 9px !important;
+    }
+
+    .portal-card.flex.flex-col a {
+        padding: 7px 4px !important;
+        font-size: 10px !important;
+    }
+
+    /* Compact announcement banner */
+    .portal-sections section.mb-10.mt-4 {
+        margin-top: 0 !important;
+        margin-bottom: 22px !important;
+    }
+
+    .portal-sections section.mb-10.mt-4 > div {
+        border-radius: 14px !important;
+    }
+
+    .portal-sections section.mb-10.mt-4 .flex.items-center.h-20 {
+        height: 58px !important;
+    }
+
+    .portal-sections section.mb-10.mt-4 .px-6 {
+        padding-left: 10px !important;
+        padding-right: 10px !important;
+        gap: 7px !important;
+    }
+
+    .portal-sections section.mb-10.mt-4 .w-12.h-12 {
+        width: 36px !important;
+        height: 36px !important;
+        font-size: 20px !important;
+        border-radius: 11px !important;
+    }
+
+    .portal-sections section.mb-10.mt-4 .announcement-marquee {
+        animation-duration: 25s !important;
+    }
+
+    .portal-sections section.mb-10.mt-4 .announcement-marquee > div {
+        margin-left: 12px !important;
+        margin-right: 12px !important;
+    }
+
+    .portal-sections section.mb-10.mt-4 .announcement-marquee span {
+        font-size: 12px !important;
+    }
+}
+
+/* Very small Android screens */
+@media screen and (max-width: 360px) {
+
+    .portal-card {
+        min-height: 100px !important;
+        font-size: 12px !important;
+        padding: 10px 5px !important;
+    }
+
+    .portal-sections .grid {
+        gap: 9px !important;
+    }
+
+    .portal-hero {
+        height: 145px !important;
+        min-height: 145px !important;
+    }
+}
+
+/* Respect users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+    .portal-card,
+    .announcement-marquee {
+        animation: none !important;
+        transition: none !important;
+    }
 }
 
 </style>

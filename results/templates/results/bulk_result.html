@@ -320,6 +320,100 @@
         padding: 6px;
       }
     }
+
+    /* =========================================
+   A4 PRINT: ONE COMPLETE STUDENT PER PAGE
+========================================= */
+
+@page {
+    size: A4 portrait;
+    margin: 5mm;
+}
+
+@media print {
+
+    html,
+    body {
+        width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        background: #fff !important;
+        overflow: visible !important;
+    }
+
+    .no-print {
+        display: none !important;
+    }
+
+    .print-wrapper {
+        width: 100% !important;
+        max-width: none !important;
+        height: auto !important;
+        overflow: visible !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .result-card {
+        display: block !important;
+        width: 200mm !important;
+        max-width: 200mm !important;
+        height: auto !important;
+        max-height: none !important;
+        margin: 0 !important;
+        padding: 3mm !important;
+        box-sizing: border-box !important;
+        overflow: visible !important;
+
+        page-break-before: auto !important;
+        page-break-after: always !important;
+        page-break-inside: avoid !important;
+
+        break-before: auto !important;
+        break-after: page !important;
+        break-inside: avoid !important;
+
+        position: relative !important;
+    }
+
+    .result-card:last-child {
+        page-break-after: auto !important;
+        break-after: auto !important;
+    }
+
+    .result-content {
+        width: 100% !important;
+        min-width: 0 !important;
+        position: relative !important;
+    }
+
+    /* Do not let sticky table headings interfere with printing. */
+    .result-content table th {
+        position: static !important;
+    }
+
+    .result-content table {
+        width: 100% !important;
+        border-collapse: collapse !important;
+    }
+
+    .result-content img {
+        max-width: 100%;
+    }
+
+    /* Individual printing: hide every other student. */
+    body.print-single .result-card:not(.print-target) {
+        display: none !important;
+    }
+
+    body.print-single .result-card.print-target {
+        display: block !important;
+        page-break-before: auto !important;
+        break-before: auto !important;
+        page-break-after: auto !important;
+        break-after: auto !important;
+    }
+}
   </style>
 </head>
 <body>
@@ -646,7 +740,7 @@
 <script>
 
 // ==========================================
-// PRINT ONE STUDENT RESULT
+// PRINT ONLY ONE STUDENT - ANDROID FRIENDLY
 // ==========================================
 
 function printSingle(studentId) {
@@ -654,41 +748,96 @@ function printSingle(studentId) {
     const card = document.getElementById("student-" + studentId);
 
     if (!card) {
-        alert("Student not found");
+        alert("Student result could not be found.");
         return;
     }
 
-    const styles = Array.from(
-        document.querySelectorAll('link[rel="stylesheet"], style')
-    ).map(e => e.outerHTML).join("");
+    // Remove any previous individual-print selection.
+    document.body.classList.remove("print-single");
 
-    const w = window.open("", "Print", "width=900,height=650");
+    document.querySelectorAll(".result-card").forEach(function(item) {
+        item.classList.remove("print-target");
+        item.style.zoom = "";
+    });
 
-    if (!w) {
-        alert("Please allow pop-ups to print the result.");
-        return;
-    }
+    // Select only the requested student's result.
+    card.classList.add("print-target");
+    document.body.classList.add("print-single");
 
-    w.document.write(`
-        <html>
-        <head>
-            <title>Student Result</title>
-            ${styles}
-        </head>
-        <body>
-            ${card.outerHTML}
-        </body>
-        </html>
-    `);
+    // Wait for the page to apply the print layout.
+    requestAnimationFrame(function() {
+        requestAnimationFrame(function() {
 
-    w.document.close();
-    w.focus();
+            fitResultsToA4();
 
-    w.onload = function() {
-        w.print();
-    };
+            // Print the current page with only the selected student visible.
+            window.print();
+
+        });
+    });
 }
 
+// ==========================================
+// AUTOMATICALLY FIT EACH STUDENT ON ONE A4 PAGE
+// ==========================================
+
+function fitResultsToA4() {
+
+    const cards = document.querySelectorAll(
+        "body.print-single .result-card.print-target, " +
+        "body:not(.print-single) .result-card"
+    );
+
+    // A4 printable height with 5mm top and bottom margins.
+    // 277mm converted to CSS pixels.
+    const availableHeight = (277 / 25.4) * 96;
+
+    cards.forEach(function(card) {
+
+        // Reset previous scaling before measuring.
+        card.style.zoom = "1";
+
+        // Force the A4 content width before measuring.
+        card.style.width = "200mm";
+        card.style.maxWidth = "200mm";
+        card.style.boxSizing = "border-box";
+
+        const originalHeight = card.scrollHeight;
+
+        if (!originalHeight || originalHeight <= availableHeight) {
+            card.style.zoom = "1";
+            return;
+        }
+
+        // Shrink the complete result proportionally to fit one page.
+        const scale = availableHeight / originalHeight;
+
+        card.style.zoom = String(scale);
+
+    });
+}
+
+
+// Recalculate when the browser or Android print service starts printing.
+window.addEventListener("beforeprint", function() {
+    fitResultsToA4();
+});
+
+
+// Restore the normal screen layout after printing.
+window.addEventListener("afterprint", function() {
+
+    document.body.classList.remove("print-single");
+
+    document.querySelectorAll(".result-card").forEach(function(card) {
+        card.classList.remove("print-target");
+        card.style.zoom = "";
+        card.style.width = "";
+        card.style.maxWidth = "";
+        card.style.boxSizing = "";
+    });
+
+});
 
 // ==========================================
 // COMMON PDF GENERATION FUNCTION
