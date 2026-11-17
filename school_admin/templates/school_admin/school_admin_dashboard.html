@@ -692,6 +692,233 @@
 }
 
 
+<style>
+/* ==========================================
+   TECHCENTER ANDROID — NATIVE SIDEBAR CARDS
+   Android app only. Browser remains unchanged.
+========================================== */
+
+html.techcenter-android-app body .sidebar {
+    background: linear-gradient(180deg, #f8fafc, #eef2ff) !important;
+    color: #0f172a !important;
+    border: 1px solid #e2e8f0;
+    border-radius: 24px;
+    padding: 18px 14px;
+    box-shadow: 0 12px 35px rgba(15, 23, 42, .15);
+}
+
+/* Sidebar heading */
+html.techcenter-android-app body .sidebar-brand {
+    color: #312e81 !important;
+    font-size: 17px;
+    font-weight: 800;
+    line-height: 1.4;
+    padding: 12px 10px 18px;
+    margin-bottom: 10px;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+/* Space between navigation cards */
+html.techcenter-android-app body .sidebar-menu {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+}
+
+/* Individual navigation cards */
+html.techcenter-android-app body .sidebar .sidebar-link {
+    min-height: 57px;
+    width: 100%;
+    box-sizing: border-box;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+
+    padding: 12px 13px;
+    border-radius: 16px;
+
+    background: #ffffff !important;
+    color: #1e293b !important;
+
+    border: 1px solid #e2e8f0;
+    box-shadow: 0 3px 9px rgba(15, 23, 42, .045);
+
+    font-size: 13px;
+    font-weight: 700;
+    line-height: 1.4;
+    text-decoration: none;
+
+    transition: background .18s ease, transform .18s ease,
+                box-shadow .18s ease;
+
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+}
+
+/* Card text and emoji */
+html.techcenter-android-app body .sidebar .sidebar-link > span:first-child {
+    display: flex;
+    align-items: center;
+    gap: 11px;
+    flex: 1;
+    min-width: 0;
+}
+
+/* Right arrow */
+html.techcenter-android-app body .sidebar .sidebar-link::after {
+    content: "›";
+    font-size: 23px;
+    font-weight: 400;
+    color: #94a3b8;
+    line-height: 1;
+}
+
+/* Navigation badges */
+html.techcenter-android-app body .sidebar .sidebar-badge {
+    min-width: 27px;
+    padding: 4px 8px;
+    border-radius: 10px;
+    background: #eef2ff;
+    color: #4338ca;
+    border: 1px solid #e0e7ff;
+    font-size: 11px;
+    font-weight: 800;
+}
+
+/* Selected navigation card */
+html.techcenter-android-app body .sidebar .sidebar-link.active {
+    background: linear-gradient(135deg, #4338ca, #6366f1) !important;
+    color: #ffffff !important;
+    border-color: transparent;
+    box-shadow: 0 7px 17px rgba(67, 56, 202, .22);
+}
+
+html.techcenter-android-app body .sidebar .sidebar-link.active::after {
+    color: #ffffff;
+}
+
+html.techcenter-android-app body .sidebar .sidebar-link.active .sidebar-badge {
+    background: rgba(255,255,255,.2);
+    color: #ffffff;
+    border-color: rgba(255,255,255,.2);
+}
+
+/* Touch feedback */
+html.techcenter-android-app body .sidebar .sidebar-link:active {
+    transform: scale(.975);
+    background: #eef2ff !important;
+    box-shadow: none;
+}
+
+html.techcenter-android-app body .sidebar .sidebar-link.active:active {
+    background: #3730a3 !important;
+}
+
+/* More Actions button */
+html.techcenter-android-app body .sidebar .sidebar-more-btn {
+    min-height: 52px;
+    margin-top: 8px;
+    padding: 12px 14px;
+    border-radius: 15px;
+
+    background: linear-gradient(135deg, #4338ca, #6366f1);
+    color: #ffffff;
+    border: none;
+
+    font-size: 13px;
+    font-weight: 800;
+    box-shadow: 0 6px 16px rgba(67, 56, 202, .2);
+}
+
+html.techcenter-android-app body .sidebar .sidebar-more-btn:active {
+    transform: scale(.98);
+}
+
+/* Expanded More Actions cards */
+html.techcenter-android-app body .sidebar .sidebar-extra {
+    gap: 9px;
+    margin-top: 5px;
+}
+
+html.techcenter-android-app body .sidebar .sidebar-extra.show {
+    display: flex;
+}
+
+/* Close button */
+html.techcenter-android-app body .sidebar .sidebar-close {
+    background: #e2e8f0;
+    color: #334155;
+    border: 1px solid #cbd5e1;
+    border-radius: 12px;
+}
+
+/* Android navigation drawer */
+@media (max-width: 768px) {
+
+    html.techcenter-android-app body .sidebar {
+        width: min(88vw, 340px);
+        height: 100dvh;
+        max-height: 100dvh;
+        left: -100%;
+        top: 0;
+
+        padding-top: calc(18px + env(safe-area-inset-top));
+        padding-bottom: calc(18px + env(safe-area-inset-bottom));
+
+        border-radius: 0 25px 25px 0;
+        overflow-x: hidden;
+        overflow-y: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    html.techcenter-android-app body .sidebar.show {
+        left: 0;
+    }
+
+    html.techcenter-android-app body .sidebar-menu {
+        gap: 10px;
+    }
+
+    html.techcenter-android-app body .sidebar .sidebar-link {
+        min-height: 60px;
+        padding: 13px 14px;
+        border-radius: 17px;
+        font-size: 14px;
+    }
+
+    html.techcenter-android-app body .sidebar .sidebar-link > span:first-child {
+        gap: 12px;
+    }
+
+    html.techcenter-android-app body .sidebar .sidebar-badge {
+        font-size: 12px;
+        min-width: 29px;
+    }
+}
+
+/* Disable desktop hover movement inside Android */
+@media (hover: hover) {
+    html.techcenter-android-app body .sidebar .sidebar-link:hover {
+        transform: none;
+        background: #f1f5f9 !important;
+        box-shadow: 0 4px 12px rgba(15, 23, 42, .07);
+    }
+
+    html.techcenter-android-app body .sidebar .sidebar-link.active:hover {
+        background: #4338ca !important;
+        color: #ffffff !important;
+    }
+}
+
+/* Accessibility */
+html.techcenter-android-app body .sidebar .sidebar-link:focus-visible,
+html.techcenter-android-app body .sidebar .sidebar-more-btn:focus-visible {
+    outline: 3px solid #818cf8;
+    outline-offset: 3px;
+}
+</style>
+
 
 </style>
 
