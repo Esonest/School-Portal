@@ -278,21 +278,11 @@ scroll-smooth {% if request.resolver_match.url_name == 'login' %}login-layout{% 
 
 
 <!-- CONTENT -->
-{% if request.resolver_match.url_name == 'login' %}
 
-    <main class="login-main">
-        {% block content %}{% endblock %}
-    </main>
-
-{% else %}
-
-    <div id="android-zoom-content">
-        <main class="flex-grow max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
-            {% block content %}{% endblock %}
-        </main>
-    </div>
-
-{% endif %}
+<main class="{% if request.resolver_match.url_name == 'login' %}login-main{% else %}flex-grow max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8{% endif %}"
+      {% if request.resolver_match.url_name != 'login' %}id="android-zoom-content"{% endif %}>
+    {% block content %}{% endblock %}
+</main>
 
 <!-- FOOTER -->
 <!-- FOOTER -->
@@ -959,9 +949,14 @@ body.login-layout > .login-footer {
 
 <!-- MOBILE SCRIPT -->
 <script>
-document.getElementById("mobile-menu-button").addEventListener("click", () => {
-    document.getElementById("mobile-menu").classList.toggle("hidden");
-});
+const mobileMenuButton = document.getElementById("mobile-menu-button");
+const mobileMenu = document.getElementById("mobile-menu");
+
+if (mobileMenuButton && mobileMenu) {
+    mobileMenuButton.addEventListener("click", () => {
+        mobileMenu.classList.toggle("hidden");
+    });
+}
 </script>
 
 <!-- AUTO LOGOUT -->
