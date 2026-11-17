@@ -1008,11 +1008,15 @@ html.techcenter-android-app body .portal-sections .portal-card:focus-visible {
 
     var hour = new Date().getHours();
 
-    var greeting = hour < 12
-        ? 'Good morning'
-        : hour < 17
-            ? 'Good afternoon'
-            : 'Good evening';
+    var greeting;
+
+if (hour >= 0 && hour < 12) {
+    greeting = 'Good morning';
+} else if (hour >= 12 && hour < 17) {
+    greeting = 'Good afternoon';
+} else {
+    greeting = 'Good evening';
+}
 
     function showGreeting() {
         if (document.getElementById('tc-welcome-greeting')) return;
