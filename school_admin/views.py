@@ -20,7 +20,7 @@ from openpyxl.styles import Font, PatternFill, Alignment
 from openpyxl.worksheet.datavalidation import DataValidation
 from openpyxl.utils import get_column_letter
 
-from datetime import datetime
+from datetime import datetime, date
 
 from django.http import JsonResponse
 from django.views.decorators.http import require_POST
@@ -116,18 +116,81 @@ def map_student_columns(headers):
     return mapping
 
 
+
 def clean_student_record(row):
 
     cleaned = {}
 
     for key, value in row.items():
 
+        # Handle empty values.
         if value is None:
-            value = ""
+            cleaned[key] = ""
+            continue
 
+        # Normalize dates, including actual Excel date objects.
+        if key == "dob":
+
+            if isinstance(value, datetime):
+                cleaned[key] = value.strftime("%Y-%m-%d")
+                continue
+
+            if isinstance(value, date):
+                cleaned[key] = value.strftime("%Y-%m-%d")
+                continue
+
+            value = str(value).strip()
+
+            if not value:
+                cleaned[key] = ""
+                continue
+
+            parsed_date = None
+
+            # Nigerian date formats first: DD/MM/YYYY.
+            date_formats = [
+                "%d/%m/%Y",
+                "%d-%m-%Y",
+                "%d.%m.%Y",
+                "%d/%m/%y",
+                "%d-%m-%y",
+                "%d %b %Y",
+                "%d %B %Y",
+
+                # ISO date formats.
+                "%Y-%m-%d",
+                "%Y/%m/%d",
+
+                # US formats, only used when unambiguous.
+                "%m/%d/%Y",
+                "%m-%d-%Y",
+            ]
+
+            for fmt in date_formats:
+
+                try:
+                    parsed_date = datetime.strptime(
+                        value,
+                        fmt
+                    )
+                    break
+
+                except ValueError:
+                    continue
+
+            if parsed_date:
+                cleaned[key] = parsed_date.strftime("%Y-%m-%d")
+            else:
+                # Preserve unrecognized input for manual correction.
+                cleaned[key] = value
+
+            continue
+
+        # Convert other values to strings.
         value = str(value).strip()
 
         if key == "gender":
+
             gender = value.lower()
 
             if gender in ["male", "m"]:
@@ -136,33 +199,10 @@ def clean_student_record(row):
             elif gender in ["female", "f"]:
                 value = "F"
 
-        if key == "dob" and value:
-
-            try:
-                if re.match(r"^\d{4}-\d{2}-\d{2}$", value):
-                    pass
-
-                else:
-                    for fmt in (
-                        "%d/%m/%Y",
-                        "%d-%m-%Y",
-                        "%m/%d/%Y",
-                        "%d.%m.%Y",
-                    ):
-                        try:
-                            value = datetime.strptime(
-                                value, fmt
-                            ).strftime("%Y-%m-%d")
-                            break
-                        except ValueError:
-                            continue
-
-            except Exception:
-                pass
-
         cleaned[key] = value
 
     return cleaned
+
 
 
 def extract_table_records(rows):
@@ -226,6 +266,7 @@ def extract_word(file_path):
     return extract_text_records(text)
 
 
+
 def extract_excel(file_path):
 
     workbook = load_workbook(
@@ -236,20 +277,45 @@ def extract_excel(file_path):
 
     records = []
 
-    for sheet in workbook.worksheets:
+    try:
+        for sheet in workbook.worksheets:
 
-        rows = list(sheet.iter_rows(values_only=True))
+            # Prevent Excel formatting from forcing millions of
+            # unnecessary rows or columns to be processed.
+            max_rows = min(sheet.max_row or 0, 5000)
+            max_columns = min(sheet.max_column or 0, 50)
 
-        if not rows:
-            continue
+            if max_rows == 0 or max_columns == 0:
+                continue
 
-        extracted = extract_table_records(rows)
+            rows = []
 
-        records.extend(extracted)
+            for row in sheet.iter_rows(
+                min_row=1,
+                max_row=max_rows,
+                min_col=1,
+                max_col=max_columns,
+                values_only=True
+            ):
+                rows.append(row)
 
-    workbook.close()
+            if not rows:
+                continue
+
+            extracted = extract_table_records(rows)
+
+            if extracted:
+                records.extend(extracted)
+
+            # The system accepts a maximum of 300 students.
+            if len(records) > 300:
+                break
+
+    finally:
+        workbook.close()
 
     return records
+
 
 
 def extract_pdf(file_path):

@@ -15,6 +15,7 @@ tailwind_file = "block w-full text-sm text-gray-700 border border-gray-300 round
 
 
 
+
 def generate_student_credentials(
     school,
     reserved_admissions=None,
@@ -35,41 +36,55 @@ def generate_student_credentials(
 
     prefix = re.sub(r"[^A-Z0-9]", "", prefix) or "STU"
 
-    existing_numbers = Student.objects.filter(
-        admission_no__startswith=prefix
-    ).values_list("admission_no", flat=True)
+    # Load existing database values once per batch.
+    if not reserved_admissions:
+
+        reserved_admissions.update(
+            Student.objects.filter(
+                admission_no__startswith=prefix
+            ).values_list("admission_no", flat=True)
+        )
+
+    if not reserved_usernames:
+
+        reserved_usernames.update(
+            User.objects.filter(
+                username__startswith=prefix
+            ).values_list("username", flat=True)
+        )
 
     highest = 0
 
-    for number in existing_numbers:
+    for number in reserved_admissions:
+
         match = re.fullmatch(
             re.escape(prefix) + r"(\d+)",
-            number
+            str(number)
         )
 
         if match:
             highest = max(highest, int(match.group(1)))
 
+    # Find the next available number without repeated DB queries.
     while True:
+
         highest += 1
         admission_no = f"{prefix}{highest:04d}"
 
         if (
-            Student.objects.filter(admission_no=admission_no).exists()
-            or User.objects.filter(username=admission_no).exists()
-            or admission_no in reserved_admissions
-            or admission_no in reserved_usernames
+            admission_no not in reserved_admissions
+            and admission_no not in reserved_usernames
         ):
-            continue
+            break
 
-        reserved_admissions.add(admission_no)
-        reserved_usernames.add(admission_no)
+    reserved_admissions.add(admission_no)
+    reserved_usernames.add(admission_no)
 
-        return {
-            "admission_no": admission_no,
-            "username": admission_no,
-            "password": str(secrets.randbelow(90000) + 10000),
-        }
+    return {
+        "admission_no": admission_no,
+        "username": admission_no,
+        "password": str(secrets.randbelow(90000) + 10000),
+    }
 
 
 class StudentCreateForm(forms.ModelForm):
