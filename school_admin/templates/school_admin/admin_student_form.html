@@ -1025,15 +1025,32 @@ if (
                 }
             );
 
-            const data = await response.json();
+            const responseText = await response.text();
 
-            if (!response.ok) {
+let data = {};
 
-                throw new Error(
-                    data.error || "Extraction failed."
-                );
+try {
+    data = JSON.parse(responseText);
+} catch (error) {
+    console.error("Extraction returned non-JSON:", responseText);
 
-            }
+    throw new Error(
+        "The server returned an invalid response. HTTP Status: " +
+        response.status +
+        ". Check the server logs."
+    );
+}
+
+console.log("Extraction HTTP Status:", response.status);
+console.log("Extraction Response:", data);
+
+if (!response.ok) {
+    throw new Error(
+        data.error ||
+        data.message ||
+        "Extraction failed. HTTP Status: " + response.status
+    );
+}
 
             renderStudentForms(data.students);
 
