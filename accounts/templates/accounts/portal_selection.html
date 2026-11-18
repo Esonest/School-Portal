@@ -1006,9 +1006,15 @@ html.techcenter-android-app body .portal-sections .portal-card:focus-visible {
     // Capture the logged-in user's registered name or username.
     var userName = "{{ request.user.get_full_name|default:request.user.username|escapejs }}".trim();
 
-    var hour = new Date().getHours();
+    var hour = Number(
+    new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'Africa/Lagos',
+        hour: '2-digit',
+        hourCycle: 'h23'
+    }).format(new Date())
+);
 
-    var greeting;
+var greeting;
 
 if (hour >= 0 && hour < 12) {
     greeting = 'Good morning';
@@ -1113,21 +1119,27 @@ if (hour >= 0 && hour < 12) {
 
         var userName = "{{ request.user.get_full_name|default:request.user.username|escapejs }}".trim();
 
-        var hour = new Date().getHours();
+        var hour = Number(
+    new Intl.DateTimeFormat('en-GB', {
+        timeZone: 'Africa/Lagos',
+        hour: '2-digit',
+        hourCycle: 'h23'
+    }).format(new Date())
+);
 
-        var greeting;
-        var description;
+var greeting;
+var description;
 
-        if (hour >= 5 && hour < 12) {
-            greeting = 'Good morning';
-            description = 'A fresh day, a fresh opportunity to learn, grow and achieve greatness!';
-        } else if (hour >= 12 && hour < 17) {
-            greeting = 'Good afternoon';
-            description = 'Keep the momentum going. Every step you take today brings you closer to success!';
-        } else {
-            greeting = 'Good evening';
-            description = 'Take a moment to celebrate your progress. Tomorrow brings another opportunity to excel!';
-        }
+if (hour >= 0 && hour < 12) {
+    greeting = 'Good morning';
+    description = 'A fresh day, a fresh opportunity to learn, grow and achieve greatness!';
+} else if (hour >= 12 && hour < 17) {
+    greeting = 'Good afternoon';
+    description = 'Keep the momentum going. Every step you take today brings you closer to success!';
+} else {
+    greeting = 'Good evening';
+    description = 'Take a moment to celebrate your progress. Tomorrow brings another opportunity to excel!';
+}
 
         heading.textContent = greeting + (userName ? ', ' + userName : '') + ' 👋';
         message.textContent = description;
