@@ -474,29 +474,24 @@ def bulk_extract_students(request, school_id):
                 "error": "Maximum 300 students per upload."
             }, status=400)
 
+        
         reserved_admissions = set()
         reserved_usernames = set()
 
         for record in records:
 
-            while True:
-
-                credentials = generate_student_credentials(school)
-
-                if (
-                    credentials["admission_no"] not in reserved_admissions
-                    and credentials["username"] not in reserved_usernames
-                ):
-                    break
-
-            reserved_admissions.add(credentials["admission_no"])
-            reserved_usernames.add(credentials["username"])
+            credentials = generate_student_credentials(
+                school,
+                reserved_admissions=reserved_admissions,
+                reserved_usernames=reserved_usernames
+    )
 
             record.update(credentials)
 
             record["school_class"] = record.get(
                 "school_class", ""
             )
+
 
         return JsonResponse({
             "success": True,
