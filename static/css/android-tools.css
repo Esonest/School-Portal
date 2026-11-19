@@ -1,0 +1,388 @@
+/* ==========================================
+   TECHCENTER ANDROID DISPLAY TOOLBAR
+   ANDROID APP ONLY
+========================================== */
+
+#android-display-toolbar,
+#android-notification-overlay {
+    display: none;
+}
+
+html.techcenter-android-app #android-display-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 7px;
+    width: 100%;
+    padding: 9px 10px;
+    background: #ffffff;
+    border-bottom: 1px solid #e5e7eb;
+    position: relative;
+    z-index: 100;
+    box-sizing: border-box;
+}
+
+html.techcenter-android-app .android-tool-button {
+    min-width: 40px;
+    min-height: 40px;
+    padding: 5px 9px;
+    border: none;
+    border-radius: 11px;
+    background: #f1f5f9;
+    color: #1e293b;
+    font-size: 13px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 5px;
+    position: relative;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+}
+
+html.techcenter-android-app .android-tool-button:active {
+    transform: scale(.95);
+    background: #dbeafe;
+}
+
+html.techcenter-android-app .android-zoom-controls {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+html.techcenter-android-app #android-zoom-level {
+    min-width: 43px;
+    text-align: center;
+    font-size: 12px;
+    font-weight: 800;
+    color: #475569;
+}
+
+html.techcenter-android-app .android-notification-count {
+    position: absolute;
+    top: -5px;
+    right: -5px;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 20px;
+    background: #dc2626;
+    color: white;
+    font-size: 10px;
+    font-weight: 800;
+    border: 2px solid white;
+}
+
+html.techcenter-android-app .android-notification-count[hidden] {
+    display: none !important;
+}
+
+/* ==========================================
+   NOTIFICATION INBOX
+========================================== */
+
+html.techcenter-android-app #android-notification-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    background: rgba(15, 23, 42, .65);
+    padding: 12px;
+    box-sizing: border-box;
+    align-items: center;
+    justify-content: center;
+}
+
+html.techcenter-android-app #android-notification-overlay:not([hidden]) {
+    display: flex;
+}
+
+html.techcenter-android-app #android-notification-panel {
+    width: 100%;
+    max-width: 520px;
+    max-height: 85dvh;
+    overflow-y: auto;
+    background: white;
+    color: #1e293b;
+    border-radius: 19px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.25);
+    padding: 17px;
+    box-sizing: border-box;
+}
+
+html.techcenter-android-app .android-notification-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+    padding-bottom: 13px;
+    border-bottom: 1px solid #e5e7eb;
+}
+
+html.techcenter-android-app .android-notification-header h2 {
+    font-size: 21px;
+    font-weight: 800;
+}
+
+html.techcenter-android-app .android-notification-header p {
+    font-size: 12px;
+    color: #64748b;
+    margin-top: 3px;
+}
+
+html.techcenter-android-app #android-notification-close {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    background: #f1f5f9;
+    font-size: 19px;
+}
+
+html.techcenter-android-app .android-notification-actions {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    padding: 12px 0;
+}
+
+html.techcenter-android-app .android-notification-actions button {
+    font-size: 11px;
+    font-weight: 700;
+    color: #2563eb;
+    padding: 7px;
+}
+
+html.techcenter-android-app #android-notification-list {
+    display: flex;
+    flex-direction: column;
+    gap: 9px;
+}
+
+html.techcenter-android-app .android-notification-item {
+    width: 100%;
+    display: flex;
+    gap: 10px;
+    text-align: left;
+    padding: 12px;
+    border: 1px solid #e5e7eb;
+    border-radius: 13px;
+    background: #f8fafc;
+    color: #1e293b;
+}
+
+html.techcenter-android-app .android-notification-item.unread {
+    background: #eff6ff;
+    border-color: #bfdbfe;
+}
+
+html.techcenter-android-app .android-notification-item-content {
+    flex: 1;
+    min-width: 0;
+}
+
+html.techcenter-android-app .android-notification-item-title {
+    font-size: 13px;
+    font-weight: 800;
+    overflow-wrap: anywhere;
+}
+
+html.techcenter-android-app .android-notification-item-message {
+    font-size: 12px;
+    color: #475569;
+    margin-top: 4px;
+    overflow-wrap: anywhere;
+}
+
+html.techcenter-android-app .android-notification-item-date {
+    font-size: 10px;
+    color: #64748b;
+    margin-top: 7px;
+}
+
+html.techcenter-android-app .android-notification-unread-dot {
+    width: 9px;
+    height: 9px;
+    flex-shrink: 0;
+    border-radius: 50%;
+    background: #2563eb;
+    margin-top: 5px;
+}
+
+html.techcenter-android-app #android-notification-empty {
+    text-align: center;
+    padding: 35px 15px;
+    color: #64748b;
+}
+
+html.techcenter-android-app #android-notification-empty p {
+    font-weight: 800;
+    margin: 10px 0 5px;
+}
+
+html.techcenter-android-app #android-notification-empty small {
+    font-size: 11px;
+}
+
+html.techcenter-android-app #android-notification-detail {
+    padding-top: 15px;
+}
+
+html.techcenter-android-app #android-notification-back {
+    color: #2563eb;
+    font-size: 12px;
+    font-weight: 700;
+    margin-bottom: 20px;
+}
+
+html.techcenter-android-app #android-detail-title {
+    font-size: 19px;
+    font-weight: 800;
+    overflow-wrap: anywhere;
+}
+
+html.techcenter-android-app #android-detail-date {
+    font-size: 11px;
+    color: #64748b;
+    margin: 8px 0 17px;
+}
+
+html.techcenter-android-app #android-detail-message {
+    font-size: 14px;
+    line-height: 1.7;
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+html.techcenter-android-app #android-detail-link {
+    display: inline-block;
+    margin-top: 20px;
+    color: #2563eb;
+    font-weight: 700;
+    font-size: 13px;
+}
+
+/* ==========================================
+   ANDROID DARK MODE
+========================================== */
+
+html.techcenter-android-app.tc-dark {
+    color-scheme: dark;
+    background: #0f172a !important;
+}
+
+html.techcenter-android-app.tc-dark body {
+    background: #0f172a !important;
+    color: #e2e8f0 !important;
+}
+
+html.techcenter-android-app.tc-dark #android-display-toolbar {
+    background: #111827 !important;
+    border-color: #334155 !important;
+}
+
+html.techcenter-android-app.tc-dark .android-tool-button {
+    background: #263449 !important;
+    color: #f8fafc !important;
+}
+
+html.techcenter-android-app.tc-dark #android-zoom-level {
+    color: #e2e8f0 !important;
+}
+
+html.techcenter-android-app.tc-dark #android-notification-panel {
+    background: #111827 !important;
+    color: #f8fafc !important;
+}
+
+html.techcenter-android-app.tc-dark .android-notification-header {
+    border-color: #334155 !important;
+}
+
+html.techcenter-android-app.tc-dark .android-notification-header p,
+html.techcenter-android-app.tc-dark .android-notification-item-message,
+html.techcenter-android-app.tc-dark .android-notification-item-date,
+html.techcenter-android-app.tc-dark #android-detail-date {
+    color: #cbd5e1 !important;
+}
+
+html.techcenter-android-app.tc-dark .android-notification-item {
+    background: #1e293b !important;
+    color: #f8fafc !important;
+    border-color: #334155 !important;
+}
+
+html.techcenter-android-app.tc-dark .android-notification-item.unread {
+    background: #172b48 !important;
+    border-color: #2563eb !important;
+}
+
+html.techcenter-android-app.tc-dark #android-notification-close {
+    background: #263449 !important;
+    color: white !important;
+}
+
+html.techcenter-android-app.tc-dark #android-notification-empty {
+    color: #cbd5e1 !important;
+}
+
+/* Common Tailwind backgrounds */
+html.techcenter-android-app.tc-dark .bg-white,
+html.techcenter-android-app.tc-dark .bg-gray-50,
+html.techcenter-android-app.tc-dark .bg-gray-100,
+html.techcenter-android-app.tc-dark .bg-slate-50,
+html.techcenter-android-app.tc-dark .bg-slate-100,
+html.techcenter-android-app.tc-dark .bg-blue-50,
+html.techcenter-android-app.tc-dark .bg-indigo-50,
+html.techcenter-android-app.tc-dark .bg-purple-50,
+html.techcenter-android-app.tc-dark .bg-green-50,
+html.techcenter-android-app.tc-dark .bg-yellow-50 {
+    background-color: #1e293b !important;
+}
+
+/* Common Tailwind text colors */
+html.techcenter-android-app.tc-dark .text-gray-900,
+html.techcenter-android-app.tc-dark .text-gray-800,
+html.techcenter-android-app.tc-dark .text-gray-700,
+html.techcenter-android-app.tc-dark .text-gray-600,
+html.techcenter-android-app.tc-dark .text-slate-900,
+html.techcenter-android-app.tc-dark .text-slate-800,
+html.techcenter-android-app.tc-dark .text-slate-700,
+html.techcenter-android-app.tc-dark .text-slate-600 {
+    color: #e2e8f0 !important;
+}
+
+/* Form fields */
+html.techcenter-android-app.tc-dark input,
+html.techcenter-android-app.tc-dark select,
+html.techcenter-android-app.tc-dark textarea {
+    background-color: #1e293b !important;
+    color: #f8fafc !important;
+    border-color: #475569 !important;
+}
+
+html.techcenter-android-app.tc-dark input::placeholder,
+html.techcenter-android-app.tc-dark textarea::placeholder {
+    color: #94a3b8 !important;
+}
+
+@media (max-width: 380px) {
+    html.techcenter-android-app #android-display-toolbar {
+        gap: 4px;
+        padding: 7px 5px;
+    }
+
+    html.techcenter-android-app .android-tool-button {
+        padding: 5px 6px;
+        font-size: 11px;
+    }
+
+    html.techcenter-android-app #android-zoom-level {
+        min-width: 37px;
+        font-size: 11px;
+    }
+}

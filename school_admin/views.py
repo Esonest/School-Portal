@@ -740,6 +740,7 @@ from .forms import StudentCreateForm  # 👈 separate forms like you did for acc
 # BULK STUDENT REGISTRATION
 # ==========================================================
 
+
 @login_required
 @user_passes_test(
     lambda u: is_schooladmin(u) or is_superadmin(u)
@@ -750,7 +751,6 @@ def bulk_save_students(request, school_id):
     school = get_object_or_404(School, id=school_id)
 
     if not is_superadmin(request.user):
-
         admin_school = request.user.school_admin_profile.school
 
         if admin_school.id != school.id:
@@ -760,18 +760,15 @@ def bulk_save_students(request, school_id):
             )
 
     try:
-
         payload = json.loads(request.body)
-
         students_data = payload.get("students", [])
 
-    except (json.JSONDecodeError, AttributeError):
-
+    except (json.JSONDecodeError, AttributeError, TypeError):
         return JsonResponse({
             "error": "Invalid student data."
         }, status=400)
 
-    if not students_data:
+    if not isinstance(students_data, list) or not students_data:
         return JsonResponse({
             "error": "No students submitted."
         }, status=400)
@@ -784,91 +781,163 @@ def bulk_save_students(request, school_id):
     successful = []
     failed = []
 
+    # --------------------------------------------------
+    # LOAD SCHOOL CLASSES ONCE
+    # --------------------------------------------------
+
+    school_classes = {
+        item.name.strip().casefold(): item
+        for item in SchoolClass.objects.filter(
+            school=school
+        ).only("id", "name")
+    }
+
+    # --------------------------------------------------
+    # CHECK EXISTING CREDENTIALS IN BATCHES
+    # --------------------------------------------------
+
+    admission_numbers = {
+        str(data.get("admission_no", "")).strip()
+        for data in students_data
+        if isinstance(data, dict) and data.get("admission_no")
+    }
+
+    usernames = {
+        str(data.get("username", "")).strip()
+        for data in students_data
+        if isinstance(data, dict) and data.get("username")
+    }
+
+    existing_admissions = set(
+        Student.objects.filter(
+            admission_no__in=admission_numbers
+        ).values_list("admission_no", flat=True)
+    )
+
+    UserModel = get_user_model()
+
+    existing_usernames = set(
+        UserModel.objects.filter(
+            username__in=usernames
+        ).values_list("username", flat=True)
+    )
+
+    # Prevent duplicate credentials within this upload.
+    processed_admissions = set()
+    processed_usernames = set()
+
+    # --------------------------------------------------
+    # REGISTER STUDENTS
+    # --------------------------------------------------
+
     for index, data in enumerate(students_data, start=1):
+
+        if not isinstance(data, dict):
+            failed.append({
+                "row": index,
+                "name": "",
+                "error": "Invalid student record.",
+                "data": {}
+            })
+            continue
 
         try:
 
             with transaction.atomic():
 
-                # Resolve class against this school's classes.
                 class_name = str(
-                    data.get("school_class", "")
+                    data.get("school_class") or ""
                 ).strip()
 
                 school_class = None
 
                 if class_name:
 
-                    school_class = SchoolClass.objects.filter(
-                        school=school,
-                        name__iexact=class_name
-                    ).first()
+                    school_class = school_classes.get(
+                        class_name.casefold()
+                    )
 
                     if not school_class:
-
                         raise ValueError(
                             f"Class '{class_name}' does not exist "
                             "in this school."
                         )
 
                 admission_no = str(
-                    data.get("admission_no", "")
+                    data.get("admission_no") or ""
                 ).strip()
 
                 username = str(
-                    data.get("username", "")
+                    data.get("username") or ""
                 ).strip()
 
                 password = str(
-                    data.get("password", "")
+                    data.get("password") or ""
                 )
 
-                # Check credentials before creating accounts.
                 if not re.fullmatch(r"\d{5}", password):
-
                     raise ValueError(
                         "Password must contain exactly five digits."
                     )
 
                 if not admission_no or not username:
-
                     raise ValueError(
                         "Admission number and username are required."
                     )
 
-                if Student.objects.filter(
-                    admission_no=admission_no
-                ).exists():
-
+                if (
+                    admission_no in existing_admissions
+                    or admission_no in processed_admissions
+                ):
                     raise ValueError(
-                        f"Admission number {admission_no} already exists."
+                        f"Admission number {admission_no} already exists "
+                        "or is duplicated in this upload."
                     )
 
-                if get_user_model().objects.filter(
-                    username=username
-                ).exists():
-
+                if (
+                    username in existing_usernames
+                    or username in processed_usernames
+                ):
                     raise ValueError(
-                        f"Username {username} already exists."
+                        f"Username {username} already exists "
+                        "or is duplicated in this upload."
                     )
 
-                # Prepare data for the existing form.
+                # Prepare data for the existing registration form.
                 form_data = {
-                    "first_name": data.get("first_name", "").strip(),
-                    "last_name": data.get("last_name", "").strip(),
+                    "first_name": str(
+                        data.get("first_name") or ""
+                    ).strip(),
+
+                    "last_name": str(
+                        data.get("last_name") or ""
+                    ).strip(),
+
                     "username": username,
-                    "email": data.get("email", "").strip(),
+
+                    "email": str(
+                        data.get("email") or ""
+                    ).strip(),
+
                     "password": password,
+
                     "admission_no": admission_no,
+
                     "school_class": (
                         school_class.pk if school_class else ""
                     ),
-                    "dob": data.get("dob", ""),
-                    "gender": data.get("gender", ""),
-                    "parent_name": data.get("parent_name", ""),
-                    "parent_email": data.get("parent_email", ""),
-                    "parent_phone": data.get("parent_phone", ""),
-                    "student_email": data.get("student_email", ""),
+
+                    "dob": data.get("dob") or "",
+
+                    "gender": data.get("gender") or "",
+
+                    "parent_name": data.get("parent_name") or "",
+
+                    "parent_email": data.get("parent_email") or "",
+
+                    "parent_phone": data.get("parent_phone") or "",
+
+                    "student_email": data.get("student_email") or "",
                 }
 
                 form = StudentCreateForm(
@@ -887,29 +956,43 @@ def bulk_save_students(request, school_id):
 
                 student = form.save()
 
+                # Reserve credentials after successful registration.
+                existing_admissions.add(admission_no)
+                existing_usernames.add(username)
+
+                processed_admissions.add(admission_no)
+                processed_usernames.add(username)
+
                 successful.append({
                     "name": student.full_name(),
                     "admission_no": student.admission_no,
                     "username": username,
                     "password": password,
+
+                    # Include the actual registered class in the response.
+                    "school_class": (
+                        school_class.name if school_class else ""
+                    ),
                 })
 
         except Exception as exc:
 
-           
             import traceback
 
-            print("\n========== BULK STUDENT REGISTRATION ERROR ==========")
+            print(
+                "\n========== BULK STUDENT REGISTRATION ERROR =========="
+            )
             traceback.print_exc()
             print("=====================================================")
 
-   
             failed.append({
                 "row": index,
+
                 "name": (
                     f"{data.get('first_name', '')} "
                     f"{data.get('last_name', '')}"
                 ).strip(),
+
                 "error": str(exc),
                 "data": data
             })
@@ -920,6 +1003,7 @@ def bulk_save_students(request, school_id):
         "failed": len(failed),
         "successful_students": successful,
         "failed_students": failed,
+
         "message": (
             f"{len(successful)} students registered successfully. "
             f"{len(failed)} records failed."

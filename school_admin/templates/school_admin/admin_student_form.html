@@ -692,46 +692,39 @@ function downloadSuccessfulStudents(students) {
         let textY = y + 19;
 
         const fields = [
-            ["Name", student.name],
-            ["Admission No.", student.admission_no],
-            ["Username", student.username],
-            ["Password", student.password]
-        ];
+    ["Name", student.name],
+    ["Class", student.school_class],
+    ["Admission No.", student.admission_no],
+    ["Username", student.username],
+    ["Password", student.password]
+];
 
-        fields.forEach(([label, value]) => {
+       fields.forEach(([label, value]) => {
 
-            const valueText = String(value ?? "");
+    const valueText = String(value ?? "Not specified");
 
-            doc.setFont("helvetica", "bold");
-            doc.setFontSize(8);
-            doc.setTextColor(90, 90, 90);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(7.5);
+    doc.setTextColor(90, 90, 90);
 
-            doc.text(
-                label + ":",
-                x + 5,
-                textY
-            );
+    doc.text(label + ":", x + 5, textY);
 
-            textY += 4;
+    textY += 3.5;
 
-            doc.setFont("helvetica", "normal");
-            doc.setFontSize(9);
-            doc.setTextColor(20, 20, 20);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(8.5);
+    doc.setTextColor(20, 20, 20);
 
-            const lines = doc.splitTextToSize(
-                valueText,
-                cardWidth - 10
-            );
+    const lines = doc.splitTextToSize(
+        valueText,
+        cardWidth - 10
+    );
 
-            doc.text(
-                lines,
-                x + 5,
-                textY
-            );
+    doc.text(lines, x + 5, textY);
 
-            textY += (lines.length * 4) + 4;
+    textY += (lines.length * 3.5) + 2;
 
-        });
+});
 
     });
 
@@ -1246,6 +1239,18 @@ if (data.successful_students.length) {
                         </p>
 
                     </div>
+
+                    <div class="min-w-0">
+
+    <p class="text-xs text-gray-500 mb-1">
+        Class
+    </p>
+
+    <p class="text-sm font-semibold text-gray-800 break-all">
+        ${escapeHTML(student.school_class || "Not specified")}
+    </p>
+
+</div>
 
                     <div class="min-w-0">
 
