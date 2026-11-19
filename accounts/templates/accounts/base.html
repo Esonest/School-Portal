@@ -11,7 +11,7 @@
     {% load static %}
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
 
-    <script>
+   <script>
 (function () {
     if (window.TechcenterBridge) {
         document.documentElement.classList.add('techcenter-android-app');
@@ -83,7 +83,7 @@ scroll-smooth {% if request.resolver_match.url_name == 'login' %}login-layout{% 
 {% endif %}
 
 
-{% if user.is_authenticated and request.resolver_match.url_name != 'login' and is_android_app %}
+{% if user.is_authenticated and request.resolver_match.url_name != 'login' %}
 <!-- ANDROID APP DISPLAY TOOLBAR -->
 <div id="android-display-toolbar">
 
@@ -563,18 +563,25 @@ body.login-layout > .login-footer {
 </style>
 
 <style>
-    #android-display-toolbar,
-    #android-notification-overlay {
-        display: none !important;
-    }
+/* Hide Android controls in ordinary browsers */
+html:not(.techcenter-android-app) #android-display-toolbar,
+html:not(.techcenter-android-app) #android-notification-overlay {
+    display: none !important;
+}
 
-    html.techcenter-android-app #android-display-toolbar {
-        display: flex !important;
-    }
+/* Show controls only in the native Android app */
+html.techcenter-android-app #android-display-toolbar {
+    display: flex !important;
+}
 
-    html.techcenter-android-app #android-notification-overlay:not([hidden]) {
-        display: flex !important;
-    }
+/* Notification panel remains hidden until opened */
+html.techcenter-android-app #android-notification-overlay[hidden] {
+    display: none !important;
+}
+
+html.techcenter-android-app #android-notification-overlay:not([hidden]) {
+    display: flex !important;
+}
 </style>
 
 <!-- MOBILE SCRIPT -->
