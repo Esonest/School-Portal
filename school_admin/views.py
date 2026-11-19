@@ -13,6 +13,7 @@ import os
 import re
 import json
 import tempfile
+from django.core.paginator import Paginator
 
 from django.http import HttpResponse
 from openpyxl import Workbook
@@ -695,6 +696,7 @@ from .forms import StudentCreateForm, StudentUpdateForm
 
 
 # LIST STUDENTS
+# LIST STUDENTS
 @login_required
 @user_passes_test(
     lambda u: is_schooladmin(u) or is_superadmin(u)
@@ -704,9 +706,9 @@ def student_list(request, school_id):
     # Base queryset
     students = Student.objects.filter(
         school_id=school_id
-    ).select_related("user", "school_class")
+    ).select_related("user", "school_class").order_by("id")
 
-    # --- FILTER BY CLASS ---
+    # FILTER BY CLASS
     class_id = request.GET.get("class_id")
     if class_id:
         students = students.filter(school_class_id=class_id)
@@ -714,16 +716,23 @@ def student_list(request, school_id):
     # Get school
     school = request.user.school_admin_profile.school
 
-    # Get all classes in this school for dropdown
+    # Get all classes in this school
     classes = SchoolClass.objects.filter(school_id=school_id)
 
+    # PAGINATION: 20 STUDENTS PER PAGE
+    paginator = Paginator(students, 20)
+    page_number = request.GET.get("page")
+    page_obj = paginator.get_page(page_number)
+
     return render(request, "school_admin/super_admin_student_list.html", {
-        "students": students,
+        "students": page_obj,
+        "page_obj": page_obj,
         "school": school,
         "classes": classes,
         "selected_class": class_id,
     })
 
+    
 from results.utils import generate_unique_username
 from django.contrib.auth import get_user_model
 
