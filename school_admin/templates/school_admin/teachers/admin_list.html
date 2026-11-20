@@ -167,47 +167,133 @@ html.techcenter-android-app body .teacher-chart-card canvas {
     max-height: 260px;
 }
 
-/* TEACHERS TABLE */
+
+/* =====================================================
+   ANDROID TEACHER LIST — NATIVE PROFILE CARDS
+===================================================== */
+
 html.techcenter-android-app body .teacher-table-container {
     width: 100%;
-    border-radius: 19px !important;
-    border: 1px solid #e2e8f0 !important;
-    background: #ffffff !important;
-    box-shadow: 0 4px 15px rgba(15,23,42,.05) !important;
-    overflow-x: auto !important;
-    -webkit-overflow-scrolling: touch;
+    overflow: visible !important;
+    border: none !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
 }
 
 html.techcenter-android-app body .teacher-table-container table {
-    min-width: 650px;
+    display: block;
+    width: 100% !important;
+    min-width: 0 !important;
     border-collapse: separate;
     border-spacing: 0;
 }
 
-html.techcenter-android-app body .teacher-table-container th {
-    padding: 13px 12px !important;
-    background: #f1f5f9 !important;
+html.techcenter-android-app body .teacher-table-container thead {
+    display: none !important;
+}
+
+html.techcenter-android-app body .teacher-table-container tbody {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 13px;
+    width: 100%;
+}
+
+html.techcenter-android-app body .teacher-table-container tbody tr:not(.teacher-empty-row) {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+    gap: 13px 12px;
+    width: 100%;
+    padding: 16px;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 19px;
+    background: #ffffff !important;
+    box-shadow: 0 4px 13px rgba(15,23,42,.055);
+}
+
+html.techcenter-android-app body .teacher-table-container tbody td {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 5px;
+    min-width: 0;
+    padding: 0 !important;
+    border: none !important;
+    background: transparent !important;
     color: #334155 !important;
-    font-size: 11px !important;
-    font-weight: 850 !important;
+    font-size: 13px !important;
+    line-height: 1.5;
+    overflow-wrap: anywhere;
+}
+
+html.techcenter-android-app body .teacher-table-container tbody td::before {
+    content: attr(data-label);
+    display: block;
+    color: #94a3b8;
+    font-size: 10px;
+    font-weight: 850;
     text-transform: uppercase;
-    letter-spacing: .35px;
-    white-space: nowrap;
+    letter-spacing: .55px;
 }
 
-html.techcenter-android-app body .teacher-table-container td {
-    padding: 13px 12px !important;
-    font-size: 12px !important;
-    color: #334155;
-    vertical-align: middle;
+html.techcenter-android-app body .teacher-table-container tbody td:first-child {
+    grid-column: 1 / -1;
+    padding-bottom: 11px !important;
+    border-bottom: 1px solid #e2e8f0 !important;
+    color: #172033 !important;
+    font-size: 16px !important;
+    font-weight: 850 !important;
 }
 
-html.techcenter-android-app body .teacher-table-container tbody tr {
+html.techcenter-android-app body .teacher-table-container tbody td:first-child::before {
+    color: #64748b;
+}
+
+html.techcenter-android-app body .teacher-table-container tbody td:last-child {
+    grid-column: 1 / -1;
+    padding-top: 11px !important;
+    border-top: 1px solid #e2e8f0 !important;
+}
+
+html.techcenter-android-app body .teacher-table-container tbody td:last-child::before {
+    margin-bottom: 3px;
+}
+
+/* Empty teacher list */
+html.techcenter-android-app body .teacher-table-container tbody tr.teacher-empty-row {
+    display: block;
+    padding: 25px 15px;
+    border: 1px dashed #cbd5e1;
+    border-radius: 17px;
     background: #ffffff;
+    text-align: center;
 }
 
-html.techcenter-android-app body .teacher-table-container tbody tr:active {
-    background: #f1f5f9;
+html.techcenter-android-app body .teacher-table-container tbody tr.teacher-empty-row td {
+    display: block;
+    padding: 0 !important;
+    color: #64748b !important;
+}
+
+/* Android table dark mode */
+html.techcenter-android-app.tc-dark body .teacher-table-container tbody tr:not(.teacher-empty-row),
+html.techcenter-android-app.tc-dark body .teacher-table-container tbody tr.teacher-empty-row {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+html.techcenter-android-app.tc-dark body .teacher-table-container tbody td {
+    color: #e2e8f0 !important;
+}
+
+html.techcenter-android-app.tc-dark body .teacher-table-container tbody td:first-child {
+    color: #f8fafc !important;
+    border-bottom-color: #334155 !important;
+}
+
+html.techcenter-android-app.tc-dark body .teacher-table-container tbody td:last-child {
+    border-top-color: #334155 !important;
 }
 
 /* ACTION BUTTON */
@@ -221,16 +307,25 @@ html.techcenter-android-app body .teacher-actions-wrapper > button {
 }
 
 /* ACTION DROPDOWN */
+/* ANDROID ACTION DROPDOWN */
+html.techcenter-android-app body .teacher-actions-wrapper {
+    position: relative !important;
+    display: inline-block;
+}
+
 html.techcenter-android-app body .teacher-action-menu {
-    position: fixed !important;
-    right: 14px !important;
+    position: absolute !important;
+    top: calc(100% + 7px) !important;
+    bottom: auto !important;
+    right: 0 !important;
     left: auto !important;
-    top: auto;
     width: 205px !important;
-    max-width: calc(100vw - 28px);
+    max-width: calc(100vw - 35px);
+    margin: 0 !important;
     border-radius: 15px !important;
     box-shadow: 0 12px 35px rgba(15,23,42,.2) !important;
     z-index: 99999 !important;
+    overflow: hidden;
 }
 
 html.techcenter-android-app body .teacher-action-menu a {
@@ -389,15 +484,34 @@ html.techcenter-android-app.tc-dark body .teacher-action-menu a {
       <tbody>
         {% for t in teachers %}
         <tr class="border-b hover:bg-gray-50 transition">
-          <td class="p-3 font-medium">{{ t.get_full_name }}</td>
-          <td class="p-3 text-sm">{{ t.staff_id }}</td>
-          <td class="p-3 text-sm">
-            {% for cls in t.classes.all %}{{ cls.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
-          </td>
-          <td class="p-3 text-sm">
-            {% for s in t.subjects.all %}{{ s.name }}{% if not forloop.last %}, {% endif %}{% endfor %}
-          </td>
-        <td class="p-3">
+          
+<td class="p-3 font-medium" data-label="Teacher Name">
+    {{ t.get_full_name }}
+</td>
+
+<td class="p-3 text-sm" data-label="Staff ID">
+    {{ t.staff_id }}
+</td>
+
+<td class="p-3 text-sm" data-label="Classes">
+    {% for cls in t.classes.all %}
+        {{ cls.name }}{% if not forloop.last %}, {% endif %}
+    {% empty %}
+        Not assigned
+    {% endfor %}
+</td>
+
+<td class="p-3 text-sm" data-label="Subjects">
+    {% for s in t.subjects.all %}
+        {{ s.name }}{% if not forloop.last %}, {% endif %}
+    {% empty %}
+        Not assigned
+    {% endfor %}
+</td>
+
+<td class="p-3" data-label="Manage Teacher">
+ 
+
 
     <!-- ACTIONS WRAPPER -->
     <div class="teacher-actions-wrapper relative inline-block text-left">
@@ -458,8 +572,8 @@ html.techcenter-android-app.tc-dark body .teacher-action-menu a {
 
         </tr>
         {% empty %}
-        <tr>
-          <td colspan="5"
+        <tr class="teacher-empty-row">
+    <td colspan="5"
               class="p-6 text-center text-gray-500">
             No teachers found.
           </td>
@@ -526,7 +640,7 @@ html.techcenter-android-app.tc-dark body .teacher-action-menu a {
             });
 
             new Chart(canvas, {
-                type: isAndroidApp ? 'pie' : 'bar',
+               type: 'pie',
 
                 data: {
                     labels: labels,
@@ -543,8 +657,13 @@ html.techcenter-android-app.tc-dark body .teacher-action-menu a {
                                 ? '#3b82f6'
                                 : '#10b981',
 
-                        borderColor: isAndroidApp ? '#ffffff' : '#3b82f6',
-                        borderWidth: isAndroidApp ? 3 : 0,
+                        borderColor: isAndroidApp
+    ? '#ffffff'
+    : title === 'Teachers per Class'
+        ? '#3b82f6'
+        : '#10b981',
+
+borderWidth: isAndroidApp ? 3 : 0,
                         borderRadius: isAndroidApp ? 0 : 8,
                         hoverOffset: isAndroidApp ? 8 : 0
                     }]
@@ -552,7 +671,7 @@ html.techcenter-android-app.tc-dark body .teacher-action-menu a {
 
                 options: {
                     responsive: true,
-                    maintainAspectRatio: false,
+                    maintainAspectRatio: !isAndroidApp,
 
                     plugins: {
                         legend: {
