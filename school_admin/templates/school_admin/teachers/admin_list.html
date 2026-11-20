@@ -544,13 +544,11 @@ html.techcenter-android-app.tc-dark body .teacher-action-menu a {
     <div class="teacher-actions-wrapper relative inline-block text-left">
 
         <!-- ACTION BUTTON -->
-        <button
-            type="button"
-            onclick="toggleMenu(this)"
-            class="px-3 py-1 bg-gray-800 text-white rounded-lg
-                   hover:bg-gray-900 text-xs shadow">
-            Actions ▾
-        </button>
+       <button
+    type="button"
+    class="teacher-actions-button px-3 py-1 bg-gray-800 text-white rounded-lg hover:bg-gray-900 text-xs shadow">
+    Actions ▾
+</button>
 
         <!-- DROPDOWN MENU -->
         <div
@@ -758,142 +756,153 @@ borderWidth: isAndroidApp ? 3 : 0,
         );
     }
 
-    /* =================================================
-       ACTIONS DROPDOWN
-    ================================================= */
-
-    window.toggleMenu = function (button) {
-
-    const wrapper = button.closest('.teacher-actions-wrapper');
-
-    if (!wrapper) return;
-
-    const currentMenu = wrapper.querySelector('.teacher-action-menu');
-
-    if (!currentMenu) return;
-
-    // Close other open menus
-    document.querySelectorAll('.teacher-action-menu').forEach(function (menu) {
-        if (menu !== currentMenu) {
-            menu.classList.add('hidden');
-            menu.style.top = '';
-            menu.style.left = '';
-        }
-    });
-
-    // Close if this menu is already open
-    if (!currentMenu.classList.contains('hidden')) {
-        currentMenu.classList.add('hidden');
-        currentMenu.style.top = '';
-        currentMenu.style.left = '';
-        return;
-    }
-
-    // Open menu
-    currentMenu.classList.remove('hidden');
-
-    // Keep normal browser dropdown behaviour unchanged
-    if (!document.documentElement.classList.contains('techcenter-android-app')) {
-        return;
-    }
-
-    // Android: calculate the correct screen position
-    currentMenu.style.position = 'fixed';
-    currentMenu.style.right = 'auto';
-    currentMenu.style.bottom = 'auto';
-
-    const buttonRect = button.getBoundingClientRect();
-
-    const screenWidth = window.innerWidth;
-    const screenHeight = window.innerHeight;
-
-    const menuWidth = Math.min(220, screenWidth - 24);
-
-    // Leave space for the Android bottom toolbar
-    const safeBottom = screenHeight - 90;
-
-    const availableBelow = Math.max(0, safeBottom - buttonRect.bottom - 7);
-    const availableAbove = Math.max(0, buttonRect.top - 12);
-
-    currentMenu.style.width = menuWidth + 'px';
-    currentMenu.style.maxHeight = Math.max(
-        80,
-        Math.min(screenHeight - 110, 320)
-    ) + 'px';
-
-    // Measure menu after making it visible
-    const menuHeight = currentMenu.scrollHeight;
-
-    // Open upwards when there is insufficient room below
-    const openUpwards =
-        availableBelow < Math.min(menuHeight, 180) &&
-        availableAbove > availableBelow;
-
-    let top;
-
-    if (openUpwards) {
-        top = Math.max(
-            12,
-            buttonRect.top - Math.min(menuHeight, availableAbove) - 7
-        );
-    } else {
-        top = buttonRect.bottom + 7;
-
-        // Prevent the menu from extending into the bottom toolbar
-        if (top + menuHeight > safeBottom) {
-            top = Math.max(12, safeBottom - Math.min(menuHeight, safeBottom - 12));
-        }
-    }
-
-    // Align to the button, but never outside the screen
-    let left = buttonRect.right - menuWidth;
-
-    left = Math.max(
-        12,
-        Math.min(left, screenWidth - menuWidth - 12)
-    );
-
-    currentMenu.style.top = top + 'px';
-    currentMenu.style.left = left + 'px';
-};
-
-    /* CLOSE WHEN CLICKING OUTSIDE */
-
-    document.addEventListener('click', function (event) {
-
-        if (!event.target.closest('.teacher-actions-wrapper')) {
-
-            document.querySelectorAll(
-                '.teacher-action-menu'
-            ).forEach(function (menu) {
-                menu.classList.add('hidden');
-            });
-
-        }
-
-    });
-
-    /* CLOSE WITH ESCAPE */
-
-    document.addEventListener('keydown', function (event) {
-
-        if (event.key === 'Escape') {
-
-            document.querySelectorAll(
-                '.teacher-action-menu'
-            ).forEach(function (menu) {
-                menu.classList.add('hidden');
-            });
-
-        }
-
-    });
-
 })();
 
 
 </script>
 
+
+<script>
+/* =====================================================
+   INDEPENDENT TEACHER ACTIONS DROPDOWN
+   Desktop browser + Native Android
+===================================================== */
+(function () {
+    'use strict';
+
+    function closeAllMenus() {
+        document.querySelectorAll('.teacher-action-menu').forEach(function (menu) {
+            menu.classList.add('hidden');
+
+            menu.style.top = '';
+            menu.style.left = '';
+            menu.style.position = '';
+            menu.style.right = '';
+            menu.style.bottom = '';
+            menu.style.width = '';
+            menu.style.maxHeight = '';
+            menu.style.overflowY = '';
+        });
+    }
+
+    function openMenu(button, menu) {
+        closeAllMenus();
+
+        menu.classList.remove('hidden');
+
+        menu.style.position = 'fixed';
+        menu.style.right = 'auto';
+        menu.style.bottom = 'auto';
+
+        const isAndroid = document.documentElement.classList.contains(
+            'techcenter-android-app'
+        );
+
+        const rect = button.getBoundingClientRect();
+
+        const screenWidth = document.documentElement.clientWidth;
+        const screenHeight = window.innerHeight;
+
+        const menuWidth = Math.min(220, screenWidth - 24);
+
+        const safeBottom = isAndroid
+            ? screenHeight - 90
+            : screenHeight - 12;
+
+        const maxHeight = Math.max(
+            100,
+            Math.min(320, safeBottom - 24)
+        );
+
+        menu.style.width = menuWidth + 'px';
+        menu.style.maxHeight = maxHeight + 'px';
+        menu.style.overflowY = 'auto';
+
+        const menuHeight = Math.min(
+            menu.scrollHeight,
+            maxHeight
+        );
+
+        const spaceBelow = safeBottom - rect.bottom - 7;
+        const spaceAbove = rect.top - 12;
+
+        let top;
+
+        if (
+            spaceBelow < menuHeight &&
+            spaceAbove > spaceBelow
+        ) {
+            top = rect.top - menuHeight - 7;
+        } else {
+            top = rect.bottom + 7;
+        }
+
+        top = Math.max(
+            12,
+            Math.min(top, safeBottom - menuHeight)
+        );
+
+        let left = rect.right - menuWidth;
+
+        left = Math.max(
+            12,
+            Math.min(left, screenWidth - menuWidth - 12)
+        );
+
+        menu.style.top = top + 'px';
+        menu.style.left = left + 'px';
+    }
+
+    // Handle Actions button clicks
+    document.addEventListener('click', function (event) {
+
+        const button = event.target.closest(
+            '.teacher-actions-button'
+        );
+
+        if (button) {
+            event.preventDefault();
+            event.stopPropagation();
+
+            const wrapper = button.closest(
+                '.teacher-actions-wrapper'
+            );
+
+            if (!wrapper) return;
+
+            const menu = wrapper.querySelector(
+                '.teacher-action-menu'
+            );
+
+            if (!menu) return;
+
+            if (!menu.classList.contains('hidden')) {
+                closeAllMenus();
+                return;
+            }
+
+            openMenu(button, menu);
+            return;
+        }
+
+        // Close when clicking outside the menu
+        if (!event.target.closest('.teacher-actions-wrapper')) {
+            closeAllMenus();
+        }
+    });
+
+    // Close with Escape
+    document.addEventListener('keydown', function (event) {
+        if (event.key === 'Escape') {
+            closeAllMenus();
+        }
+    });
+
+    // Close after screen rotation or resizing
+    window.addEventListener('resize', closeAllMenus);
+
+})();
+</script>
 
 
 

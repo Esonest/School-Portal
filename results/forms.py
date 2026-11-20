@@ -165,25 +165,44 @@ from django import forms
 from .models import GradeSetting, SchoolClass
 
 class GradeSettingForm(forms.ModelForm):
+
     class Meta:
-        model = GradeSetting   
-        fields = ['SchoolClass', 'grade', 'min_score', 'interpretation']
+        model = GradeSetting
+        fields = [
+            'SchoolClass',
+            'grade',
+            'min_score',
+            'interpretation'
+        ]
 
     def __init__(self, *args, **kwargs):
         school = kwargs.pop('school', None)
+        school_classes = kwargs.pop('school_classes', None)
+
         super().__init__(*args, **kwargs)
 
-        # 🔥 CRITICAL FIX
         self.empty_permitted = True
 
         if school:
-            self.fields['SchoolClass'].queryset = SchoolClass.objects.filter(school=school)
+            # Keep validation restricted to this school's classes.
+            self.fields['SchoolClass'].queryset = (
+                SchoolClass.objects.filter(school=school)
+            )
+
             self.fields['SchoolClass'].empty_label = "Select Class"
+
+            # Reuse the already-loaded class list when rendering choices.
+            if school_classes is not None:
+                self.fields['SchoolClass'].choices = [
+                    ('', 'Select Class')
+                ] + [
+                    (obj.pk, str(obj))
+                    for obj in school_classes
+                ]
 
     def clean(self):
         cleaned_data = super().clean()
 
-        # 🔥 SKIP validation if marked for deletion
         if cleaned_data.get("DELETE"):
             return cleaned_data
 

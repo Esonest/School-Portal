@@ -71,22 +71,20 @@ class GradeSetting(models.Model):
         return f"{self.grade} ({self.min_score}+)"
 
 def grade_from_score_dynamic(score, school, school_class=None):
-    from .models import GradeSetting
 
-    qs = GradeSetting.objects.filter(school=school)
+    qs = GradeSetting.objects.filter(
+        school=school,
+        min_score__isnull=False
+    )
 
-    # Optional: class-specific grading
     if school_class:
         qs = qs.filter(SchoolClass=school_class)
 
-    # Highest min_score first
-    qs = qs.order_by("-min_score")
+    setting = qs.filter(
+        min_score__lte=score
+    ).order_by('-min_score').first()
 
-    for setting in qs:
-        if score >= setting.min_score:
-            return setting.grade
-
-    return "F"
+    return setting.grade if setting else "F"
 
 class ClassScoreSetting(models.Model):
     school_class = models.OneToOneField(

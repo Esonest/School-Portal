@@ -2701,59 +2701,103 @@ from .models import GradeSetting
 
 
 from django.forms import modelformset_factory
+from django.forms import modelformset_factory
+from django.db import transaction
+from django.contrib import messages
+from django.contrib.auth.decorators import login_required
+from django.shortcuts import render, redirect
+
+
 @login_required
 def grade_settings(request, school_id):
+
     school = request.user.school
+    school_classes = list(
+        SchoolClass.objects.filter(school=school)
+    )
 
     GradeFormSet = modelformset_factory(
         GradeSetting,
         form=GradeSettingForm,
-        extra=0,  # 🔥 IMPORTANT: let JS handle adding
+        extra=0,
         can_delete=True,
-        fields=('SchoolClass', 'grade', 'min_score', 'interpretation')
+        fields=(
+            'SchoolClass',
+            'grade',
+            'min_score',
+            'interpretation'
+        )
     )
 
-    queryset = GradeSetting.objects.filter(school=school)
+    # Load each grade setting together with its related class.
+    queryset = (
+        GradeSetting.objects
+        .filter(school=school)
+        .select_related('SchoolClass')
+        .order_by('id')
+    )
 
     if request.method == "POST":
+
         formset = GradeFormSet(
             request.POST,
             queryset=queryset,
-            form_kwargs={'school': school}
+            form_kwargs={
+                'school': school,
+                'school_classes': school_classes
+            }
         )
 
         if formset.is_valid():
-            instances = formset.save(commit=False)
 
-    # Delete objects
-            for obj in formset.deleted_objects:
-                obj.delete()
+            with transaction.atomic():
 
-    # Save new/updated
-            for obj in instances:
-                obj.school = school
-                obj.save()
+                instances = formset.save(commit=False)
 
-            messages.success(request, "Grade settings updated successfully.")
-            return redirect("results:grade_settings", school.id)
+                # Delete marked records.
+                for obj in formset.deleted_objects:
+                    obj.delete()
 
-        else:
-            for i, form in enumerate(formset):
-                if form.errors:
-                    print(f"Form {i} errors:", form.errors)
+                # Save changed and new records.
+                for obj in instances:
+                    obj.school = school
+                    obj.save()
 
-            messages.error(request, "Please fix the errors below.")
+                formset.save_m2m()
 
-    else:
-        formset = GradeFormSet(
-            queryset=queryset,
-            form_kwargs={'school': school}
+            messages.success(
+                request,
+                "Grade settings updated successfully."
+            )
+
+            return redirect(
+                "results:grade_settings",
+                school.id
+            )
+
+        messages.error(
+            request,
+            "Please fix the errors below."
         )
 
-    return render(request, "results/grade_settings.html", {
-        "formset": formset,
-        "school": school
-    })
+    else:
+
+        formset = GradeFormSet(
+            queryset=queryset,
+            form_kwargs={
+                'school': school,
+                'school_classes': school_classes
+            }
+        )
+
+    return render(
+        request,
+        "results/grade_settings.html",
+        {
+            "formset": formset,
+            "school": school
+        }
+    )
 
 
 
