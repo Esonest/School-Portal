@@ -752,25 +752,29 @@ function printSingle(studentId) {
         return;
     }
 
-    // Remove any previous individual-print selection.
-    document.body.classList.remove("print-single");
+    const allCards = document.querySelectorAll(".result-card");
 
-    document.querySelectorAll(".result-card").forEach(function(item) {
+    // Remember each card's original display setting.
+    allCards.forEach(function(item) {
+        item.dataset.originalDisplay = item.style.display;
         item.classList.remove("print-target");
-        item.style.zoom = "";
+
+        if (item !== card) {
+            item.style.setProperty("display", "none", "important");
+        } else {
+            item.style.setProperty("display", "block", "important");
+            item.classList.add("print-target");
+        }
     });
 
-    // Select only the requested student's result.
-    card.classList.add("print-target");
     document.body.classList.add("print-single");
 
-    // Wait for the page to apply the print layout.
+    // Allow the browser or Android WebView to update the layout.
     requestAnimationFrame(function() {
         requestAnimationFrame(function() {
 
             fitResultsToA4();
 
-            // Print the current page with only the selected student visible.
             window.print();
 
         });
@@ -830,11 +834,24 @@ window.addEventListener("afterprint", function() {
     document.body.classList.remove("print-single");
 
     document.querySelectorAll(".result-card").forEach(function(card) {
+
         card.classList.remove("print-target");
+
+        const originalDisplay = card.dataset.originalDisplay;
+
+        card.style.removeProperty("display");
+
+        if (originalDisplay) {
+            card.style.display = originalDisplay;
+        }
+
+        delete card.dataset.originalDisplay;
+
         card.style.zoom = "";
         card.style.width = "";
         card.style.maxWidth = "";
         card.style.boxSizing = "";
+
     });
 
 });

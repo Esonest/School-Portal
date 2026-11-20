@@ -2903,41 +2903,76 @@ from .models import (
 )
 from .utils import SESSION_LIST, interpret_grade
 
-def build_student_result_context(student, term, session, exam_class):
+from collections import defaultdict
+
+from django.db.models import Sum, F, Q, Count
+
+
+def build_student_result_context(student, term, session, exam_class, shared_cache=None):
     """
     Build the context for a student's result for a specific term and session only.
     NO fallback to another session.
+
+    shared_cache is optional. Bulk result views can pass the same dictionary
+    for every student so class-level database work is reused.
     """
+
     if session not in SESSION_LIST:
         raise ValueError(f"Invalid session supplied: {session}")
-    total = 0  # 🔥 prevents future crashes
-    # get the class student was in during this session
+
+    total = 0
+
+    if shared_cache is None:
+        shared_cache = {}
+
+    # -------------------------------------------------
+    # Determine the student's actual examination class
+    # -------------------------------------------------
     exam_class_id = (
         Score.objects
         .filter(student=student, term=term, session=session)
-        .values_list('school_class', flat=True)
+        .values_list("school_class", flat=True)
         .first()
     )
-    
+
     if exam_class_id:
         exam_class = SchoolClass.objects.filter(id=exam_class_id).first()
     else:
         exam_class = student.school_class
 
+    school = student.school
 
-     # ✅ Get class score settings
-    score_setting = getattr(exam_class, "score_setting", None)
-    show_position = (
-        score_setting.show_position
-        if score_setting else True
+    # Cache key for data shared by students in the same class,
+    # school, term and session.
+    class_cache_key = (
+        school.id,
+        exam_class.id if exam_class else None,
+        term,
+        session,
     )
 
     # -------------------------------------------------
-    # Position Calculation
+    # Load shared class-level data only once
     # -------------------------------------------------
-    position = None
+    if class_cache_key not in shared_cache:
 
-    if show_position:
+        score_setting = getattr(exam_class, "score_setting", None)
+
+        show_position = (
+            score_setting.show_position
+            if score_setting else True
+        )
+
+        show_teacher_on_result = getattr(
+            exam_class,
+            "show_teacher_on_result",
+            True
+        )
+
+        # ---------------------------------------------
+        # Class ranking
+        # Preserve the original ranking expression.
+        # ---------------------------------------------
         class_qs = (
             Score.objects
             .filter(
@@ -2955,98 +2990,181 @@ def build_student_result_context(student, term, session, exam_class):
             reverse=True
         )
 
-        position = next(
-            (
-                i for i, r in enumerate(ranking, start=1)
-                if r["student"] == student.id
-            ),
-            None
-        )    
+        position_map = {
+            row["student"]: index
+            for index, row in enumerate(ranking, start=1)
+        }
 
-    base_class_size = (
-        Score.objects
-        .filter(session=session, school_class=exam_class)
-        .values('student')
-        .distinct()
-        .count()
-    )
-    
-    class_size_at_session = base_class_size
+        # ---------------------------------------------
+        # Class size
+        # Preserve the original filters exactly.
+        # ---------------------------------------------
+        class_size = (
+            Score.objects
+            .filter(
+                session=session,
+                school_class=exam_class
+            )
+            .values("student")
+            .distinct()
+            .count()
+        )
 
+        # ---------------------------------------------
+        # Subject teacher assignments
+        # ---------------------------------------------
+        cst_map = {
+            cst.subject_id: cst
+            for cst in ClassSubjectTeacher.objects.filter(
+                school_class=exam_class
+            ).select_related("teacher", "teacher__user")
+        }
 
+        # ---------------------------------------------
+        # School grade settings
+        # ---------------------------------------------
+        grade_settings = list(
+            GradeSetting.objects.filter(
+                school=school
+            ).order_by("-min_score")
+        )
 
+        grade_interpretations_map = {
+            (gs.SchoolClass_id, gs.grade): gs.interpretation
+            for gs in grade_settings
+        }
 
-    scores_qs = Score.objects.filter(
-        student=student,
-        term=term,
-        session=session,
-        school_class=exam_class
-    ).filter(Q(ca__gt=0) | Q(exam__gt=0)).select_related("subject", "school")
+        # ---------------------------------------------
+        # Class-specific grade legend
+        # ---------------------------------------------
+        grade_legend = [
+            gs for gs in grade_settings
+            if gs.SchoolClass_id == (
+                exam_class.id if exam_class else None
+            )
+        ]
 
-    school = student.school
-    # Use the setting for the student's class in the selected session
-    show_teacher_on_result = getattr(
-        exam_class,
-        "show_teacher_on_result",
-        True
-    )
+        # ---------------------------------------------
+        # Subject class averages
+        #
+        # Previously this ran one Score query for
+        # every subject. Now it retrieves the relevant
+        # rows in one query and calculates the same
+        # averages in Python.
+        # ---------------------------------------------
+        class_score_rows = Score.objects.filter(
+            term=term,
+            session=session,
+            school_class=exam_class
+        ).values("subject_id", "ca", "exam")
 
-    next_term_begins = get_next_term_begins(
-        school=school,
-        session=session,
-        term=term
-    )
+        subject_totals = defaultdict(float)
+        subject_counts = defaultdict(int)
 
+        for row in class_score_rows:
+            subject_total = (
+                (row["ca"] or 0) +
+                (row["exam"] or 0)
+            )
 
-    scores = []
-    overall_total = 0
+            subject_totals[row["subject_id"]] += subject_total
+            subject_counts[row["subject_id"]] += 1
 
-    cst_map = {
-        cst.subject_id: cst
-        for cst in ClassSubjectTeacher.objects.filter(
-            school_class=exam_class  # ✅ FIX
-        ).select_related("teacher", "teacher__user")
-    }
+        class_avg_map = {
+            subject_id: (
+                subject_totals[subject_id] / subject_counts[subject_id]
+            )
+            if subject_counts[subject_id] else 0
+            for subject_id in subject_totals
+        }
 
+        shared_cache[class_cache_key] = {
+            "show_position": show_position,
+            "show_teacher_on_result": show_teacher_on_result,
+            "position_map": position_map,
+            "class_size": class_size,
+            "cst_map": cst_map,
+            "grade_settings": grade_settings,
+            "grade_interpretations_map": grade_interpretations_map,
+            "grade_legend": grade_legend,
+            "class_avg_map": class_avg_map,
+        }
 
-    class_has_ca = False  # flag to detect if any CA is set
+    class_data = shared_cache[class_cache_key]
 
-    grade_interpretations_map = {
-        (gs.SchoolClass_id, gs.grade): gs.interpretation
-        for gs in GradeSetting.objects.filter(school=school)
-    }
-    # Compute class averages per subject
-    subject_ids = [s.subject_id for s in scores_qs]
-    class_avg_map = {}
-    for sub_id in subject_ids:
-        class_scores = Score.objects.filter(
-            subject_id=sub_id,
+    show_position = class_data["show_position"]
+    show_teacher_on_result = class_data["show_teacher_on_result"]
+    position = class_data["position_map"].get(student.id)
+    class_size_at_session = class_data["class_size"]
+    cst_map = class_data["cst_map"]
+    grade_settings = class_data["grade_settings"]
+    grade_interpretations_map = class_data["grade_interpretations_map"]
+    grade_legend = class_data["grade_legend"]
+    class_avg_map = class_data["class_avg_map"]
+
+    # -------------------------------------------------
+    # Grade calculation using the same grade-setting
+    # rules as grade_from_score_dynamic()
+    # -------------------------------------------------
+    def get_cached_grade(score):
+        for setting in grade_settings:
+            if (
+                setting.min_score is not None
+                and setting.min_score <= score
+                and (
+                    exam_class is None
+                    or setting.SchoolClass_id == exam_class.id
+                )
+            ):
+                return setting.grade
+
+        return "F"
+
+    # -------------------------------------------------
+    # Student scores
+    # -------------------------------------------------
+    scores_qs = list(
+        Score.objects.filter(
+            student=student,
             term=term,
             session=session,
             school_class=exam_class
         )
-        total_scores = [(cs.ca or 0) + (cs.exam or 0) for cs in class_scores]
-        class_avg_map[sub_id] = sum(total_scores) / len(total_scores) if total_scores else 0
+        .filter(Q(ca__gt=0) | Q(exam__gt=0))
+        .select_related("subject", "school")
+    )
+
+    scores = []
+    overall_total = 0
+    class_has_ca = False
 
     for s in scores_qs:
         ca = s.ca or 0
         exam = s.exam or 0
         total = ca + exam
+
         overall_total += total
 
         if ca > 0:
-            class_has_ca = True  # CA exists for at least one subject
+            class_has_ca = True
 
         cst = cst_map.get(s.subject_id)
-        teacher_name = cst.teacher.user.get_full_name() if cst and cst.teacher else "N/A"
-        grade = grade_from_score_dynamic(total, school, exam_class)
 
-        # Add class average and school-specific grade interpretation
-        class_average = class_avg_map.get(s.subject_id, 0)
-        grade_interpretation = (
-            grade_interpretations_map.get((exam_class.id, grade))
-            or interpret_grade(grade)
+        teacher_name = (
+            cst.teacher.user.get_full_name()
+            if cst and cst.teacher else "N/A"
         )
+
+        grade = get_cached_grade(total)
+
+        class_average = class_avg_map.get(s.subject_id, 0)
+
+        grade_interpretation = (
+            grade_interpretations_map.get(
+                (exam_class.id, grade)
+            )
+            if exam_class else None
+        ) or interpret_grade(grade)
 
         scores.append({
             "subject": s.subject.name,
@@ -3060,34 +3178,55 @@ def build_student_result_context(student, term, session, exam_class):
         })
 
     avg = overall_total / len(scores) if scores else 0
-    best_subject = max(scores, key=lambda x: x['total']) if scores else None
-    least_subject = min(scores, key=lambda x: x['total']) if scores else None
 
-    class_qs = Score.objects.filter(
-        term=term,
+    best_subject = (
+        max(scores, key=lambda x: x["total"])
+        if scores else None
+    )
+
+    least_subject = (
+        min(scores, key=lambda x: x["total"])
+        if scores else None
+    )
+
+    # -------------------------------------------------
+    # Next term date
+    # -------------------------------------------------
+    next_term_begins = get_next_term_begins(
+        school=school,
         session=session,
-        school_class=exam_class
-    ).values("student").annotate(total=Sum(F("ca") + F("exam")))
+        term=term
+    )
 
-    ranking = sorted(class_qs, key=lambda x: x["total"] or 0, reverse=True)
-    position = next((i for i, r in enumerate(ranking, start=1) if r["student"] == student.id), None)
-
-
+    # -------------------------------------------------
+    # Psychomotor and affective records
+    # -------------------------------------------------
     psychomotor = Psychomotor.objects.filter(
-        student=student, term=term, session=session
+        student=student,
+        term=term,
+        session=session
     ).first()
 
     affective = Affective.objects.filter(
-        student=student, term=term, session=session
+        student=student,
+        term=term,
+        session=session
     ).first()
 
+    # -------------------------------------------------
+    # Result comments
+    # Preserve the existing locking and update logic.
+    # -------------------------------------------------
     result_comment = ResultComment.objects.filter(
-        student=student, term=term, session=session
+        student=student,
+        term=term,
+        session=session
     ).first()
 
-    final_grade = grade_from_score_dynamic(avg, school, exam_class)
+    final_grade = get_cached_grade(avg)
 
     if not result_comment or not result_comment.is_locked:
+
         principal_comment = get_random_comment(
             school=school,
             student=student,
@@ -3117,69 +3256,88 @@ def build_student_result_context(student, term, session, exam_class):
                 "is_locked": False,
             }
         )
+
     else:
         principal_comment = result_comment.principal_comment
         teacher_comment = result_comment.teacher_comment
 
-
-    # Safely get a verification object
-
-    
-
-    
+    # -------------------------------------------------
+    # Result verification
+    # Preserve existing verification behaviour.
+    # -------------------------------------------------
     verification_obj = (
         ResultVerification.objects
         .filter(student=student)
         .first()
     )
-    if not verification_obj:
-        verification_obj = ResultVerification.objects.create(student=student, valid=True)
 
-    base = getattr(settings, "SITE_URL", "https://techcenter-p2au.onrender.com")
+    if not verification_obj:
+        verification_obj = ResultVerification.objects.create(
+            student=student,
+            valid=True
+        )
+
+    base = getattr(
+        settings,
+        "SITE_URL",
+        "https://techcenter-p2au.onrender.com"
+    )
+
     verify_url = (
         f"{base}/results/verify/{student.admission_no}/"
         f"?token={verification_obj.verification_token}"
         f"&view=term"
-        f"&term={term}"  # must be '1', '2', or '3' as in Score.term
+        f"&term={term}"
         f"&session={session}"
     )
 
-    qr_data_uri = _generate_qr_data_uri(verify_url, box_size=6)
+    qr_data_uri = _generate_qr_data_uri(
+        verify_url,
+        box_size=6
+    )
 
-
+    # -------------------------------------------------
+    # School images and signatures
+    # -------------------------------------------------
     principal_signature_url = (
         school.principal_signature.url
         if school and school.principal_signature
         else None
     )
-    
 
     school_logo_url = (
         school.logo.url
         if school and school.logo
         else None
     )
-    
 
-    attendance_qs = Attendance.objects.filter(
+    # -------------------------------------------------
+    # Attendance
+    # One aggregation query instead of two count queries.
+    # -------------------------------------------------
+    attendance_data = Attendance.objects.filter(
         student=student,
         term=term,
         session=session
+    ).aggregate(
+        total_days=Count("id"),
+        present_days=Count(
+            "id",
+            filter=Q(status="present")
+        )
     )
 
-    total_days = attendance_qs.count()
-    present_days = attendance_qs.filter(status="present").count()
+    total_days = attendance_data["total_days"] or 0
+    present_days = attendance_data["present_days"] or 0
 
-    attendance_percent = 0
-    if total_days > 0:
-        attendance_percent = round((present_days / total_days) * 100, 1)
+    attendance_percent = (
+        round((present_days / total_days) * 100, 1)
+        if total_days else 0
+    )
 
-
-    grade_legend = GradeSetting.objects.filter(
-        school=school,
-        SchoolClass=exam_class
-    ).order_by("-min_score")    
-
+    # -------------------------------------------------
+    # Return the existing result context
+    # -------------------------------------------------
     return {
         "student": student,
         "school": school,
@@ -3193,13 +3351,29 @@ def build_student_result_context(student, term, session, exam_class):
         "best_subject": best_subject,
         "least_subject": least_subject,
         "psychomotor": (
-            {f: getattr(psychomotor, f, 0) for f in
-            ["neatness", "agility", "handwriting", "sports", "creativity"]}
+            {
+                f: getattr(psychomotor, f, 0)
+                for f in [
+                    "neatness",
+                    "agility",
+                    "handwriting",
+                    "sports",
+                    "creativity"
+                ]
+            }
             if psychomotor else None
         ),
         "affective": (
-            {f: getattr(affective, f, 0) for f in
-            ["punctuality", "cooperation", "behavior", "attentiveness", "perseverance"]}
+            {
+                f: getattr(affective, f, 0)
+                for f in [
+                    "punctuality",
+                    "cooperation",
+                    "behavior",
+                    "attentiveness",
+                    "perseverance"
+                ]
+            }
             if affective else None
         ),
         "principal_comment": principal_comment,
@@ -4188,14 +4362,28 @@ def class_results_overview(request, school_id):
         context
     )
 
+
 @login_required
 def bulk_class_results_view(request, school_id, class_id):
-    user = request.user
-    school = get_object_or_404(School, id=school_id)
-    selected_class = get_object_or_404(SchoolClass, id=class_id, school=school)
 
-    if not (user.is_superadmin or (user.is_schooladmin and user.school == school)):
+    user = request.user
+
+    if not (
+        user.is_superadmin
+        or (
+            user.is_schooladmin
+            and user.school_id == school_id
+        )
+    ):
         raise Http404("Not allowed")
+
+    school = get_object_or_404(School, id=school_id)
+
+    selected_class = get_object_or_404(
+        SchoolClass,
+        id=class_id,
+        school=school
+    )
 
     session = request.GET.get("session")
     term = request.GET.get("term")
@@ -4203,68 +4391,64 @@ def bulk_class_results_view(request, school_id, class_id):
     if not session or not term:
         raise Http404("Session or term missing")
 
-    students = Student.objects.filter(
-        school=school,
-        school_class=selected_class
-    ).select_related("user")
+    # Load students and related users/classes together.
+    students = list(
+        Student.objects.filter(
+            school=school,
+            school_class=selected_class
+        ).select_related(
+            "user",
+            "school_class"
+        )
+    )
 
     results = []
+    shared_cache = {}
+
+    # Fallback legend if the class has no students.
+    grade_legend = GradeSetting.objects.filter(
+        school=school,
+        SchoolClass=selected_class
+    ).order_by("-min_score")
 
     for student in students:
-        promotion = (
-            PromotionHistory.objects
-            .filter(student=student, session__lte=session)
-            .order_by("-promoted_on")
-            .first()
+
+        ctx = build_student_result_context(
+            student,
+            term,
+            session,
+            student.school_class,
+            shared_cache=shared_cache
         )
 
-        exam_class = promotion.old_class if promotion else student.school_class
-
-        ctx = build_student_result_context(student, term, session, exam_class)
-
-        attendance_qs = Attendance.objects.filter(
-            student=student,
-            term=term,
-            session=session
-        )
-
-        total_days = attendance_qs.count()
-        present_days = attendance_qs.filter(status="present").count()
-
-        attendance_percent = 0
-        if total_days > 0:
-            attendance_percent = round((present_days / total_days) * 100, 1)
-
-        ctx["attendance_total"] = total_days
-        ctx["attendance_present"] = present_days
-        ctx["attendance_percent"] = attendance_percent
-
-        grade_legend = GradeSetting.objects.filter(
-            school=school,
-            SchoolClass=exam_class
-        ).order_by("-min_score") 
-
-        # ONLY metadata — DO NOT OVERRIDE HISTORY
         ctx["term"] = term
         ctx["session"] = session
 
+        # Preserve the original outer grade-legend behaviour:
+        # use the legend belonging to the last processed student.
+        grade_legend = ctx["grade_legend"]
+
         results.append(ctx)
 
-    # 🔑 POSITION MUST BE PER CLASS, NOT GLOBAL
-    results.sort(key=lambda x: x.get("overall_total", 0), reverse=True)
+    # Preserve the original bulk ranking behaviour.
+    results.sort(
+        key=lambda x: x.get("overall_total", 0),
+        reverse=True
+    )
 
-    for i, r in enumerate(results, 1):
-        r["position"] = i
-        # ❌ DO NOT TOUCH r["class_size"]
+    for position, result in enumerate(results, 1):
+        result["position"] = position
 
-    return render(request, "results/bulk_result.html", {
-        "school": school,
-        "results": results,
-        "result_type": "term",
-        "grade_legend": grade_legend,
-    })
-
-
+    return render(
+        request,
+        "results/bulk_result.html",
+        {
+            "school": school,
+            "results": results,
+            "result_type": "term",
+            "grade_legend": grade_legend,
+        }
+    )
 
 
 
