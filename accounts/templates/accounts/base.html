@@ -62,7 +62,7 @@ scroll-smooth {% if request.resolver_match.url_name == 'login' %}login-layout{% 
 
 <!-- FLASH -->
 {% if messages %}
-<div id="flash-container" class="fixed top-4 inset-x-0 z-50 px-4">
+<div id="flash-container" class="fixed inset-x-0 px-4">
     <div class="max-w-xl mx-auto space-y-3">
         {% for message in messages %}
         <div class="flash-message px-4 py-3 rounded-lg text-sm font-medium text-center shadow-lg
@@ -396,6 +396,23 @@ html.techcenter-android-app body > footer {
 }
 
 
+/* FLASH MESSAGE: ALWAYS ABOVE ANDROID TOOLBAR */
+#flash-container {
+    position: fixed !important;
+    top: max(12px, env(safe-area-inset-top)) !important;
+    left: 0 !important;
+    right: 0 !important;
+    width: 100% !important;
+    z-index: 2147483647 !important;
+    pointer-events: none !important;
+}
+
+#flash-container .flash-message {
+    position: relative;
+    z-index: 2147483647 !important;
+    pointer-events: auto !important;
+}
+
 
 /* =========================================
    LOGIN PAGE: FIT NAVBAR, CONTENT AND FOOTER
@@ -658,7 +675,7 @@ resetTimers();
     hidden
     data-role="{{ user.role|default:''|escape }}"
     data-school-id="{{ user.school_id|default:''|escape }}"
-    data-user-id="{{ user.id }}"
+    data-user-id="{{ user.id|default:'' }}"
 ></div>
 {% endif %}
 

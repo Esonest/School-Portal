@@ -89,8 +89,7 @@ const isLoginPage = document.body.classList.contains('login-layout');
     const STORAGE_KEY =
     'tc_android_notification_history_' +
     currentSchool + '_' +
-    currentRole + '_' +
-    (androidUser?.dataset.userId || '');
+    currentRole;
 
     const notificationButton = document.getElementById('android-notification-button');
     const notificationCount = document.getElementById('android-notification-count');
