@@ -691,8 +691,10 @@
     margin-bottom:25px;
 }
 
+</style>
 
 <style>
+
 /* ==========================================
    TECHCENTER ANDROID — NATIVE SIDEBAR CARDS
    Android app only. Browser remains unchanged.
@@ -917,7 +919,133 @@ html.techcenter-android-app body .sidebar .sidebar-more-btn:focus-visible {
     outline: 3px solid #818cf8;
     outline-offset: 3px;
 }
-</style>
+
+
+
+/* ==========================================
+   ANDROID NATIVE QUICK ACCESS
+   ANDROID APP ONLY
+========================================== */
+
+html.techcenter-android-app body .quick-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+}
+
+html.techcenter-android-app body .quick-card {
+    min-width: 0;
+    min-height: 125px;
+    padding: 15px 12px !important;
+    display: flex !important;
+    flex-direction: column;
+    align-items: flex-start !important;
+    justify-content: space-between !important;
+    gap: 12px !important;
+    border-radius: 19px !important;
+    border: 1px solid rgba(255,255,255,.75);
+    box-shadow: 0 4px 14px rgba(15,23,42,.07) !important;
+    color: #172033 !important;
+    text-decoration: none;
+    -webkit-tap-highlight-color: transparent;
+    transition: transform .15s ease, box-shadow .15s ease;
+}
+
+html.techcenter-android-app body .quick-card:active {
+    transform: scale(.97);
+    box-shadow: 0 2px 7px rgba(15,23,42,.08) !important;
+}
+
+html.techcenter-android-app body .quick-icon {
+    width: 43px !important;
+    height: 43px !important;
+    min-width: 43px;
+    border-radius: 14px !important;
+    font-size: 21px !important;
+    box-shadow: 0 4px 10px rgba(0,0,0,.12);
+}
+
+html.techcenter-android-app body .quick-card .font-semibold {
+    font-size: 13px;
+    font-weight: 800;
+    line-height: 1.3;
+}
+
+html.techcenter-android-app body .quick-card small {
+    display: block;
+    margin-top: 4px;
+    font-size: 10px;
+    line-height: 1.4;
+    color: #64748b !important;
+}
+
+html.techcenter-android-app body .quick-card > span.font-bold {
+    font-size: 19px !important;
+    font-weight: 900;
+    align-self: flex-end;
+    color: #1e293b !important;
+}
+
+/* Quick Access heading */
+html.techcenter-android-app body .section > h2 {
+    font-size: 18px;
+    font-weight: 850;
+    margin-bottom: 15px;
+}
+
+/* Very narrow Android screens */
+@media (max-width: 360px) {
+    html.techcenter-android-app body .quick-grid {
+        gap: 9px !important;
+    }
+
+    html.techcenter-android-app body .quick-card {
+        padding: 12px 10px !important;
+        min-height: 118px;
+    }
+}
+
+/* ==========================================
+   ANDROID PERFORMANCE OVERVIEW CARD
+========================================== */
+
+html.techcenter-android-app body .chart-box {
+    margin-top: 22px !important;
+    padding: 19px 15px !important;
+    border-radius: 22px !important;
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: 0 5px 18px rgba(15,23,42,.06) !important;
+}
+
+html.techcenter-android-app body .chart-box h2 {
+    font-size: 17px;
+    font-weight: 850;
+    color: #172033;
+    margin-bottom: 14px;
+}
+
+html.techcenter-android-app body .chart-box canvas {
+    display: block;
+    width: 100% !important;
+    height: 290px !important;
+    max-height: 290px;
+    margin: 0 auto;
+}
+
+/* Android dark mode */
+html.techcenter-android-app.tc-dark body .chart-box {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+html.techcenter-android-app.tc-dark body .chart-box h2 {
+    color: #f8fafc !important;
+}
+
+html.techcenter-android-app.tc-dark body .quick-card {
+    border-color: #334155;
+}
 
 
 </style>
@@ -1326,55 +1454,85 @@ document.querySelectorAll(".draggable").forEach(card => {
     });
 });
 
-/* PERFORMANCE CHART */
 
-const chartCanvas =
-document.getElementById('performanceChart');
+/* ======================================
+   PERFORMANCE OVERVIEW — MULTICOLOUR PIE
+====================================== */
 
-if(chartCanvas){
+const chartCanvas = document.getElementById('performanceChart');
 
-new Chart(chartCanvas,{
+if (chartCanvas && typeof Chart !== 'undefined') {
 
-    type:'bar',
+    new Chart(chartCanvas, {
+        type: 'pie',
 
-    data:{
-        labels:[
-            'Students',
-            'Teachers',
-            'Classes',
-            'Attendance'
-        ],
-
-        datasets:[{
-
-            data:[
-                {{ student_count|default:0 }},
-                {{ teacher_count|default:0 }},
-                {{ class_count|default:0 }},
-                {{ attendance_percent|default:0 }}
+        data: {
+            labels: [
+                'Students',
+                'Teachers',
+                'Classes',
+                'Attendance'
             ],
 
-            borderRadius:12
-        }]
-    },
+            datasets: [{
+                data: [
+                    {{ student_count|default:0 }},
+                    {{ teacher_count|default:0 }},
+                    {{ class_count|default:0 }},
+                    {{ attendance_percent|default:0 }}
+                ],
 
-    options:{
-        responsive:true,
-        plugins:{
-            legend:{
-                display:false
-            }
+                backgroundColor: [
+                    '#3B82F6',
+                    '#10B981',
+                    '#A855F7',
+                    '#F59E0B'
+                ],
+
+                borderColor: '#ffffff',
+                borderWidth: 3,
+                hoverOffset: 9
+            }]
         },
-        scales:{
-            y:{
-                beginAtZero:true
+
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+
+            plugins: {
+                legend: {
+                    display: true,
+                    position: 'bottom',
+
+                    labels: {
+                        usePointStyle: true,
+                        pointStyle: 'circle',
+                        padding: 18,
+                        boxWidth: 10,
+                        font: {
+                            size: 12,
+                            weight: '600'
+                        }
+                    }
+                },
+
+                tooltip: {
+                    enabled: true,
+                    backgroundColor: '#172033',
+                    padding: 12,
+                    cornerRadius: 10
+                }
+            },
+
+            animation: {
+                animateRotate: true,
+                animateScale: true,
+                duration: 1000
             }
         }
-    }
-
-});
-
+    });
 }
+
 </script>
 
 <script>

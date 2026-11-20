@@ -90,7 +90,7 @@ const isLoginPage = document.body.classList.contains('login-layout');
     'tc_android_notification_history_' +
     currentSchool + '_' +
     currentRole;
-
+    
     const notificationButton = document.getElementById('android-notification-button');
     const notificationCount = document.getElementById('android-notification-count');
 

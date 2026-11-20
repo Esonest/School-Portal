@@ -56,14 +56,258 @@
     page-break-inside: avoid;
   }
 }
+
+
 </style>
+
+
+<style>
+/* =====================================================
+   TECHCENTER TEACHER DASHBOARD
+   NATIVE ANDROID EXPERIENCE ONLY
+   Browser and desktop styling remain unchanged.
+===================================================== */
+
+html.techcenter-android-app body {
+    background: #f1f5f9 !important;
+}
+
+/* Main dashboard spacing */
+html.techcenter-android-app body .max-w-7xl {
+    padding: 14px 12px 100px !important;
+    gap: 18px !important;
+}
+
+/* HEADER */
+html.techcenter-android-app body .teacher-dashboard-header {
+    padding: 18px !important;
+    border-radius: 20px !important;
+    border: 1px solid #e2e8f0 !important;
+    background: #ffffff !important;
+    box-shadow: 0 4px 15px rgba(15,23,42,.06) !important;
+    gap: 14px !important;
+}
+
+html.techcenter-android-app body .teacher-dashboard-header h2 {
+    font-size: 19px !important;
+    line-height: 1.4 !important;
+    font-weight: 850 !important;
+    overflow-wrap: anywhere;
+}
+
+html.techcenter-android-app body .teacher-dashboard-header > a {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    width: 100%;
+    min-height: 46px;
+    border-radius: 13px !important;
+    font-size: 14px !important;
+    font-weight: 800 !important;
+    box-shadow: 0 4px 10px rgba(79,70,229,.18);
+}
+
+/* FILTERS */
+html.techcenter-android-app body .teacher-filter-form {
+    padding: 14px !important;
+    border-radius: 19px !important;
+    gap: 11px !important;
+    background: #ffffff !important;
+    box-shadow: 0 4px 14px rgba(15,23,42,.05) !important;
+}
+
+html.techcenter-android-app body .teacher-filter-form select {
+    width: 100% !important;
+    min-height: 47px;
+    border: 1px solid #dbe3ee !important;
+    border-radius: 12px !important;
+    padding: 10px 12px !important;
+    font-size: 14px !important;
+    background-color: #f8fafc !important;
+    color: #1e293b !important;
+}
+
+html.techcenter-android-app body .teacher-filter-form button {
+    width: 100%;
+    min-height: 46px;
+    border-radius: 12px !important;
+    font-size: 14px !important;
+    font-weight: 800 !important;
+}
+
+/* CHART GRID */
+html.techcenter-android-app body .teacher-chart-grid {
+    display: grid !important;
+    grid-template-columns: minmax(0, 1fr) !important;
+    gap: 15px !important;
+}
+
+/* CHART CARDS */
+html.techcenter-android-app body .teacher-chart-card {
+    min-width: 0;
+    padding: 17px 14px !important;
+    border-radius: 21px !important;
+    border: 1px solid #e2e8f0 !important;
+    background: #ffffff !important;
+    box-shadow: 0 5px 17px rgba(15,23,42,.06) !important;
+    overflow: hidden;
+}
+
+html.techcenter-android-app body .teacher-chart-card h3 {
+    font-size: 15px !important;
+    font-weight: 850 !important;
+    color: #172033 !important;
+    margin-bottom: 12px !important;
+}
+
+html.techcenter-android-app body .teacher-chart-card canvas {
+    display: block;
+    width: 100% !important;
+    height: 260px !important;
+    max-height: 260px;
+}
+
+/* TEACHERS TABLE */
+html.techcenter-android-app body .teacher-table-container {
+    width: 100%;
+    border-radius: 19px !important;
+    border: 1px solid #e2e8f0 !important;
+    background: #ffffff !important;
+    box-shadow: 0 4px 15px rgba(15,23,42,.05) !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch;
+}
+
+html.techcenter-android-app body .teacher-table-container table {
+    min-width: 650px;
+    border-collapse: separate;
+    border-spacing: 0;
+}
+
+html.techcenter-android-app body .teacher-table-container th {
+    padding: 13px 12px !important;
+    background: #f1f5f9 !important;
+    color: #334155 !important;
+    font-size: 11px !important;
+    font-weight: 850 !important;
+    text-transform: uppercase;
+    letter-spacing: .35px;
+    white-space: nowrap;
+}
+
+html.techcenter-android-app body .teacher-table-container td {
+    padding: 13px 12px !important;
+    font-size: 12px !important;
+    color: #334155;
+    vertical-align: middle;
+}
+
+html.techcenter-android-app body .teacher-table-container tbody tr {
+    background: #ffffff;
+}
+
+html.techcenter-android-app body .teacher-table-container tbody tr:active {
+    background: #f1f5f9;
+}
+
+/* ACTION BUTTON */
+html.techcenter-android-app body .teacher-actions-wrapper > button {
+    min-height: 38px;
+    min-width: 85px;
+    padding: 8px 11px !important;
+    border-radius: 10px !important;
+    font-size: 12px !important;
+    font-weight: 800 !important;
+}
+
+/* ACTION DROPDOWN */
+html.techcenter-android-app body .teacher-action-menu {
+    position: fixed !important;
+    right: 14px !important;
+    left: auto !important;
+    top: auto;
+    width: 205px !important;
+    max-width: calc(100vw - 28px);
+    border-radius: 15px !important;
+    box-shadow: 0 12px 35px rgba(15,23,42,.2) !important;
+    z-index: 99999 !important;
+}
+
+html.techcenter-android-app body .teacher-action-menu a {
+    min-height: 46px;
+    display: flex !important;
+    align-items: center;
+    padding: 11px 14px !important;
+    font-size: 13px !important;
+    font-weight: 650;
+}
+
+/* SMALL SCREENS */
+@media (max-width: 360px) {
+    html.techcenter-android-app body .max-w-7xl {
+        padding-left: 9px !important;
+        padding-right: 9px !important;
+    }
+
+    html.techcenter-android-app body .teacher-chart-card canvas {
+        height: 235px !important;
+        max-height: 235px;
+    }
+}
+
+/* ANDROID DARK MODE */
+html.techcenter-android-app.tc-dark body {
+    background: #0f172a !important;
+}
+
+html.techcenter-android-app.tc-dark body .teacher-dashboard-header,
+html.techcenter-android-app.tc-dark body .teacher-filter-form,
+html.techcenter-android-app.tc-dark body .teacher-chart-card,
+html.techcenter-android-app.tc-dark body .teacher-table-container {
+    background: #1e293b !important;
+    border-color: #334155 !important;
+}
+
+html.techcenter-android-app.tc-dark body .teacher-dashboard-header h2,
+html.techcenter-android-app.tc-dark body .teacher-chart-card h3 {
+    color: #f8fafc !important;
+}
+
+html.techcenter-android-app.tc-dark body .teacher-filter-form select {
+    background: #0f172a !important;
+    color: #f8fafc !important;
+    border-color: #475569 !important;
+}
+
+html.techcenter-android-app.tc-dark body .teacher-table-container th {
+    background: #0f172a !important;
+    color: #e2e8f0 !important;
+}
+
+html.techcenter-android-app.tc-dark body .teacher-table-container tbody tr,
+html.techcenter-android-app.tc-dark body .teacher-table-container td {
+    background: #1e293b !important;
+    color: #e2e8f0 !important;
+    border-color: #334155 !important;
+}
+
+html.techcenter-android-app.tc-dark body .teacher-action-menu {
+    background: #1e293b !important;
+    border-color: #475569 !important;
+}
+
+html.techcenter-android-app.tc-dark body .teacher-action-menu a {
+    color: #f1f5f9 !important;
+}
+</style>
+
 
 <div class="max-w-7xl mx-auto px-4 py-8 space-y-8 bg-gray-50">
 
   <!-- ========================== -->
   <!-- HEADER -->
   <!-- ========================== -->
-  <div class="flex flex-col md:flex-row justify-between md:items-center gap-4
+  <div class="teacher-dashboard-header flex flex-col md:flex-row justify-between md:items-center gap-4
               bg-white border rounded-2xl p-6 shadow">
     <h2 class="text-2xl font-bold text-{{ school.theme_color }}-700">
       Teachers Dashboard — {{ school.name }}
@@ -80,7 +324,7 @@
   <!-- FILTER BAR -->
   <!-- ========================== -->
   <form method="GET"
-        class="flex flex-col md:flex-row gap-4
+        class="teacher-filter-form flex flex-col md:flex-row gap-4
                bg-white border rounded-xl p-4 shadow">
     <select name="class"
             class="border p-2 rounded w-full md:w-56 bg-white text-gray-800">
@@ -111,15 +355,15 @@
   <!-- ========================== -->
   <!-- CHARTS -->
   <!-- ========================== -->
-  <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-    <div class="bg-white border rounded-xl p-4 shadow">
+  <div class="teacher-chart-grid grid grid-cols-1 md:grid-cols-2 gap-6">
+    <div class="teacher-chart-card bg-white border rounded-xl p-4 shadow">
       <h3 class="font-semibold mb-3 text-gray-800">
         Teachers per Class
       </h3>
       <canvas id="classChart"></canvas>
     </div>
 
-    <div class="bg-white border rounded-xl p-4 shadow">
+   <div class="teacher-chart-card bg-white border rounded-xl p-4 shadow">
       <h3 class="font-semibold mb-3 text-gray-800">
         Teachers per Subject
       </h3>
@@ -130,7 +374,7 @@
   <!-- ========================== -->
   <!-- TEACHERS TABLE -->
   <!-- ========================== -->
-  <div class="overflow-x-auto bg-white border rounded-xl shadow">
+  <div class="teacher-table-container overflow-x-auto bg-white border rounded-xl shadow">
     <table class="w-full min-w-max">
       <thead class="bg-gray-100 border-b">
         <tr>
@@ -233,124 +477,205 @@
 <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 
 <script>
-const classData = {{ class_chart|safe }};
 
-new Chart(document.getElementById('classChart'), {
-  type: 'bar',
-  data: {
-    labels: classData.map(d => d['classes__name']),
-    datasets: [{
-      label: 'Teachers',
-      data: classData.map(d => d.total),
-      backgroundColor: '#3b82f6'
-    }]
-  }
-});
+/* =====================================================
+   TEACHER DASHBOARD CHARTS
+   Desktop: BAR CHARTS
+   Native Android: MULTICOLOUR PIE CHARTS
+===================================================== */
 
+(function () {
+    'use strict';
 
-const subjectData = {{ subject_chart|safe }};
+    const isAndroidApp =
+        document.documentElement.classList.contains(
+            'techcenter-android-app'
+        );
 
-new Chart(document.getElementById('subjectChart'), {
-  type: 'bar',
-  data: {
-    labels: subjectData.map(d => d['subjects__name']),
-    datasets: [{
-      label: 'Teachers',
-      data: subjectData.map(d => d.total),
-      backgroundColor: '#10b981'
-    }]
-  }
-});
+    const classCanvas = document.getElementById('classChart');
+    const subjectCanvas = document.getElementById('subjectChart');
 
+    const classData = {{ class_chart|safe }};
+    const subjectData = {{ subject_chart|safe }};
 
+    if (typeof Chart !== 'undefined') {
 
+        const chartColors = [
+            '#3B82F6',
+            '#10B981',
+            '#F59E0B',
+            '#A855F7',
+            '#EF4444',
+            '#06B6D4',
+            '#EC4899',
+            '#84CC16',
+            '#F97316',
+            '#6366F1'
+        ];
 
-/* =========================================================
-   ACTIONS DROPDOWN
-   ========================================================= */
+        function createTeacherChart(canvas, records, labelField, title) {
 
-function toggleMenu(button) {
+            if (!canvas) return;
 
-    const wrapper = button.closest(
-        '.teacher-actions-wrapper'
-    );
+            const labels = records.map(function (item) {
+                return item[labelField] || 'Unassigned';
+            });
 
-    if (!wrapper) {
-        return;
+            const values = records.map(function (item) {
+                return Number(item.total) || 0;
+            });
+
+            new Chart(canvas, {
+                type: isAndroidApp ? 'pie' : 'bar',
+
+                data: {
+                    labels: labels,
+
+                    datasets: [{
+                        label: title,
+                        data: values,
+
+                        backgroundColor: isAndroidApp
+                            ? labels.map(function (_, index) {
+                                return chartColors[index % chartColors.length];
+                            })
+                            : title === 'Teachers per Class'
+                                ? '#3b82f6'
+                                : '#10b981',
+
+                        borderColor: isAndroidApp ? '#ffffff' : '#3b82f6',
+                        borderWidth: isAndroidApp ? 3 : 0,
+                        borderRadius: isAndroidApp ? 0 : 8,
+                        hoverOffset: isAndroidApp ? 8 : 0
+                    }]
+                },
+
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+
+                    plugins: {
+                        legend: {
+                            display: isAndroidApp,
+                            position: 'bottom',
+
+                            labels: {
+                                usePointStyle: true,
+                                pointStyle: 'circle',
+                                padding: 14,
+                                boxWidth: 9,
+                                font: {
+                                    size: 11,
+                                    weight: '600'
+                                }
+                            }
+                        },
+
+                        tooltip: {
+                            enabled: true,
+                            backgroundColor: '#172033',
+                            padding: 12,
+                            cornerRadius: 9
+                        }
+                    },
+
+                    scales: isAndroidApp
+                        ? {}
+                        : {
+                            y: {
+                                beginAtZero: true,
+                                ticks: {
+                                    precision: 0
+                                }
+                            }
+                        },
+
+                    animation: {
+                        duration: 850
+                    }
+                }
+            });
+        }
+
+        createTeacherChart(
+            classCanvas,
+            classData,
+            'classes__name',
+            'Teachers per Class'
+        );
+
+        createTeacherChart(
+            subjectCanvas,
+            subjectData,
+            'subjects__name',
+            'Teachers per Subject'
+        );
     }
 
-    const currentMenu = wrapper.querySelector(
-        '.teacher-action-menu'
-    );
+    /* =================================================
+       ACTIONS DROPDOWN
+    ================================================= */
 
-    if (!currentMenu) {
-        return;
-    }
+    window.toggleMenu = function (button) {
 
-    /*
-     * Close all other menus
-     */
-    document.querySelectorAll(
-        '.teacher-action-menu'
-    ).forEach(function(menu) {
+        const wrapper = button.closest(
+            '.teacher-actions-wrapper'
+        );
 
-        if (menu !== currentMenu) {
-            menu.classList.add('hidden');
+        if (!wrapper) return;
+
+        const currentMenu = wrapper.querySelector(
+            '.teacher-action-menu'
+        );
+
+        if (!currentMenu) return;
+
+        document.querySelectorAll(
+            '.teacher-action-menu'
+        ).forEach(function (menu) {
+
+            if (menu !== currentMenu) {
+                menu.classList.add('hidden');
+            }
+
+        });
+
+        currentMenu.classList.toggle('hidden');
+    };
+
+    /* CLOSE WHEN CLICKING OUTSIDE */
+
+    document.addEventListener('click', function (event) {
+
+        if (!event.target.closest('.teacher-actions-wrapper')) {
+
+            document.querySelectorAll(
+                '.teacher-action-menu'
+            ).forEach(function (menu) {
+                menu.classList.add('hidden');
+            });
+
         }
 
     });
 
-    /*
-     * Toggle the selected menu
-     */
-    currentMenu.classList.toggle('hidden');
-}
+    /* CLOSE WITH ESCAPE */
 
+    document.addEventListener('keydown', function (event) {
 
-/* =========================================================
-   CLOSE WHEN CLICKING OUTSIDE
-   ========================================================= */
+        if (event.key === 'Escape') {
 
-document.addEventListener('click', function(event) {
+            document.querySelectorAll(
+                '.teacher-action-menu'
+            ).forEach(function (menu) {
+                menu.classList.add('hidden');
+            });
 
-    if (
-        !event.target.closest(
-            '.teacher-actions-wrapper'
-        )
-    ) {
+        }
 
-        document.querySelectorAll(
-            '.teacher-action-menu'
-        ).forEach(function(menu) {
+    });
 
-            menu.classList.add('hidden');
-
-        });
-
-    }
-
-});
-
-
-/* =========================================================
-   CLOSE WITH ESCAPE
-   ========================================================= */
-
-document.addEventListener('keydown', function(event) {
-
-    if (event.key === 'Escape') {
-
-        document.querySelectorAll(
-            '.teacher-action-menu'
-        ).forEach(function(menu) {
-
-            menu.classList.add('hidden');
-
-        });
-
-    }
-
-});
+})();
 
 
 </script>
