@@ -4018,20 +4018,25 @@ def teacher_delete(request, school_id, teacher_id):
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.db.models import Q
+from django.core.paginator import Paginator
+from django.db.models import Exists, OuterRef
+
+
 
 @login_required
 def block_unblock_students(request, school_id):
     school = get_object_or_404(School, id=school_id)
 
-    # Base queryset
-    students = Student.objects.filter(school=school).order_by('user__first_name')
+    # -------------------------------------------------
+    # BASE STUDENT QUERY
+    # -------------------------------------------------
+    students = Student.objects.filter(
+        school=school
+    )
 
-    # -----------------------------
-    # ADDED FILTERS ONLY (no other logic touched)
-    # -----------------------------
-    all_classes = SchoolClass.objects.filter(school=school).order_by("name")
-
-    
+    all_classes = SchoolClass.objects.filter(
+        school=school
+    ).order_by("name")
 
     class_filter = request.GET.get("class")
     name_filter = request.GET.get("search")
@@ -4039,100 +4044,212 @@ def block_unblock_students(request, school_id):
     term_filter = request.GET.get("term")
     result_type = request.GET.get("type", "term")
 
-# 🔹 Class filter
+    # -------------------------------------------------
+    # CLASS FILTER
+    # -------------------------------------------------
     if class_filter:
-        students = students.filter(school_class_id=class_filter)
+        students = students.filter(
+            school_class_id=class_filter
+        )
 
-# 🔹 Name filter (FIXED PROPERLY)
+    # -------------------------------------------------
+    # STUDENT NAME FILTER
+    # -------------------------------------------------
     if name_filter:
         students = students.filter(
             Q(user__first_name__icontains=name_filter) |
             Q(user__last_name__icontains=name_filter)
         )
 
-    result_type = request.GET.get("type", "term")
-    session_filter = request.GET.get("session")
-    term_filter = request.GET.get("term")
-
-# 🔹 TERM FILTERING
+    # -------------------------------------------------
+    # SCORE FILTERS
+    #
+    # Exists avoids duplicate Student rows caused by
+    # joining multiple Score records.
+    # -------------------------------------------------
     if result_type == "term":
+
         if session_filter and term_filter:
+            matching_scores = Score.objects.filter(
+                student_id=OuterRef("pk"),
+                session=session_filter,
+                term=term_filter
+            )
+
             students = students.filter(
-                scores__session=session_filter,
-                scores__term=term_filter
+                Exists(matching_scores)
             )
 
         elif session_filter:
+            matching_scores = Score.objects.filter(
+                student_id=OuterRef("pk"),
+                session=session_filter
+            )
+
             students = students.filter(
-                scores__session=session_filter
+                Exists(matching_scores)
             )
 
         elif term_filter:
-            students = students.filter(
-                scores__term=term_filter
+            matching_scores = Score.objects.filter(
+                student_id=OuterRef("pk"),
+                term=term_filter
             )
 
-# 🔹 CUMULATIVE FILTERING
+            students = students.filter(
+                Exists(matching_scores)
+            )
+
     elif result_type == "cumulative":
+
         if session_filter:
-            students = students.filter(
-                scores__session=session_filter
+            matching_scores = Score.objects.filter(
+                student_id=OuterRef("pk"),
+                session=session_filter
             )
+
+            students = students.filter(
+                Exists(matching_scores)
+            )
+
         else:
-        
-            students = students.filter(
-                scores__isnull=False
+            matching_scores = Score.objects.filter(
+                student_id=OuterRef("pk")
             )
 
-# 🔹 VERY IMPORTANT (avoid duplicates)
-    students = students.distinct()
-    # -----------------------------
+            students = students.filter(
+                Exists(matching_scores)
+            )
 
+    # -------------------------------------------------
+    # ORDERING
+    # -------------------------------------------------
+    students = students.select_related(
+        "user",
+        "school_class"
+    ).order_by(
+        "user__first_name",
+        "user__last_name",
+        "id"
+    )
+
+    # -------------------------------------------------
+    # BULK AND INDIVIDUAL ACTIONS
+    #
+    # IMPORTANT:
+    # These actions use the complete filtered queryset,
+    # NOT just the 20 students on the current page.
+    # -------------------------------------------------
     if request.method == "POST":
+
         action = request.POST.get("action")
         student_id = request.POST.get("student_id")
 
         if action == "block_all":
-            students.update(is_result_blocked=True, block_reason="Access blocked by admin")
-            messages.success(request, "All students have been blocked from accessing results.")
+
+            students.update(
+                is_result_blocked=True,
+                block_reason="Access blocked by admin"
+            )
+
+            messages.success(
+                request,
+                "All students matching the selected filters have been blocked."
+            )
 
         elif action == "unblock_all":
-            students.update(is_result_blocked=False, block_reason="")
-            messages.success(request, "All students have been unblocked.")
+
+            students.update(
+                is_result_blocked=False,
+                block_reason=""
+            )
+
+            messages.success(
+                request,
+                "All students matching the selected filters have been unblocked."
+            )
 
         elif action in ["block", "unblock"] and student_id:
-            student = get_object_or_404(Student, id=student_id)
+
+            student = get_object_or_404(
+                Student,
+                id=student_id,
+                school=school
+            )
+
             if action == "block":
+
                 student.is_result_blocked = True
                 student.block_reason = "Access blocked by admin"
                 student.save()
-                messages.success(request, f"{student.user.get_full_name()} is now blocked.")
+
+                messages.success(
+                    request,
+                    f"{student.user.get_full_name()} is now blocked."
+                )
+
             else:
+
                 student.is_result_blocked = False
                 student.block_reason = ""
                 student.save()
-                messages.success(request, f"{student.user.get_full_name()} is now unblocked.")
 
-        return redirect(
-            request.path +
-            f"?class={class_filter or ''}"
-            f"&search={name_filter or ''}"
-            f"&session={session_filter or ''}"
-            f"&term={term_filter or ''}"
-            f"&type={result_type or 'term'}"
-        )
+                messages.success(
+                    request,
+                    f"{student.user.get_full_name()} is now unblocked."
+                )
 
+        # Preserve filters and current page after an action.
+        query_string = request.GET.urlencode()
+
+        redirect_url = request.path
+
+        if query_string:
+            redirect_url += "?" + query_string
+
+        return redirect(redirect_url)
+
+    # -------------------------------------------------
+    # PAGINATION: 20 STUDENTS PER PAGE
+    # -------------------------------------------------
+    paginator = Paginator(students, 20)
+
+    page_obj = paginator.get_page(
+        request.GET.get("page")
+    )
+
+    # Remove page from the query string so pagination
+    # can generate the next/previous page correctly.
+    pagination_params = request.GET.copy()
+    pagination_params.pop("page", None)
+
+    pagination_query = pagination_params.urlencode()
+
+    # -------------------------------------------------
+    # CONTEXT
+    # -------------------------------------------------
     context = {
         "school": school,
-        "students": students,
-        "all_classes": all_classes,         # ADDED
-        "selected_class": class_filter,     # ADDED
-        "search_value": name_filter, 
+        "students": page_obj.object_list,
+        "page_obj": page_obj,
+        "paginator": paginator,
+        "pagination_query": pagination_query,
+
+        "all_classes": all_classes,
+        "selected_class": class_filter,
+        "search_value": name_filter,
+
         "sessions": SESSION_LIST,
         "selected_session": session_filter,
-        "selected_term": term_filter,      
+        "selected_term": term_filter,
     }
-    return render(request, "school_admin/block_unblock_students.html", context)
+
+    return render(
+        request,
+        "school_admin/block_unblock_students.html",
+        context
+    )
+
 
 
 

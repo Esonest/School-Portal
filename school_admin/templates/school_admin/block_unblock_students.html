@@ -1,7 +1,7 @@
 {% extends "accounts/base.html" %}
 
 {% block content %}
-<div class="min-h-screen bg-gray-100 p-4 sm:p-6">
+<div id="result-access-page" class="min-h-screen bg-gray-100 p-4 sm:p-6">
     <div class="max-w-6xl mx-auto space-y-6">
 
         <!-- HEADER -->
@@ -10,7 +10,7 @@
         </h1>
 
         <!-- FILTER SECTION -->
-        <form method="get" class="bg-white p-4 rounded-lg shadow flex flex-col md:flex-row gap-4">
+        <form id="result-access-filters" method="get" class="bg-white p-4 rounded-lg shadow flex flex-col md:flex-row gap-4">
 
             <div class="flex-1">
     <label class="block text-sm font-semibold mb-1">Session</label>
@@ -67,13 +67,68 @@
                        value="{{ request.GET.search }}"
                        class="border rounded px-3 py-2 w-full">
             </div>
-
+            <input type="hidden" name="page" value="1">
             <div class="flex items-end">
                 <button class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 transition">
                     Filter
                 </button>
             </div>
         </form>
+
+        <!-- RESULT COUNT AND PAGINATION -->
+<div class="bg-white rounded-lg shadow-sm p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+
+    <div>
+        <p class="font-semibold text-gray-800">
+            Student Results Access
+        </p>
+
+        <p class="text-sm text-gray-500">
+            Showing
+            {% if page_obj.paginator.count %}
+                {{ page_obj.start_index }}–{{ page_obj.end_index }}
+            {% else %}
+                0
+            {% endif %}
+            of {{ page_obj.paginator.count }} students
+        </p>
+    </div>
+
+    {% if page_obj.paginator.num_pages > 1 %}
+    <div class="flex items-center gap-2 flex-wrap">
+
+        {% if page_obj.has_previous %}
+            <a href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page=1"
+               class="px-3 py-2 rounded-lg border text-sm font-semibold hover:bg-gray-100">
+                First
+            </a>
+
+            <a href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ page_obj.previous_page_number }}"
+               class="px-3 py-2 rounded-lg border text-sm font-semibold hover:bg-gray-100">
+                Previous
+            </a>
+        {% endif %}
+
+        <span class="px-3 py-2 text-sm font-semibold text-gray-700">
+            {{ page_obj.number }} / {{ page_obj.paginator.num_pages }}
+        </span>
+
+        {% if page_obj.has_next %}
+            <a href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ page_obj.next_page_number }}"
+               class="px-3 py-2 rounded-lg border text-sm font-semibold hover:bg-gray-100">
+                Next
+            </a>
+
+            <a href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ page_obj.paginator.num_pages }}"
+               class="px-3 py-2 rounded-lg border text-sm font-semibold hover:bg-gray-100">
+                Last
+            </a>
+        {% endif %}
+
+    </div>
+    {% endif %}
+
+</div>
 
         <!-- Bulk Actions -->
         <form method="post" class="flex flex-col sm:flex-row gap-2 sm:gap-4">
@@ -91,7 +146,7 @@
         <!-- MOBILE CARDS VIEW -->
         <div class="space-y-4 md:hidden">
             {% for student in students %}
-            <div class="bg-white p-4 rounded-lg shadow flex flex-col gap-2">
+            <div class="result-access-card bg-white p-4 rounded-lg shadow flex flex-col gap-3">
                 <div class="flex justify-between items-center">
                     <h3 class="font-semibold text-gray-800">{{ student.user.get_full_name }}</h3>
                     <span class="px-2 py-1 rounded-full text-xs font-semibold text-white
@@ -105,12 +160,12 @@
                     <input type="hidden" name="student_id" value="{{ student.id }}">
                     {% if student.is_result_blocked %}
                         <button type="submit" name="action" value="unblock"
-                                class="bg-green-600 text-white px-3 py-1 rounded hover:bg-green-700 transition w-full">
+                                class="result-access-action bg-green-600 text-white px-3 py-2 rounded-lg hover:bg-green-700 transition w-full">
                             Unblock
                         </button>
                     {% else %}
                         <button type="submit" name="action" value="block"
-                                class="bg-red-600 text-white px-3 py-1 rounded hover:bg-red-700 transition w-full">
+                                class="result-access-action bg-red-600 text-white px-3 py-2 rounded-lg hover:bg-red-700 transition w-full">
                             Block
                         </button>
                     {% endif %}
@@ -172,6 +227,33 @@
                 </tbody>
             </table>
         </div>
+        <!-- BOTTOM PAGINATION -->
+{% if page_obj.paginator.num_pages > 1 %}
+<div class="bg-white rounded-lg shadow-sm p-4 flex flex-col sm:flex-row items-center justify-between gap-3">
+
+    <p class="text-sm text-gray-600">
+        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+    </p>
+
+    <div class="flex gap-2 flex-wrap">
+
+        {% if page_obj.has_previous %}
+            <a href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ page_obj.previous_page_number }}"
+               class="px-4 py-2 rounded-lg border font-semibold text-sm">
+                Previous
+            </a>
+        {% endif %}
+
+        {% if page_obj.has_next %}
+            <a href="?{% if pagination_query %}{{ pagination_query }}&{% endif %}page={{ page_obj.next_page_number }}"
+               class="px-4 py-2 rounded-lg bg-blue-600 text-white font-semibold text-sm">
+                Next
+            </a>
+        {% endif %}
+
+    </div>
+</div>
+{% endif %}
 
     </div>
 </div>
@@ -194,4 +276,137 @@ function toggleTerm() {
 typeSelect.addEventListener("change", toggleTerm);
 window.addEventListener("load", toggleTerm);
 </script>
+
+<style>
+/* =====================================================
+   TECHCENTER ANDROID APP ONLY
+   Normal website styling remains unchanged.
+   ===================================================== */
+
+html.techcenter-android-app #result-access-page {
+    min-height: 100vh;
+    padding: 14px 12px calc(125px + env(safe-area-inset-bottom));
+    background: #f3f5f9;
+}
+
+/* Android page heading */
+html.techcenter-android-app #result-access-page h1 {
+    font-size: 1.25rem;
+    line-height: 1.5rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    margin-bottom: 16px;
+}
+
+/* Android filter panel */
+html.techcenter-android-app #result-access-filters {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 13px;
+    padding: 16px;
+    border-radius: 18px;
+    border: 1px solid #e8edf4;
+    box-shadow: 0 3px 12px rgba(15, 23, 42, 0.05);
+}
+
+html.techcenter-android-app #result-access-filters label {
+    color: #334155;
+    font-size: 13px;
+    margin-bottom: 6px;
+}
+
+html.techcenter-android-app #result-access-filters input,
+html.techcenter-android-app #result-access-filters select {
+    width: 100%;
+    min-height: 48px;
+    padding: 11px 12px;
+    border: 1px solid #dbe2ea;
+    border-radius: 12px;
+    background-color: #fff;
+    color: #1e293b;
+    font-size: 15px;
+}
+
+/* Filter button */
+html.techcenter-android-app #result-access-filters button {
+    width: 100%;
+    min-height: 48px;
+    border-radius: 12px;
+    font-weight: 700;
+}
+
+/* Count panel */
+html.techcenter-android-app #result-access-page .bg-white.rounded-lg.shadow-sm {
+    border: 1px solid #e8edf4;
+    border-radius: 16px;
+}
+
+/* Bulk action buttons */
+html.techcenter-android-app #result-access-page form button[name="action"][value="block_all"],
+html.techcenter-android-app #result-access-page form button[name="action"][value="unblock_all"] {
+    min-height: 48px;
+    border-radius: 12px;
+    font-weight: 700;
+}
+
+/* Student cards */
+html.techcenter-android-app #result-access-page .result-access-card {
+    padding: 16px;
+    border: 1px solid #e8edf4;
+    border-radius: 17px;
+    box-shadow: 0 3px 12px rgba(15, 23, 42, 0.045);
+}
+
+/* Student names */
+html.techcenter-android-app #result-access-page .result-access-card h3 {
+    font-size: 15px;
+    line-height: 1.4;
+    font-weight: 750;
+    color: #172033;
+}
+
+/* Student class */
+html.techcenter-android-app #result-access-page .result-access-card p {
+    font-size: 13px;
+    color: #64748b;
+}
+
+/* Status badges */
+html.techcenter-android-app #result-access-page .result-access-card span {
+    padding: 6px 10px;
+    border-radius: 999px;
+}
+
+/* Large touch-friendly action buttons */
+html.techcenter-android-app #result-access-page .result-access-action {
+    min-height: 46px;
+    border-radius: 12px;
+    font-size: 14px;
+    font-weight: 750;
+}
+
+/* Pagination touch targets */
+html.techcenter-android-app #result-access-page a[href*="page="] {
+    min-height: 44px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 11px;
+    padding-left: 14px;
+    padding-right: 14px;
+    font-weight: 700;
+}
+
+/* Comfortable mobile spacing */
+@media (max-width: 640px) {
+    html.techcenter-android-app #result-access-page .space-y-4 > * + * {
+        margin-top: 12px;
+    }
+
+    html.techcenter-android-app #result-access-page .result-access-card {
+        margin-bottom: 12px;
+    }
+}
+</style>
+
 {% endblock %}
