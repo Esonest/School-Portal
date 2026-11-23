@@ -1,59 +1,444 @@
+
 {% extends "accounts/base.html" %}
 {% block content %}
 
-<div class="max-w-6xl mx-auto p-6">
-    <div class="flex justify-between items-center mb-6">
-        <h1 class="text-2xl font-bold text-{{ school.theme_color }}-800">
-            Class Subject Teachers – {{ school.name }}
-        </h1>
+<div id="class-subject-teachers-page" class="max-w-6xl mx-auto p-4 sm:p-6">
+
+    <!-- HEADER -->
+    <div class="cst-header flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
+
+        <div class="min-w-0">
+            <h1 class="text-2xl font-bold text-{{ school.theme_color }}-800">
+                Class Subject Teachers
+            </h1>
+            <p class="text-sm text-gray-500 mt-1">
+                {{ school.name }}
+            </p>
+        </div>
 
         <a href="{% url 'school_admin:class_subject_teacher_create' school.id %}"
-           class="bg-indigo-600 text-white px-4 py-2 rounded hover:bg-indigo-700">
+           class="cst-add-btn inline-flex items-center justify-center gap-2 bg-indigo-600 text-white px-4 py-3 rounded-lg hover:bg-indigo-700 font-semibold transition">
+            <span class="text-lg">+</span>
             Assign New
         </a>
+
     </div>
 
-    <table class="w-full border-collapse bg-white shadow rounded">
-        <thead class="bg-gray-100">
-            <tr>
-                <th class="p-3 text-left">Class</th>
-                <th class="p-3 text-left">Subject</th>
-                <th class="p-3 text-left">Teacher</th>
-                <th class="p-3">Actions</th>
-            </tr>
-        </thead>
-        <tbody>
+
+    <!-- ANDROID APP: ASSIGNMENT CARDS -->
+    <div class="cst-mobile-list">
+
         {% for a in assignments %}
-            <tr class="border-t">
-                <td class="p-3">{{ a.school_class.name }}</td>
-                <td class="p-3">{{ a.subject.name }}</td>
-                <td class="p-3">
-                    {% if a.teacher %}
-                        {{ a.teacher.user.get_full_name|default:a.teacher.user.username }}
-                    {% else %}
-                        Not Assigned
-                    {% endif %}
-                </td>
-                
-                <td class="p-3 text-center space-x-2">
-                    <a href="{% url 'school_admin:class_subject_teacher_update' school.id a.id %}"
-                       class="text-indigo-600 hover:underline">Edit</a>
-                    <a href="{% url 'school_admin:class_subject_teacher_delete' school.id a.id %}"
-                       class="text-red-600 hover:underline"
-                       onclick="return confirm('Delete this assignment?')">
-                        Delete
-                    </a>
-                </td>
-            </tr>
+
+        <div class="cst-mobile-card">
+
+            <div class="flex items-start gap-3">
+
+                <div class="cst-icon">
+                    <span>📘</span>
+                </div>
+
+                <div class="flex-1 min-w-0">
+
+                    <h3 class="font-bold text-gray-800 text-base break-words">
+                        {{ a.subject.name }}
+                    </h3>
+
+                    <p class="text-sm text-gray-500 mt-1">
+                        Subject
+                    </p>
+
+                </div>
+
+            </div>
+
+
+            <div class="cst-details">
+
+                <div class="cst-detail-row">
+                    <span class="cst-detail-label">Class</span>
+                    <span class="cst-detail-value">
+                        {{ a.school_class.name }}
+                    </span>
+                </div>
+
+                <div class="cst-detail-row">
+                    <span class="cst-detail-label">Teacher</span>
+                    <span class="cst-detail-value">
+                        {% if a.teacher %}
+                            {{ a.teacher.user.get_full_name|default:a.teacher.user.username }}
+                        {% else %}
+                            <span class="cst-unassigned">Not Assigned</span>
+                        {% endif %}
+                    </span>
+                </div>
+
+            </div>
+
+
+            <div class="cst-mobile-actions">
+
+                <a href="{% url 'school_admin:class_subject_teacher_update' school.id a.id %}"
+                   class="cst-edit-btn">
+                    <span>✏️</span>
+                    Edit
+                </a>
+
+                <a href="{% url 'school_admin:class_subject_teacher_delete' school.id a.id %}"
+                   class="cst-delete-btn"
+                   onclick="return confirm('Delete this assignment?')">
+                    <span>🗑️</span>
+                    Delete
+                </a>
+
+            </div>
+
+        </div>
+
         {% empty %}
-            <tr>
-                <td colspan="4" class="p-6 text-center text-gray-500">
-                    No assignments found.
-                </td>
-            </tr>
+
+        <div class="cst-empty">
+            <div class="text-3xl mb-2">📘</div>
+            <p class="font-semibold text-gray-700">
+                No assignments found
+            </p>
+            <p class="text-sm text-gray-500 mt-1">
+                Assign subjects and teachers to classes to get started.
+            </p>
+        </div>
+
         {% endfor %}
-        </tbody>
-    </table>
+
+    </div>
+
+
+    <!-- NORMAL WEBSITE: RESPONSIVE TABLE -->
+    <div class="cst-table-wrapper">
+
+        <table class="cst-table w-full border-collapse bg-white shadow rounded-lg">
+
+            <thead class="bg-gray-100">
+                <tr>
+                    <th class="p-3 text-left">Class</th>
+                    <th class="p-3 text-left">Subject</th>
+                    <th class="p-3 text-left">Teacher</th>
+                    <th class="p-3 text-center">Actions</th>
+                </tr>
+            </thead>
+
+            <tbody>
+
+            {% for a in assignments %}
+
+                <tr class="border-t">
+
+                    <td class="p-3">
+                        {{ a.school_class.name }}
+                    </td>
+
+                    <td class="p-3">
+                        {{ a.subject.name }}
+                    </td>
+
+                    <td class="p-3">
+                        {% if a.teacher %}
+                            {{ a.teacher.user.get_full_name|default:a.teacher.user.username }}
+                        {% else %}
+                            <span class="text-gray-500">Not Assigned</span>
+                        {% endif %}
+                    </td>
+
+                    <td class="p-3">
+                        <div class="cst-table-actions">
+
+                            <a href="{% url 'school_admin:class_subject_teacher_update' school.id a.id %}"
+                               class="text-indigo-600 hover:underline font-medium">
+                                Edit
+                            </a>
+
+                            <a href="{% url 'school_admin:class_subject_teacher_delete' school.id a.id %}"
+                               class="text-red-600 hover:underline font-medium"
+                               onclick="return confirm('Delete this assignment?')">
+                                Delete
+                            </a>
+
+                        </div>
+                    </td>
+
+                </tr>
+
+            {% empty %}
+
+                <tr>
+                    <td colspan="4" class="p-6 text-center text-gray-500">
+                        No assignments found.
+                    </td>
+                </tr>
+
+            {% endfor %}
+
+            </tbody>
+
+        </table>
+
+    </div>
+
 </div>
+
+
+<style>
+
+/* =====================================================
+   NORMAL WEBSITE TABLE
+   ===================================================== */
+
+#class-subject-teachers-page {
+    width: 100%;
+    min-width: 0;
+}
+
+.cst-mobile-list {
+    display: none;
+}
+
+.cst-table-wrapper {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+.cst-table {
+    width: 100%;
+    table-layout: fixed;
+    border: 1px solid #e5e7eb;
+}
+
+.cst-table th,
+.cst-table td {
+    overflow-wrap: anywhere;
+    vertical-align: middle;
+}
+
+.cst-table th:nth-child(1),
+.cst-table td:nth-child(1) {
+    width: 20%;
+}
+
+.cst-table th:nth-child(2),
+.cst-table td:nth-child(2) {
+    width: 23%;
+}
+
+.cst-table th:nth-child(3),
+.cst-table td:nth-child(3) {
+    width: 35%;
+}
+
+.cst-table th:nth-child(4),
+.cst-table td:nth-child(4) {
+    width: 22%;
+}
+
+.cst-table-actions {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    font-size: 14px;
+}
+
+
+/* =====================================================
+   SMALL SCREEN NORMAL WEB BROWSER
+   Keep the table visible.
+   ===================================================== */
+
+@media (max-width: 640px) {
+
+    #class-subject-teachers-page {
+        padding: 12px;
+    }
+
+    .cst-header h1 {
+        font-size: 20px;
+        line-height: 1.4;
+    }
+
+    .cst-add-btn {
+        width: 100%;
+        min-height: 46px;
+        font-size: 14px;
+    }
+
+    .cst-table th,
+    .cst-table td {
+        padding: 8px 5px;
+        font-size: 11px;
+    }
+
+    .cst-table-actions {
+        gap: 6px;
+        font-size: 11px;
+    }
+
+}
+
+
+/* =====================================================
+   TECHCENTER ANDROID APP ONLY
+   ===================================================== */
+
+html.techcenter-android-app #class-subject-teachers-page {
+    max-width: 100%;
+    margin: 0;
+    padding: 15px 12px calc(125px + env(safe-area-inset-bottom));
+}
+
+/* App header */
+
+html.techcenter-android-app #class-subject-teachers-page .cst-header {
+    margin-bottom: 20px;
+}
+
+html.techcenter-android-app #class-subject-teachers-page .cst-header h1 {
+    font-size: 23px;
+    line-height: 1.35;
+    font-weight: 800;
+    color: #172033;
+}
+
+html.techcenter-android-app #class-subject-teachers-page .cst-header p {
+    font-size: 13px;
+    color: #64748b;
+}
+
+/* Add assignment button */
+
+html.techcenter-android-app #class-subject-teachers-page .cst-add-btn {
+    width: 100%;
+    min-height: 50px;
+    border-radius: 14px;
+    font-size: 15px;
+    font-weight: 750;
+    box-shadow: 0 4px 10px rgba(79, 70, 229, 0.15);
+}
+
+/* Switch to cards only inside the native app */
+
+html.techcenter-android-app #class-subject-teachers-page .cst-table-wrapper {
+    display: none;
+}
+
+html.techcenter-android-app #class-subject-teachers-page .cst-mobile-list {
+    display: flex;
+    flex-direction: column;
+    gap: 13px;
+}
+
+/* Assignment cards */
+
+html.techcenter-android-app #class-subject-teachers-page .cst-mobile-card {
+    background: #ffffff;
+    border: 1px solid #e8edf4;
+    border-radius: 17px;
+    padding: 16px;
+    box-shadow: 0 3px 12px rgba(15, 23, 42, 0.045);
+}
+
+/* Card icon */
+
+html.techcenter-android-app #class-subject-teachers-page .cst-icon {
+    width: 43px;
+    height: 43px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #eef2ff;
+    border-radius: 13px;
+    font-size: 21px;
+}
+
+/* Assignment details */
+
+html.techcenter-android-app #class-subject-teachers-page .cst-details {
+    margin-top: 15px;
+    padding: 12px 0;
+    border-top: 1px solid #eef1f5;
+    border-bottom: 1px solid #eef1f5;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+html.techcenter-android-app #class-subject-teachers-page .cst-detail-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 12px;
+}
+
+html.techcenter-android-app #class-subject-teachers-page .cst-detail-label {
+    color: #64748b;
+    font-size: 13px;
+    flex-shrink: 0;
+}
+
+html.techcenter-android-app #class-subject-teachers-page .cst-detail-value {
+    color: #1e293b;
+    font-size: 13px;
+    font-weight: 650;
+    text-align: right;
+    overflow-wrap: anywhere;
+}
+
+html.techcenter-android-app #class-subject-teachers-page .cst-unassigned {
+    color: #d97706;
+}
+
+/* Card actions */
+
+html.techcenter-android-app #class-subject-teachers-page .cst-mobile-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 14px;
+}
+
+html.techcenter-android-app #class-subject-teachers-page .cst-mobile-actions a {
+    min-height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border-radius: 11px;
+    font-size: 13px;
+    font-weight: 750;
+    text-decoration: none;
+}
+
+html.techcenter-android-app #class-subject-teachers-page .cst-edit-btn {
+    background: #eef2ff;
+    color: #4338ca;
+}
+
+html.techcenter-android-app #class-subject-teachers-page .cst-delete-btn {
+    background: #fef2f2;
+    color: #dc2626;
+}
+
+/* Empty state */
+
+html.techcenter-android-app #class-subject-teachers-page .cst-empty {
+    text-align: center;
+    padding: 35px 18px;
+    background: #ffffff;
+    border: 1px solid #e8edf4;
+    border-radius: 17px;
+    color: #64748b;
+}
+
+</style>
 
 {% endblock %}

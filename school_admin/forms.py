@@ -16,6 +16,16 @@ tailwind_file = "block w-full text-sm text-gray-700 border border-gray-300 round
 
 
 
+MAX_STUDENT_PHOTO_SIZE = 1 * 1024 * 1024  # 1 MB
+
+
+def validate_student_photo_size(uploaded_file):
+    if uploaded_file and uploaded_file.size > MAX_STUDENT_PHOTO_SIZE:
+        raise forms.ValidationError(
+            "Photo size must not exceed 1 MB. "
+            "Please resize or compress the image and try again."
+        )
+
 def generate_student_credentials(
     school,
     reserved_admissions=None,
@@ -172,6 +182,17 @@ class StudentCreateForm(forms.ModelForm):
                 self.fields["username"].initial = credentials["username"]
                 self.fields["password"].initial = credentials["password"]
 
+    def clean_photo(self):
+        photo = self.cleaned_data.get("photo")
+
+        # Validate only a newly uploaded photo.
+        uploaded_photo = self.files.get(self.add_prefix("photo"))
+
+        if uploaded_photo:
+            validate_student_photo_size(uploaded_photo)
+
+        return photo            
+
     def save(self, commit=True):
         data = self.cleaned_data
         username = data.get("username") or generate_unique_username(
@@ -305,7 +326,19 @@ class StudentUpdateForm(forms.ModelForm):
             self.fields["student_email"].initial = self.instance.student_email
 
         if self.instance:
-            self.fields["is_active"].initial = self.instance.is_active        
+            self.fields["is_active"].initial = self.instance.is_active 
+
+
+    def clean_photo(self):
+        photo = self.cleaned_data.get("photo")
+
+        # Validate only a newly uploaded photo.
+        uploaded_photo = self.files.get(self.add_prefix("photo"))
+
+        if uploaded_photo:
+            validate_student_photo_size(uploaded_photo)
+
+        return photo               
 
     def save(self, commit=True):
         student = super().save(commit=False)

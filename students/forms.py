@@ -2,6 +2,17 @@ from django import forms
 from .models import Student
 
 
+MAX_STUDENT_PHOTO_SIZE = 1 * 1024 * 1024  # 1 MB
+
+
+def validate_student_photo_size(uploaded_file):
+    if uploaded_file and uploaded_file.size > MAX_STUDENT_PHOTO_SIZE:
+        raise forms.ValidationError(
+            "Photo size must not exceed 1 MB. "
+            "Please resize or compress the image and try again."
+        )
+
+
 class StudentProfileForm(forms.ModelForm):
     class Meta:
         model = Student
@@ -14,6 +25,15 @@ class StudentProfileForm(forms.ModelForm):
         super().__init__(*args, **kwargs)
         # Make photo optional
         self.fields['photo'].required = False
+
+    def clean_photo(self):
+        photo = self.cleaned_data.get("photo")
+        uploaded_photo = self.files.get(self.add_prefix("photo"))
+
+        if uploaded_photo:
+            validate_student_photo_size(uploaded_photo)
+
+        return photo
 
 
 
