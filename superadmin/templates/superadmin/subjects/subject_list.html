@@ -1,45 +1,336 @@
+
 {% extends "accounts/base.html" %}
 {% block content %}
 
-<div class="bg-white p-6 rounded-xl shadow-lg mt-10">
-    <div class="flex justify-between items-center mb-4">
-        <h2 class="text-2xl font-bold">Subjects</h2>
+<div id="subjects-page" class="bg-white p-4 sm:p-6 rounded-xl shadow-lg mt-4 sm:mt-10">
 
-        <a href="{% url 'superadmin:subject_create' %}" 
-           class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-            + Add Subject
+    <!-- HEADER -->
+    <div class="subjects-header flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3 mb-5">
+        <div>
+            <h2 class="text-2xl font-bold text-gray-800">Subjects</h2>
+            <p class="text-sm text-gray-500 mt-1">Manage school subjects</p>
+        </div>
+
+        <a href="{% url 'superadmin:subject_create' %}"
+           class="subjects-add-btn inline-flex items-center justify-center gap-2 px-4 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 font-semibold transition">
+            <span class="text-lg">+</span>
+            Add Subject
         </a>
     </div>
 
-    <table class="w-full border rounded-lg">
-        <thead class="bg-gray-200 text-left">
-            <tr>
-                <th class="p-3">Name</th>
-                <th class="p-3">School</th>
-                <th class="p-3">Actions</th>
-            </tr>
-        </thead>
 
-        <tbody>
-            {% for subject in subjects %}
-            <tr class="border-b">
-                <td class="p-3">{{ subject.name }}</td>
-                <td class="p-3">{{ subject.school.name }}</td>
-                <td class="p-3 flex gap-3">
-                    <a href="{% url 'superadmin:subject_edit' subject.id %}" 
-                       class="text-blue-600 hover:underline">Edit</a>
+    <!-- ANDROID APP: NATIVE SUBJECT CARDS -->
+    <div class="subjects-mobile-list">
 
-                    <a href="{% url 'superadmin:subject_delete' subject.id %}" 
-                       class="text-red-600 hover:underline">Delete</a>
-                </td>
-            </tr>
-            {% empty %}
-            <tr>
-                <td colspan="3" class="text-center p-4 text-gray-500">No subjects found</td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
+        {% for subject in subjects %}
+        <div class="subject-mobile-card">
+
+            <div class="flex items-start gap-3">
+                <div class="subject-icon">
+                    <span>📚</span>
+                </div>
+
+                <div class="min-w-0 flex-1">
+                    <h3 class="font-bold text-gray-800 text-base break-words">
+                        {{ subject.name }}
+                    </h3>
+
+                    <p class="text-sm text-gray-500 mt-1 break-words">
+                        {{ subject.school.name }}
+                    </p>
+                </div>
+            </div>
+
+            <div class="subject-mobile-actions">
+                <a href="{% url 'superadmin:subject_edit' subject.id %}"
+                   class="subject-edit-btn">
+                    <span>✏️</span>
+                    Edit Subject
+                </a>
+
+                <a href="{% url 'superadmin:subject_delete' subject.id %}"
+                   class="subject-delete-btn">
+                    <span>🗑️</span>
+                    Delete
+                </a>
+            </div>
+
+        </div>
+        {% empty %}
+        <div class="subjects-empty">
+            <div class="text-3xl mb-2">📚</div>
+            <p class="font-semibold text-gray-700">No subjects found</p>
+            <p class="text-sm text-gray-500 mt-1">
+                Add a subject to get started.
+            </p>
+        </div>
+        {% endfor %}
+
+    </div>
+
+
+    <!-- NORMAL WEBSITE: RESPONSIVE TABLE -->
+    <div class="subjects-table-wrapper">
+        <table class="subjects-table w-full border-collapse">
+            <thead>
+                <tr>
+                    <th class="p-3 text-left">Name</th>
+                    <th class="p-3 text-left">School</th>
+                    <th class="p-3 text-left">Actions</th>
+                </tr>
+            </thead>
+
+            <tbody>
+                {% for subject in subjects %}
+                <tr class="border-b">
+                    <td class="p-3 subject-name-cell">
+                        {{ subject.name }}
+                    </td>
+
+                    <td class="p-3 subject-school-cell">
+                        {{ subject.school.name }}
+                    </td>
+
+                    <td class="p-3">
+                        <div class="subject-table-actions">
+                            <a href="{% url 'superadmin:subject_edit' subject.id %}"
+                               class="text-blue-600 hover:underline font-medium">
+                                Edit
+                            </a>
+
+                            <a href="{% url 'superadmin:subject_delete' subject.id %}"
+                               class="text-red-600 hover:underline font-medium">
+                                Delete
+                            </a>
+                        </div>
+                    </td>
+                </tr>
+
+                {% empty %}
+                <tr>
+                    <td colspan="3" class="text-center p-4 text-gray-500">
+                        No subjects found
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+
 </div>
+
+
+<style>
+
+/* =====================================================
+   NORMAL WEBSITE TABLE
+   Includes Android Chrome and other mobile browsers.
+   ===================================================== */
+
+#subjects-page {
+    width: 100%;
+    min-width: 0;
+}
+
+.subjects-mobile-list {
+    display: none;
+}
+
+.subjects-table-wrapper {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+.subjects-table {
+    width: 100%;
+    table-layout: fixed;
+    border: 1px solid #e5e7eb;
+    border-radius: 10px;
+}
+
+.subjects-table thead {
+    background: #f3f4f6;
+}
+
+.subjects-table th,
+.subjects-table td {
+    overflow-wrap: anywhere;
+    vertical-align: middle;
+}
+
+.subjects-table th:nth-child(1),
+.subjects-table td:nth-child(1) {
+    width: 32%;
+}
+
+.subjects-table th:nth-child(2),
+.subjects-table td:nth-child(2) {
+    width: 38%;
+}
+
+.subjects-table th:nth-child(3),
+.subjects-table td:nth-child(3) {
+    width: 30%;
+}
+
+.subject-table-actions {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    font-size: 14px;
+}
+
+
+/* =====================================================
+   SMALL SCREEN NORMAL WEB BROWSER
+   Keep the table visible and make it fit the screen.
+   ===================================================== */
+
+@media (max-width: 640px) {
+
+    #subjects-page {
+        padding: 12px;
+        margin-top: 12px;
+    }
+
+    .subjects-header h2 {
+        font-size: 21px;
+    }
+
+    .subjects-add-btn {
+        min-height: 44px;
+        width: 100%;
+        font-size: 14px;
+    }
+
+    .subjects-table th,
+    .subjects-table td {
+        padding: 9px 6px;
+        font-size: 12px;
+    }
+
+    .subject-table-actions {
+        gap: 7px;
+        font-size: 12px;
+    }
+}
+
+
+/* =====================================================
+   TECHCENTER ANDROID APP ONLY
+   Hide table and show native-style subject cards.
+   ===================================================== */
+
+html.techcenter-android-app #subjects-page {
+    margin-top: 8px;
+    padding: 15px 12px calc(125px + env(safe-area-inset-bottom));
+    background: #f3f5f9;
+    border-radius: 0;
+    box-shadow: none;
+    min-height: 100vh;
+}
+
+html.techcenter-android-app #subjects-page .subjects-header {
+    margin-bottom: 20px;
+}
+
+html.techcenter-android-app #subjects-page .subjects-header h2 {
+    font-size: 23px;
+    font-weight: 800;
+    color: #172033;
+}
+
+html.techcenter-android-app #subjects-page .subjects-header p {
+    font-size: 13px;
+    color: #64748b;
+}
+
+html.techcenter-android-app #subjects-page .subjects-add-btn {
+    width: 100%;
+    min-height: 50px;
+    border-radius: 14px;
+    font-size: 15px;
+    font-weight: 750;
+    box-shadow: 0 4px 10px rgba(37, 99, 235, 0.15);
+}
+
+/* Switch layouts only inside the native app */
+html.techcenter-android-app #subjects-page .subjects-table-wrapper {
+    display: none;
+}
+
+html.techcenter-android-app #subjects-page .subjects-mobile-list {
+    display: flex;
+    flex-direction: column;
+    gap: 13px;
+}
+
+/* Subject card */
+html.techcenter-android-app #subjects-page .subject-mobile-card {
+    background: #ffffff;
+    border: 1px solid #e8edf4;
+    border-radius: 17px;
+    padding: 16px;
+    box-shadow: 0 3px 12px rgba(15, 23, 42, 0.045);
+}
+
+/* Subject icon */
+html.techcenter-android-app #subjects-page .subject-icon {
+    width: 43px;
+    height: 43px;
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #eff6ff;
+    border-radius: 13px;
+    font-size: 21px;
+}
+
+/* Subject actions */
+html.techcenter-android-app #subjects-page .subject-mobile-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-top: 16px;
+    padding-top: 13px;
+    border-top: 1px solid #eef1f5;
+}
+
+html.techcenter-android-app #subjects-page .subject-mobile-actions a {
+    min-height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    border-radius: 11px;
+    font-size: 13px;
+    font-weight: 750;
+    text-decoration: none;
+}
+
+html.techcenter-android-app #subjects-page .subject-edit-btn {
+    background: #eff6ff;
+    color: #2563eb;
+}
+
+html.techcenter-android-app #subjects-page .subject-delete-btn {
+    background: #fef2f2;
+    color: #dc2626;
+}
+
+/* Empty state */
+html.techcenter-android-app #subjects-page .subjects-empty {
+    text-align: center;
+    padding: 35px 18px;
+    background: #ffffff;
+    border: 1px solid #e8edf4;
+    border-radius: 17px;
+    color: #64748b;
+}
+
+</style>
 
 {% endblock %}
