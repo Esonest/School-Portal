@@ -1077,11 +1077,13 @@ class ClassSubjectTeacherForm(forms.ModelForm):
                 .order_by("name")
             )
 
-            teachers = (
-                Teacher.objects
-                .filter(school=school)
-                .select_related("user")
-                .order_by("user__first_name", "user__last_name")
+            teachers = Teacher.objects.filter(
+                school=school
+            ).select_related(
+                "user"
+            ).order_by(
+                "user__first_name",
+                "user__last_name"
             )
 
             self.fields["teacher"].queryset = teachers

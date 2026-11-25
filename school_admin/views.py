@@ -4945,14 +4945,25 @@ def class_subject_teacher_list(request, school_id):
     assignments = (
         ClassSubjectTeacher.objects
         .filter(school_class__school=school)
-        .select_related("school_class", "subject", "teacher")
-        .order_by("school_class__name", "subject__name")
+        .select_related(
+            "school_class",
+            "subject",
+            "teacher__user"
+        )
+        .order_by(
+            "school_class__name",
+            "subject__name"
+        )
     )
 
-    return render(request, "school_admin/teachers/class_subject_teacher_list.html", {
-        "school": school,
-        "assignments": assignments,
-    })
+    return render(
+        request,
+        "school_admin/teachers/class_subject_teacher_list.html",
+        {
+            "school": school,
+            "assignments": assignments,
+        }
+    )
 
 
 
