@@ -514,14 +514,25 @@ const isLoginPage = document.body.classList.contains('login-layout');
 
     popup.appendChild(profileLink);
 
-    // Logout link.
-    // Logout link.
+    // Logout link with native Android confirmation.
 const logoutLink = createLink(
     ['⇥', 'Logout', '/logout/'],
     true
 );
 
 logoutLink.classList.add('tc-role-logout');
+
+logoutLink.addEventListener('click', function (event) {
+    event.preventDefault();
+
+    const confirmed = window.confirm(
+        'Are you sure you want to log out of your TECHCENTER account?'
+    );
+
+    if (confirmed) {
+        window.location.href = logoutLink.href;
+    }
+});
 
 popup.appendChild(logoutLink);
 
