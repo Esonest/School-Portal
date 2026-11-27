@@ -563,7 +563,6 @@ function createLink(item, popupLink) {
     return link;
 }
 
-
     // First four role-specific links appear in the bottom bar.
     menuItems.slice(0, 4).forEach(function (item) {
         bottomItems.appendChild(createLink(item, false));
