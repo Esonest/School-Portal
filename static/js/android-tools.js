@@ -626,25 +626,30 @@ settingsIcon.appendChild(createNavIcon('settings'));
 
     settingsButton.append(settingsIcon, settingsLabel);
 
-    settingsButton.addEventListener('click', function () {
-        const isOpen = popup.classList.toggle('tc-open');
+    settingsButton.addEventListener('click', function (event) {
+    event.preventDefault();
+    event.stopPropagation();
 
-        settingsButton.setAttribute(
-            'aria-expanded',
-            String(isOpen)
-        );
-    });
+    const isOpen = !popup.classList.contains('tc-open');
+
+    popup.classList.toggle('tc-open', isOpen);
+
+    settingsButton.setAttribute(
+        'aria-expanded',
+        String(isOpen)
+    );
+});
 
     // Close the popup when another area is tapped.
-    document.addEventListener('click', function (event) {
-        if (
-            !popup.contains(event.target) &&
-            !settingsButton.contains(event.target)
-        ) {
-            popup.classList.remove('tc-open');
-            settingsButton.setAttribute('aria-expanded', 'false');
-        }
-    });
+   document.addEventListener('click', function (event) {
+    if (
+        !popup.contains(event.target) &&
+        !settingsButton.contains(event.target)
+    ) {
+        popup.classList.remove('tc-open');
+        settingsButton.setAttribute('aria-expanded', 'false');
+    }
+});
 
     // Close the popup when a navigation link is selected.
     popup.addEventListener('click', function (event) {
