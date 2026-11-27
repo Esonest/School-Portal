@@ -357,3 +357,224 @@ const isLoginPage = document.body.classList.contains('login-layout');
     updateNotificationCount();
 
 })();
+
+
+
+/* ==========================================
+   TECHCENTER ROLE-BASED BOTTOM NAVIGATION
+   BASE TEMPLATE - ANDROID APP ONLY
+========================================== */
+
+(function () {
+    'use strict';
+
+    const root = document.documentElement;
+
+    // Android app only.
+    if (!root.classList.contains('techcenter-android-app')) return;
+
+    const userElement = document.getElementById('techcenter-android-user');
+    const navigation = document.getElementById('techcenter-app-navigation');
+
+    // Do not display navigation for unauthenticated users.
+    if (!userElement || !navigation) return;
+
+    const role = userElement.dataset.role || '';
+    const schoolId = userElement.dataset.schoolId || '';
+
+    const schoolFallback = '/portal-selection/';
+
+    const groups = {
+        student: [
+            ['⌂', 'Dashboard', '/students/'],
+            ['▤', 'My Results', '/results/student/portal/'],
+            ['▣', 'Assignments', '/assignments/'],
+            ['▧', 'Lesson Notes', '/notes/'],
+            ['✎', 'CBT Exams', '/cbt/'],
+            ['₦', 'Payments', '/finance/student/']
+        ],
+
+        teacher: [
+            ['⌂', 'Dashboard', '/teachers/dashboard/'],
+            ['▤', 'Results', '/teachers/results/'],
+            ['▣', 'Assignments', '/assignments/'],
+            ['◷', 'Attendance', schoolId
+                ? '/school_admin/' + schoolId + '/attendance/'
+                : schoolFallback],
+            ['✎', 'CBT Exams', '/school_admin/'],
+            ['▧', 'Lesson Notes', '/notes/'],
+            ['◎', 'Live Classes', '/liveclass/']
+        ],
+
+        schooladmin: [
+            ['⌂', 'Dashboard', schoolId
+                ? '/school_admin/school_admin/' + schoolId + '/'
+                : schoolFallback],
+            ['✎', 'Bulk Scores', schoolId
+                ? '/results/school/' + schoolId + '/scores/'
+                : schoolFallback],
+            ['◈', 'Psychomotor & Affective', schoolId
+                ? '/results/bulk_psycho_affective/' + schoolId + '/'
+                : schoolFallback],
+            ['⇩', 'Bulk Results Download', schoolId
+                ? '/results/school/' + schoolId + '/bulk-results/select/'
+                : schoolFallback],
+            ['♙', 'Students', schoolId
+                ? '/school_admin/' + schoolId + '/'
+                : schoolFallback],
+            ['♟', 'Teachers', schoolId
+                ? '/school_admin/' + schoolId + '/teachers/'
+                : schoolFallback],
+            ['▦', 'Classes', schoolId
+                ? '/school_admin/' + schoolId + '/classes/'
+                : schoolFallback],
+            ['◷', 'Attendance', schoolId
+                ? '/school_admin/' + schoolId + '/attendance/'
+                : schoolFallback],
+            ['✎', 'CBT', schoolId
+                ? '/school_admin/admin/' + schoolId + '/'
+                : schoolFallback],
+            ['▣', 'Assignments', '/assignments/'],
+            ['▧', 'Lesson Notes', '/notes/'],
+            ['₦', 'Finance', '/finance/']
+        ],
+
+        accountant: [
+            ['⌂', 'Dashboard', '/finance/'],
+            ['▤', 'Invoices', '/finance/invoices/'],
+            ['₦', 'Payments', '/finance/payments/'],
+            ['＋', 'Create Invoices', '/finance/invoice/create/'],
+            ['▧', 'Expenses', '/finance/expenses/']
+        ],
+
+        superadmin: [
+            ['⌂', 'Dashboard', '/portal-selection/']
+        ]
+    };
+
+    const menuItems = groups[role];
+
+    if (!menuItems) return;
+
+    // Build the navigation container.
+    navigation.replaceChildren();
+
+    const popup = document.createElement('div');
+    popup.id = 'tc-role-nav-popup';
+
+    const bottomItems = document.createElement('div');
+    bottomItems.id = 'tc-role-nav-items';
+
+    function createLink(item, popupLink) {
+        const link = document.createElement('a');
+
+        link.href = item[2];
+        link.className = popupLink
+            ? 'tc-role-popup-link'
+            : 'tc-role-nav-link';
+
+        const icon = document.createElement('span');
+        icon.className = popupLink
+            ? 'tc-role-popup-icon'
+            : 'tc-role-nav-icon';
+        icon.textContent = item[0];
+
+        const label = document.createElement('span');
+        label.className = popupLink
+            ? ''
+            : 'tc-role-nav-label';
+        label.textContent = item[1];
+
+        link.append(icon, label);
+
+        return link;
+    }
+
+    // First four role-specific links appear in the bottom bar.
+    menuItems.slice(0, 4).forEach(function (item) {
+        bottomItems.appendChild(createLink(item, false));
+    });
+
+    // Remaining role-specific links appear in the Settings popup.
+    menuItems.slice(4).forEach(function (item) {
+        popup.appendChild(createLink(item, true));
+    });
+
+    // Profile link.
+    const profileLink = createLink(
+        ['♙', 'Profile', '/students/profile/'],
+        true
+    );
+
+    if (popup.children.length) {
+        const divider = document.createElement('div');
+        divider.className = 'tc-role-popup-divider';
+        popup.appendChild(divider);
+    }
+
+    popup.appendChild(profileLink);
+
+    // Logout link.
+    // Logout link.
+const logoutLink = createLink(
+    ['⇥', 'Logout', '/logout/'],
+    true
+);
+
+logoutLink.classList.add('tc-role-logout');
+
+popup.appendChild(logoutLink);
+
+    // Settings button.
+    const settingsButton = document.createElement('button');
+    settingsButton.type = 'button';
+    settingsButton.className = 'tc-role-nav-settings';
+    settingsButton.setAttribute('aria-label', 'Open Settings menu');
+    settingsButton.setAttribute('aria-expanded', 'false');
+
+    const settingsIcon = document.createElement('span');
+    settingsIcon.className = 'tc-role-nav-icon';
+    settingsIcon.textContent = '☰';
+
+    const settingsLabel = document.createElement('span');
+    settingsLabel.className = 'tc-role-nav-label';
+    settingsLabel.textContent = 'Settings';
+
+    settingsButton.append(settingsIcon, settingsLabel);
+
+    settingsButton.addEventListener('click', function () {
+        const isOpen = popup.classList.toggle('tc-open');
+
+        settingsButton.setAttribute(
+            'aria-expanded',
+            String(isOpen)
+        );
+    });
+
+    // Close the popup when another area is tapped.
+    document.addEventListener('click', function (event) {
+        if (
+            !popup.contains(event.target) &&
+            !settingsButton.contains(event.target)
+        ) {
+            popup.classList.remove('tc-open');
+            settingsButton.setAttribute('aria-expanded', 'false');
+        }
+    });
+
+    // Close the popup when a navigation link is selected.
+    popup.addEventListener('click', function (event) {
+        if (event.target.closest('a')) {
+            popup.classList.remove('tc-open');
+            settingsButton.setAttribute('aria-expanded', 'false');
+        }
+    });
+
+    bottomItems.appendChild(settingsButton);
+    navigation.append(popup, bottomItems);
+
+    // Display the new navigation.
+    root.classList.add('tc-has-role-nav');
+    navigation.style.display = 'block';
+
+})();
