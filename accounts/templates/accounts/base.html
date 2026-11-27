@@ -10,6 +10,7 @@
 
     {% load static %}
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
+ <link rel="stylesheet" href="{% static 'css/android-tools.css' %}">
 
    <script>
 (function () {
@@ -685,14 +686,13 @@ resetTimers();
 (function () {
     if (!window.TechcenterBridge) return;
 
-    const css = document.createElement('link');
-    css.rel = 'stylesheet';
-    css.href = "{% static 'css/android-tools.css' %}";
-    document.head.appendChild(css);
-
+    // Load Android functionality only.
+    // Its stylesheet is already loaded in the document head.
     const script = document.createElement('script');
+
     script.src = "{% static 'js/android-tools.js' %}";
     script.async = false;
+
     document.body.appendChild(script);
 })();
 </script>
