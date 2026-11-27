@@ -389,170 +389,211 @@ html.techcenter-android-app.tc-dark textarea::placeholder {
 
 
 
+
 /* ==========================================
-   TECHCENTER ROLE-BASED BOTTOM NAVIGATION
-   BASE TEMPLATE - ANDROID APP ONLY
+   TECHCENTER ANDROID NAVIGATION
+   COMPACT MATERIAL-STYLE DESIGN
 ========================================== */
 
-/* Hide the old navigation injected by Android.
-   Do not hide any other Android components. */
-html.techcenter-android-app #tc-fixed-bottom,
-html.techcenter-android-app #tc-quick-menu {
-    display: none !important;
-}
-
-/* New navigation is hidden outside the Android app. */
-#techcenter-app-navigation {
-    display: none;
-}
-
+/* Compact fixed bottom navigation */
 html.techcenter-android-app #techcenter-app-navigation {
-    display: block;
-    position: fixed;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 99990;
-    padding: 7px 5px calc(7px + env(safe-area-inset-bottom));
-    background: #ffffff;
-    border-top: 1px solid #e2e8f0;
-    box-shadow: 0 -4px 18px rgba(15, 23, 42, .10);
-    box-sizing: border-box;
+    padding: 2px 4px calc(2px + env(safe-area-inset-bottom, 0px)) !important;
+    background: #ffffff !important;
+    border-top: 1px solid #dbeafe !important;
+    box-shadow: 0 -2px 10px rgba(15, 23, 42, .10) !important;
 }
 
+/* Five equally spaced navigation items */
 html.techcenter-android-app #tc-role-nav-items {
-    display: grid;
+    display: grid !important;
     grid-template-columns: repeat(5, minmax(0, 1fr));
-    align-items: stretch;
-    gap: 3px;
+    align-items: center;
+    gap: 2px;
 }
 
+/* Bottom navigation touch targets */
 html.techcenter-android-app .tc-role-nav-link,
 html.techcenter-android-app .tc-role-nav-settings {
     min-width: 0;
-    min-height: 53px;
-    padding: 5px 2px;
+    min-height: 43px !important;
+    height: 43px;
+    padding: 2px 1px !important;
     border: 0;
-    border-radius: 10px;
+    border-radius: 9px;
     background: transparent;
-    color: #475569;
-    text-decoration: none;
+    color: #2563eb !important;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    gap: 3px;
-    font-family: inherit;
+    gap: 1px;
+    text-decoration: none;
     cursor: pointer;
+    touch-action: manipulation;
     -webkit-tap-highlight-color: transparent;
+    transition: background .12s ease, transform .12s ease;
 }
 
 html.techcenter-android-app .tc-role-nav-link:active,
 html.techcenter-android-app .tc-role-nav-settings:active {
-    background: #eff6ff;
+    background: #dbeafe !important;
+    transform: scale(.94);
 }
 
+/* Proper SVG icons */
 html.techcenter-android-app .tc-role-nav-icon {
+    width: 21px;
+    height: 21px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #2563eb;
     font-size: 20px;
-    line-height: 1.2;
+    line-height: 1;
 }
 
+html.techcenter-android-app .tc-role-nav-icon svg {
+    width: 21px;
+    height: 21px;
+    display: block;
+    stroke: currentColor;
+}
+
+/* Bottom labels */
 html.techcenter-android-app .tc-role-nav-label {
+    display: block;
     max-width: 100%;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    font-size: 10px;
-    line-height: 1.3;
+    font-size: 9px;
+    line-height: 11px;
     font-weight: 700;
+    color: #475569;
 }
 
-html.techcenter-android-app .tc-role-nav-settings {
-    width: 100%;
-}
-
+/* Settings popup */
 html.techcenter-android-app #tc-role-nav-popup {
-    display: none;
-    position: absolute;
-    right: 8px;
-    bottom: calc(100% + 8px);
-    width: min(260px, calc(100vw - 24px));
-    max-height: min(65dvh, 470px);
+    right: 7px;
+    bottom: calc(100% + 7px);
+    width: min(270px, calc(100vw - 20px));
+    max-height: min(62dvh, 460px);
     overflow-y: auto;
-    padding: 8px;
+    padding: 7px;
     background: #ffffff;
-    color: #1e293b;
-    border: 1px solid #e2e8f0;
-    border-radius: 15px;
-    box-shadow: 0 12px 35px rgba(15, 23, 42, .20);
-    box-sizing: border-box;
+    border: 1px solid #dbeafe;
+    border-radius: 16px;
+    box-shadow: 0 8px 28px rgba(15, 23, 42, .20);
+    overscroll-behavior: contain;
 }
 
-html.techcenter-android-app #tc-role-nav-popup.tc-open {
-    display: block;
-}
-
+/* Every Settings link gets a native-style touch row */
 html.techcenter-android-app .tc-role-popup-link {
     display: flex;
     align-items: center;
-    gap: 11px;
+    gap: 12px;
     width: 100%;
-    min-height: 43px;
-    padding: 9px 10px;
+    min-height: 48px;
+    padding: 6px 9px;
+    margin: 2px 0;
     border: 0;
-    border-radius: 9px;
+    border-radius: 11px;
     background: transparent;
-    color: #334155;
+    color: #1e293b;
     text-decoration: none;
     text-align: left;
     font-size: 13px;
     font-weight: 650;
     box-sizing: border-box;
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+    transition: background .12s ease, transform .12s ease;
 }
 
 html.techcenter-android-app .tc-role-popup-link:active {
-    background: #eff6ff;
+    background: #dbeafe !important;
+    transform: scale(.98);
 }
 
+/* Icon background in each Settings row */
 html.techcenter-android-app .tc-role-popup-icon {
-    width: 23px;
-    flex-shrink: 0;
-    text-align: center;
-    font-size: 17px;
+    width: 34px;
+    height: 34px;
+    flex: 0 0 34px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    background: #eff6ff;
+    color: #2563eb;
 }
 
+html.techcenter-android-app .tc-role-popup-icon svg {
+    width: 19px;
+    height: 19px;
+    display: block;
+    stroke: currentColor;
+}
+
+/* Settings divider */
 html.techcenter-android-app .tc-role-popup-divider {
     height: 1px;
-    margin: 6px 4px;
+    margin: 6px 5px;
     background: #e2e8f0;
 }
 
-/* Keep page content clear of the fixed bottom navigation. */
-html.techcenter-android-app.tc-has-role-nav body {
-    padding-bottom: 78px !important;
+/* Logout remains visually distinct */
+html.techcenter-android-app .tc-role-popup-link.tc-role-logout {
+    margin-top: 5px;
+    color: #dc2626 !important;
+    background: #fef2f2 !important;
+    border: 1px solid #fecaca;
+    font-weight: 800;
 }
 
-/* Dark mode */
+html.techcenter-android-app .tc-role-popup-link.tc-role-logout .tc-role-popup-icon {
+    color: #dc2626 !important;
+    background: #fee2e2 !important;
+}
+
+html.techcenter-android-app .tc-role-popup-link.tc-role-logout:active {
+    background: #fee2e2 !important;
+}
+
+/* Less space reserved below page content */
+html.techcenter-android-app.tc-has-role-nav body {
+    padding-bottom: calc(51px + env(safe-area-inset-bottom, 0px)) !important;
+}
+
+/* ==========================================
+   DARK MODE
+========================================== */
+
 html.techcenter-android-app.tc-dark #techcenter-app-navigation {
-    background: #111827;
-    border-color: #334155;
-    box-shadow: 0 -4px 18px rgba(0, 0, 0, .25);
+    background: #111827 !important;
+    border-top-color: #334155 !important;
 }
 
 html.techcenter-android-app.tc-dark .tc-role-nav-link,
 html.techcenter-android-app.tc-dark .tc-role-nav-settings {
-    color: #e2e8f0;
+    color: #60a5fa !important;
+}
+
+html.techcenter-android-app.tc-dark .tc-role-nav-icon {
+    color: #60a5fa;
+}
+
+html.techcenter-android-app.tc-dark .tc-role-nav-label {
+    color: #cbd5e1;
 }
 
 html.techcenter-android-app.tc-dark .tc-role-nav-link:active,
-html.techcenter-android-app.tc-dark .tc-role-nav-settings:active,
-html.techcenter-android-app.tc-dark .tc-role-popup-link:active {
-    background: #263449;
+html.techcenter-android-app.tc-dark .tc-role-nav-settings:active {
+    background: #263449 !important;
 }
 
 html.techcenter-android-app.tc-dark #tc-role-nav-popup {
     background: #111827;
-    color: #f8fafc;
     border-color: #334155;
 }
 
@@ -560,47 +601,46 @@ html.techcenter-android-app.tc-dark .tc-role-popup-link {
     color: #e2e8f0;
 }
 
+html.techcenter-android-app.tc-dark .tc-role-popup-link:active {
+    background: #263449 !important;
+}
+
+html.techcenter-android-app.tc-dark .tc-role-popup-icon {
+    background: #1e3a5f;
+    color: #60a5fa;
+}
+
 html.techcenter-android-app.tc-dark .tc-role-popup-divider {
     background: #334155;
 }
 
-/* ==========================================
-   ANDROID LOGOUT LINK - RED STYLING
-========================================== */
-
-html.techcenter-android-app .tc-role-popup-link.tc-role-logout {
-    color: #dc2626 !important;
-    background: #fef2f2;
-    font-weight: 800;
-    border: 1px solid #fecaca;
-    margin-top: 4px;
-}
-
-html.techcenter-android-app .tc-role-popup-link.tc-role-logout:hover,
-html.techcenter-android-app .tc-role-popup-link.tc-role-logout:active {
-    color: #b91c1c !important;
-    background: #fee2e2;
-}
-
-/* Dark mode */
 html.techcenter-android-app.tc-dark .tc-role-popup-link.tc-role-logout {
     color: #f87171 !important;
-    background: #3b1d27;
+    background: #3b1d27 !important;
     border-color: #7f1d1d;
 }
 
-html.techcenter-android-app.tc-dark .tc-role-popup-link.tc-role-logout:hover,
-html.techcenter-android-app.tc-dark .tc-role-popup-link.tc-role-logout:active {
-    color: #fca5a5 !important;
-    background: #51212e;
+html.techcenter-android-app.tc-dark .tc-role-popup-link.tc-role-logout .tc-role-popup-icon {
+    color: #f87171 !important;
+    background: #51212e !important;
 }
 
+html.techcenter-android-app .tc-role-popup-label {
+    flex: 1;
+    min-width: 0;
+    overflow-wrap: anywhere;
+    line-height: 1.35;
+}
+
+
 @media (max-width: 360px) {
-    html.techcenter-android-app .tc-role-nav-label {
-        font-size: 9px;
+    html.techcenter-android-app .tc-role-nav-icon,
+    html.techcenter-android-app .tc-role-nav-icon svg {
+        width: 19px;
+        height: 19px;
     }
 
-    html.techcenter-android-app .tc-role-nav-icon {
-        font-size: 18px;
+    html.techcenter-android-app .tc-role-nav-label {
+        font-size: 8px;
     }
 }

@@ -465,30 +465,104 @@ const isLoginPage = document.body.classList.contains('login-layout');
     const bottomItems = document.createElement('div');
     bottomItems.id = 'tc-role-nav-items';
 
-    function createLink(item, popupLink) {
-        const link = document.createElement('a');
+    
+function createNavIcon(name) {
+    const paths = {
+        home: 'M3 10.5 12 3l9 7.5M5.5 9v11h13V9M9 20v-6h6v6',
+        results: 'M5 3h14v18H5zM8 8h8M8 12h8M8 16h5',
+        assignments: 'M8 4h8M9 3h6v3H9zM6 5H4v16h16V5h-2M8 11h8M8 15h8',
+        notes: 'M5 3h14v18H5zM8 8h8M8 12h8M8 16h5',
+        exam: 'M4 4h16v16H4zM8 8h8M8 12h8M8 16h4',
+        payment: 'M12 2v20M17 6H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6',
+        attendance: 'M8 3v3M16 3v3M4 8h16M5 5h14v16H5zM8 13l2.5 2.5L16 10',
+        download: 'M12 3v12M7 10l5 5 5-5M4 20h16',
+        students: 'M16 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2M10 11a4 4 0 1 0 0-8 4 4 0 0 0 0 8M20 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75',
+        teachers: 'M12 12a4 4 0 1 0 0-8 4 4 0 0 0 0 8M4 21a8 8 0 0 1 16 0M18 8h4M20 6v4',
+        classes: 'M3 4h18v16H3zM3 9h18M9 9v11M15 9v11',
+        live: 'M3 8h18v12H3zM8 8l2-4h4l2 4M10 14l5 3-5 3z',
+        profile: 'M20 21a8 8 0 0 0-16 0M12 13a4 4 0 1 0 0-8 4 4 0 0 0 0 8',
+        settings: 'M12 8a4 4 0 1 0 0 8 4 4 0 0 0 0-8M19.4 15a1.7 1.7 0 0 0 .34 1.88l.06.06-1.7 2.94-.08-.02a1.7 1.7 0 0 0-1.7.49l-.06.06h-3.4l-.04-.08a1.7 1.7 0 0 0-1.48-.98 1.7 1.7 0 0 0-1.48.98l-.04.08h-3.4l-.06-.06a1.7 1.7 0 0 0-1.7-.49l-.08.02-1.7-2.94.06-.06A1.7 1.7 0 0 0 3.4 15l-.08-.04v-3.4l.08-.04a1.7 1.7 0 0 0 .98-1.48 1.7 1.7 0 0 0-.98-1.48l-.08-.04V5.12l.08-.04a1.7 1.7 0 0 0 1.48-.98l.04-.08h3.4l.04.08a1.7 1.7 0 0 0 1.48.98 1.7 1.7 0 0 0 1.48-.98l.04-.08h3.4l.06.06a1.7 1.7 0 0 0 1.7.49l.08-.02 1.7 2.94-.06.06A1.7 1.7 0 0 0 19.4 9l.08.04v3.4z',
+        logout: 'M10 17l5-5-5-5M15 12H3M12 3h7a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-7',
+        finance: 'M3 6h18v13H3zM3 10h18M7 15h4',
+        plus: 'M12 5v14M5 12h14',
+        psychomotor: 'M12 3v18M3 12h18M5.6 5.6l12.8 12.8M18.4 5.6 5.6 18.4',
+        generic: 'M4 4h16v16H4zM8 8h8M8 12h8M8 16h5'
+    };
 
-        link.href = item[2];
-        link.className = popupLink
-            ? 'tc-role-popup-link'
-            : 'tc-role-nav-link';
+    const svgNS = 'http://www.w3.org/2000/svg';
+    const svg = document.createElementNS(svgNS, 'svg');
 
-        const icon = document.createElement('span');
-        icon.className = popupLink
-            ? 'tc-role-popup-icon'
-            : 'tc-role-nav-icon';
-        icon.textContent = item[0];
+    svg.setAttribute('viewBox', '0 0 24 24');
+    svg.setAttribute('fill', 'none');
+    svg.setAttribute('stroke', 'currentColor');
+    svg.setAttribute('stroke-width', '1.8');
+    svg.setAttribute('stroke-linecap', 'round');
+    svg.setAttribute('stroke-linejoin', 'round');
+    svg.setAttribute('aria-hidden', 'true');
 
-        const label = document.createElement('span');
-        label.className = popupLink
-            ? ''
-            : 'tc-role-nav-label';
-        label.textContent = item[1];
+    const path = document.createElementNS(svgNS, 'path');
+    path.setAttribute('d', paths[name] || paths.generic);
+    svg.appendChild(path);
 
-        link.append(icon, label);
+    return svg;
+}
 
-        return link;
-    }
+function getNavIconName(label) {
+    const names = {
+        'Dashboard': 'home',
+        'My Results': 'results',
+        'Results': 'results',
+        'Assignments': 'assignments',
+        'Lesson Notes': 'notes',
+        'CBT Exams': 'exam',
+        'CBT': 'exam',
+        'Payments': 'payment',
+        'Invoices': 'results',
+        'Create Invoices': 'plus',
+        'Expenses': 'finance',
+        'Finance': 'finance',
+        'Attendance': 'attendance',
+        'Bulk Scores': 'results',
+        'Psychomotor & Affective': 'psychomotor',
+        'Bulk Results Download': 'download',
+        'Students': 'students',
+        'Teachers': 'teachers',
+        'Classes': 'classes',
+        'Live Classes': 'live',
+        'Profile': 'profile',
+        'Logout': 'logout',
+        'Settings': 'settings'
+    };
+
+    return names[label] || 'generic';
+}
+
+function createLink(item, popupLink) {
+    const link = document.createElement('a');
+
+    link.href = item[2];
+    link.className = popupLink
+        ? 'tc-role-popup-link'
+        : 'tc-role-nav-link';
+
+    const icon = document.createElement('span');
+    icon.className = popupLink
+        ? 'tc-role-popup-icon'
+        : 'tc-role-nav-icon';
+
+    icon.appendChild(createNavIcon(getNavIconName(item[1])));
+
+    const label = document.createElement('span');
+    label.className = popupLink
+        ? 'tc-role-popup-label'
+        : 'tc-role-nav-label';
+    label.textContent = item[1];
+
+    link.append(icon, label);
+
+    return link;
+}
+
 
     // First four role-specific links appear in the bottom bar.
     menuItems.slice(0, 4).forEach(function (item) {
@@ -544,8 +618,8 @@ popup.appendChild(logoutLink);
     settingsButton.setAttribute('aria-expanded', 'false');
 
     const settingsIcon = document.createElement('span');
-    settingsIcon.className = 'tc-role-nav-icon';
-    settingsIcon.textContent = '☰';
+settingsIcon.className = 'tc-role-nav-icon';
+settingsIcon.appendChild(createNavIcon('settings'));
 
     const settingsLabel = document.createElement('span');
     settingsLabel.className = 'tc-role-nav-label';
