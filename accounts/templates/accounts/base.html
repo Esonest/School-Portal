@@ -5,31 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>{% block title %}TECHCENTER School Portal{% endblock %}</title>
 
-   {% load static %}
+    <!-- Tailwind -->
+    <script src="https://cdn.tailwindcss.com"></script>
 
-<!-- Local stylesheets -->
-<link rel="stylesheet" href="{% static 'css/style.css' %}">
-<link rel="stylesheet" href="{% static 'css/android-tools.css' %}">
-
-<!-- TECHCENTER BRAND COLORS -->
-<script>
-    tailwind = {
-        config: {
-            theme: {
-                extend: {
-                    colors: {
-                        techPrimary: "#2563eb",
-                        techSecondary: "#7c3aed",
-                        techDark: "#0f172a"
-                    }
-                }
-            }
-        }
-    };
-</script>
-
-<!-- Load Tailwind without blocking HTML parsing -->
-<script defer src="https://cdn.tailwindcss.com"></script>
+    {% load static %}
+    <link rel="stylesheet" href="{% static 'css/style.css' %}">
+ <link rel="stylesheet" href="{% static 'css/android-tools.css' %}">
 
    <script>
 (function () {
