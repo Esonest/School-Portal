@@ -351,54 +351,27 @@ if (clearButton) {
     });
 }
 
-    /* ======================================
-       RECEIVE NOTIFICATIONS FROM PAGE JS
-    ====================================== */
-
-    // Other portal scripts can send notifications using:
-    // window.dispatchEvent(new CustomEvent('techcenter:notification', {
-    //     detail: {title: 'New result', message: 'Your result is ready.'}
-    // }));
-
-   /* ======================================
-   ANDROID PUSH NOTIFICATION POP-UP
-====================================== */
-
-const pushPopup = document.getElementById('tc-push-popup');
-const pushPopupTitle = document.getElementById('tc-push-popup-title');
-const pushPopupMessage = document.getElementById('tc-push-popup-message');
-const pushPopupClose = document.getElementById('tc-push-popup-close');
-
-function showPushNotification(data) {
-    if (!data || !pushPopup) return;
-
-    const title = String(
-        data.title || data.subject || 'TECHCENTER Notification'
-    ).trim();
-
-    const message = String(
-        data.message || data.body || data.text || ''
-    ).trim();
-
-    if (!message && !title) return;
-
-    pushPopupTitle.textContent = title;
-    pushPopupMessage.textContent = message;
-
-    pushPopup.hidden = false;
-}
-
-if (pushPopupClose) {
-    pushPopupClose.addEventListener('click', function () {
-        pushPopup.hidden = true;
-    });
-}
-
-window.addEventListener('techcenter:notification', function (event) {
-    const data = event.detail;
+    function handleTechcenterNotification(data) {
+    if (!data) return;
 
     addNotification(data);
     showPushNotification(data);
+}
+
+window.addEventListener('techcenter:notification', function (event) {
+    handleTechcenterNotification(event.detail);
+});
+
+// Mark the notification handler as ready.
+window.__tcToolsReady = true;
+
+// Process notifications that arrived before this script loaded.
+const pendingNotifications = window.__tcPendingNotifications || [];
+
+window.__tcPendingNotifications = [];
+
+pendingNotifications.forEach(function (data) {
+    handleTechcenterNotification(data);
 });
 
     // Simple helper for existing portal scripts.

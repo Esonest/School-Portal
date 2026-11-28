@@ -14,9 +14,18 @@
 
    <script>
 (function () {
-    if (window.TechcenterBridge) {
-        document.documentElement.classList.add('techcenter-android-app');
-    }
+    if (!window.TechcenterBridge) return;
+
+    document.documentElement.classList.add('techcenter-android-app');
+
+    window.__tcToolsReady = false;
+    window.__tcPendingNotifications = [];
+
+    window.addEventListener('techcenter:notification', function (event) {
+        if (!window.__tcToolsReady && event.detail) {
+            window.__tcPendingNotifications.push(event.detail);
+        }
+    });
 })();
 </script>
 
