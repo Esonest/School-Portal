@@ -428,26 +428,47 @@ if (pushPopupClose) {
     pushPopupClose.addEventListener('click', closePushNotification);
 }
 
-function handleTechcenterNotification(data) {
-    if (!data || typeof data !== 'object') return;
-
-    // Save the announcement in notification history.
-    addNotification(data);
-
-    // Display the announcement popup immediately.
-    showPushNotification(data);
-}
 
 // ==========================================
 // CENTRAL TECHCENTER NOTIFICATION RECEIVER
 // ==========================================
 
+function handleTechcenterNotification(data) {
+    if (!data || typeof data !== 'object') return;
+
+    const title =
+        data.title ||
+        data.subject ||
+        'TECHCENTER Announcement';
+
+    const message =
+        data.message ||
+        data.body ||
+        data.text ||
+        '';
+
+    if (!message && !title) return;
+
+    const notification = {
+        ...data,
+        title: title,
+        message: message
+    };
+
+    // Save to notification history.
+    addNotification(notification);
+
+    // Display the complete message, including on the login page.
+    showPushNotification(notification);
+}
+
+// Make the receiver available to the early base.html listener.
 window.__tcHandleNotification = handleTechcenterNotification;
 
-// Mark the notification system ready.
+// Mark the notification system as ready.
 window.__tcToolsReady = true;
 
-// Process notifications received before this file loaded.
+// Process notifications received before this script loaded.
 const pendingNotifications = Array.isArray(window.__tcPendingNotifications)
     ? window.__tcPendingNotifications.slice()
     : [];
@@ -457,6 +478,8 @@ window.__tcPendingNotifications = [];
 pendingNotifications.forEach(function (data) {
     handleTechcenterNotification(data);
 });
+
+
     // Simple helper for existing portal scripts.
     window.TechcenterNotifications = {
         add: addNotification,

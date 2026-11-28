@@ -12,7 +12,8 @@
     <link rel="stylesheet" href="{% static 'css/style.css' %}">
  <link rel="stylesheet" href="{% static 'css/android-tools.css' %}">
 
-   <script>
+   
+<script>
 (function () {
     if (!window.TechcenterBridge) return;
 
@@ -21,20 +22,26 @@
     window.__tcToolsReady = false;
     window.__tcPendingNotifications = [];
 
-    // Receive notifications before android-tools.js loads.
     window.addEventListener('techcenter:notification', function (event) {
         const data = event.detail;
 
         if (!data || typeof data !== 'object') return;
 
-        if (typeof window.__tcHandleNotification === 'function') {
+        // If android-tools.js is ready, process immediately.
+        if (
+            window.__tcToolsReady &&
+            typeof window.__tcHandleNotification === 'function'
+        ) {
             window.__tcHandleNotification(data);
-        } else {
-            window.__tcPendingNotifications.push(data);
+            return;
         }
+
+        // Otherwise, keep the notification until the JS loads.
+        window.__tcPendingNotifications.push(data);
     });
 })();
 </script>
+
 
 <style>
     /* Hide the normal website header and footer immediately in Android */
