@@ -22,12 +22,14 @@
     window.__tcToolsReady = false;
     window.__tcPendingNotifications = [];
 
+    const STORAGE_KEY = 'tc_android_pending_push_notifications';
+
     window.addEventListener('techcenter:notification', function (event) {
         const data = event.detail;
 
         if (!data || typeof data !== 'object') return;
 
-        // If android-tools.js is ready, process immediately.
+        // The notification handler is ready: process immediately.
         if (
             window.__tcToolsReady &&
             typeof window.__tcHandleNotification === 'function'
@@ -36,8 +38,22 @@
             return;
         }
 
-        // Otherwise, keep the notification until the JS loads.
-        window.__tcPendingNotifications.push(data);
+        // The handler is not ready: preserve the notification.
+        try {
+            const pending = JSON.parse(
+                localStorage.getItem(STORAGE_KEY) || '[]'
+            );
+
+            pending.push(data);
+
+            // Prevent an unlimited pending queue.
+            localStorage.setItem(
+                STORAGE_KEY,
+                JSON.stringify(pending.slice(-50))
+            );
+        } catch (error) {
+            console.error('Unable to preserve pending notification:', error);
+        }
     });
 })();
 </script>

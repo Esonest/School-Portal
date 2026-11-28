@@ -579,25 +579,50 @@ function handleTechcenterNotification(data) {
 window.__tcHandleNotification = handleTechcenterNotification;
 
 
-// Process notifications received before this script loaded.
-const pendingNotifications =
-    Array.isArray(window.__tcPendingNotifications)
-        ? window.__tcPendingNotifications.slice()
-        : [];
+// ==========================================
+// RESTORE PENDING NOTIFICATIONS
+// ==========================================
+
+const PENDING_PUSH_KEY = 'tc_android_pending_push_notifications';
+
+let pendingNotifications = [];
+
+try {
+    const storedNotifications = JSON.parse(
+        localStorage.getItem(PENDING_PUSH_KEY) || '[]'
+    );
+
+    if (Array.isArray(storedNotifications)) {
+        pendingNotifications = pendingNotifications.concat(
+            storedNotifications
+        );
+    }
+} catch (error) {
+    console.error('Unable to restore pending notifications:', error);
+}
+
+if (Array.isArray(window.__tcPendingNotifications)) {
+    pendingNotifications = pendingNotifications.concat(
+        window.__tcPendingNotifications
+    );
+}
 
 window.__tcPendingNotifications = [];
 
-
-// Mark notification system ready.
+// Mark ready so future incoming notifications are processed immediately.
 window.__tcToolsReady = true;
 
+try {
+    pendingNotifications.forEach(function (data) {
+        handleTechcenterNotification(data);
+    });
 
-// Process queued notifications.
-pendingNotifications.forEach(function (data) {
+    // Remove the queue only after processing.
+    localStorage.removeItem(PENDING_PUSH_KEY);
 
-    handleTechcenterNotification(data);
-
-});
+} catch (error) {
+    console.error('Unable to process pending notifications:', error);
+}
 
     // Simple helper for existing portal scripts.
     window.TechcenterNotifications = {
