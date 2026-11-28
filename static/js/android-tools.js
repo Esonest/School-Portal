@@ -438,22 +438,25 @@ function handleTechcenterNotification(data) {
     showPushNotification(data);
 }
 
-window.addEventListener('techcenter:notification', function (event) {
-    handleTechcenterNotification(event.detail);
-});
+// ==========================================
+// CENTRAL TECHCENTER NOTIFICATION RECEIVER
+// ==========================================
 
-// Mark the notification handler as ready.
+window.__tcHandleNotification = handleTechcenterNotification;
+
+// Mark the notification system ready.
 window.__tcToolsReady = true;
 
-// Process notifications that arrived before this script loaded.
-const pendingNotifications = window.__tcPendingNotifications || [];
+// Process notifications received before this file loaded.
+const pendingNotifications = Array.isArray(window.__tcPendingNotifications)
+    ? window.__tcPendingNotifications.slice()
+    : [];
 
 window.__tcPendingNotifications = [];
 
 pendingNotifications.forEach(function (data) {
     handleTechcenterNotification(data);
 });
-
     // Simple helper for existing portal scripts.
     window.TechcenterNotifications = {
         add: addNotification,
