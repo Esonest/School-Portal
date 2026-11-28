@@ -431,7 +431,10 @@ if (pushPopupClose) {
 function handleTechcenterNotification(data) {
     if (!data || typeof data !== 'object') return;
 
+    // Save the announcement in notification history.
     addNotification(data);
+
+    // Display the announcement popup immediately.
     showPushNotification(data);
 }
 
