@@ -413,8 +413,8 @@ function showPushNotification(data) {
         data.message || data.body || data.text || '';
 
     pushPopup.hidden = false;
-    pushPopup.style.display = 'flex';
-    pushPopup.style.zIndex = '2147483647';
+    pushPopup.style.removeProperty('display');
+pushPopup.style.removeProperty('z-index');
 }
 
 function closePushNotification() {

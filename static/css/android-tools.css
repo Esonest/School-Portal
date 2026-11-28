@@ -816,16 +816,19 @@ html.techcenter-android-app.tc-dark #tc-role-nav-popup .tc-role-logout .tc-role-
 ========================================= */
 
 #tc-push-popup {
-    display: none;
+    display: none !important;
 }
 
 html.techcenter-android-app #tc-push-popup:not([hidden]) {
-    display: block;
-    position: fixed;
-    top: max(12px, env(safe-area-inset-top));
-    left: 12px;
-    right: 12px;
-    z-index: 2147483646;
+    display: block !important;
+    position: fixed !important;
+    top: max(12px, env(safe-area-inset-top, 0px)) !important;
+    left: 12px !important;
+    right: 12px !important;
+    width: auto !important;
+    z-index: 2147483647 !important;
+    box-sizing: border-box !important;
+    pointer-events: auto !important;
 }
 
 .tc-push-popup-card {
@@ -853,6 +856,7 @@ html.techcenter-android-app #tc-push-popup:not([hidden]) {
     color: #64748b;
     font-size: 20px;
     padding: 2px 8px;
+    cursor: pointer;
 }
 
 #tc-push-popup-title {
@@ -868,8 +872,16 @@ html.techcenter-android-app #tc-push-popup:not([hidden]) {
     overflow-wrap: anywhere;
 }
 
-html.tc-dark .tc-push-popup-card {
+html.techcenter-android-app.tc-dark .tc-push-popup-card {
     background: #1e293b;
     color: #f8fafc;
     border-color: #475569;
+}
+
+html.techcenter-android-app.tc-dark .tc-push-popup-heading {
+    color: #60a5fa;
+}
+
+html.techcenter-android-app.tc-dark #tc-push-popup-close {
+    color: #cbd5e1;
 }
