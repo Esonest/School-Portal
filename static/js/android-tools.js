@@ -98,10 +98,11 @@ if (zoomOut) {
        NOTIFICATION STORAGE
     ====================================== */
 
-    const STORAGE_KEY =
-    'tc_android_notification_history_' +
-    currentSchool + '_' +
-    currentRole;
+    const GUEST_STORAGE_KEY = 'tc_android_notification_history_guest';
+
+const STORAGE_KEY = (currentSchool && currentRole)
+    ? 'tc_android_notification_history_' + currentSchool + '_' + currentRole
+    : GUEST_STORAGE_KEY;
     
     const notificationButton = document.getElementById('android-notification-button');
     const notificationCount = document.getElementById('android-notification-count');
@@ -143,6 +144,45 @@ if (zoomOut) {
             console.error('Unable to save notification history:', error);
         }
     }
+
+    function migrateGuestNotifications() {
+    // Only migrate after a user has logged in.
+    if (!currentSchool || !currentRole) return;
+
+    try {
+        const guestItems = JSON.parse(
+            localStorage.getItem(GUEST_STORAGE_KEY) || '[]'
+        );
+
+        if (!Array.isArray(guestItems) || !guestItems.length) return;
+
+        const currentItems = loadNotifications();
+
+        guestItems.forEach(function (guestItem) {
+            const duplicate = currentItems.some(function (item) {
+                return (
+                    (guestItem.sourceId &&
+                     item.sourceId === guestItem.sourceId) ||
+                    item.id === guestItem.id
+                );
+            });
+
+            if (!duplicate) {
+                currentItems.push(guestItem);
+            }
+        });
+
+        currentItems.sort(function (a, b) {
+            return new Date(b.date) - new Date(a.date);
+        });
+
+        saveNotifications(currentItems);
+        localStorage.removeItem(GUEST_STORAGE_KEY);
+
+    } catch (error) {
+        console.error('Unable to migrate guest notifications:', error);
+    }
+}
 
     function escapeNotificationText(value) {
         return String(value == null ? '' : value);
@@ -351,8 +391,45 @@ if (clearButton) {
     });
 }
 
-    function handleTechcenterNotification(data) {
-    if (!data) return;
+   /* ======================================
+   ANDROID PUSH ANNOUNCEMENT POP-UP
+====================================== */
+
+const pushPopup = document.getElementById('tc-push-popup');
+const pushPopupTitle = document.getElementById('tc-push-popup-title');
+const pushPopupMessage = document.getElementById('tc-push-popup-message');
+const pushPopupClose = document.getElementById('tc-push-popup-close');
+
+function showPushNotification(data) {
+    if (!pushPopup || !pushPopupTitle || !pushPopupMessage) {
+        console.error('TECHCENTER push popup elements not found.');
+        return;
+    }
+
+    pushPopupTitle.textContent =
+        data.title || data.subject || 'TECHCENTER Announcement';
+
+    pushPopupMessage.textContent =
+        data.message || data.body || data.text || '';
+
+    pushPopup.hidden = false;
+    pushPopup.style.display = 'flex';
+    pushPopup.style.zIndex = '2147483647';
+}
+
+function closePushNotification() {
+    if (!pushPopup) return;
+
+    pushPopup.hidden = true;
+    pushPopup.style.display = 'none';
+}
+
+if (pushPopupClose) {
+    pushPopupClose.addEventListener('click', closePushNotification);
+}
+
+function handleTechcenterNotification(data) {
+    if (!data || typeof data !== 'object') return;
 
     addNotification(data);
     showPushNotification(data);
@@ -396,7 +473,8 @@ pendingNotifications.forEach(function (data) {
             type: 'django-message'
         });
     });
-
+     
+    migrateGuestNotifications();
     updateNotificationCount();
 
 })();
