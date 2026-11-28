@@ -20,6 +20,14 @@
 })();
 </script>
 
+<style>
+    /* Hide the normal website header and footer immediately in Android */
+    html.techcenter-android-app body > nav,
+    html.techcenter-android-app body > footer {
+        display: none !important;
+    }
+</style>
+
     {% block extra_head %}{% endblock %}
     {{ form.media }}
 
@@ -148,6 +156,19 @@ scroll-smooth {% if request.resolver_match.url_name == 'login' %}login-layout{% 
     </div>
 </div>
 {% endif %}
+<!-- ANDROID PUSH NOTIFICATION POP-UP -->
+<div id="tc-push-popup" hidden>
+    <div class="tc-push-popup-card">
+        <div class="tc-push-popup-heading">
+            <span>🔔 TECHCENTER</span>
+            <button type="button" id="tc-push-popup-close"
+                    aria-label="Dismiss notification">✕</button>
+        </div>
+
+        <h3 id="tc-push-popup-title">Notification</h3>
+        <p id="tc-push-popup-message"></p>
+    </div>
+</div>
 
 
 <!-- NAVBAR -->

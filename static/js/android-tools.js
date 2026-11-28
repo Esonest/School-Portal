@@ -12,33 +12,39 @@ const currentSchool = androidUser?.dataset.schoolId || '';
     if (!root.classList.contains('techcenter-android-app')) return;
 
     const toolbar = document.getElementById('android-display-toolbar');
-    if (!toolbar) return;
 
     /* ======================================
-       DARK MODE
-    ====================================== */
+   DARK MODE
+====================================== */
 
-    const darkButton = document.getElementById('android-dark-toggle');
-    const darkIcon = document.getElementById('android-dark-icon');
-    const darkLabel = document.getElementById('android-dark-label');
+const darkButton = document.getElementById('android-dark-toggle');
+const darkIcon = document.getElementById('android-dark-icon');
+const darkLabel = document.getElementById('android-dark-label');
 
-    let isDark = localStorage.getItem('tc_android_dark_mode') === 'true';
+let isDark = localStorage.getItem('tc_android_dark_mode') === 'true';
 
-    function applyDarkMode() {
-        root.classList.toggle('tc-dark', isDark);
+function applyDarkMode() {
+    root.classList.toggle('tc-dark', isDark);
 
+    if (darkIcon) {
         darkIcon.textContent = isDark ? '☀️' : '🌙';
-        darkLabel.textContent = isDark ? 'Light' : 'Dark';
-
-        localStorage.setItem('tc_android_dark_mode', String(isDark));
     }
 
+    if (darkLabel) {
+        darkLabel.textContent = isDark ? 'Light' : 'Dark';
+    }
+
+    localStorage.setItem('tc_android_dark_mode', String(isDark));
+}
+
+if (darkButton) {
     darkButton.addEventListener('click', function () {
         isDark = !isDark;
         applyDarkMode();
     });
+}
 
-    applyDarkMode();
+applyDarkMode();
 
 
     /* ======================================
@@ -64,20 +70,26 @@ const isLoginPage = document.body.classList.contains('login-layout');
     zoomContent.style.zoom = String(zoom);
 }
 
-        zoomLevel.textContent = Math.round(zoom * 100) + '%';
+       if (zoomLevel) {
+    zoomLevel.textContent = Math.round(zoom * 100) + '%';
+}
 
         localStorage.setItem('tc_android_zoom', String(zoom));
     }
 
+   if (zoomIn) {
     zoomIn.addEventListener('click', function () {
         zoom = Math.round((zoom + 0.1) * 10) / 10;
         applyZoom();
     });
+}
 
+if (zoomOut) {
     zoomOut.addEventListener('click', function () {
         zoom = Math.round((zoom - 0.1) * 10) / 10;
         applyZoom();
     });
+}
 
     applyZoom();
 
@@ -137,17 +149,21 @@ const isLoginPage = document.body.classList.contains('login-layout');
     }
 
     function updateNotificationCount() {
-        const items = loadNotifications();
-        const unread = items.filter(item => !item.read).length;
+    const items = loadNotifications();
+    const unread = items.filter(item => !item.read).length;
 
+    if (notificationCount) {
         notificationCount.textContent = unread > 99 ? '99+' : String(unread);
         notificationCount.hidden = unread === 0;
+    }
 
+    if (summary) {
         summary.textContent =
             items.length + ' saved notification' +
             (items.length === 1 ? '' : 's') +
             ' · ' + unread + ' unread';
     }
+}
 
     function addNotification(data) {
         if (!data || typeof data !== 'object') return;
@@ -180,9 +196,9 @@ const isLoginPage = document.body.classList.contains('login-layout');
         updateNotificationCount();
 
         // Refresh the inbox if it is already open.
-        if (!overlay.hidden) {
-            renderNotificationList();
-        }
+        if (overlay && !overlay.hidden) {
+    renderNotificationList();
+}
     }
 
     function formatNotificationDate(value) {
@@ -279,25 +295,39 @@ const isLoginPage = document.body.classList.contains('login-layout');
     }
 
     function openInbox() {
-        overlay.hidden = false;
-        document.body.style.overflow = 'hidden';
-        renderNotificationList();
-    }
+    if (!overlay) return;
 
-    function closeInbox() {
-        overlay.hidden = true;
-        document.body.style.overflow = '';
-    }
+    overlay.hidden = false;
+    document.body.style.overflow = 'hidden';
+    renderNotificationList();
+}
 
+function closeInbox() {
+    if (!overlay) return;
+
+    overlay.hidden = true;
+    document.body.style.overflow = '';
+}
+
+    if (notificationButton) {
     notificationButton.addEventListener('click', openInbox);
-    closeButton.addEventListener('click', closeInbox);
+}
 
+if (closeButton) {
+    closeButton.addEventListener('click', closeInbox);
+}
+
+if (overlay) {
     overlay.addEventListener('click', function (event) {
         if (event.target === overlay) closeInbox();
     });
+}
 
+if (backButton) {
     backButton.addEventListener('click', renderNotificationList);
+}
 
+    if (markAllButton) {
     markAllButton.addEventListener('click', function () {
         const items = loadNotifications();
 
@@ -308,7 +338,9 @@ const isLoginPage = document.body.classList.contains('login-layout');
         saveNotifications(items);
         renderNotificationList();
     });
+}
 
+if (clearButton) {
     clearButton.addEventListener('click', function () {
         if (!confirm('Clear all saved notifications? This cannot be undone.')) {
             return;
@@ -317,6 +349,7 @@ const isLoginPage = document.body.classList.contains('login-layout');
         saveNotifications([]);
         renderNotificationList();
     });
+}
 
     /* ======================================
        RECEIVE NOTIFICATIONS FROM PAGE JS
@@ -327,9 +360,46 @@ const isLoginPage = document.body.classList.contains('login-layout');
     //     detail: {title: 'New result', message: 'Your result is ready.'}
     // }));
 
-    window.addEventListener('techcenter:notification', function (event) {
-        addNotification(event.detail);
+   /* ======================================
+   ANDROID PUSH NOTIFICATION POP-UP
+====================================== */
+
+const pushPopup = document.getElementById('tc-push-popup');
+const pushPopupTitle = document.getElementById('tc-push-popup-title');
+const pushPopupMessage = document.getElementById('tc-push-popup-message');
+const pushPopupClose = document.getElementById('tc-push-popup-close');
+
+function showPushNotification(data) {
+    if (!data || !pushPopup) return;
+
+    const title = String(
+        data.title || data.subject || 'TECHCENTER Notification'
+    ).trim();
+
+    const message = String(
+        data.message || data.body || data.text || ''
+    ).trim();
+
+    if (!message && !title) return;
+
+    pushPopupTitle.textContent = title;
+    pushPopupMessage.textContent = message;
+
+    pushPopup.hidden = false;
+}
+
+if (pushPopupClose) {
+    pushPopupClose.addEventListener('click', function () {
+        pushPopup.hidden = true;
     });
+}
+
+window.addEventListener('techcenter:notification', function (event) {
+    const data = event.detail;
+
+    addNotification(data);
+    showPushNotification(data);
+});
 
     // Simple helper for existing portal scripts.
     window.TechcenterNotifications = {
