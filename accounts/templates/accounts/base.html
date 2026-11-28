@@ -179,18 +179,36 @@ scroll-smooth {% if request.resolver_match.url_name == 'login' %}login-layout{% 
     </div>
 </div>
 {% endif %}
-<!-- ANDROID PUSH NOTIFICATION POP-UP -->
+<!-- ANDROID PUSH NOTIFICATION POPUP -->
+
 <div id="tc-push-popup" hidden>
+
     <div class="tc-push-popup-card">
+
         <div class="tc-push-popup-heading">
-            <span>🔔 TECHCENTER</span>
-            <button type="button" id="tc-push-popup-close"
-                    aria-label="Dismiss notification">✕</button>
+
+            <span>🔔 TECHCENTER ANNOUNCEMENT</span>
+
+            <button type="button"
+                    id="tc-push-popup-close"
+                    aria-label="Dismiss notification">
+                ✕
+            </button>
+
         </div>
 
-        <h3 id="tc-push-popup-title">Notification</h3>
+        <h3 id="tc-push-popup-title">
+            Notification
+        </h3>
+
         <p id="tc-push-popup-message"></p>
+
+        <small>
+            Tap this message to open it
+        </small>
+
     </div>
+
 </div>
 
 

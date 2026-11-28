@@ -100,9 +100,13 @@ if (zoomOut) {
 
     const GUEST_STORAGE_KEY = 'tc_android_notification_history_guest';
 
-const STORAGE_KEY = (currentSchool && currentRole)
-    ? 'tc_android_notification_history_' + currentSchool + '_' + currentRole
+const currentUserId = androidUser?.dataset.userId || '';
+
+const STORAGE_KEY = (currentSchool && currentRole && currentUserId)
+    ? 'tc_android_notification_history_' +
+      currentSchool + '_' + currentRole + '_' + currentUserId
     : GUEST_STORAGE_KEY;
+
     
     const notificationButton = document.getElementById('android-notification-button');
     const notificationCount = document.getElementById('android-notification-count');
@@ -206,40 +210,68 @@ const STORAGE_KEY = (currentSchool && currentRole)
 }
 
     function addNotification(data) {
-        if (!data || typeof data !== 'object') return;
 
-        const title = escapeNotificationText(data.title || data.subject || 'TECHCENTER Notification').trim();
-        const message = escapeNotificationText(data.message || data.body || data.text || '').trim();
+    if (!data || typeof data !== 'object') return null;
 
-        if (!message && !title) return;
+    const title = String(
+        data.title || data.subject || 'TECHCENTER Announcement'
+    ).trim();
 
-        const items = loadNotifications();
+    const message = String(
+        data.message || data.body || data.text || ''
+    ).trim();
 
-        // Avoid duplicate notifications when the same event is delivered again.
-        if (data.id && items.some(item => item.sourceId === String(data.id))) {
-            return;
+    if (!message && !title) return null;
+
+    const items = loadNotifications();
+
+    // Prevent duplicate notifications.
+    if (data.id) {
+
+        const existing = items.find(function (item) {
+            return item.sourceId === String(data.id);
+        });
+
+        if (existing) {
+            updateNotificationCount();
+            return existing;
         }
-
-        const notification = {
-            id: 'tc_' + Date.now() + '_' + Math.random().toString(36).slice(2, 9),
-            sourceId: data.id ? String(data.id) : '',
-            title: title,
-            message: message,
-            date: data.date || data.timestamp || new Date().toISOString(),
-            url: data.url || '',
-            type: data.type || 'general',
-            read: false
-        };
-
-        items.unshift(notification);
-        saveNotifications(items);
-        updateNotificationCount();
-
-        // Refresh the inbox if it is already open.
-        if (overlay && !overlay.hidden) {
-    renderNotificationList();
-}
     }
+
+    const notification = {
+
+        id: 'tc_' + Date.now() + '_' +
+            Math.random().toString(36).slice(2, 9),
+
+        sourceId: data.id ? String(data.id) : '',
+
+        title: title,
+
+        message: message,
+
+        date: data.date ||
+              data.timestamp ||
+              new Date().toISOString(),
+
+        url: data.url || '',
+
+        type: data.type || 'announcement',
+
+        read: false
+    };
+
+    items.unshift(notification);
+
+    saveNotifications(items);
+
+    updateNotificationCount();
+
+    if (overlay && !overlay.hidden) {
+        renderNotificationList();
+    }
+
+    return notification;
+}
 
     function formatNotificationDate(value) {
         const date = new Date(value);
@@ -391,18 +423,26 @@ if (clearButton) {
     });
 }
 
-   /* ======================================
-   ANDROID PUSH ANNOUNCEMENT POP-UP
-====================================== */
+   /* ==========================================
+   TECHCENTER ANDROID PUSH POPUP
+========================================== */
 
 const pushPopup = document.getElementById('tc-push-popup');
-const pushPopupTitle = document.getElementById('tc-push-popup-title');
-const pushPopupMessage = document.getElementById('tc-push-popup-message');
-const pushPopupClose = document.getElementById('tc-push-popup-close');
 
-function showPushNotification(data) {
+const pushPopupTitle =
+    document.getElementById('tc-push-popup-title');
+
+const pushPopupMessage =
+    document.getElementById('tc-push-popup-message');
+
+const pushPopupClose =
+    document.getElementById('tc-push-popup-close');
+
+
+function showPushNotification(data, notificationId) {
+
     if (!pushPopup || !pushPopupTitle || !pushPopupMessage) {
-        console.error('TECHCENTER push popup elements not found.');
+        console.error('TECHCENTER notification popup not found.');
         return;
     }
 
@@ -412,20 +452,76 @@ function showPushNotification(data) {
     pushPopupMessage.textContent =
         data.message || data.body || data.text || '';
 
+    // Remember the exact saved notification.
+    pushPopup.dataset.notificationId = notificationId || '';
+
     pushPopup.hidden = false;
-    pushPopup.style.removeProperty('display');
-pushPopup.style.removeProperty('z-index');
+
+    pushPopup.style.display = 'flex';
+
+    pushPopup.style.zIndex = '2147483647';
+
 }
 
+
+// Close popup.
 function closePushNotification() {
+
     if (!pushPopup) return;
 
     pushPopup.hidden = true;
+
     pushPopup.style.display = 'none';
+
 }
 
+
+// Close button.
 if (pushPopupClose) {
-    pushPopupClose.addEventListener('click', closePushNotification);
+
+    pushPopupClose.addEventListener('click', function (event) {
+
+        event.stopPropagation();
+
+        closePushNotification();
+
+    });
+
+}
+
+
+// CLICKING THE POPUP OPENS THE SAVED MESSAGE.
+if (pushPopup) {
+
+    pushPopup.addEventListener('click', function (event) {
+
+        if (event.target.closest('#tc-push-popup-close')) {
+            return;
+        }
+
+        const notificationId =
+            pushPopup.dataset.notificationId;
+
+        if (!notificationId) return;
+
+        // The user is logged in and the inbox exists.
+        if (overlay && list && detail) {
+
+            closePushNotification();
+
+            openInbox();
+
+            openNotification(notificationId);
+
+        } else {
+
+            // Before login, keep the complete message visible.
+            pushPopupMessage.style.whiteSpace = 'pre-wrap';
+
+        }
+
+    });
+
 }
 
 
@@ -433,52 +529,75 @@ if (pushPopupClose) {
 // CENTRAL TECHCENTER NOTIFICATION RECEIVER
 // ==========================================
 
+// ==========================================
+// CENTRAL TECHCENTER NOTIFICATION RECEIVER
+// ==========================================
+
 function handleTechcenterNotification(data) {
+
     if (!data || typeof data !== 'object') return;
 
-    const title =
-        data.title ||
-        data.subject ||
-        'TECHCENTER Announcement';
-
-    const message =
-        data.message ||
-        data.body ||
-        data.text ||
-        '';
-
-    if (!message && !title) return;
-
     const notification = {
+
         ...data,
-        title: title,
-        message: message
+
+        title:
+            data.title ||
+            data.subject ||
+            'TECHCENTER Announcement',
+
+        message:
+            data.message ||
+            data.body ||
+            data.text ||
+            '',
+
+        type: data.type || 'announcement'
+
     };
 
-    // Save to notification history.
-    addNotification(notification);
+    if (!notification.message) {
+        console.warn('Received notification without a message.');
+        return;
+    }
 
-    // Display the complete message, including on the login page.
-    showPushNotification(notification);
+    // Save notification and retrieve its permanent local ID.
+    const savedNotification = addNotification(notification);
+
+    if (!savedNotification) return;
+
+    // Display the complete announcement.
+    showPushNotification(
+        notification,
+        savedNotification.id
+    );
+
 }
 
-// Make the receiver available to the early base.html listener.
+
+// Expose receiver to base.html and Android bridge.
 window.__tcHandleNotification = handleTechcenterNotification;
 
-// Mark the notification system as ready.
-window.__tcToolsReady = true;
 
 // Process notifications received before this script loaded.
-const pendingNotifications = Array.isArray(window.__tcPendingNotifications)
-    ? window.__tcPendingNotifications.slice()
-    : [];
+const pendingNotifications =
+    Array.isArray(window.__tcPendingNotifications)
+        ? window.__tcPendingNotifications.slice()
+        : [];
 
 window.__tcPendingNotifications = [];
 
-pendingNotifications.forEach(function (data) {
-    handleTechcenterNotification(data);
-});
 
+// Mark notification system ready.
+window.__tcToolsReady = true;
+
+
+// Process queued notifications.
+pendingNotifications.forEach(function (data) {
+
+    handleTechcenterNotification(data);
+
+});
 
     // Simple helper for existing portal scripts.
     window.TechcenterNotifications = {

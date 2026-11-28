@@ -99,7 +99,12 @@ html.techcenter-android-app #android-notification-overlay {
 }
 
 html.techcenter-android-app #android-notification-overlay:not([hidden]) {
-    display: flex;
+    display: flex !important;
+    position: fixed !important;
+    inset: 0 !important;
+    z-index: 2147483000 !important;
+    align-items: center !important;
+    justify-content: center !important;
 }
 
 html.techcenter-android-app #android-notification-panel {
@@ -811,81 +816,186 @@ html.techcenter-android-app.tc-dark #tc-role-nav-popup .tc-role-logout .tc-role-
     color: #f87171 !important;
 }
 
-/* =========================================
-   ANDROID PUSH NOTIFICATION POP-UP
-========================================= */
+/* ==========================================
+   TECHCENTER ANDROID PUSH NOTIFICATION
+   CLICKABLE POPUP
+========================================== */
 
+/* Hidden by default everywhere */
 #tc-push-popup {
     display: none !important;
 }
 
+/* Show only inside the Android application */
 html.techcenter-android-app #tc-push-popup:not([hidden]) {
+
     display: flex !important;
+
     position: fixed !important;
+
     top: max(12px, env(safe-area-inset-top, 0px)) !important;
+
     left: 12px !important;
+
     right: 12px !important;
+
     width: auto !important;
+
     z-index: 2147483647 !important;
+
     box-sizing: border-box !important;
-    pointer-events: auto !important;
+
     justify-content: center !important;
+
+    align-items: flex-start !important;
+
+    pointer-events: auto !important;
+
+    visibility: visible !important;
+
 }
 
-.tc-push-popup-card {
-    width: 100%;
-    max-width: 520px;
-    background: #ffffff;
-    color: #172033;
-    padding: 16px;
-    border-radius: 14px;
-    box-shadow: 0 8px 30px rgba(0, 0, 0, 0.28);
-    border: 1px solid #e5e7eb;
-    box-sizing: border-box;
+/* Popup card */
+html.techcenter-android-app .tc-push-popup-card {
+
+    width: 100% !important;
+
+    max-width: 520px !important;
+
+    background: #ffffff !important;
+
+    color: #172033 !important;
+
+    padding: 16px !important;
+
+    border-radius: 14px !important;
+
+    box-shadow: 0 8px 30px rgba(0,0,0,.28) !important;
+
+    border: 1px solid #e5e7eb !important;
+
+    box-sizing: border-box !important;
+
+    pointer-events: auto !important;
+
+    cursor: pointer !important;
+
 }
 
-.tc-push-popup-heading {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+/* Heading */
+html.techcenter-android-app .tc-push-popup-heading {
+
+    display: flex !important;
+
+    justify-content: space-between !important;
+
+    align-items: center !important;
+
+    gap: 10px;
+
     font-size: 13px;
+
     font-weight: 700;
+
     color: #2563eb;
+
     margin-bottom: 10px;
+
 }
 
-#tc-push-popup-close {
+/* Close button */
+html.techcenter-android-app #tc-push-popup-close {
+
+    flex-shrink: 0;
+
+    width: 35px;
+
+    height: 35px;
+
     border: 0;
-    background: transparent;
+
+    border-radius: 50%;
+
+    background: #f1f5f9;
+
     color: #64748b;
+
     font-size: 20px;
-    padding: 2px 8px;
+
     cursor: pointer;
+
+    pointer-events: auto !important;
+
 }
 
-#tc-push-popup-title {
+/* Title */
+html.techcenter-android-app #tc-push-popup-title {
+
     font-size: 16px;
-    font-weight: 700;
-    margin-bottom: 5px;
-}
 
-#tc-push-popup-message {
-    font-size: 14px;
-    line-height: 1.5;
-    white-space: pre-wrap;
+    font-weight: 800;
+
+    margin-bottom: 7px;
+
     overflow-wrap: anywhere;
+
 }
 
+/* Complete message */
+html.techcenter-android-app #tc-push-popup-message {
+
+    font-size: 14px;
+
+    line-height: 1.6;
+
+    white-space: pre-wrap !important;
+
+    overflow-wrap: anywhere;
+
+    word-break: normal;
+
+}
+
+/* Tap instruction */
+html.techcenter-android-app .tc-push-popup-card small {
+
+    display: block;
+
+    margin-top: 12px;
+
+    font-size: 11px;
+
+    color: #64748b;
+
+}
+
+/* Dark mode */
 html.techcenter-android-app.tc-dark .tc-push-popup-card {
-    background: #1e293b;
-    color: #f8fafc;
-    border-color: #475569;
+
+    background: #1e293b !important;
+
+    color: #f8fafc !important;
+
+    border-color: #475569 !important;
+
 }
 
 html.techcenter-android-app.tc-dark .tc-push-popup-heading {
+
     color: #60a5fa;
+
 }
 
 html.techcenter-android-app.tc-dark #tc-push-popup-close {
+
+    background: #263449;
+
+    color: #f8fafc;
+
+}
+
+html.techcenter-android-app.tc-dark .tc-push-popup-card small {
+
     color: #cbd5e1;
+
 }
